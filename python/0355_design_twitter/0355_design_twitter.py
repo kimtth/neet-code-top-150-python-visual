@@ -99,6 +99,9 @@ class Twitter:
         followed or by the user themself.
         Tweets must be ordered from most recent to least recent.
         
+        Uses optimized k-way merge: O(k log k) where k = number of followed users,
+        instead of O(n log n) where n = total tweets from all followed users.
+        
         Args:
             userId: The user requesting their news feed
             
@@ -107,16 +110,30 @@ class Twitter:
         """
         if userId not in self.user_map:
             return []
+        
         followed_users = self.user_map[userId].followed
         heap = []
+        
+        # Only add the most recent tweet from each followed user to the heap
         for followed_id in followed_users:
             if followed_id in self.user_map:
-                for time, tweet_id in self.user_map[followed_id].tweets:
-                    heapq.heappush(heap, (-time, tweet_id))
+                tweets = self.user_map[followed_id].tweets
+                if tweets:
+                    idx = len(tweets) - 1
+                    time, tweet_id = tweets[idx]
+                    # Store: (-time, tweet_id, user_id, tweet_index)
+                    heapq.heappush(heap, (-time, tweet_id, followed_id, idx))
+        
         result = []
         while heap and len(result) < 10:
-            _, tweet_id = heapq.heappop(heap)
+            _, tweet_id, user_id, idx = heapq.heappop(heap)
             result.append(tweet_id)
+            
+            # If this user has more tweets, add the next most recent one
+            if idx > 0:
+                next_time, next_tweet_id = self.user_map[user_id].tweets[idx - 1]
+                heapq.heappush(heap, (-next_time, next_tweet_id, user_id, idx - 1))
+        
         return result
 
     def follow(self, followerId: int, followeeId: int) ->None:

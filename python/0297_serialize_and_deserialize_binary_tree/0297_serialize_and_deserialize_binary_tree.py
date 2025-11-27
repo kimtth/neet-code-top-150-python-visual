@@ -1,4 +1,5 @@
 from typing import List, Optional
+from collections import deque
 
 
 """
@@ -128,19 +129,20 @@ class CodecAlternative:
             TreeNode: Root of the reconstructed binary tree
         """
 
-        def recdeserialize(string_list):
-            if string_list[0] == 'None':
-                string_list.pop(0)
+        def recdeserialize(string_deque):
+            if string_deque[0] == 'None':
+                string_deque.popleft()
                 return None
-            root = TreeNode(int(string_list[0]))
-            string_list.pop(0)
-            root.left = recdeserialize(string_list)
-            root.right = recdeserialize(string_list)
+            root = TreeNode(int(string_deque[0]))
+            string_deque.popleft()
+            root.left = recdeserialize(string_deque)
+            root.right = recdeserialize(string_deque)
             return root
         string_list = data.split(',')
         if string_list[-1] == '':
             string_list.pop()
-        return recdeserialize(string_list)
+        string_deque = deque(string_list)
+        return recdeserialize(string_deque)
 
 
 if __name__ == '__main__':
