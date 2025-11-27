@@ -1,4 +1,5 @@
 from typing import List
+from collections import deque
 
 
 """
@@ -89,7 +90,7 @@ class Solution:
                     if 0 <= ni < m and 0 <= nj < n and matrix[ni][nj] < matrix[
                         i][j]:
                         in_degree[i][j] += 1
-        queue = []
+        queue = deque()
         for i in range(m):
             for j in range(n):
                 if in_degree[i][j] == 0:
@@ -99,7 +100,7 @@ class Solution:
             path_length += 1
             size = len(queue)
             for _ in range(size):
-                i, j = queue.pop(0)
+                i, j = queue.popleft()
                 for di, dj in dirs:
                     ni, nj = i + di, j + dj
                     if 0 <= ni < m and 0 <= nj < n and matrix[ni][nj] > matrix[

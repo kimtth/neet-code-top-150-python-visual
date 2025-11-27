@@ -49,6 +49,10 @@ class Solution:
         result = []
         
         for i in range(len(nums) - 2):
+            # Early exit: if the smallest number is positive, no triplet can sum to zero
+            if nums[i] > 0:
+                break
+                
             # Skip duplicate values for the first element
             if i > 0 and nums[i] == nums[i-1]:
                 continue
@@ -89,10 +93,14 @@ class Solution:
         Returns:
             List[List[int]]: List of all unique triplets that sum to zero
         """
-        res = []
+        res = set()  # Use set to avoid duplicate triplets
         nums.sort()
         
         for i in range(len(nums) - 2):
+            # Early exit: if the smallest number is positive, no triplet can sum to zero
+            if nums[i] > 0:
+                break
+                
             # Skip duplicates
             if i > 0 and nums[i] == nums[i-1]:
                 continue
@@ -102,13 +110,12 @@ class Solution:
             for j in range(i + 1, len(nums)):
                 complement = -nums[i] - nums[j]
                 if complement in seen:
-                    res.append([nums[i], complement, nums[j]])
-                    # Skip duplicates
-                    while j + 1 < len(nums) and nums[j] == nums[j+1]:
-                        j += 1
+                    # Store as tuple in set to avoid duplicates
+                    res.add((nums[i], complement, nums[j]))
                 seen.add(nums[j])
-                
-        return res
+        
+        # Convert back to list of lists
+        return [list(triplet) for triplet in res]
 
 
 if __name__ == '__main__':

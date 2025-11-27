@@ -45,8 +45,7 @@ class Solution:
             return False
         if self._isSameTree(root, subRoot):
             return True
-        return self.isSubtree(root.left, subRoot) or self.isSubtree(root.
-            right, subRoot)
+        return self.is_subtree(root.left, subRoot) or self.is_subtree(root.right, subRoot)
 
     def _isSameTree(self, s: Optional[TreeNode], t: Optional[TreeNode]) ->bool:
         """

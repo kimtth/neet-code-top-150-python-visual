@@ -68,6 +68,7 @@ class Solution:
     def reverse_clean(self, x: int) ->int:
         """
         A cleaner approach without separating sign handling.
+        Note: This method handles Python's floor division semantics correctly.
         
         Args:
             x: The integer to reverse
@@ -76,16 +77,29 @@ class Solution:
             int: The reversed integer, or 0 if the result would overflow
         """
         INT_MIN, INT_MAX = -2 ** 31, 2 ** 31 - 1
+        
+        # Handle negative numbers by working with absolute value
+        sign = -1 if x < 0 else 1
+        x = abs(x)
         rev = 0
+        
         while x != 0:
             digit = x % 10
-            x = (x - digit) // 10
-            if rev > INT_MAX // 10 or rev == INT_MAX // 10 and digit > 7:
+            x //= 10
+            
+            # Check for overflow before multiplying
+            if rev > INT_MAX // 10 or (rev == INT_MAX // 10 and digit > 7):
                 return 0
-            if rev < INT_MIN // 10 or rev == INT_MIN // 10 and digit < -8:
-                return 0
+            
             rev = rev * 10 + digit
-        return rev
+        
+        result = sign * rev
+        
+        # Final overflow check for negative result
+        if result < INT_MIN or result > INT_MAX:
+            return 0
+            
+        return result
 
 
 if __name__ == '__main__':
