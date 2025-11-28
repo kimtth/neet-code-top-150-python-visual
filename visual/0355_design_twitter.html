@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>355 - Design Twitter</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="problem-info">
+            <h1><span class="problem-number">#355</span> Design Twitter</h1>
+            <p>
+                Design a simplified version of Twitter where users can post tweets, follow/unfollow 
+                another user, and see the 10 most recent tweets in their news feed using a min-heap 
+                for k-way merge.
+            </p>
+            <div class="problem-meta">
+                <span class="meta-tag">🏗️ Design</span>
+                <span class="meta-tag">⏱️ O(n)</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <code>python/0355_design_twitter/0355_design_twitter.py</code>
+            </div>
+
+        </div>
+
+        <div class="explanation-panel">
+            <h4>🧠 How It Works (Layman's Terms)</h4>
+            <p>Design problems require building <strong>efficient data structures</strong>:</p>
+            <ul>
+                <li><strong>Interface:</strong> Define what operations are needed</li>
+                <li><strong>Data structure:</strong> Choose the right internal representation</li>
+                <li><strong>Trade-offs:</strong> Balance time and space complexity</li>
+                <li><strong>Edge cases:</strong> Handle empty, full, duplicate scenarios</li>
+            </ul>
+        </div>
+
+
+        <section class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+            <div class="controls">
+                <button id="step1" class="btn">User 1: Post Tweet 5</button>
+                <button id="step2" class="btn">User 1: Get Feed</button>
+                <button id="step3" class="btn">User 1: Follow User 2</button>
+                <button id="step4" class="btn">User 2: Post Tweet 6</button>
+                <button id="step5" class="btn">User 1: Get Feed</button>
+                <button id="step6" class="btn">User 1: Unfollow User 2</button>
+                <button id="step7" class="btn">User 1: Get Feed</button>
+                <button id="resetBtn" class="btn btn-danger">Reset</button>
+            </div>
+            <div class="status" id="status">Follow the example operations</div>
+            <svg id="visualization"></svg>
+        </section>
+
+        <section class="code-section">
+            <h2>Python Solution</h2>
+            <pre><span class="keyword">import</span> heapq
+
+<span class="keyword">class</span> Twitter:
+    <span class="keyword">def</span> <span class="function">__init__</span>(self):
+        self.time_stamp = <span class="number">0</span>
+        self.user_map = {}  <span class="comment"># user_id -> {followed: set, tweets: list}</span>
+
+    <span class="keyword">def</span> <span class="function">postTweet</span>(self, userId, tweetId):
+        <span class="keyword">if</span> userId <span class="keyword">not</span> <span class="keyword">in</span> self.user_map:
+            self.user_map[userId] = {<span class="string">"followed"</span>: {userId}, <span class="string">"tweets"</span>: []}
+        self.user_map[userId][<span class="string">"tweets"</span>].<span class="function">append</span>((self.time_stamp, tweetId))
+        self.time_stamp += <span class="number">1</span>
+
+    <span class="keyword">def</span> <span class="function">getNewsFeed</span>(self, userId):
+        <span class="keyword">if</span> userId <span class="keyword">not</span> <span class="keyword">in</span> self.user_map:
+            <span class="keyword">return</span> []
+        heap = []
+        <span class="keyword">for</span> followedId <span class="keyword">in</span> self.user_map[userId][<span class="string">"followed"</span>]:
+            <span class="keyword">if</span> followedId <span class="keyword">in</span> self.user_map:
+                tweets = self.user_map[followedId][<span class="string">"tweets"</span>]
+                <span class="keyword">if</span> tweets:
+                    idx = <span class="function">len</span>(tweets) - <span class="number">1</span>
+                    time, tweetId = tweets[idx]
+                    heapq.<span class="function">heappush</span>(heap, (-time, tweetId, followedId, idx))
+        
+        result = []
+        <span class="keyword">while</span> heap <span class="keyword">and</span> <span class="function">len</span>(result) < <span class="number">10</span>:
+            _, tweetId, userId, idx = heapq.<span class="function">heappop</span>(heap)
+            result.<span class="function">append</span>(tweetId)
+            <span class="keyword">if</span> idx > <span class="number">0</span>:
+                time, nextTweetId = self.user_map[userId][<span class="string">"tweets"</span>][idx - <span class="number">1</span>]
+                heapq.<span class="function">heappush</span>(heap, (-time, nextTweetId, userId, idx - <span class="number">1</span>))
+        <span class="keyword">return</span> result
+
+    <span class="keyword">def</span> <span class="function">follow</span>(self, followerId, followeeId):
+        <span class="keyword">if</span> followerId <span class="keyword">not</span> <span class="keyword">in</span> self.user_map:
+            self.user_map[followerId] = {<span class="string">"followed"</span>: {followerId}, <span class="string">"tweets"</span>: []}
+        self.user_map[followerId][<span class="string">"followed"</span>].<span class="function">add</span>(followeeId)
+
+    <span class="keyword">def</span> <span class="function">unfollow</span>(self, followerId, followeeId):
+        <span class="keyword">if</span> followerId <span class="keyword">in</span> self.user_map <span class="keyword">and</span> followerId != followeeId:
+            self.user_map[followerId][<span class="string">"followed"</span>].<span class="function">discard</span>(followeeId)</pre>
+        </section>
+    </div>
+
+    <script>
+        const width = 900;
+        const height = 550;
+
+        const svg = d3.select("#visualization")
+            .attr("width", width)
+            .attr("height", height);
+
+        let timestamp = 0;
+        let users = {};
+        let newsFeed = [];
+        let lastOperation = "";
+
+        function postTweet(userId, tweetId) {
+            if (!users[userId]) {
+                users[userId] = { followed: new Set([userId]), tweets: [] };
+            }
+            users[userId].tweets.push({ time: timestamp++, id: tweetId });
+            lastOperation = `User ${userId} posted Tweet ${tweetId}`;
+            newsFeed = [];
+        }
+
+        function getNewsFeed(userId) {
+            if (!users[userId]) {
+                newsFeed = [];
+                lastOperation = `User ${userId} has no feed`;
+                return [];
+            }
+
+            const heap = [];
+            for (const followedId of users[userId].followed) {
+                if (users[followedId] && users[followedId].tweets.length > 0) {
+                    const tweets = users[followedId].tweets;
+                    const idx = tweets.length - 1;
+                    heap.push({ 
+                        time: tweets[idx].time, 
+                        tweetId: tweets[idx].id, 
+                        userId: followedId, 
+                        idx 
+                    });
+                }
+            }
+            heap.sort((a, b) => b.time - a.time);
+
+            const result = [];
+            while (heap.length > 0 && result.length < 10) {
+                heap.sort((a, b) => b.time - a.time);
+                const item = heap.shift();
+                result.push({ tweetId: item.tweetId, userId: item.userId, time: item.time });
+                
+                if (item.idx > 0) {
+                    const tweets = users[item.userId].tweets;
+                    heap.push({
+                        time: tweets[item.idx - 1].time,
+                        tweetId: tweets[item.idx - 1].id,
+                        userId: item.userId,
+                        idx: item.idx - 1
+                    });
+                }
+            }
+
+            newsFeed = result;
+            lastOperation = `User ${userId}'s news feed: [${result.map(t => t.tweetId).join(", ")}]`;
+            return result;
+        }
+
+        function follow(followerId, followeeId) {
+            if (!users[followerId]) {
+                users[followerId] = { followed: new Set([followerId]), tweets: [] };
+            }
+            if (!users[followeeId]) {
+                users[followeeId] = { followed: new Set([followeeId]), tweets: [] };
+            }
+            users[followerId].followed.add(followeeId);
+            lastOperation = `User ${followerId} followed User ${followeeId}`;
+            newsFeed = [];
+        }
+
+        function unfollow(followerId, followeeId) {
+            if (users[followerId] && followerId !== followeeId) {
+                users[followerId].followed.delete(followeeId);
+            }
+            lastOperation = `User ${followerId} unfollowed User ${followeeId}`;
+            newsFeed = [];
+        }
+
+        function render() {
+            svg.selectAll("*").remove();
+
+            const userIds = Object.keys(users).sort();
+            const userWidth = 200;
+            const startX = (width - userIds.length * userWidth) / 2 + userWidth / 2;
+
+            // Draw users
+            userIds.forEach((userId, i) => {
+                const x = startX + i * userWidth;
+                const y = 80;
+                const user = users[userId];
+
+                // User circle
+                svg.append("circle")
+                    .attr("cx", x)
+                    .attr("cy", y)
+                    .attr("r", 40)
+                    .attr("fill", userId === "1" ? "#dbeafe" : "#d1fae5")
+                    .attr("stroke", userId === "1" ? "#3b82f6" : "#10b981")
+                    .attr("stroke-width", 3);
+
+                svg.append("text")
+                    .attr("x", x)
+                    .attr("y", y - 5)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "12px")
+                    .attr("fill", "#64748b")
+                    .text("User");
+
+                svg.append("text")
+                    .attr("x", x)
+                    .attr("y", y + 12)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "20px")
+                    .attr("font-weight", "bold")
+                    .attr("fill", "#1e293b")
+                    .text(userId);
+
+                // Following list
+                svg.append("text")
+                    .attr("x", x)
+                    .attr("y", y + 70)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "12px")
+                    .attr("fill", "#64748b")
+                    .text("Following:");
+
+                svg.append("text")
+                    .attr("x", x)
+                    .attr("y", y + 88)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "14px")
+                    .attr("font-weight", "bold")
+                    .attr("fill", "#1e293b")
+                    .text([...user.followed].sort().join(", "));
+
+                // Tweets
+                svg.append("text")
+                    .attr("x", x)
+                    .attr("y", y + 120)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "12px")
+                    .attr("fill", "#64748b")
+                    .text("Tweets:");
+
+                const tweetsG = svg.append("g")
+                    .attr("transform", `translate(${x}, ${y + 145})`);
+
+                user.tweets.slice().reverse().forEach((tweet, j) => {
+                    tweetsG.append("rect")
+                        .attr("x", -35)
+                        .attr("y", j * 35)
+                        .attr("width", 70)
+                        .attr("height", 30)
+                        .attr("rx", 5)
+                        .attr("fill", "#fef3c7")
+                        .attr("stroke", "#f59e0b")
+                        .attr("stroke-width", 2);
+
+                    tweetsG.append("text")
+                        .attr("x", 0)
+                        .attr("y", j * 35 + 12)
+                        .attr("text-anchor", "middle")
+                        .attr("font-size", "10px")
+                        .attr("fill", "#92400e")
+                        .text(`t=${tweet.time}`);
+
+                    tweetsG.append("text")
+                        .attr("x", 0)
+                        .attr("y", j * 35 + 24)
+                        .attr("text-anchor", "middle")
+                        .attr("font-size", "14px")
+                        .attr("font-weight", "bold")
+                        .attr("fill", "#92400e")
+                        .text(`#${tweet.id}`);
+                });
+            });
+
+            // Draw follow connections
+            if (users["1"] && users["2"]) {
+                const x1 = startX;
+                const x2 = startX + userWidth;
+                const y = 80;
+
+                if (users["1"].followed.has("2")) {
+                    svg.append("path")
+                        .attr("d", `M ${x1 + 45} ${y} Q ${(x1 + x2) / 2} ${y - 60} ${x2 - 45} ${y}`)
+                        .attr("fill", "none")
+                        .attr("stroke", "#8b5cf6")
+                        .attr("stroke-width", 2)
+                        .attr("stroke-dasharray", "5,5")
+                        .attr("marker-end", "url(#arrowhead)");
+
+                    svg.append("text")
+                        .attr("x", (x1 + x2) / 2)
+                        .attr("y", y - 45)
+                        .attr("text-anchor", "middle")
+                        .attr("font-size", "12px")
+                        .attr("fill", "#8b5cf6")
+                        .text("follows");
+                }
+            }
+
+            // Arrow marker
+            svg.append("defs").append("marker")
+                .attr("id", "arrowhead")
+                .attr("viewBox", "0 -5 10 10")
+                .attr("refX", 8)
+                .attr("refY", 0)
+                .attr("markerWidth", 6)
+                .attr("markerHeight", 6)
+                .attr("orient", "auto")
+                .append("path")
+                .attr("d", "M0,-5L10,0L0,5")
+                .attr("fill", "#8b5cf6");
+
+            // News Feed display
+            if (newsFeed.length > 0) {
+                const feedG = svg.append("g")
+                    .attr("transform", `translate(${width - 180}, 100)`);
+
+                feedG.append("rect")
+                    .attr("x", -70)
+                    .attr("y", -30)
+                    .attr("width", 160)
+                    .attr("height", 30 + newsFeed.length * 40)
+                    .attr("rx", 10)
+                    .attr("fill", "#f8fafc")
+                    .attr("stroke", "#3b82f6")
+                    .attr("stroke-width", 2);
+
+                feedG.append("text")
+                    .attr("x", 10)
+                    .attr("y", -10)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "14px")
+                    .attr("font-weight", "bold")
+                    .attr("fill", "#3b82f6")
+                    .text("News Feed");
+
+                newsFeed.forEach((item, i) => {
+                    feedG.append("rect")
+                        .attr("x", -55)
+                        .attr("y", 10 + i * 40)
+                        .attr("width", 130)
+                        .attr("height", 35)
+                        .attr("rx", 5)
+                        .attr("fill", "#dbeafe")
+                        .attr("stroke", "#3b82f6");
+
+                    feedG.append("text")
+                        .attr("x", 10)
+                        .attr("y", 25 + i * 40)
+                        .attr("text-anchor", "middle")
+                        .attr("font-size", "12px")
+                        .attr("fill", "#1e293b")
+                        .text(`Tweet #${item.tweetId}`);
+
+                    feedG.append("text")
+                        .attr("x", 10)
+                        .attr("y", 38 + i * 40)
+                        .attr("text-anchor", "middle")
+                        .attr("font-size", "10px")
+                        .attr("fill", "#64748b")
+                        .text(`from User ${item.userId} (t=${item.time})`);
+                });
+            }
+
+            // Status
+            document.getElementById("status").textContent = lastOperation || "Follow the example operations";
+        }
+
+        function reset() {
+            timestamp = 0;
+            users = {};
+            newsFeed = [];
+            lastOperation = "";
+            render();
+        }
+
+        document.getElementById("step1").addEventListener("click", () => { postTweet("1", 5); render(); });
+        document.getElementById("step2").addEventListener("click", () => { getNewsFeed("1"); render(); });
+        document.getElementById("step3").addEventListener("click", () => { follow("1", "2"); render(); });
+        document.getElementById("step4").addEventListener("click", () => { postTweet("2", 6); render(); });
+        document.getElementById("step5").addEventListener("click", () => { getNewsFeed("1"); render(); });
+        document.getElementById("step6").addEventListener("click", () => { unfollow("1", "2"); render(); });
+        document.getElementById("step7").addEventListener("click", () => { getNewsFeed("1"); render(); });
+        document.getElementById("resetBtn").addEventListener("click", reset);
+
+        render();
+    </script>
+</body>
+</html>

@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>763 - Partition Labels</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="problem-info">
+            <h1><span class="problem-number">#763</span> Partition Labels</h1>
+            <p>
+                Partition a string into as many parts as possible so that each letter appears 
+                in at most one part. Return the sizes of these parts.
+            </p>
+            <div class="problem-meta">
+                <span class="meta-tag">💰 Greedy</span>
+                <span class="meta-tag">⏱️ O(n)</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <code>python/0763_partition_labels/0763_partition_labels.py</code>
+            </div>
+
+            <h3>Example:</h3>
+            <pre>
+s = "ababcbacadefegdehijhklij"
+Output: [9, 7, 8] → "ababcbaca", "defegde", "hijhklij"
+            </pre>
+        </div>
+
+        <div class="explanation-panel">
+            <h4>🧠 How It Works (Layman's Terms)</h4>
+            <p>Greedy algorithms make <strong>locally optimal choices</strong>:</p>
+            <ul>
+                <li><strong>Local best:</strong> At each step, pick the best option</li>
+                <li><strong>No backtrack:</strong> Commit to choices</li>
+                <li><strong>Prove:</strong> Local optimal leads to global optimal</li>
+                <li><strong>Efficient:</strong> Usually O(n) time</li>
+            </ul>
+        </div>
+
+
+        <section class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+            <div class="controls">
+                <button id="stepBtn" class="btn">Step</button>
+                <button id="autoBtn" class="btn btn-success">Auto Run</button>
+                <button id="resetBtn" class="btn btn-danger">Reset</button>
+            </div>
+            <div class="status" id="status">Partition string so each character appears in only one partition</div>
+            <svg id="visualization"></svg>
+        </section>
+
+        <section class="code-section">
+            <h2>Python Solution</h2>
+            <pre><span class="keyword">def</span> <span class="function">partitionLabels</span>(s):
+    last = {c: <span class="class-name">i</span> <span class="keyword">for</span> i, c <span class="keyword">in</span> <span class="function">enumerate</span>(s)}
+    result = []
+    start = end = <span class="number">0</span>
+    
+    <span class="keyword">for</span> i, c <span class="keyword">in</span> <span class="function">enumerate</span>(s):
+        end = <span class="function">max</span>(end, last[c])
+        <span class="keyword">if</span> i == end:
+            result.<span class="function">append</span>(end - start + <span class="number">1</span>)
+            start = i + <span class="number">1</span>
+    
+    <span class="keyword">return</span> result</pre>
+        </section>
+    </div>
+
+    <script>
+        const width = 900;
+        const height = 550;
+
+        const svg = d3.select("#visualization")
+            .attr("width", width)
+            .attr("height", height);
+
+        const s = "ababcbacadefegdehijhklij";
+        const n = s.length;
+
+        let lastOccurrence = {};
+        let currentIdx = 0;
+        let start = 0;
+        let end = 0;
+        let partitions = [];
+        let isRunning = false;
+        let phase = "init";
+
+        function reset() {
+            lastOccurrence = {};
+            for (let i = 0; i < n; i++) {
+                lastOccurrence[s[i]] = i;
+            }
+            currentIdx = 0;
+            start = 0;
+            end = 0;
+            partitions = [];
+            phase = "init";
+            isRunning = false;
+            document.getElementById("autoBtn").textContent = "Auto Run";
+            document.getElementById("status").textContent = 
+                `String: "${s}" (length ${n})`;
+            render();
+        }
+
+        function getCharColor(char) {
+            const colors = {
+                'a': '#ef4444', 'b': '#f97316', 'c': '#eab308', 
+                'd': '#22c55e', 'e': '#14b8a6', 'f': '#3b82f6',
+                'g': '#8b5cf6', 'h': '#ec4899', 'i': '#f43f5e',
+                'j': '#84cc16', 'k': '#06b6d4', 'l': '#a855f7'
+            };
+            return colors[char] || '#64748b';
+        }
+
+        function render() {
+            svg.selectAll("*").remove();
+
+            const startX = 30;
+            const startY = 60;
+            const cellWidth = 32;
+            const cellHeight = 35;
+
+            // String display
+            for (let i = 0; i < n; i++) {
+                const x = startX + i * cellWidth;
+                const isActive = i === currentIdx;
+                const inCurrentPartition = i >= start && i <= end;
+                const isPartitionEnd = i === end && phase !== "init";
+                
+                // Find which completed partition this belongs to
+                let partitionIdx = -1;
+                let offset = 0;
+                for (let p = 0; p < partitions.length; p++) {
+                    if (i >= offset && i < offset + partitions[p]) {
+                        partitionIdx = p;
+                        break;
+                    }
+                    offset += partitions[p];
+                }
+
+                // Cell
+                svg.append("rect")
+                    .attr("x", x)
+                    .attr("y", startY)
+                    .attr("width", cellWidth - 2)
+                    .attr("height", cellHeight)
+                    .attr("rx", 4)
+                    .attr("fill", () => {
+                        if (partitionIdx >= 0) {
+                            return partitionIdx % 3 === 0 ? "#dbeafe" : 
+                                   partitionIdx % 3 === 1 ? "#dcfce7" : "#fef3c7";
+                        }
+                        if (isActive) return "#fef3c7";
+                        if (inCurrentPartition) return "#f1f5f9";
+                        return "#f8fafc";
+                    })
+                    .attr("stroke", () => {
+                        if (isActive) return "#f59e0b";
+                        if (isPartitionEnd) return "#10b981";
+                        return "#e2e8f0";
+                    })
+                    .attr("stroke-width", isActive ? 2 : 1);
+
+                // Character
+                svg.append("text")
+                    .attr("x", x + (cellWidth - 2) / 2)
+                    .attr("y", startY + 24)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "16px")
+                    .attr("font-weight", "bold")
+                    .attr("fill", getCharColor(s[i]))
+                    .text(s[i]);
+
+                // Index
+                svg.append("text")
+                    .attr("x", x + (cellWidth - 2) / 2)
+                    .attr("y", startY - 5)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "9px")
+                    .attr("fill", "#94a3b8")
+                    .text(i);
+            }
+
+            // Current partition bracket
+            if (phase === "scan" && start <= end) {
+                const bracketX1 = startX + start * cellWidth;
+                const bracketX2 = startX + end * cellWidth + cellWidth - 2;
+                const bracketY = startY + cellHeight + 5;
+
+                svg.append("path")
+                    .attr("d", `M ${bracketX1} ${bracketY} L ${bracketX1} ${bracketY + 10} 
+                               L ${bracketX2} ${bracketY + 10} L ${bracketX2} ${bracketY}`)
+                    .attr("fill", "none")
+                    .attr("stroke", "#3b82f6")
+                    .attr("stroke-width", 2);
+
+                svg.append("text")
+                    .attr("x", (bracketX1 + bracketX2) / 2)
+                    .attr("y", bracketY + 28)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "12px")
+                    .attr("fill", "#3b82f6")
+                    .text(`current partition [${start}, ${end}]`);
+            }
+
+            // Last occurrence map
+            const mapY = 160;
+            svg.append("text")
+                .attr("x", startX)
+                .attr("y", mapY)
+                .attr("font-size", "14px")
+                .attr("font-weight", "bold")
+                .attr("fill", "#1e293b")
+                .text("Last occurrence of each character:");
+
+            const uniqueChars = [...new Set(s)];
+            uniqueChars.forEach((char, idx) => {
+                const x = startX + idx * 60;
+                const isRelevant = phase === "scan" && s[currentIdx] === char;
+
+                svg.append("rect")
+                    .attr("x", x)
+                    .attr("y", mapY + 15)
+                    .attr("width", 55)
+                    .attr("height", 40)
+                    .attr("rx", 6)
+                    .attr("fill", isRelevant ? "#fef3c7" : "#f8fafc")
+                    .attr("stroke", isRelevant ? "#f59e0b" : getCharColor(char))
+                    .attr("stroke-width", isRelevant ? 2 : 1);
+
+                svg.append("text")
+                    .attr("x", x + 27)
+                    .attr("y", mapY + 32)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "14px")
+                    .attr("font-weight", "bold")
+                    .attr("fill", getCharColor(char))
+                    .text(char);
+
+                svg.append("text")
+                    .attr("x", x + 27)
+                    .attr("y", mapY + 48)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "11px")
+                    .attr("fill", "#64748b")
+                    .text(`→ ${lastOccurrence[char]}`);
+            });
+
+            // Current state
+            const stateY = 280;
+            svg.append("rect")
+                .attr("x", startX)
+                .attr("y", stateY)
+                .attr("width", 300)
+                .attr("height", 80)
+                .attr("rx", 10)
+                .attr("fill", "#f8fafc")
+                .attr("stroke", "#e2e8f0");
+
+            svg.append("text")
+                .attr("x", startX + 15)
+                .attr("y", stateY + 25)
+                .attr("font-size", "13px")
+                .attr("fill", "#1e293b")
+                .text(`Current index: ${currentIdx}`);
+
+            svg.append("text")
+                .attr("x", startX + 15)
+                .attr("y", stateY + 45)
+                .attr("font-size", "13px")
+                .attr("fill", "#1e293b")
+                .text(`Partition start: ${start}, end: ${end}`);
+
+            svg.append("text")
+                .attr("x", startX + 15)
+                .attr("y", stateY + 65)
+                .attr("font-size", "13px")
+                .attr("fill", "#1e293b")
+                .text(`Partitions found: [${partitions.join(', ')}]`);
+
+            // Completed partitions visualization
+            const partY = 390;
+            svg.append("text")
+                .attr("x", startX)
+                .attr("y", partY)
+                .attr("font-size", "14px")
+                .attr("font-weight", "bold")
+                .attr("fill", "#1e293b")
+                .text("Completed Partitions:");
+
+            let partOffset = 0;
+            partitions.forEach((size, idx) => {
+                const partStr = s.substring(partOffset, partOffset + size);
+                const colors = ["#dbeafe", "#dcfce7", "#fef3c7"];
+                const strokes = ["#3b82f6", "#10b981", "#f59e0b"];
+
+                svg.append("rect")
+                    .attr("x", startX + idx * 200)
+                    .attr("y", partY + 15)
+                    .attr("width", 180)
+                    .attr("height", 50)
+                    .attr("rx", 8)
+                    .attr("fill", colors[idx % 3])
+                    .attr("stroke", strokes[idx % 3]);
+
+                svg.append("text")
+                    .attr("x", startX + idx * 200 + 90)
+                    .attr("y", partY + 45)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "14px")
+                    .attr("font-weight", "bold")
+                    .attr("fill", "#1e293b")
+                    .text(`"${partStr}" (${size})`);
+
+                partOffset += size;
+            });
+
+            // Key insight
+            svg.append("text")
+                .attr("x", 400)
+                .attr("y", stateY + 25)
+                .attr("font-size", "12px")
+                .attr("fill", "#64748b")
+                .text("Key: Extend partition end to include");
+
+            svg.append("text")
+                .attr("x", 400)
+                .attr("y", stateY + 45)
+                .attr("font-size", "12px")
+                .attr("fill", "#64748b")
+                .text("last occurrence of each character.");
+
+            svg.append("text")
+                .attr("x", 400)
+                .attr("y", stateY + 65)
+                .attr("font-size", "12px")
+                .attr("fill", "#64748b")
+                .text("When i == end, partition is complete!");
+
+            // Result
+            if (phase === "done") {
+                svg.append("rect")
+                    .attr("x", startX)
+                    .attr("y", 480)
+                    .attr("width", 500)
+                    .attr("height", 55)
+                    .attr("rx", 10)
+                    .attr("fill", "#d1fae5")
+                    .attr("stroke", "#10b981")
+                    .attr("stroke-width", 2);
+
+                svg.append("text")
+                    .attr("x", startX + 250)
+                    .attr("y", 515)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "18px")
+                    .attr("font-weight", "bold")
+                    .attr("fill", "#10b981")
+                    .text(`✓ Partitions: [${partitions.join(', ')}]`);
+            }
+        }
+
+        function step() {
+            if (phase === "done") return;
+
+            if (phase === "init") {
+                phase = "scan";
+                end = lastOccurrence[s[0]];
+                document.getElementById("status").textContent = 
+                    `Start: char '${s[0]}' last appears at ${lastOccurrence[s[0]]}, set end = ${end}`;
+                render();
+                return;
+            }
+
+            if (phase === "scan") {
+                const char = s[currentIdx];
+                const lastIdx = lastOccurrence[char];
+                const oldEnd = end;
+
+                end = Math.max(end, lastIdx);
+
+                if (end > oldEnd) {
+                    document.getElementById("status").textContent = 
+                        `i=${currentIdx}: '${char}' last at ${lastIdx}, extend end: ${oldEnd} → ${end}`;
+                } else {
+                    document.getElementById("status").textContent = 
+                        `i=${currentIdx}: '${char}' last at ${lastIdx} ≤ ${end}, end unchanged`;
+                }
+
+                if (currentIdx === end) {
+                    const partitionSize = end - start + 1;
+                    partitions.push(partitionSize);
+                    document.getElementById("status").textContent = 
+                        `i=${currentIdx} == end! Partition complete, size = ${partitionSize}`;
+                    start = currentIdx + 1;
+                    
+                    if (currentIdx === n - 1) {
+                        phase = "done";
+                        document.getElementById("status").textContent = 
+                            `✓ All partitions: [${partitions.join(', ')}]`;
+                    }
+                }
+
+                render();
+
+                currentIdx++;
+                if (currentIdx < n && currentIdx === start) {
+                    end = lastOccurrence[s[currentIdx]];
+                }
+
+                if (currentIdx >= n && phase !== "done") {
+                    phase = "done";
+                    document.getElementById("status").textContent = 
+                        `✓ All partitions: [${partitions.join(', ')}]`;
+                    render();
+                }
+            }
+        }
+
+        async function autoRun() {
+            if (isRunning) {
+                isRunning = false;
+                document.getElementById("autoBtn").textContent = "Auto Run";
+                return;
+            }
+
+            isRunning = true;
+            document.getElementById("autoBtn").textContent = "Pause";
+
+            while (phase !== "done" && isRunning) {
+                step();
+                await new Promise(r => setTimeout(r, 200));
+            }
+
+            isRunning = false;
+            document.getElementById("autoBtn").textContent = "Auto Run";
+        }
+
+        document.getElementById("stepBtn").addEventListener("click", step);
+        document.getElementById("autoBtn").addEventListener("click", autoRun);
+        document.getElementById("resetBtn").addEventListener("click", reset);
+
+        reset();
+    </script>
+</body>
+</html>

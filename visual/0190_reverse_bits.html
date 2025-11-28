@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reverse Bits - LeetCode 190</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="problem-info">
+            <h1><span class="problem-number">#0190</span> Reverse Bits</h1>
+            <p><strong>Problem:</strong> Reverse bits of a given 32 bits unsigned integer.</p>
+            <p><strong>Pattern:</strong> Bit Manipulation - Extract bits from right, build result from left</p>
+            <div class="problem-meta">
+                <span class="meta-tag">💻 Bit</span>
+                <span class="meta-tag">⏱️ O(n)</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <code>python/0190_reverse_bits/0190_reverse_bits.py</code>
+            </div>
+
+        </div>
+
+        <div class="explanation-panel">
+            <h4>🧠 How It Works (Layman's Terms)</h4>
+            <p>A linked list is like a <strong>chain of train cars</strong>:</p>
+            <ul>
+                <li><strong>Each node:</strong> Contains data and points to next node</li>
+                <li><strong>Traversal:</strong> Follow the chain one node at a time</li>
+                <li><strong>Modification:</strong> Redirect links to rearrange</li>
+                <li><strong>Two pointers:</strong> Often use slow/fast pointers</li>
+            </ul>
+        </div>
+
+
+        <div class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+
+            <div class="visualization">
+            <svg id="mainSvg"></svg>
+        </div>
+
+        <div class="controls">
+            <button id="stepBtn">Step</button>
+            <button id="autoBtn">Auto Run</button>
+            <button id="resetBtn">Reset</button>
+            <div class="speed-control">
+                <label for="speed">Speed:</label>
+                <input type="range" id="speed" min="100" max="2000" value="600">
+            </div>
+        </div>
+
+        <div class="status" id="status">Click "Step" to reverse bits one at a time</div>
+
+        <div class="variables">
+            <div class="var-item">
+                <span class="var-label">Bit Position:</span>
+                <span id="bitPos">-</span>
+            </div>
+            <div class="var-item">
+                <span class="var-label">Current Bit:</span>
+                <span id="currentBit">-</span>
+            </div>
+        </div>
+
+        </div>
+
+        <div class="code-section">
+            <h3>Python Solution</h3>
+            <pre><span class="keyword">def</span> <span class="function">reverseBits</span>(n):
+    <span class="string">"""
+    Reverse the bits of a 32-bit unsigned integer.
+    Extract each bit from right, place it from left.
+    Time: O(32) = O(1), Space: O(1)
+    """</span>
+    result = <span class="number">0</span>
+    <span class="keyword">for</span> i <span class="keyword">in</span> <span class="function">range</span>(<span class="number">32</span>):
+        bit = (n >> i) & <span class="number">1</span>  <span class="comment"># Get bit at position i</span>
+        result |= bit << (<span class="number">31</span> - i)  <span class="comment"># Place at reversed position</span>
+    <span class="keyword">return</span> result</pre>
+        </div>
+    </div>
+
+    <script>
+        // Use 8 bits for visualization simplicity
+        const BITS = 8;
+        const originalNum = 43; // 00101011
+        let n = originalNum;
+        let result = 0;
+        let bitPosition = 0;
+        let autoRunning = false;
+        let autoTimer = null;
+
+        const width = 800;
+        const height = 400;
+        const svg = d3.select("#mainSvg")
+            .attr("width", width)
+            .attr("height", height);
+
+        function toBinary(num, bits = BITS) {
+            return (num >>> 0).toString(2).padStart(bits, '0');
+        }
+
+        function draw() {
+            svg.selectAll("*").remove();
+
+            const originalBits = toBinary(originalNum);
+            const currentBits = toBinary(n);
+            const resultBits = toBinary(result);
+
+            // Title
+            svg.append("text")
+                .attr("x", width / 2)
+                .attr("y", 30)
+                .attr("text-anchor", "middle")
+                .attr("font-weight", "bold")
+                .text(`Reversing bits of ${originalNum} (${BITS}-bit demo)`);
+
+            // Original number
+            svg.append("text")
+                .attr("x", 100)
+                .attr("y", 80)
+                .attr("text-anchor", "end")
+                .attr("font-weight", "bold")
+                .text("Original:");
+
+            drawBitArray(originalBits, 120, 60, "original");
+
+            // Arrow showing extraction
+            if (bitPosition < BITS) {
+                const extractX = 120 + (BITS - 1 - bitPosition) * 45 + 17;
+                svg.append("path")
+                    .attr("d", `M${extractX},100 L${extractX},130`)
+                    .attr("stroke", "#f57c00")
+                    .attr("stroke-width", 2)
+                    .attr("marker-end", "url(#arrow)");
+                
+                svg.append("text")
+                    .attr("x", extractX)
+                    .attr("y", 150)
+                    .attr("text-anchor", "middle")
+                    .attr("fill", "#f57c00")
+                    .attr("font-size", "12px")
+                    .text(`Extract bit ${bitPosition}`);
+            }
+
+            // Current n (remaining)
+            svg.append("text")
+                .attr("x", 100)
+                .attr("y", 200)
+                .attr("text-anchor", "end")
+                .text("n (shifted):");
+
+            drawBitArray(currentBits, 120, 180, "current");
+
+            // Result being built
+            svg.append("text")
+                .attr("x", 100)
+                .attr("y", 300)
+                .attr("text-anchor", "end")
+                .attr("font-weight", "bold")
+                .text("Result:");
+
+            drawBitArray(resultBits, 120, 280, "result");
+
+            // Arrow showing placement
+            if (bitPosition > 0 && bitPosition <= BITS) {
+                const placeX = 120 + (bitPosition - 1) * 45 + 17;
+                svg.append("path")
+                    .attr("d", `M${placeX},250 L${placeX},275`)
+                    .attr("stroke", "#4caf50")
+                    .attr("stroke-width", 2)
+                    .attr("marker-end", "url(#arrow-green)");
+            }
+
+            // Values
+            svg.append("text")
+                .attr("x", 520)
+                .attr("y", 80)
+                .attr("font-size", "14px")
+                .text(`= ${originalNum}`);
+
+            svg.append("text")
+                .attr("x", 520)
+                .attr("y", 200)
+                .attr("font-size", "14px")
+                .text(`= ${n}`);
+
+            svg.append("text")
+                .attr("x", 520)
+                .attr("y", 300)
+                .attr("font-size", "14px")
+                .attr("font-weight", "bold")
+                .attr("fill", bitPosition === BITS ? "#4caf50" : "#333")
+                .text(`= ${result}`);
+
+            // Formula
+            svg.append("text")
+                .attr("x", width / 2)
+                .attr("y", 360)
+                .attr("text-anchor", "middle")
+                .attr("font-family", "monospace")
+                .attr("font-size", "14px")
+                .text(bitPosition < BITS ? 
+                    `bit = (n >> ${bitPosition}) & 1 = ${(n >> bitPosition) & 1}, result |= bit << ${BITS - 1 - bitPosition}` :
+                    `Complete! ${originalNum} reversed = ${result}`);
+
+            // Define arrow markers
+            svg.append("defs").html(`
+                <marker id="arrow" markerWidth="10" markerHeight="10" refX="5" refY="5" orient="auto">
+                    <path d="M0,0 L10,5 L0,10 Z" fill="#f57c00"/>
+                </marker>
+                <marker id="arrow-green" markerWidth="10" markerHeight="10" refX="5" refY="5" orient="auto">
+                    <path d="M0,0 L10,5 L0,10 Z" fill="#4caf50"/>
+                </marker>
+            `);
+        }
+
+        function drawBitArray(bits, x, y, type) {
+            const bitArray = bits.split('');
+            
+            bitArray.forEach((bit, i) => {
+                const isHighlighted = type === "original" && i === BITS - 1 - bitPosition;
+                const isPlaced = type === "result" && i < bitPosition;
+                const isCurrent = type === "result" && i === bitPosition - 1;
+
+                svg.append("rect")
+                    .attr("x", x + i * 45)
+                    .attr("y", y)
+                    .attr("width", 35)
+                    .attr("height", 35)
+                    .attr("rx", 5)
+                    .attr("fill", isHighlighted ? "#fff3e0" : 
+                                  isCurrent ? "#c8e6c9" :
+                                  isPlaced ? "#e8f5e9" : 
+                                  bit === '1' ? "#e3f2fd" : "#f5f5f5")
+                    .attr("stroke", isHighlighted ? "#f57c00" : 
+                                   isCurrent ? "#4caf50" :
+                                   bit === '1' ? "#1976d2" : "#bdbdbd")
+                    .attr("stroke-width", isHighlighted || isCurrent ? 3 : 2);
+
+                svg.append("text")
+                    .attr("x", x + i * 45 + 17.5)
+                    .attr("y", y + 22)
+                    .attr("text-anchor", "middle")
+                    .attr("font-family", "monospace")
+                    .attr("font-size", "18px")
+                    .attr("font-weight", "bold")
+                    .attr("fill", bit === '1' ? "#1976d2" : "#999")
+                    .text(bit);
+            });
+        }
+
+        function step() {
+            if (bitPosition >= BITS) return false;
+
+            const bit = (originalNum >> bitPosition) & 1;
+            result |= bit << (BITS - 1 - bitPosition);
+            n = originalNum >> (bitPosition + 1);
+
+            document.getElementById("bitPos").textContent = bitPosition;
+            document.getElementById("currentBit").textContent = bit;
+
+            bitPosition++;
+            draw();
+
+            if (bitPosition >= BITS) {
+                document.getElementById("status").textContent = 
+                    `Complete! ${originalNum} → ${result} (reversed)`;
+                return false;
+            } else {
+                document.getElementById("status").textContent = 
+                    `Extracted bit ${bitPosition - 1} (value: ${bit}), placed at position ${BITS - bitPosition}`;
+                return true;
+            }
+        }
+
+        function reset() {
+            n = originalNum;
+            result = 0;
+            bitPosition = 0;
+            autoRunning = false;
+            if (autoTimer) clearInterval(autoTimer);
+            
+            document.getElementById("bitPos").textContent = "-";
+            document.getElementById("currentBit").textContent = "-";
+            document.getElementById("status").textContent = 'Click "Step" to reverse bits one at a time';
+            document.getElementById("autoBtn").textContent = "Auto Run";
+            
+            draw();
+        }
+
+        function autoRun() {
+            if (autoRunning) {
+                autoRunning = false;
+                clearInterval(autoTimer);
+                document.getElementById("autoBtn").textContent = "Auto Run";
+            } else {
+                autoRunning = true;
+                document.getElementById("autoBtn").textContent = "Pause";
+                const speed = 2100 - document.getElementById("speed").value;
+                autoTimer = setInterval(() => {
+                    if (!step()) {
+                        autoRunning = false;
+                        clearInterval(autoTimer);
+                        document.getElementById("autoBtn").textContent = "Auto Run";
+                    }
+                }, speed);
+            }
+        }
+
+        document.getElementById("stepBtn").addEventListener("click", step);
+        document.getElementById("autoBtn").addEventListener("click", autoRun);
+        document.getElementById("resetBtn").addEventListener("click", reset);
+
+        draw();
+    </script>
+</body>
+</html>

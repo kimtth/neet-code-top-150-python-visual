@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LC 7: Reverse Integer - Algorithm Visualization</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="problem-info">
+            <h1><span class="problem-number">#7</span> Reverse Integer</h1>
+            <p>Given a signed 32-bit integer x, return x with its digits reversed. If reversing x causes the value to go outside the signed 32-bit integer range [-2³¹, 2³¹ - 1], return 0.</p>
+            <div class="problem-meta">
+                <span class="meta-tag">🔢 Math</span>
+                <span class="meta-tag">📊 Modulo</span>
+                <span class="meta-tag">⏱️ O(log n)</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <code>python/0007_reverse_integer/0007_reverse_integer.py</code>
+            </div>
+            </div>
+
+        <div class="explanation-panel">
+            <h4>🧠 How It Works (Layman's Terms)</h4>
+            <p>Reversing a number is like <strong>moving digits one by one</strong> from the end to build a new number:</p>
+            <ul>
+                <li><strong>Pop last digit:</strong> Use <code>x % 10</code> to get the last digit</li>
+                <li><strong>Remove last digit:</strong> Use <code>x // 10</code> to shrink the number</li>
+                <li><strong>Push to result:</strong> Use <code>result * 10 + digit</code> to build reversed number</li>
+                <li><strong>Check overflow:</strong> Ensure result stays within 32-bit range</li>
+            </ul>
+        </div>
+
+
+        <div class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+            
+            <div class="controls">
+                <input type="number" id="numberInput" value="12345" style="width: 120px; padding: 10px; border-radius: 8px; border: 2px solid #ddd;">
+                <button class="btn btn-primary" onclick="setNumber()">Set Number</button>
+                <button class="btn btn-primary" id="stepBtn" onclick="step()">Step</button>
+                <button class="btn btn-success" id="autoBtn" onclick="toggleAuto()">Auto Run</button>
+                <button class="btn btn-warning" onclick="reset()">Reset</button>
+            </div>
+
+            <div class="status-message" id="statusMessage">
+                Enter a number and click Step to begin
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin: 20px 0;">
+                <div class="array-section">
+                    <div class="array-label">📥 Original Number</div>
+                    <div id="originalViz" class="array-container" style="justify-content: center; padding: 20px; background: #f5f5f5; border-radius: 12px; min-height: 100px;"></div>
+                </div>
+                <div class="array-section">
+                    <div class="array-label">📤 Reversed Number</div>
+                    <div id="resultViz" class="array-container" style="justify-content: center; padding: 20px; background: #e8f5e9; border-radius: 12px; min-height: 100px;"></div>
+                </div>
+            </div>
+
+            <div class="array-section">
+                <div class="array-label">⚙️ Current Operation</div>
+                <div id="operationArea" style="padding: 20px; background: #f5f5f5; border-radius: 12px; text-align: center; font-family: monospace; font-size: 1.1em;">
+                    Click Step or Auto Run to begin
+                </div>
+            </div>
+        </div>
+
+        <div class="code-section">
+            <h3>💻 Python Solution</h3>
+            <div class="code-block">
+                <pre><span class="keyword">def</span> <span class="function">reverse</span>(x: <span class="class-name">int</span>) -> <span class="class-name">int</span>:
+    INT_MIN, INT_MAX = -<span class="number">2</span>**<span class="number">31</span>, <span class="number">2</span>**<span class="number">31</span> - <span class="number">1</span>
+    
+    result = <span class="number">0</span>
+    sign = <span class="number">1</span> <span class="keyword">if</span> x >= <span class="number">0</span> <span class="keyword">else</span> -<span class="number">1</span>
+    x = <span class="function">abs</span>(x)
+    
+    <span class="keyword">while</span> x != <span class="number">0</span>:
+        digit = x % <span class="number">10</span>      <span class="comment"># Pop last digit</span>
+        x //= <span class="number">10</span>            <span class="comment"># Remove last digit</span>
+        
+        <span class="comment"># Check for overflow before adding</span>
+        <span class="keyword">if</span> result > (INT_MAX - digit) // <span class="number">10</span>:
+            <span class="keyword">return</span> <span class="number">0</span>
+        
+        result = result * <span class="number">10</span> + digit  <span class="comment"># Push digit</span>
+    
+    <span class="keyword">return</span> sign * result</pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const INT_MAX = 2147483647;
+        const INT_MIN = -2147483648;
+        
+        let originalNumber = 12345;
+        let x = 0;
+        let result = 0;
+        let sign = 1;
+        let steps = [];
+        let stepIndex = 0;
+        let autoInterval = null;
+        let isComplete = false;
+
+        function setNumber() {
+            const input = parseInt(document.getElementById('numberInput').value);
+            if (!isNaN(input)) {
+                originalNumber = input;
+                reset();
+            }
+        }
+
+        function reset() {
+            sign = originalNumber >= 0 ? 1 : -1;
+            x = Math.abs(originalNumber);
+            result = 0;
+            steps = [];
+            stepIndex = 0;
+            isComplete = false;
+            
+            if (autoInterval) {
+                clearInterval(autoInterval);
+                autoInterval = null;
+                document.getElementById('autoBtn').textContent = 'Auto Run';
+            }
+            
+            // Build all steps
+            let tempX = x;
+            let tempResult = 0;
+            while (tempX !== 0) {
+                const digit = tempX % 10;
+                const newX = Math.floor(tempX / 10);
+                const newResult = tempResult * 10 + digit;
+                
+                steps.push({
+                    x: tempX,
+                    digit: digit,
+                    newX: newX,
+                    result: tempResult,
+                    newResult: newResult,
+                    overflow: Math.abs(newResult) > INT_MAX
+                });
+                
+                tempX = newX;
+                tempResult = newResult;
+            }
+            
+            render();
+            document.getElementById('statusMessage').textContent = 'Enter a number and click Step to begin';
+        }
+
+        function step() {
+            if (isComplete || stepIndex >= steps.length) {
+                isComplete = true;
+                render();
+                return;
+            }
+            
+            stepIndex++;
+            render();
+        }
+
+        function toggleAuto() {
+            if (autoInterval) {
+                clearInterval(autoInterval);
+                autoInterval = null;
+                document.getElementById('autoBtn').textContent = 'Auto Run';
+            } else {
+                autoInterval = setInterval(() => {
+                    if (stepIndex >= steps.length) {
+                        clearInterval(autoInterval);
+                        autoInterval = null;
+                        document.getElementById('autoBtn').textContent = 'Auto Run';
+                        isComplete = true;
+                        render();
+                    } else {
+                        step();
+                    }
+                }, 1000);
+                document.getElementById('autoBtn').textContent = 'Pause';
+            }
+        }
+
+        function render() {
+            const originalViz = document.getElementById('originalViz');
+            const resultViz = document.getElementById('resultViz');
+            const operationArea = document.getElementById('operationArea');
+            
+            const originalDigits = Math.abs(originalNumber).toString().split('');
+            const processedCount = stepIndex;
+            
+            // Render original number
+            let originalHtml = '';
+            if (sign < 0) {
+                originalHtml += '<div class="array-box" style="background: #ffcdd2; border-color: #f44336; width: 50px;">−</div>';
+            }
+            
+            originalDigits.forEach((d, i) => {
+                const revIndex = originalDigits.length - 1 - i;
+                let style = '';
+                if (revIndex < processedCount) {
+                    style = 'background: #c8e6c9; border-color: #4caf50;';
+                } else if (revIndex === processedCount && stepIndex > 0) {
+                    style = 'background: #fff9c4; border-color: #fbc02d; transform: scale(1.1);';
+                }
+                originalHtml += `<div class="array-box" style="${style}">${d}</div>`;
+            });
+            originalViz.innerHTML = originalHtml;
+            
+            // Render result number
+            let currentResult = 0;
+            if (stepIndex > 0) {
+                currentResult = steps[stepIndex - 1].newResult;
+            }
+            
+            const resultStr = currentResult.toString();
+            let resultHtml = '';
+            if (sign < 0 && currentResult > 0) {
+                resultHtml += '<div class="array-box" style="background: #ffcdd2; border-color: #f44336; width: 50px;">−</div>';
+            }
+            
+            if (currentResult === 0 && stepIndex === 0) {
+                resultHtml += '<div class="array-box" style="opacity: 0.5;">0</div>';
+            } else {
+                resultStr.split('').forEach((d) => {
+                    resultHtml += `<div class="array-box" style="background: #c8e6c9; border-color: #4caf50;">${d}</div>`;
+                });
+            }
+            resultViz.innerHTML = resultHtml;
+            
+            // Render operation
+            if (stepIndex > 0 && stepIndex <= steps.length) {
+                const s = steps[stepIndex - 1];
+                operationArea.innerHTML = `
+                    <div style="display: flex; justify-content: center; gap: 20px; flex-wrap: wrap;">
+                        <span style="padding: 10px 15px; background: #e3f2fd; border-radius: 8px;">digit = ${s.x} % 10 = <strong>${s.digit}</strong></span>
+                        <span style="padding: 10px 15px; background: #f5f5f5; border-radius: 8px;">x = ${s.x} / 10 = ${s.newX}</span>
+                        <span style="padding: 10px 15px; background: #e8f5e9; border-radius: 8px;">result = ${s.result} × 10 + ${s.digit} = <strong>${s.newResult}</strong></span>
+                    </div>
+                    ${s.overflow ? '<div style="margin-top: 15px; padding: 10px; background: #ffebee; border-radius: 8px; color: #c62828;">⚠️ Overflow detected! Would return 0</div>' : ''}
+                `;
+                document.getElementById('statusMessage').textContent = `Step ${stepIndex}: Pop digit ${s.digit}, result = ${s.newResult}`;
+            } else if (isComplete) {
+                const finalResult = sign * (steps.length > 0 ? steps[steps.length - 1].newResult : 0);
+                const overflow = Math.abs(finalResult) > INT_MAX;
+                operationArea.innerHTML = `
+                    <div style="font-size: 1.4em; color: #4caf50; font-weight: bold;">
+                        Final Result: ${overflow ? 0 : finalResult}
+                    </div>
+                    ${overflow ? '<div style="margin-top: 15px; padding: 10px; background: #ffebee; border-radius: 8px; color: #c62828;">⚠️ Overflow! Return 0</div>' : ''}
+                `;
+                document.getElementById('statusMessage').className = 'status-message success';
+                document.getElementById('statusMessage').textContent = `✅ Complete! Reversed: ${overflow ? 0 : finalResult}`;
+            } else {
+                operationArea.innerHTML = 'Click Step or Auto Run to begin';
+            }
+        }
+
+        reset();
+    </script>
+</body>
+</html>

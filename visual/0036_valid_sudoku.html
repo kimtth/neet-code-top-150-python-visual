@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>036 - Valid Sudoku</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="problem-info">
+            <h1><span class="problem-number">#036</span> Valid Sudoku</h1>
+            <p>
+                Determine if a 9x9 Sudoku board is valid. Only filled cells need to be validated 
+                according to the rules: each row, column, and 3x3 sub-box must contain digits 1-9 
+                without repetition.
+            </p>
+            <div class="problem-meta">
+                <span class="meta-tag">📚 Stack</span>
+                <span class="meta-tag">🔲 Matrix</span>
+                <span class="meta-tag">⏱️ O(n)</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <code>python/0036_valid_sudoku/0036_valid_sudoku.py</code>
+            </div>
+
+        </div>
+
+        <div class="explanation-panel">
+            <h4>🧠 How It Works (Layman's Terms)</h4>
+            <p>A stack works like a <strong>pile of plates</strong> - last in, first out (LIFO):</p>
+            <ul>
+                <li><strong>Push:</strong> Add item to the top</li>
+                <li><strong>Pop:</strong> Remove and return the top item</li>
+                <li><strong>Peek:</strong> Look at top without removing</li>
+                <li><strong>Match pairs:</strong> Great for matching brackets, parentheses</li>
+            </ul>
+        </div>
+
+
+        <section class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+            <div class="controls">
+                <button id="autoRunBtn" class="btn">▶ Auto Run</button>
+                <button id="stepBtn" class="btn btn-success">Step</button>
+                <button id="resetBtn" class="btn btn-danger">Reset</button>
+            </div>
+            <div class="status" id="status">Click to validate the Sudoku board</div>
+            <svg id="visualization"></svg>
+        </section>
+
+        <section class="code-section">
+            <h2>Python Solution</h2>
+            <pre><span class="keyword">def</span> <span class="function">isValidSudoku</span>(board):
+    rows = [<span class="function">set</span>() <span class="keyword">for</span> _ <span class="keyword">in</span> <span class="function">range</span>(<span class="number">9</span>)]
+    cols = [<span class="function">set</span>() <span class="keyword">for</span> _ <span class="keyword">in</span> <span class="function">range</span>(<span class="number">9</span>)]
+    boxes = [<span class="function">set</span>() <span class="keyword">for</span> _ <span class="keyword">in</span> <span class="function">range</span>(<span class="number">9</span>)]
+    
+    <span class="keyword">for</span> r <span class="keyword">in</span> <span class="function">range</span>(<span class="number">9</span>):
+        <span class="keyword">for</span> c <span class="keyword">in</span> <span class="function">range</span>(<span class="number">9</span>):
+            <span class="keyword">if</span> board[r][c] == <span class="string">'.'</span>:
+                <span class="keyword">continue</span>
+            
+            num = board[r][c]
+            box_idx = (r // <span class="number">3</span>) * <span class="number">3</span> + (c // <span class="number">3</span>)
+            
+            <span class="keyword">if</span> num <span class="keyword">in</span> rows[r] <span class="keyword">or</span> num <span class="keyword">in</span> cols[c] <span class="keyword">or</span> num <span class="keyword">in</span> boxes[box_idx]:
+                <span class="keyword">return</span> <span class="keyword">False</span>
+            
+            rows[r].<span class="function">add</span>(num)
+            cols[c].<span class="function">add</span>(num)
+            boxes[box_idx].<span class="function">add</span>(num)
+    
+    <span class="keyword">return</span> <span class="keyword">True</span></pre>
+        </section>
+    </div>
+
+    <script>
+        const width = 900;
+        const height = 550;
+
+        const svg = d3.select("#visualization")
+            .attr("width", width)
+            .attr("height", height);
+
+        // Sample valid Sudoku board
+        const board = [
+            ['5','3','.','.','7','.','.','.','.'],
+            ['6','.','.','1','9','5','.','.','.'],
+            ['.','9','8','.','.','.','.','6','.'],
+            ['8','.','.','.','6','.','.','.','3'],
+            ['4','.','.','8','.','3','.','.','1'],
+            ['7','.','.','.','2','.','.','.','6'],
+            ['.','6','.','.','.','.','2','8','.'],
+            ['.','.','.','4','1','9','.','.','5'],
+            ['.','.','.','.','8','.','.','7','9']
+        ];
+
+        let rows, cols, boxes;
+        let currentRow = 0, currentCol = 0;
+        let phase = "init";
+        let animationTimer = null;
+        let isValid = true;
+        let checking = null;
+        let validated = [];
+
+        function reset() {
+            rows = Array(9).fill(null).map(() => new Set());
+            cols = Array(9).fill(null).map(() => new Set());
+            boxes = Array(9).fill(null).map(() => new Set());
+            currentRow = 0;
+            currentCol = 0;
+            phase = "init";
+            isValid = true;
+            checking = null;
+            validated = [];
+            
+            if (animationTimer) clearInterval(animationTimer);
+            animationTimer = null;
+            document.getElementById("autoRunBtn").textContent = "▶ Auto Run";
+            document.getElementById("status").textContent = "Click to validate the Sudoku board";
+            render();
+        }
+
+        function render() {
+            svg.selectAll("*").remove();
+
+            const cellSize = 45;
+            const startX = 50;
+            const startY = 30;
+
+            // Draw board
+            for (let r = 0; r < 9; r++) {
+                for (let c = 0; c < 9; c++) {
+                    const x = startX + c * cellSize;
+                    const y = startY + r * cellSize;
+                    const num = board[r][c];
+                    const isCurrent = r === currentRow && c === currentCol && phase !== "done";
+                    const isChecking = checking && (
+                        (checking.type === 'row' && r === checking.idx) ||
+                        (checking.type === 'col' && c === checking.idx) ||
+                        (checking.type === 'box' && Math.floor(r/3)*3 + Math.floor(c/3) === checking.idx)
+                    );
+                    const isValidated = validated.some(v => v.r === r && v.c === c);
+
+                    svg.append("rect")
+                        .attr("x", x)
+                        .attr("y", y)
+                        .attr("width", cellSize - 2)
+                        .attr("height", cellSize - 2)
+                        .attr("fill", () => {
+                            if (isCurrent) return "#fef3c7";
+                            if (isChecking) return "#dbeafe";
+                            if (isValidated) return "#d1fae5";
+                            return "#f8fafc";
+                        })
+                        .attr("stroke", () => {
+                            if (isCurrent) return "#f59e0b";
+                            if (isChecking) return "#3b82f6";
+                            return "#94a3b8";
+                        })
+                        .attr("stroke-width", isCurrent ? 3 : 1);
+
+                    if (num !== '.') {
+                        svg.append("text")
+                            .attr("x", x + (cellSize - 2) / 2)
+                            .attr("y", y + (cellSize - 2) / 2 + 6)
+                            .attr("text-anchor", "middle")
+                            .attr("font-size", "18px")
+                            .attr("font-weight", "bold")
+                            .attr("fill", "#1e293b")
+                            .text(num);
+                    }
+                }
+            }
+
+            // Draw 3x3 box borders
+            for (let i = 0; i <= 3; i++) {
+                svg.append("line")
+                    .attr("x1", startX + i * 3 * cellSize)
+                    .attr("y1", startY)
+                    .attr("x2", startX + i * 3 * cellSize)
+                    .attr("y2", startY + 9 * cellSize)
+                    .attr("stroke", "#1e293b")
+                    .attr("stroke-width", 2);
+
+                svg.append("line")
+                    .attr("x1", startX)
+                    .attr("y1", startY + i * 3 * cellSize)
+                    .attr("x2", startX + 9 * cellSize)
+                    .attr("y2", startY + i * 3 * cellSize)
+                    .attr("stroke", "#1e293b")
+                    .attr("stroke-width", 2);
+            }
+
+            // Sets display
+            const setsX = 480;
+            svg.append("text")
+                .attr("x", setsX)
+                .attr("y", 50)
+                .attr("font-size", "14px")
+                .attr("font-weight", "bold")
+                .attr("fill", "#1e293b")
+                .text("Tracking Sets:");
+
+            // Current row set
+            if (currentRow < 9) {
+                svg.append("text")
+                    .attr("x", setsX)
+                    .attr("y", 85)
+                    .attr("font-size", "12px")
+                    .attr("fill", "#64748b")
+                    .text(`Row ${currentRow}: {${[...rows[currentRow]].join(', ')}}`);
+            }
+
+            // Current col set
+            if (currentCol < 9) {
+                svg.append("text")
+                    .attr("x", setsX)
+                    .attr("y", 110)
+                    .attr("font-size", "12px")
+                    .attr("fill", "#64748b")
+                    .text(`Col ${currentCol}: {${[...cols[currentCol]].join(', ')}}`);
+            }
+
+            // Current box set
+            const boxIdx = Math.floor(currentRow / 3) * 3 + Math.floor(currentCol / 3);
+            if (boxIdx < 9) {
+                svg.append("text")
+                    .attr("x", setsX)
+                    .attr("y", 135)
+                    .attr("font-size", "12px")
+                    .attr("fill", "#64748b")
+                    .text(`Box ${boxIdx}: {${[...boxes[boxIdx]].join(', ')}}`);
+            }
+
+            // Algorithm explanation
+            svg.append("text")
+                .attr("x", setsX)
+                .attr("y", 200)
+                .attr("font-size", "13px")
+                .attr("font-weight", "bold")
+                .attr("fill", "#1e293b")
+                .text("Validation Rules:");
+
+            const rules = [
+                "• Each row must have unique digits 1-9",
+                "• Each column must have unique digits 1-9",
+                "• Each 3×3 box must have unique digits 1-9",
+                "",
+                "Box index = (row/3)*3 + (col/3)"
+            ];
+
+            rules.forEach((rule, i) => {
+                svg.append("text")
+                    .attr("x", setsX)
+                    .attr("y", 225 + i * 22)
+                    .attr("font-size", "12px")
+                    .attr("fill", "#64748b")
+                    .text(rule);
+            });
+
+            // Result
+            if (phase === "done") {
+                svg.append("rect")
+                    .attr("x", setsX)
+                    .attr("y", 380)
+                    .attr("width", 280)
+                    .attr("height", 55)
+                    .attr("rx", 10)
+                    .attr("fill", isValid ? "#d1fae5" : "#fee2e2")
+                    .attr("stroke", isValid ? "#10b981" : "#ef4444")
+                    .attr("stroke-width", 2);
+
+                svg.append("text")
+                    .attr("x", setsX + 140)
+                    .attr("y", 415)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "18px")
+                    .attr("font-weight", "bold")
+                    .attr("fill", isValid ? "#10b981" : "#ef4444")
+                    .text(isValid ? "✓ Valid Sudoku!" : "✗ Invalid Sudoku!");
+            }
+        }
+
+        function step() {
+            if (phase === "done") return;
+
+            while (currentRow < 9) {
+                const num = board[currentRow][currentCol];
+                
+                if (num !== '.') {
+                    const boxIdx = Math.floor(currentRow / 3) * 3 + Math.floor(currentCol / 3);
+                    
+                    // Check for duplicates
+                    if (rows[currentRow].has(num) || cols[currentCol].has(num) || boxes[boxIdx].has(num)) {
+                        isValid = false;
+                        phase = "done";
+                        document.getElementById("status").textContent = 
+                            `✗ Invalid! Duplicate '${num}' found at (${currentRow}, ${currentCol})`;
+                        render();
+                        return;
+                    }
+                    
+                    // Add to sets
+                    rows[currentRow].add(num);
+                    cols[currentCol].add(num);
+                    boxes[boxIdx].add(num);
+                    validated.push({r: currentRow, c: currentCol});
+                    
+                    document.getElementById("status").textContent = 
+                        `Checking (${currentRow}, ${currentCol}): '${num}' - Valid! Added to row/col/box sets`;
+                    
+                    // Move to next cell
+                    currentCol++;
+                    if (currentCol >= 9) {
+                        currentCol = 0;
+                        currentRow++;
+                    }
+                    
+                    render();
+                    return;
+                }
+                
+                // Skip empty cells
+                currentCol++;
+                if (currentCol >= 9) {
+                    currentCol = 0;
+                    currentRow++;
+                }
+            }
+
+            // All cells checked
+            phase = "done";
+            document.getElementById("status").textContent = "✓ All cells validated - Valid Sudoku!";
+            render();
+        }
+
+        function autoRun() {
+            if (animationTimer) {
+                clearInterval(animationTimer);
+                animationTimer = null;
+                document.getElementById("autoRunBtn").textContent = "▶ Auto Run";
+                return;
+            }
+
+            document.getElementById("autoRunBtn").textContent = "⏸ Pause";
+            animationTimer = setInterval(() => {
+                if (phase === "done") {
+                    clearInterval(animationTimer);
+                    animationTimer = null;
+                    document.getElementById("autoRunBtn").textContent = "▶ Auto Run";
+                    return;
+                }
+                step();
+            }, 300);
+        }
+
+        document.getElementById("autoRunBtn").addEventListener("click", autoRun);
+        document.getElementById("stepBtn").addEventListener("click", step);
+        document.getElementById("resetBtn").addEventListener("click", reset);
+
+        reset();
+    </script>
+</body>
+</html>

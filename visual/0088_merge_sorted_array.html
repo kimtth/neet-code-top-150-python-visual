@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>088 - Merge Sorted Array</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="problem-info">
+            <h1><span class="problem-number">#088</span> Merge Sorted Array</h1>
+            <p>
+                Given two integer arrays nums1 and nums2, sorted in non-decreasing order, merge 
+                nums2 into nums1 as one sorted array. The number of elements initialized in nums1 
+                is m, and in nums2 is n. nums1 has enough space to hold m + n elements.
+            </p>
+            <h3>Key Insight</h3>
+            <p>
+                Merge from the end! Start filling nums1 from the back (position m+n-1) by 
+                comparing the largest remaining elements from both arrays. This avoids 
+                overwriting elements we haven't processed yet.
+            </p>
+            <div class="problem-meta">
+                <span class="meta-tag">📊 Array</span>
+                <span class="meta-tag">📊 Sorting</span>
+                <span class="meta-tag">⏱️ O(n log n)</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <code>python/0088_merge_sorted_array/0088_merge_sorted_array.py</code>
+            </div>
+
+        </div>
+
+        <div class="explanation-panel">
+            <h4>🧠 How It Works (Layman's Terms)</h4>
+            <p>A linked list is like a <strong>chain of train cars</strong>:</p>
+            <ul>
+                <li><strong>Each node:</strong> Contains data and points to next node</li>
+                <li><strong>Traversal:</strong> Follow the chain one node at a time</li>
+                <li><strong>Modification:</strong> Redirect links to rearrange</li>
+                <li><strong>Two pointers:</strong> Often use slow/fast pointers</li>
+            </ul>
+        </div>
+
+
+        <section class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+            <div class="controls">
+                <button id="autoRunBtn" class="btn">▶ Auto Run</button>
+                <button id="stepBtn" class="btn btn-success">Step</button>
+                <button id="resetBtn" class="btn btn-danger">Reset</button>
+            </div>
+            <div class="status" id="status">Click Auto Run to merge arrays from the end</div>
+            <svg id="visualization"></svg>
+        </section>
+
+        <section class="code-section">
+            <h2>Python Solution</h2>
+            <pre><span class="keyword">def</span> <span class="function">merge</span>(nums1, m, nums2, n):
+    <span class="comment"># Start from the end of both arrays</span>
+    i, j, k = m - <span class="number">1</span>, n - <span class="number">1</span>, m + n - <span class="number">1</span>
+    
+    <span class="comment"># While there are elements in both arrays</span>
+    <span class="keyword">while</span> i >= <span class="number">0</span> <span class="keyword">and</span> j >= <span class="number">0</span>:
+        <span class="comment"># Place the larger element at the end</span>
+        <span class="keyword">if</span> nums1[i] > nums2[j]:
+            nums1[k] = nums1[i]
+            i -= <span class="number">1</span>
+        <span class="keyword">else</span>:
+            nums1[k] = nums2[j]
+            j -= <span class="number">1</span>
+        k -= <span class="number">1</span>
+    
+    <span class="comment"># Copy remaining elements from nums2</span>
+    <span class="keyword">while</span> j >= <span class="number">0</span>:
+        nums1[k] = nums2[j]
+        j -= <span class="number">1</span>
+        k -= <span class="number">1</span></pre>
+        </section>
+    </div>
+
+    <script>
+        const width = 900;
+        const height = 550;
+
+        const svg = d3.select("#visualization")
+            .attr("width", width)
+            .attr("height", height);
+
+        // Example data
+        const originalNums1 = [1, 2, 3, 0, 0, 0];
+        const originalNums2 = [2, 5, 6];
+        const m = 3;
+        const n = 3;
+
+        let nums1 = [];
+        let nums2 = [];
+        let i, j, k;
+        let phase = "init";
+        let animationTimer = null;
+        let comparing = null;
+        let history = [];
+
+        function reset() {
+            nums1 = [...originalNums1];
+            nums2 = [...originalNums2];
+            i = m - 1;
+            j = n - 1;
+            k = m + n - 1;
+            phase = "init";
+            comparing = null;
+            history = [];
+
+            if (animationTimer) clearInterval(animationTimer);
+            animationTimer = null;
+            document.getElementById("autoRunBtn").textContent = "▶ Auto Run";
+            document.getElementById("status").textContent = 
+                `Merge from the end: i=${i} (nums1), j=${j} (nums2), k=${k} (insert position)`;
+            render();
+        }
+
+        function render() {
+            svg.selectAll("*").remove();
+
+            const cellWidth = 60;
+            const cellHeight = 50;
+            const startX = 80;
+            const nums1Y = 100;
+            const nums2Y = 200;
+
+            // Title and explanation
+            svg.append("text")
+                .attr("x", 30)
+                .attr("y", 35)
+                .attr("font-size", "14px")
+                .attr("font-weight", "bold")
+                .attr("fill", "#1e293b")
+                .text("Merge from End Strategy: Fill nums1 backwards, comparing largest elements");
+
+            // nums1 label
+            svg.append("text")
+                .attr("x", 30)
+                .attr("y", nums1Y + 30)
+                .attr("font-size", "14px")
+                .attr("font-weight", "bold")
+                .attr("fill", "#1e293b")
+                .text("nums1:");
+
+            // Draw nums1
+            nums1.forEach((val, idx) => {
+                const x = startX + idx * cellWidth;
+                const isOriginal = idx < m && nums1[idx] === originalNums1[idx];
+                const isZeroSlot = originalNums1[idx] === 0 && idx >= m;
+                const isCurrent = idx === k;
+                const isComparing = idx === i && comparing !== null;
+                const isFilled = !isZeroSlot || nums1[idx] !== 0;
+
+                svg.append("rect")
+                    .attr("x", x)
+                    .attr("y", nums1Y)
+                    .attr("width", cellWidth - 5)
+                    .attr("height", cellHeight)
+                    .attr("rx", 8)
+                    .attr("fill", () => {
+                        if (isCurrent) return "#fef3c7";
+                        if (isComparing) return "#dbeafe";
+                        if (isFilled && idx >= m) return "#d1fae5";
+                        if (isZeroSlot && !isFilled) return "#f1f5f9";
+                        return "#e0e7ff";
+                    })
+                    .attr("stroke", () => {
+                        if (isCurrent) return "#f59e0b";
+                        if (isComparing) return "#3b82f6";
+                        if (isFilled && idx >= m) return "#10b981";
+                        return "#6366f1";
+                    })
+                    .attr("stroke-width", isCurrent || isComparing ? 3 : 2);
+
+                svg.append("text")
+                    .attr("x", x + (cellWidth - 5) / 2)
+                    .attr("y", nums1Y + 32)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "18px")
+                    .attr("font-weight", "bold")
+                    .attr("fill", "#1e293b")
+                    .text(val === 0 && idx >= m && originalNums1[idx] === 0 && nums1[idx] === 0 ? "-" : val);
+
+                // Index labels
+                svg.append("text")
+                    .attr("x", x + (cellWidth - 5) / 2)
+                    .attr("y", nums1Y + cellHeight + 20)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "11px")
+                    .attr("fill", "#64748b")
+                    .text(idx);
+            });
+
+            // Pointer indicators for nums1
+            if (i >= 0 && phase !== "done") {
+                svg.append("text")
+                    .attr("x", startX + i * cellWidth + (cellWidth - 5) / 2)
+                    .attr("y", nums1Y - 15)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "12px")
+                    .attr("font-weight", "bold")
+                    .attr("fill", "#3b82f6")
+                    .text("i");
+
+                svg.append("path")
+                    .attr("d", `M${startX + i * cellWidth + (cellWidth - 5) / 2},${nums1Y - 10} L${startX + i * cellWidth + (cellWidth - 5) / 2},${nums1Y - 3}`)
+                    .attr("stroke", "#3b82f6")
+                    .attr("stroke-width", 2)
+                    .attr("marker-end", "url(#arrowBlue)");
+            }
+
+            if (k >= 0 && phase !== "done") {
+                svg.append("text")
+                    .attr("x", startX + k * cellWidth + (cellWidth - 5) / 2)
+                    .attr("y", nums1Y + cellHeight + 45)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "12px")
+                    .attr("font-weight", "bold")
+                    .attr("fill", "#f59e0b")
+                    .text("k (insert)");
+            }
+
+            // nums2 label
+            svg.append("text")
+                .attr("x", 30)
+                .attr("y", nums2Y + 30)
+                .attr("font-size", "14px")
+                .attr("font-weight", "bold")
+                .attr("fill", "#1e293b")
+                .text("nums2:");
+
+            // Draw nums2
+            nums2.forEach((val, idx) => {
+                const x = startX + idx * cellWidth;
+                const isComparing = idx === j && comparing !== null;
+                const isUsed = idx > j;
+
+                svg.append("rect")
+                    .attr("x", x)
+                    .attr("y", nums2Y)
+                    .attr("width", cellWidth - 5)
+                    .attr("height", cellHeight)
+                    .attr("rx", 8)
+                    .attr("fill", () => {
+                        if (isUsed) return "#f1f5f9";
+                        if (isComparing) return "#dbeafe";
+                        return "#fce7f3";
+                    })
+                    .attr("stroke", () => {
+                        if (isUsed) return "#94a3b8";
+                        if (isComparing) return "#3b82f6";
+                        return "#ec4899";
+                    })
+                    .attr("stroke-width", isComparing ? 3 : 2)
+                    .attr("opacity", isUsed ? 0.5 : 1);
+
+                svg.append("text")
+                    .attr("x", x + (cellWidth - 5) / 2)
+                    .attr("y", nums2Y + 32)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "18px")
+                    .attr("font-weight", "bold")
+                    .attr("fill", isUsed ? "#94a3b8" : "#1e293b")
+                    .text(val);
+
+                // Index labels
+                svg.append("text")
+                    .attr("x", x + (cellWidth - 5) / 2)
+                    .attr("y", nums2Y + cellHeight + 20)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "11px")
+                    .attr("fill", "#64748b")
+                    .text(idx);
+            });
+
+            // Pointer for nums2
+            if (j >= 0 && phase !== "done") {
+                svg.append("text")
+                    .attr("x", startX + j * cellWidth + (cellWidth - 5) / 2)
+                    .attr("y", nums2Y - 15)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "12px")
+                    .attr("font-weight", "bold")
+                    .attr("fill", "#ec4899")
+                    .text("j");
+
+                svg.append("path")
+                    .attr("d", `M${startX + j * cellWidth + (cellWidth - 5) / 2},${nums2Y - 10} L${startX + j * cellWidth + (cellWidth - 5) / 2},${nums2Y - 3}`)
+                    .attr("stroke", "#ec4899")
+                    .attr("stroke-width", 2)
+                    .attr("marker-end", "url(#arrowPink)");
+            }
+
+            // Arrow markers
+            const defs = svg.append("defs");
+            
+            defs.append("marker")
+                .attr("id", "arrowBlue")
+                .attr("viewBox", "0 0 10 10")
+                .attr("refX", 9)
+                .attr("refY", 5)
+                .attr("markerWidth", 6)
+                .attr("markerHeight", 6)
+                .attr("orient", "auto")
+                .append("path")
+                .attr("d", "M 0 0 L 10 5 L 0 10 z")
+                .attr("fill", "#3b82f6");
+
+            defs.append("marker")
+                .attr("id", "arrowPink")
+                .attr("viewBox", "0 0 10 10")
+                .attr("refX", 9)
+                .attr("refY", 5)
+                .attr("markerWidth", 6)
+                .attr("markerHeight", 6)
+                .attr("orient", "auto")
+                .append("path")
+                .attr("d", "M 0 0 L 10 5 L 0 10 z")
+                .attr("fill", "#ec4899");
+
+            // Algorithm explanation
+            const algoY = 320;
+            svg.append("text")
+                .attr("x", 30)
+                .attr("y", algoY)
+                .attr("font-size", "14px")
+                .attr("font-weight", "bold")
+                .attr("fill", "#1e293b")
+                .text("Algorithm Steps:");
+
+            const steps = [
+                "1. Start with i at end of nums1 elements, j at end of nums2, k at last position",
+                "2. Compare nums1[i] and nums2[j], place larger at nums1[k]",
+                "3. Decrement the pointer of the array we took from, and k",
+                "4. When one array is exhausted, copy remaining from the other"
+            ];
+
+            steps.forEach((step, idx) => {
+                svg.append("text")
+                    .attr("x", 30)
+                    .attr("y", algoY + 25 + idx * 22)
+                    .attr("font-size", "12px")
+                    .attr("fill", "#64748b")
+                    .text(step);
+            });
+
+            // Current comparison
+            if (comparing && phase === "compare") {
+                const compY = 440;
+                svg.append("rect")
+                    .attr("x", 30)
+                    .attr("y", compY)
+                    .attr("width", 350)
+                    .attr("height", 50)
+                    .attr("rx", 10)
+                    .attr("fill", "#eff6ff")
+                    .attr("stroke", "#3b82f6");
+
+                svg.append("text")
+                    .attr("x", 205)
+                    .attr("y", compY + 32)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "14px")
+                    .attr("fill", "#1e293b")
+                    .text(comparing);
+            }
+
+            // Final result
+            if (phase === "done") {
+                svg.append("rect")
+                    .attr("x", 30)
+                    .attr("y", 440)
+                    .attr("width", 500)
+                    .attr("height", 55)
+                    .attr("rx", 10)
+                    .attr("fill", "#d1fae5")
+                    .attr("stroke", "#10b981")
+                    .attr("stroke-width", 2);
+
+                svg.append("text")
+                    .attr("x", 280)
+                    .attr("y", 475)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "18px")
+                    .attr("font-weight", "bold")
+                    .attr("fill", "#10b981")
+                    .text(`✓ Merged! Result: [${nums1.join(', ')}]`);
+            }
+
+            // Legend
+            const legendX = 550;
+            const legendY = 320;
+            
+            svg.append("text")
+                .attr("x", legendX)
+                .attr("y", legendY)
+                .attr("font-size", "13px")
+                .attr("font-weight", "bold")
+                .attr("fill", "#1e293b")
+                .text("Legend:");
+
+            const legendItems = [
+                { color: "#e0e7ff", stroke: "#6366f1", text: "Original nums1" },
+                { color: "#fce7f3", stroke: "#ec4899", text: "nums2" },
+                { color: "#d1fae5", stroke: "#10b981", text: "Filled position" },
+                { color: "#fef3c7", stroke: "#f59e0b", text: "Insert position (k)" }
+            ];
+
+            legendItems.forEach((item, idx) => {
+                svg.append("rect")
+                    .attr("x", legendX)
+                    .attr("y", legendY + 15 + idx * 28)
+                    .attr("width", 20)
+                    .attr("height", 20)
+                    .attr("rx", 4)
+                    .attr("fill", item.color)
+                    .attr("stroke", item.stroke);
+
+                svg.append("text")
+                    .attr("x", legendX + 30)
+                    .attr("y", legendY + 30 + idx * 28)
+                    .attr("font-size", "12px")
+                    .attr("fill", "#64748b")
+                    .text(item.text);
+            });
+        }
+
+        function step() {
+            if (phase === "done") return;
+
+            if (phase === "init") {
+                phase = "compare";
+            }
+
+            if (i >= 0 && j >= 0) {
+                // Compare and place
+                if (nums1[i] > nums2[j]) {
+                    comparing = `nums1[${i}]=${nums1[i]} > nums2[${j}]=${nums2[j]} → Place ${nums1[i]} at position ${k}`;
+                    nums1[k] = nums1[i];
+                    i--;
+                } else {
+                    comparing = `nums1[${i}]=${nums1[i]} <= nums2[${j}]=${nums2[j]} → Place ${nums2[j]} at position ${k}`;
+                    nums1[k] = nums2[j];
+                    j--;
+                }
+                k--;
+
+                if (i < 0 && j < 0) {
+                    phase = "done";
+                    document.getElementById("status").textContent = "✓ Merge complete!";
+                } else if (i < 0) {
+                    document.getElementById("status").textContent = 
+                        `nums1 exhausted, copying remaining from nums2. j=${j}, k=${k}`;
+                } else if (j < 0) {
+                    phase = "done";
+                    document.getElementById("status").textContent = 
+                        "✓ nums2 exhausted, nums1 elements already in place!";
+                } else {
+                    document.getElementById("status").textContent = 
+                        `Next: compare nums1[${i}]=${nums1[i]} and nums2[${j}]=${nums2[j]}`;
+                }
+            } else if (j >= 0) {
+                // Copy remaining from nums2
+                comparing = `Copying nums2[${j}]=${nums2[j]} to position ${k}`;
+                nums1[k] = nums2[j];
+                j--;
+                k--;
+
+                if (j < 0) {
+                    phase = "done";
+                    document.getElementById("status").textContent = "✓ Merge complete!";
+                } else {
+                    document.getElementById("status").textContent = 
+                        `Copying remaining from nums2. j=${j}, k=${k}`;
+                }
+            } else {
+                phase = "done";
+                document.getElementById("status").textContent = "✓ Merge complete!";
+            }
+
+            render();
+        }
+
+        function autoRun() {
+            if (animationTimer) {
+                clearInterval(animationTimer);
+                animationTimer = null;
+                document.getElementById("autoRunBtn").textContent = "▶ Auto Run";
+                return;
+            }
+
+            document.getElementById("autoRunBtn").textContent = "⏸ Pause";
+            animationTimer = setInterval(() => {
+                if (phase === "done") {
+                    clearInterval(animationTimer);
+                    animationTimer = null;
+                    document.getElementById("autoRunBtn").textContent = "▶ Auto Run";
+                    return;
+                }
+                step();
+            }, 1000);
+        }
+
+        document.getElementById("autoRunBtn").addEventListener("click", autoRun);
+        document.getElementById("stepBtn").addEventListener("click", step);
+        document.getElementById("resetBtn").addEventListener("click", reset);
+
+        reset();
+    </script>
+</body>
+</html>

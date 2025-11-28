@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LC 348: Design Tic-Tac-Toe - Algorithm Visualization</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="problem-info">
+            <h1><span class="problem-number">#348</span> Design Tic-Tac-Toe</h1>
+            <p>Design a Tic-Tac-Toe game that can check if a player wins after each move in O(1) time.</p>
+            <div class="problem-meta">
+                <span class="meta-tag">🔧 Design</span>
+                <span class="meta-tag">📊 Array</span>
+                <span class="meta-tag">⏱️ O(1) per move</span>
+                <span class="meta-tag">💾 O(n)</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <code>python/0348_design_tic_tac_toe/0348_design_tic_tac_toe.py</code>
+            </div>
+            </div>
+
+        <div class="explanation-panel">
+            <h4>🧠 How It Works (Layman's Terms)</h4>
+            <p>Track <strong>counts</strong> instead of checking entire board:</p>
+            <ul>
+                <li><strong>Row counts:</strong> +1 for player 1, -1 for player 2</li>
+                <li><strong>Column counts:</strong> Same idea for each column</li>
+                <li><strong>Diagonals:</strong> Two extra counters for diagonals</li>
+                <li><strong>Win condition:</strong> If any count = n or -n → winner!</li>
+            </ul>
+        </div>
+
+
+        <div class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+            
+            <div class="controls">
+                <label>Board size n = </label>
+                <select id="boardSize" onchange="reset()" style="padding: 8px; border-radius: 5px;">
+                    <option value="3" selected>3</option>
+                    <option value="4">4</option>
+                    <option value="5">5</option>
+                </select>
+                <button class="btn btn-warning" onclick="reset()">New Game</button>
+            </div>
+
+            <div class="status-message" id="statusMessage">
+                Player 1 (X) turn - Click a cell to play
+            </div>
+
+            <div style="display: flex; gap: 30px; flex-wrap: wrap; margin-top: 20px;">
+                <div style="flex: 1; min-width: 250px;">
+                    <div id="boardDisplay" style="display: grid; gap: 5px; background: #333; padding: 5px; border-radius: 12px; width: fit-content;"></div>
+                </div>
+                <div style="flex: 1; min-width: 250px;">
+                    <h4>📊 Row Counts</h4>
+                    <div id="rowCounts" style="display: flex; gap: 10px; padding: 10px; background: #e3f2fd; border-radius: 8px; flex-wrap: wrap;"></div>
+                    
+                    <h4 style="margin-top: 15px;">📊 Column Counts</h4>
+                    <div id="colCounts" style="display: flex; gap: 10px; padding: 10px; background: #fff3e0; border-radius: 8px; flex-wrap: wrap;"></div>
+                    
+                    <h4 style="margin-top: 15px;">📊 Diagonal Counts</h4>
+                    <div id="diagCounts" style="display: flex; gap: 15px; padding: 10px; background: #f3e5f5; border-radius: 8px;"></div>
+                    
+                    <div style="margin-top: 20px; padding: 15px; background: #f5f5f5; border-radius: 12px;">
+                        <h4 style="margin-bottom: 10px;">📝 Explanation</h4>
+                        <p style="font-size: 0.9em; color: #666;">
+                            Player 1 (X) adds <strong>+1</strong> to counts<br>
+                            Player 2 (O) adds <strong>-1</strong> to counts<br>
+                            Win when any count = <strong>±n</strong>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="code-section">
+            <h3>💻 Python Solution</h3>
+            <div class="code-block">
+                <pre><span class="keyword">class</span> <span class="function">TicTacToe</span>:
+    <span class="keyword">def</span> <span class="function">__init__</span>(self, n):
+        self.n = n
+        self.rows = [<span class="number">0</span>] * n      <span class="comment"># Row counts</span>
+        self.cols = [<span class="number">0</span>] * n      <span class="comment"># Column counts</span>
+        self.diag = <span class="number">0</span>           <span class="comment"># Main diagonal</span>
+        self.anti_diag = <span class="number">0</span>      <span class="comment"># Anti-diagonal</span>
+    
+    <span class="keyword">def</span> <span class="function">move</span>(self, row, col, player):
+        add = <span class="number">1</span> <span class="keyword">if</span> player == <span class="number">1</span> <span class="keyword">else</span> <span class="number">-1</span>
+        
+        self.rows[row] += add
+        self.cols[col] += add
+        
+        <span class="keyword">if</span> row == col:
+            self.diag += add
+        <span class="keyword">if</span> row + col == self.n - <span class="number">1</span>:
+            self.anti_diag += add
+        
+        <span class="comment"># Check for win</span>
+        <span class="keyword">if</span> <span class="function">abs</span>(self.rows[row]) == self.n <span class="keyword">or</span> \
+           <span class="function">abs</span>(self.cols[col]) == self.n <span class="keyword">or</span> \
+           <span class="function">abs</span>(self.diag) == self.n <span class="keyword">or</span> \
+           <span class="function">abs</span>(self.anti_diag) == self.n:
+            <span class="keyword">return</span> player
+        
+        <span class="keyword">return</span> <span class="number">0</span></pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let n = 3;
+        let board = [];
+        let rows = [];
+        let cols = [];
+        let diag = 0;
+        let antiDiag = 0;
+        let currentPlayer = 1;
+        let winner = 0;
+        let moveCount = 0;
+
+        function render() {
+            // Render board
+            const boardContainer = document.getElementById('boardDisplay');
+            boardContainer.style.gridTemplateColumns = `repeat(${n}, 60px)`;
+            
+            let boardHtml = '';
+            for (let i = 0; i < n; i++) {
+                for (let j = 0; j < n; j++) {
+                    const cell = board[i][j];
+                    let content = '';
+                    let bg = 'white';
+                    
+                    if (cell === 1) {
+                        content = 'X';
+                        bg = '#e3f2fd';
+                    } else if (cell === 2) {
+                        content = 'O';
+                        bg = '#ffebee';
+                    }
+                    
+                    const clickable = winner === 0 && cell === 0;
+                    boardHtml += `<div onclick="${clickable ? `makeMove(${i}, ${j})` : ''}" style="
+                        width: 60px; height: 60px;
+                        background: ${bg};
+                        display: flex; align-items: center; justify-content: center;
+                        font-size: 2em; font-weight: bold;
+                        color: ${cell === 1 ? '#2196f3' : '#f44336'};
+                        cursor: ${clickable ? 'pointer' : 'default'};
+                        border-radius: 8px;
+                        transition: all 0.2s;
+                    ">${content}</div>`;
+                }
+            }
+            boardContainer.innerHTML = boardHtml;
+
+            // Render row counts
+            document.getElementById('rowCounts').innerHTML = rows.map((r, i) => 
+                `<div style="padding: 8px 12px; background: ${Math.abs(r) === n ? '#4caf50' : 'white'}; color: ${Math.abs(r) === n ? 'white' : 'black'}; border-radius: 6px;">R${i}: ${r}</div>`
+            ).join('');
+
+            // Render column counts
+            document.getElementById('colCounts').innerHTML = cols.map((c, i) => 
+                `<div style="padding: 8px 12px; background: ${Math.abs(c) === n ? '#4caf50' : 'white'}; color: ${Math.abs(c) === n ? 'white' : 'black'}; border-radius: 6px;">C${i}: ${c}</div>`
+            ).join('');
+
+            // Render diagonal counts
+            document.getElementById('diagCounts').innerHTML = `
+                <div style="padding: 8px 12px; background: ${Math.abs(diag) === n ? '#4caf50' : 'white'}; color: ${Math.abs(diag) === n ? 'white' : 'black'}; border-radius: 6px;">↘ Main: ${diag}</div>
+                <div style="padding: 8px 12px; background: ${Math.abs(antiDiag) === n ? '#4caf50' : 'white'}; color: ${Math.abs(antiDiag) === n ? 'white' : 'black'}; border-radius: 6px;">↙ Anti: ${antiDiag}</div>
+            `;
+        }
+
+        function makeMove(row, col) {
+            if (winner !== 0 || board[row][col] !== 0) return;
+
+            const add = currentPlayer === 1 ? 1 : -1;
+            board[row][col] = currentPlayer;
+            
+            rows[row] += add;
+            cols[col] += add;
+            
+            if (row === col) diag += add;
+            if (row + col === n - 1) antiDiag += add;
+            
+            moveCount++;
+
+            // Check for win
+            if (Math.abs(rows[row]) === n || 
+                Math.abs(cols[col]) === n || 
+                Math.abs(diag) === n || 
+                Math.abs(antiDiag) === n) {
+                winner = currentPlayer;
+                document.getElementById('statusMessage').textContent = 
+                    `🎉 Player ${winner} (${winner === 1 ? 'X' : 'O'}) wins!`;
+                document.getElementById('statusMessage').style.color = winner === 1 ? '#2196f3' : '#f44336';
+            } else if (moveCount === n * n) {
+                document.getElementById('statusMessage').textContent = "🤝 It's a draw!";
+            } else {
+                currentPlayer = currentPlayer === 1 ? 2 : 1;
+                document.getElementById('statusMessage').textContent = 
+                    `Player ${currentPlayer} (${currentPlayer === 1 ? 'X' : 'O'}) turn - Click a cell to play`;
+                document.getElementById('statusMessage').style.color = '#333';
+            }
+
+            render();
+        }
+
+        function reset() {
+            n = parseInt(document.getElementById('boardSize').value);
+            board = Array.from({ length: n }, () => Array(n).fill(0));
+            rows = Array(n).fill(0);
+            cols = Array(n).fill(0);
+            diag = 0;
+            antiDiag = 0;
+            currentPlayer = 1;
+            winner = 0;
+            moveCount = 0;
+            
+            document.getElementById('statusMessage').textContent = 'Player 1 (X) turn - Click a cell to play';
+            document.getElementById('statusMessage').style.color = '#333';
+            render();
+        }
+
+        reset();
+    </script>
+</body>
+</html>

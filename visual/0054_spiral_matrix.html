@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spiral Matrix - LeetCode 54</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="problem-info">
+            <h1><span class="problem-number">#0054</span> Spiral Matrix</h1>
+            <p><strong>Problem:</strong> Given an m x n matrix, return all elements of the matrix in spiral order.</p>
+            <p><strong>Pattern:</strong> Simulation with Boundaries - right → down → left → up, shrink bounds</p>
+            <div class="problem-meta">
+                <span class="meta-tag">🔲 Matrix</span>
+                <span class="meta-tag">⏱️ O(m×n)</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <code>python/0054_spiral_matrix/0054_spiral_matrix.py</code>
+            </div>
+
+        </div>
+
+        <div class="explanation-panel">
+            <h4>🧠 How It Works (Layman's Terms)</h4>
+            <p>Matrix problems work with <strong>2D grids</strong>:</p>
+            <ul>
+                <li><strong>Row/Col:</strong> Access elements by [row][col]</li>
+                <li><strong>Traverse:</strong> Iterate in various patterns</li>
+                <li><strong>In-place:</strong> Often modify without extra space</li>
+                <li><strong>Boundaries:</strong> Watch for edge cases</li>
+            </ul>
+        </div>
+
+
+        <div class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+
+            <div class="visualization">
+            <svg id="mainSvg"></svg>
+        </div>
+
+        <div class="controls">
+            <button id="stepBtn">Step</button>
+            <button id="autoBtn">Auto Run</button>
+            <button id="resetBtn">Reset</button>
+            <div class="speed-control">
+                <label for="speed">Speed:</label>
+                <input type="range" id="speed" min="100" max="2000" value="500">
+            </div>
+        </div>
+
+        <div class="status" id="status">Click "Step" to traverse the matrix in spiral order</div>
+
+        <div class="variables">
+            <div class="var-item">
+                <span class="var-label">Direction:</span>
+                <span id="dirDisplay">→ Right</span>
+            </div>
+            <div class="var-item">
+                <span class="var-label">Bounds:</span>
+                <span id="boundsDisplay">top=0, bottom=2, left=0, right=3</span>
+            </div>
+        </div>
+
+        <div class="result-display">
+            <h3>Spiral Order:</h3>
+            <div id="resultList" class="result-list"></div>
+        </div>
+
+        </div>
+
+        <div class="code-section">
+            <h3>Python Solution</h3>
+            <pre><span class="keyword">def</span> <span class="function">spiralOrder</span>(matrix):
+    <span class="string">"""
+    Traverse in spiral: right, down, left, up.
+    Shrink boundaries after each direction.
+    Time: O(m*n), Space: O(1) extra
+    """</span>
+    result = []
+    top, bottom = <span class="number">0</span>, <span class="function">len</span>(matrix) - <span class="number">1</span>
+    left, right = <span class="number">0</span>, <span class="function">len</span>(matrix[<span class="number">0</span>]) - <span class="number">1</span>
+    
+    <span class="keyword">while</span> top <= bottom <span class="keyword">and</span> left <= right:
+        <span class="comment"># Right</span>
+        <span class="keyword">for</span> col <span class="keyword">in</span> <span class="function">range</span>(left, right + <span class="number">1</span>):
+            result.<span class="function">append</span>(matrix[top][col])
+        top += <span class="number">1</span>
+        
+        <span class="comment"># Down</span>
+        <span class="keyword">for</span> row <span class="keyword">in</span> <span class="function">range</span>(top, bottom + <span class="number">1</span>):
+            result.<span class="function">append</span>(matrix[row][right])
+        right -= <span class="number">1</span>
+        
+        <span class="keyword">if</span> top <= bottom:
+            <span class="comment"># Left</span>
+            <span class="keyword">for</span> col <span class="keyword">in</span> <span class="function">range</span>(right, left - <span class="number">1</span>, <span class="number">-1</span>):
+                result.<span class="function">append</span>(matrix[bottom][col])
+            bottom -= <span class="number">1</span>
+        
+        <span class="keyword">if</span> left <= right:
+            <span class="comment"># Up</span>
+            <span class="keyword">for</span> row <span class="keyword">in</span> <span class="function">range</span>(bottom, top - <span class="number">1</span>, <span class="number">-1</span>):
+                result.<span class="function">append</span>(matrix[row][left])
+            left += <span class="number">1</span>
+    
+    <span class="keyword">return</span> result</pre>
+        </div>
+    </div>
+
+    <script>
+        const matrix = [
+            [1, 2, 3, 4],
+            [5, 6, 7, 8],
+            [9, 10, 11, 12]
+        ];
+        
+        const m = matrix.length;
+        const n = matrix[0].length;
+        
+        let top = 0, bottom = m - 1, left = 0, right = n - 1;
+        let result = [];
+        let visited = Array(m).fill(null).map(() => Array(n).fill(false));
+        let currentPos = null;
+        let direction = 0; // 0:right, 1:down, 2:left, 3:up
+        let directionIndex = 0;
+        let autoRunning = false;
+        let autoTimer = null;
+
+        const width = 800;
+        const height = 350;
+        const svg = d3.select("#mainSvg")
+            .attr("width", width)
+            .attr("height", height);
+
+        const cellSize = 60;
+        const startX = (width - n * cellSize) / 2;
+        const startY = 50;
+
+        const directions = ['→ Right', '↓ Down', '← Left', '↑ Up'];
+        const dirColors = ['#4caf50', '#2196f3', '#ff9800', '#e91e63'];
+
+        function draw() {
+            svg.selectAll("*").remove();
+
+            svg.append("text")
+                .attr("x", width / 2)
+                .attr("y", 30)
+                .attr("text-anchor", "middle")
+                .attr("font-weight", "bold")
+                .text("Spiral Matrix Traversal");
+
+            // Draw matrix
+            for (let i = 0; i < m; i++) {
+                for (let j = 0; j < n; j++) {
+                    const x = startX + j * cellSize;
+                    const y = startY + i * cellSize;
+                    const isVisited = visited[i][j];
+                    const isCurrent = currentPos && currentPos[0] === i && currentPos[1] === j;
+                    const isInBounds = i >= top && i <= bottom && j >= left && j <= right;
+
+                    svg.append("rect")
+                        .attr("x", x)
+                        .attr("y", y)
+                        .attr("width", cellSize - 4)
+                        .attr("height", cellSize - 4)
+                        .attr("rx", 5)
+                        .attr("fill", isCurrent ? "#ffeb3b" : 
+                                     isVisited ? "#c8e6c9" : 
+                                     isInBounds ? "#e3f2fd" : "#f5f5f5")
+                        .attr("stroke", isCurrent ? "#f57c00" : 
+                                       isVisited ? "#4caf50" : 
+                                       isInBounds ? "#1976d2" : "#bdbdbd")
+                        .attr("stroke-width", isCurrent ? 3 : 2);
+
+                    svg.append("text")
+                        .attr("x", x + (cellSize - 4) / 2)
+                        .attr("y", y + (cellSize - 4) / 2 + 5)
+                        .attr("text-anchor", "middle")
+                        .attr("font-size", "18px")
+                        .attr("font-weight", "bold")
+                        .attr("fill", isVisited ? "#2e7d32" : "#333")
+                        .text(matrix[i][j]);
+                }
+            }
+
+            // Draw boundaries
+            if (top <= bottom && left <= right) {
+                // Top boundary
+                svg.append("line")
+                    .attr("x1", startX + left * cellSize - 5)
+                    .attr("y1", startY + top * cellSize - 5)
+                    .attr("x2", startX + (right + 1) * cellSize - 4 + 5)
+                    .attr("y2", startY + top * cellSize - 5)
+                    .attr("stroke", "#e91e63")
+                    .attr("stroke-width", 3);
+
+                // Bottom boundary
+                svg.append("line")
+                    .attr("x1", startX + left * cellSize - 5)
+                    .attr("y1", startY + (bottom + 1) * cellSize - 4 + 5)
+                    .attr("x2", startX + (right + 1) * cellSize - 4 + 5)
+                    .attr("y2", startY + (bottom + 1) * cellSize - 4 + 5)
+                    .attr("stroke", "#e91e63")
+                    .attr("stroke-width", 3);
+
+                // Left boundary
+                svg.append("line")
+                    .attr("x1", startX + left * cellSize - 5)
+                    .attr("y1", startY + top * cellSize - 5)
+                    .attr("x2", startX + left * cellSize - 5)
+                    .attr("y2", startY + (bottom + 1) * cellSize - 4 + 5)
+                    .attr("stroke", "#e91e63")
+                    .attr("stroke-width", 3);
+
+                // Right boundary  
+                svg.append("line")
+                    .attr("x1", startX + (right + 1) * cellSize - 4 + 5)
+                    .attr("y1", startY + top * cellSize - 5)
+                    .attr("x2", startX + (right + 1) * cellSize - 4 + 5)
+                    .attr("y2", startY + (bottom + 1) * cellSize - 4 + 5)
+                    .attr("stroke", "#e91e63")
+                    .attr("stroke-width", 3);
+            }
+
+            // Direction indicator
+            svg.append("rect")
+                .attr("x", startX + n * cellSize + 20)
+                .attr("y", startY)
+                .attr("width", 100)
+                .attr("height", 40)
+                .attr("rx", 8)
+                .attr("fill", dirColors[direction])
+                .attr("opacity", 0.8);
+
+            svg.append("text")
+                .attr("x", startX + n * cellSize + 70)
+                .attr("y", startY + 25)
+                .attr("text-anchor", "middle")
+                .attr("fill", "white")
+                .attr("font-weight", "bold")
+                .text(directions[direction]);
+
+            updateResultDisplay();
+        }
+
+        function updateResultDisplay() {
+            const container = document.getElementById("resultList");
+            container.innerHTML = result.map((val, i) => 
+                `<span class="result-item">${val}</span>`
+            ).join(' ');
+        }
+
+        function getNextPositions() {
+            const positions = [];
+            
+            if (top > bottom || left > right) return positions;
+
+            switch (direction) {
+                case 0: // Right
+                    for (let col = left; col <= right; col++) {
+                        if (!visited[top][col]) positions.push([top, col]);
+                    }
+                    break;
+                case 1: // Down
+                    for (let row = top; row <= bottom; row++) {
+                        if (!visited[row][right]) positions.push([row, right]);
+                    }
+                    break;
+                case 2: // Left
+                    for (let col = right; col >= left; col--) {
+                        if (!visited[bottom][col]) positions.push([bottom, col]);
+                    }
+                    break;
+                case 3: // Up
+                    for (let row = bottom; row >= top; row--) {
+                        if (!visited[row][left]) positions.push([row, left]);
+                    }
+                    break;
+            }
+            return positions;
+        }
+
+        function step() {
+            if (top > bottom || left > right) {
+                document.getElementById("status").textContent = 
+                    `Complete! Spiral order: [${result.join(", ")}]`;
+                return false;
+            }
+
+            const positions = getNextPositions();
+            
+            if (directionIndex < positions.length) {
+                const [r, c] = positions[directionIndex];
+                currentPos = [r, c];
+                visited[r][c] = true;
+                result.push(matrix[r][c]);
+                directionIndex++;
+                
+                document.getElementById("status").textContent = 
+                    `Visiting (${r}, ${c}) = ${matrix[r][c]}`;
+            }
+
+            if (directionIndex >= positions.length) {
+                // Move to next direction
+                directionIndex = 0;
+                
+                switch (direction) {
+                    case 0: top++; break;
+                    case 1: right--; break;
+                    case 2: bottom--; break;
+                    case 3: left++; break;
+                }
+                
+                direction = (direction + 1) % 4;
+                document.getElementById("dirDisplay").textContent = directions[direction];
+                document.getElementById("boundsDisplay").textContent = 
+                    `top=${top}, bottom=${bottom}, left=${left}, right=${right}`;
+            }
+
+            draw();
+            return top <= bottom && left <= right;
+        }
+
+        function reset() {
+            top = 0; bottom = m - 1; left = 0; right = n - 1;
+            result = [];
+            visited = Array(m).fill(null).map(() => Array(n).fill(false));
+            currentPos = null;
+            direction = 0;
+            directionIndex = 0;
+            autoRunning = false;
+            if (autoTimer) clearInterval(autoTimer);
+            
+            document.getElementById("dirDisplay").textContent = "→ Right";
+            document.getElementById("boundsDisplay").textContent = 
+                `top=0, bottom=${m-1}, left=0, right=${n-1}`;
+            document.getElementById("status").textContent = 
+                'Click "Step" to traverse the matrix in spiral order';
+            document.getElementById("autoBtn").textContent = "Auto Run";
+            
+            draw();
+        }
+
+        function autoRun() {
+            if (autoRunning) {
+                autoRunning = false;
+                clearInterval(autoTimer);
+                document.getElementById("autoBtn").textContent = "Auto Run";
+            } else {
+                autoRunning = true;
+                document.getElementById("autoBtn").textContent = "Pause";
+                const speed = 2100 - document.getElementById("speed").value;
+                autoTimer = setInterval(() => {
+                    if (!step()) {
+                        autoRunning = false;
+                        clearInterval(autoTimer);
+                        document.getElementById("autoBtn").textContent = "Auto Run";
+                    }
+                }, speed);
+            }
+        }
+
+        document.getElementById("stepBtn").addEventListener("click", step);
+        document.getElementById("autoBtn").addEventListener("click", autoRun);
+        document.getElementById("resetBtn").addEventListener("click", reset);
+
+        draw();
+    </script>
+
+    <style>
+        .result-display {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+        .result-display h3 {
+            margin: 0 0 10px 0;
+        }
+        .result-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+        }
+        .result-item {
+            background: #4caf50;
+            color: white;
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-weight: bold;
+        }
+    </style>
+</body>
+</html>

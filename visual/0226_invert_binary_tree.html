@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LC 226: Invert Binary Tree - Algorithm Visualization</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="problem-info">
+            <h1><span class="problem-number">#226</span> Invert Binary Tree</h1>
+            <p>Given the root of a binary tree, invert the tree (swap left and right children at every node), and return its root.</p>
+            <div class="problem-meta">
+                <span class="meta-tag">🌳 Binary Tree</span>
+                <span class="meta-tag">🔄 Recursion</span>
+                <span class="meta-tag">⏱️ O(n)</span>
+                <span class="meta-tag">💾 O(h) stack</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <code>python/0226_invert_binary_tree/0226_invert_binary_tree.py</code>
+            </div>
+            </div>
+
+        <div class="explanation-panel">
+            <h4>🧠 How It Works (Layman's Terms)</h4>
+            <p>Think of it like looking at a tree in a mirror:</p>
+            <ul>
+                <li><strong>At each node:</strong> Swap the left and right children</li>
+                <li><strong>Recursively:</strong> Do this for every node in the tree</li>
+                <li><strong>Order:</strong> We go deep first (post-order), then swap on the way back up</li>
+                <li><strong>Result:</strong> The entire tree is mirrored!</li>
+            </ul>
+        </div>
+
+
+        <div class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+            
+            <div class="controls">
+                <button class="btn btn-primary" id="stepBtn" onclick="step()">Step</button>
+                <button class="btn btn-success" id="autoBtn" onclick="toggleAuto()">Auto Run</button>
+                <button class="btn btn-warning" onclick="reset()">Reset</button>
+            </div>
+
+            <div class="info-box secondary" style="margin-bottom: 20px;">
+                🌳 Input Tree: <strong>[4, 2, 7, 1, 3, 6, 9]</strong>
+            </div>
+
+            <div class="status-message" id="statusMessage">
+                Click "Step" or "Auto Run" to start visualization
+            </div>
+
+            <div style="display: flex; gap: 40px; justify-content: center; flex-wrap: wrap;">
+                <div>
+                    <h4 style="text-align: center; margin-bottom: 10px;">Original Tree</h4>
+                    <div id="originalTreeContainer" style="width: 350px; height: 300px; background: #f5f5f5; border-radius: 12px;"></div>
+                </div>
+                <div>
+                    <h4 style="text-align: center; margin-bottom: 10px;">Current State</h4>
+                    <div id="currentTreeContainer" style="width: 350px; height: 300px; background: #e8f5e9; border-radius: 12px;"></div>
+                </div>
+            </div>
+
+            <div class="explanation-panel" style="margin-top: 20px;">
+                <h4>📝 Recursion Stack</h4>
+                <div id="stackDisplay" style="display: flex; gap: 10px; flex-wrap: wrap; padding: 10px;">
+                    <span style="color: #666;">Empty - Click Step to begin</span>
+                </div>
+            </div>
+        </div>
+        <div class="code-section">
+            <h3>💻 Python Solution</h3>
+            <div class="code-block">
+                <pre><span class="keyword">def</span> <span class="function">invert_tree</span>(self, root: <span class="class-name">TreeNode</span>) -> TreeNode:
+    <span class="keyword">if</span> root <span class="keyword">is</span> <span class="keyword">None</span>:
+        <span class="keyword">return</span> <span class="keyword">None</span>
+    
+    <span class="comment"># Recursively invert subtrees</span>
+    right = self.<span class="function">invert_tree</span>(root.right)
+    left = self.<span class="function">invert_tree</span>(root.left)
+    
+    <span class="comment"># Swap children</span>
+    root.left = right
+    root.right = left
+    
+    <span class="keyword">return</span> root</pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Tree structure: [4, 2, 7, 1, 3, 6, 9]
+        //        4
+        //       / \
+        //      2   7
+        //     / \ / \
+        //    1  3 6  9
+        
+        const originalTree = {
+            val: 4,
+            left: {
+                val: 2,
+                left: { val: 1, left: null, right: null },
+                right: { val: 3, left: null, right: null }
+            },
+            right: {
+                val: 7,
+                left: { val: 6, left: null, right: null },
+                right: { val: 9, left: null, right: null }
+            }
+        };
+
+        let currentTree;
+        let steps = [];
+        let currentStepIdx = -1;
+        let autoInterval = null;
+
+        function deepCopy(obj) {
+            return JSON.parse(JSON.stringify(obj));
+        }
+
+        function generateSteps(node, path = []) {
+            if (node === null) return;
+            
+            steps.push({ 
+                type: 'visit', 
+                path: [...path], 
+                val: node.val,
+                message: `Visiting node ${node.val}`
+            });
+            
+            // Visit children first (post-order)
+            if (node.left) generateSteps(node.left, [...path, 'left']);
+            if (node.right) generateSteps(node.right, [...path, 'right']);
+            
+            // Then swap
+            if (node.left || node.right) {
+                steps.push({ 
+                    type: 'swap', 
+                    path: [...path], 
+                    val: node.val,
+                    leftVal: node.left?.val || 'null',
+                    rightVal: node.right?.val || 'null',
+                    message: `Swapping children of node ${node.val}: ${node.left?.val || 'null'} ↔ ${node.right?.val || 'null'}`
+                });
+            }
+        }
+
+        function getNode(tree, path) {
+            let node = tree;
+            for (const dir of path) {
+                node = node[dir];
+            }
+            return node;
+        }
+
+        function swapChildren(tree, path) {
+            const node = getNode(tree, path);
+            const temp = node.left;
+            node.left = node.right;
+            node.right = temp;
+        }
+
+        function init() {
+            currentTree = deepCopy(originalTree);
+            steps = [];
+            generateSteps(originalTree);
+            renderTree('originalTreeContainer', originalTree, null, false);
+            renderTree('currentTreeContainer', currentTree, null, false);
+        }
+
+        function renderTree(containerId, tree, highlightPath, showSwap) {
+            const container = document.getElementById(containerId);
+            const width = container.offsetWidth;
+            const height = container.offsetHeight;
+            
+            d3.select(`#${containerId}`).selectAll('*').remove();
+            
+            const svg = d3.select(`#${containerId}`)
+                .append('svg')
+                .attr('width', width)
+                .attr('height', height);
+
+            const nodeRadius = 25;
+            const levelHeight = 70;
+            
+            function getPositions(node, x, y, level, dx) {
+                if (!node) return [];
+                
+                const positions = [{ node, x, y, level }];
+                const childDx = dx / 2;
+                
+                if (node.left) {
+                    positions.push(...getPositions(node.left, x - dx, y + levelHeight, level + 1, childDx));
+                }
+                if (node.right) {
+                    positions.push(...getPositions(node.right, x + dx, y + levelHeight, level + 1, childDx));
+                }
+                
+                return positions;
+            }
+
+            const positions = getPositions(tree, width / 2, 40, 0, 80);
+            const posMap = new Map();
+            positions.forEach(p => posMap.set(p.node, p));
+
+            // Draw edges
+            positions.forEach(({ node, x, y }) => {
+                if (node.left) {
+                    const childPos = posMap.get(node.left);
+                    svg.append('line')
+                        .attr('x1', x)
+                        .attr('y1', y + nodeRadius)
+                        .attr('x2', childPos.x)
+                        .attr('y2', childPos.y - nodeRadius)
+                        .attr('stroke', '#999')
+                        .attr('stroke-width', 2);
+                }
+                if (node.right) {
+                    const childPos = posMap.get(node.right);
+                    svg.append('line')
+                        .attr('x1', x)
+                        .attr('y1', y + nodeRadius)
+                        .attr('x2', childPos.x)
+                        .attr('y2', childPos.y - nodeRadius)
+                        .attr('stroke', '#999')
+                        .attr('stroke-width', 2);
+                }
+            });
+
+            // Draw nodes
+            positions.forEach(({ node, x, y }) => {
+                const g = svg.append('g')
+                    .attr('transform', `translate(${x}, ${y})`);
+
+                let fillColor = '#fff';
+                let strokeColor = '#667eea';
+                
+                // Check if this node is highlighted
+                if (highlightPath !== null) {
+                    let testNode = tree;
+                    let isMatch = true;
+                    for (const dir of highlightPath) {
+                        testNode = testNode[dir];
+                    }
+                    if (testNode === node) {
+                        fillColor = showSwap ? '#ff9800' : '#4caf50';
+                        strokeColor = showSwap ? '#e65100' : '#2e7d32';
+                    }
+                }
+
+                g.append('circle')
+                    .attr('r', nodeRadius)
+                    .attr('fill', fillColor)
+                    .attr('stroke', strokeColor)
+                    .attr('stroke-width', 3);
+
+                g.append('text')
+                    .attr('text-anchor', 'middle')
+                    .attr('dy', 5)
+                    .attr('font-size', '16px')
+                    .attr('font-weight', 'bold')
+                    .attr('fill', fillColor === '#fff' ? '#333' : '#fff')
+                    .text(node.val);
+            });
+        }
+
+        function updateStackDisplay() {
+            const container = document.getElementById('stackDisplay');
+            
+            if (currentStepIdx < 0) {
+                container.innerHTML = '<span style="color: #666;">Empty - Click Step to begin</span>';
+                return;
+            }
+            
+            // Build stack from steps up to current
+            const stack = [];
+            for (let i = 0; i <= currentStepIdx; i++) {
+                const step = steps[i];
+                if (step.type === 'visit') {
+                    stack.push(step.val);
+                } else if (step.type === 'swap') {
+                    // Pop after swap (returning from recursion)
+                    const idx = stack.lastIndexOf(step.val);
+                    if (idx !== -1) stack.splice(idx, 1);
+                }
+            }
+            
+            if (stack.length === 0) {
+                container.innerHTML = '<span style="color: #4caf50;">✅ Recursion complete!</span>';
+                return;
+            }
+            
+            container.innerHTML = stack.map((val, i) => 
+                `<div style="padding: 5px 15px; background: ${i === stack.length - 1 ? '#667eea' : '#e0e0e0'}; 
+                color: ${i === stack.length - 1 ? 'white' : '#333'}; border-radius: 5px; font-weight: bold;">
+                    ${val}
+
+        </div>`
+            ).join('');
+        }
+
+        function step() {
+            currentStepIdx++;
+            
+            if (currentStepIdx >= steps.length) {
+                document.getElementById('statusMessage').className = 'status-message success';
+                document.getElementById('statusMessage').textContent = '✅ Tree inversion complete!';
+                document.getElementById('stepBtn').disabled = true;
+                stopAuto();
+                return;
+            }
+
+            const stepData = steps[currentStepIdx];
+            document.getElementById('statusMessage').textContent = stepData.message;
+
+            if (stepData.type === 'swap') {
+                swapChildren(currentTree, stepData.path);
+                renderTree('currentTreeContainer', currentTree, stepData.path, true);
+            } else {
+                renderTree('currentTreeContainer', currentTree, stepData.path, false);
+            }
+
+            updateStackDisplay();
+        }
+
+        function toggleAuto() {
+            if (autoInterval) {
+                stopAuto();
+            } else {
+                document.getElementById('autoBtn').textContent = 'Pause';
+                autoInterval = setInterval(() => {
+                    if (currentStepIdx >= steps.length - 1) {
+                        step();
+                        stopAuto();
+                    } else {
+                        step();
+                    }
+                }, 800);
+            }
+        }
+
+        function stopAuto() {
+            if (autoInterval) {
+                clearInterval(autoInterval);
+                autoInterval = null;
+            }
+            document.getElementById('autoBtn').textContent = 'Auto Run';
+        }
+
+        function reset() {
+            stopAuto();
+            currentStepIdx = -1;
+            document.getElementById('stepBtn').disabled = false;
+            document.getElementById('statusMessage').className = 'status-message';
+            document.getElementById('statusMessage').textContent = 'Click "Step" or "Auto Run" to start visualization';
+            init();
+        }
+
+        init();
+    </script>
+</body>
+</html>

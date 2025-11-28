@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>043 - Multiply Strings</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="problem-info">
+            <h1><span class="problem-number">#043</span> Multiply Strings</h1>
+            <p>
+                Given two non-negative integers represented as strings, return the product as a string.
+                Cannot use built-in BigInteger or convert inputs to integers directly.
+                Use grade-school multiplication algorithm.
+            </p>
+            <div class="problem-meta">
+                <span class="meta-tag">🔤 String</span>
+                <span class="meta-tag">🔢 Math</span>
+                <span class="meta-tag">⏱️ O(n)</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <code>python/0043_multiply_strings/0043_multiply_strings.py</code>
+            </div>
+
+        </div>
+
+        <div class="explanation-panel">
+            <h4>🧠 How It Works (Layman's Terms)</h4>
+            <p>This algorithm solves the problem <strong>step by step</strong>:</p>
+            <ul>
+                <li><strong>Understand:</strong> Parse the input data</li>
+                <li><strong>Process:</strong> Apply the core logic</li>
+                <li><strong>Optimize:</strong> Use efficient data structures</li>
+                <li><strong>Return:</strong> Output the computed result</li>
+            </ul>
+        </div>
+
+
+        <section class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+            <div class="controls">
+                <button id="autoRunBtn" class="btn">▶ Auto Run</button>
+                <button id="stepBtn" class="btn btn-success">Step</button>
+                <button id="resetBtn" class="btn btn-danger">Reset</button>
+            </div>
+            <div class="status" id="status">Multiply "123" × "45" = ?</div>
+            <svg id="visualization"></svg>
+        </section>
+
+        <section class="code-section">
+            <h2>Python Solution</h2>
+            <pre><span class="keyword">def</span> <span class="function">multiply</span>(num1, num2):
+    <span class="keyword">if</span> num1 == <span class="string">"0"</span> <span class="keyword">or</span> num2 == <span class="string">"0"</span>:
+        <span class="keyword">return</span> <span class="string">"0"</span>
+    
+    n1, n2 = <span class="function">len</span>(num1), <span class="function">len</span>(num2)
+    result = [<span class="number">0</span>] * (n1 + n2)
+    
+    <span class="keyword">for</span> i <span class="keyword">in</span> <span class="function">range</span>(n1 - <span class="number">1</span>, <span class="number">-1</span>, <span class="number">-1</span>):
+        <span class="keyword">for</span> j <span class="keyword">in</span> <span class="function">range</span>(n2 - <span class="number">1</span>, <span class="number">-1</span>, <span class="number">-1</span>):
+            mul = <span class="function">int</span>(num1[i]) * <span class="function">int</span>(num2[j])
+            p1, p2 = i + j, i + j + <span class="number">1</span>
+            total = mul + result[p2]
+            
+            result[p2] = total % <span class="number">10</span>
+            result[p1] += total // <span class="number">10</span>
+    
+    <span class="comment"># Remove leading zeros</span>
+    result_str = <span class="string">''</span>.<span class="function">join</span>(<span class="function">map</span>(str, result))
+    <span class="keyword">return</span> result_str.<span class="function">lstrip</span>(<span class="string">'0'</span>) <span class="keyword">or</span> <span class="string">'0'</span></pre>
+        </section>
+    </div>
+
+    <script>
+        const width = 900;
+        const height = 550;
+
+        const svg = d3.select("#visualization")
+            .attr("width", width)
+            .attr("height", height);
+
+        const num1 = "123";
+        const num2 = "45";
+        
+        let result;
+        let i, j;
+        let phase = "init";
+        let animationTimer = null;
+        let currentMul = null;
+
+        function reset() {
+            result = new Array(num1.length + num2.length).fill(0);
+            i = num1.length - 1;
+            j = num2.length - 1;
+            phase = "init";
+            currentMul = null;
+            
+            if (animationTimer) clearInterval(animationTimer);
+            animationTimer = null;
+            document.getElementById("autoRunBtn").textContent = "▶ Auto Run";
+            document.getElementById("status").textContent = `Multiply "${num1}" × "${num2}" = ?`;
+            render();
+        }
+
+        function render() {
+            svg.selectAll("*").remove();
+
+            const cellSize = 45;
+            const startX = 100;
+
+            // Title
+            svg.append("text")
+                .attr("x", 30)
+                .attr("y", 35)
+                .attr("font-size", "14px")
+                .attr("font-weight", "bold")
+                .attr("fill", "#1e293b")
+                .text(`Grade School Multiplication: ${num1} × ${num2}`);
+
+            // Draw num1
+            svg.append("text")
+                .attr("x", 30)
+                .attr("y", 80)
+                .attr("font-size", "13px")
+                .attr("fill", "#64748b")
+                .text("num1:");
+
+            num1.split('').forEach((digit, idx) => {
+                const x = startX + idx * cellSize;
+                const isCurrent = idx === i && phase !== "done";
+
+                svg.append("rect")
+                    .attr("x", x)
+                    .attr("y", 60)
+                    .attr("width", cellSize - 5)
+                    .attr("height", 35)
+                    .attr("rx", 6)
+                    .attr("fill", isCurrent ? "#fef3c7" : "#dbeafe")
+                    .attr("stroke", isCurrent ? "#f59e0b" : "#3b82f6")
+                    .attr("stroke-width", isCurrent ? 3 : 2);
+
+                svg.append("text")
+                    .attr("x", x + (cellSize - 5) / 2)
+                    .attr("y", 85)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "18px")
+                    .attr("font-weight", "bold")
+                    .attr("fill", "#1e293b")
+                    .text(digit);
+            });
+
+            // Draw num2
+            svg.append("text")
+                .attr("x", 30)
+                .attr("y", 130)
+                .attr("font-size", "13px")
+                .attr("fill", "#64748b")
+                .text("num2:");
+
+            num2.split('').forEach((digit, idx) => {
+                const x = startX + idx * cellSize;
+                const isCurrent = idx === j && phase !== "done";
+
+                svg.append("rect")
+                    .attr("x", x)
+                    .attr("y", 110)
+                    .attr("width", cellSize - 5)
+                    .attr("height", 35)
+                    .attr("rx", 6)
+                    .attr("fill", isCurrent ? "#fef3c7" : "#fce7f3")
+                    .attr("stroke", isCurrent ? "#f59e0b" : "#ec4899")
+                    .attr("stroke-width", isCurrent ? 3 : 2);
+
+                svg.append("text")
+                    .attr("x", x + (cellSize - 5) / 2)
+                    .attr("y", 135)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "18px")
+                    .attr("font-weight", "bold")
+                    .attr("fill", "#1e293b")
+                    .text(digit);
+            });
+
+            // Multiplication line
+            svg.append("line")
+                .attr("x1", startX - 20)
+                .attr("y1", 155)
+                .attr("x2", startX + num1.length * cellSize + 50)
+                .attr("y2", 155)
+                .attr("stroke", "#1e293b")
+                .attr("stroke-width", 2);
+
+            svg.append("text")
+                .attr("x", startX - 30)
+                .attr("y", 130)
+                .attr("font-size", "20px")
+                .attr("font-weight", "bold")
+                .attr("fill", "#1e293b")
+                .text("×");
+
+            // Draw result array
+            svg.append("text")
+                .attr("x", 30)
+                .attr("y", 200)
+                .attr("font-size", "13px")
+                .attr("fill", "#64748b")
+                .text("result[]:");
+
+            result.forEach((digit, idx) => {
+                const x = startX + idx * cellSize;
+                const p1 = i >= 0 && j >= 0 ? i + j : -1;
+                const p2 = i >= 0 && j >= 0 ? i + j + 1 : -1;
+                const isTarget = idx === p1 || idx === p2;
+
+                svg.append("rect")
+                    .attr("x", x)
+                    .attr("y", 180)
+                    .attr("width", cellSize - 5)
+                    .attr("height", 35)
+                    .attr("rx", 6)
+                    .attr("fill", isTarget ? "#d1fae5" : digit > 0 ? "#e0e7ff" : "#f8fafc")
+                    .attr("stroke", isTarget ? "#10b981" : "#94a3b8")
+                    .attr("stroke-width", isTarget ? 3 : 1);
+
+                svg.append("text")
+                    .attr("x", x + (cellSize - 5) / 2)
+                    .attr("y", 205)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "18px")
+                    .attr("font-weight", "bold")
+                    .attr("fill", "#1e293b")
+                    .text(digit);
+
+                // Index label
+                svg.append("text")
+                    .attr("x", x + (cellSize - 5) / 2)
+                    .attr("y", 230)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "10px")
+                    .attr("fill", "#94a3b8")
+                    .text(idx);
+            });
+
+            // Current multiplication
+            if (currentMul) {
+                const calcY = 280;
+                svg.append("rect")
+                    .attr("x", 30)
+                    .attr("y", calcY)
+                    .attr("width", 500)
+                    .attr("height", 70)
+                    .attr("rx", 10)
+                    .attr("fill", "#eff6ff")
+                    .attr("stroke", "#3b82f6");
+
+                svg.append("text")
+                    .attr("x", 50)
+                    .attr("y", calcY + 25)
+                    .attr("font-size", "13px")
+                    .attr("fill", "#1e293b")
+                    .text(`num1[${currentMul.i}] × num2[${currentMul.j}] = ${currentMul.d1} × ${currentMul.d2} = ${currentMul.mul}`);
+
+                svg.append("text")
+                    .attr("x", 50)
+                    .attr("y", calcY + 50)
+                    .attr("font-size", "13px")
+                    .attr("fill", "#1e293b")
+                    .text(`Position: p1=${currentMul.p1}, p2=${currentMul.p2} | result[p2] += ${currentMul.mul}, handle carry`);
+            }
+
+            // Algorithm explanation
+            const algoX = 550;
+            svg.append("text")
+                .attr("x", algoX)
+                .attr("y", 280)
+                .attr("font-size", "13px")
+                .attr("font-weight", "bold")
+                .attr("fill", "#1e293b")
+                .text("Algorithm:");
+
+            const steps = [
+                "1. result[] has n1+n2 positions",
+                "2. For each digit pair (i, j):",
+                "   - Multiply: d1 × d2",
+                "   - Position: p1=i+j, p2=i+j+1",
+                "   - Add to result[p2]",
+                "   - Carry to result[p1]"
+            ];
+
+            steps.forEach((step, idx) => {
+                svg.append("text")
+                    .attr("x", algoX)
+                    .attr("y", 305 + idx * 20)
+                    .attr("font-size", "12px")
+                    .attr("fill", "#64748b")
+                    .text(step);
+            });
+
+            // Final result
+            if (phase === "done") {
+                const finalResult = result.join('').replace(/^0+/, '') || '0';
+                svg.append("rect")
+                    .attr("x", 30)
+                    .attr("y", 450)
+                    .attr("width", 400)
+                    .attr("height", 55)
+                    .attr("rx", 10)
+                    .attr("fill", "#d1fae5")
+                    .attr("stroke", "#10b981")
+                    .attr("stroke-width", 2);
+
+                svg.append("text")
+                    .attr("x", 230)
+                    .attr("y", 485)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "18px")
+                    .attr("font-weight", "bold")
+                    .attr("fill", "#10b981")
+                    .text(`✓ ${num1} × ${num2} = ${finalResult}`);
+            }
+        }
+
+        function step() {
+            if (i < 0) {
+                phase = "done";
+                const finalResult = result.join('').replace(/^0+/, '') || '0';
+                document.getElementById("status").textContent = `✓ Complete! ${num1} × ${num2} = ${finalResult}`;
+                render();
+                return;
+            }
+
+            const d1 = parseInt(num1[i]);
+            const d2 = parseInt(num2[j]);
+            const mul = d1 * d2;
+            const p1 = i + j;
+            const p2 = i + j + 1;
+            const total = mul + result[p2];
+
+            result[p2] = total % 10;
+            result[p1] += Math.floor(total / 10);
+
+            currentMul = { i, j, d1, d2, mul, p1, p2 };
+            document.getElementById("status").textContent = 
+                `${d1} × ${d2} = ${mul}, add to position ${p2}`;
+
+            // Move to next position
+            j--;
+            if (j < 0) {
+                j = num2.length - 1;
+                i--;
+            }
+
+            render();
+        }
+
+        function autoRun() {
+            if (animationTimer) {
+                clearInterval(animationTimer);
+                animationTimer = null;
+                document.getElementById("autoRunBtn").textContent = "▶ Auto Run";
+                return;
+            }
+
+            document.getElementById("autoRunBtn").textContent = "⏸ Pause";
+            animationTimer = setInterval(() => {
+                if (i < 0) {
+                    phase = "done";
+                    const finalResult = result.join('').replace(/^0+/, '') || '0';
+                    document.getElementById("status").textContent = `✓ Complete! ${num1} × ${num2} = ${finalResult}`;
+                    render();
+                    clearInterval(animationTimer);
+                    animationTimer = null;
+                    document.getElementById("autoRunBtn").textContent = "▶ Auto Run";
+                    return;
+                }
+                step();
+            }, 800);
+        }
+
+        document.getElementById("autoRunBtn").addEventListener("click", autoRun);
+        document.getElementById("stepBtn").addEventListener("click", step);
+        document.getElementById("resetBtn").addEventListener("click", reset);
+
+        reset();
+    </script>
+</body>
+</html>

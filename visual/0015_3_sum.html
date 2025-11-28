@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LC 15: 3Sum - Algorithm Visualization</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="problem-info">
+            <h1><span class="problem-number">#15</span> 3Sum</h1>
+            <p>Given an integer array nums, return all unique triplets [nums[i], nums[j], nums[k]] where i ≠ j ≠ k and nums[i] + nums[j] + nums[k] == 0.</p>
+            <div class="problem-meta">
+                <span class="meta-tag">📁 Array</span>
+                <span class="meta-tag">👉👈 Two Pointers</span>
+                <span class="meta-tag">📊 Sorting</span>
+                <span class="meta-tag">⏱️ O(n²)</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <code>python/0015_3_sum/0015_3_sum.py</code>
+            </div>
+            </div>
+
+        <div class="explanation-panel">
+            <h4>🧠 How It Works (Layman's Terms)</h4>
+            <p>We want to find three numbers that add up to zero. The trick is:</p>
+            <ul>
+                <li><strong>Sort first:</strong> This lets us use two pointers efficiently</li>
+                <li><strong>Fix one number:</strong> For each number, find two others that complete the sum</li>
+                <li><strong>Two pointers:</strong> After fixing one number, use left/right pointers on the rest</li>
+                <li><strong>Adjust pointers:</strong> If sum too small → move left up. If too big → move right down</li>
+                <li><strong>Skip duplicates:</strong> To avoid duplicate triplets</li>
+            </ul>
+        </div>
+
+
+        <div class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+            
+            <div class="controls">
+                <button class="btn btn-primary" id="stepBtn" onclick="step()">Step</button>
+                <button class="btn btn-success" id="autoBtn" onclick="toggleAuto()">Auto Run</button>
+                <button class="btn btn-warning" onclick="reset()">Reset</button>
+            </div>
+
+            <div class="status-message" id="statusMessage">
+                Click "Step" or "Auto Run" to start visualization
+            </div>
+
+            <div class="variable-display">
+                <div class="variable-box">
+                    <div class="variable-name">Fixed (i)</div>
+                    <div class="variable-value" id="fixedVal" style="color: #9c27b0;">-</div>
+                </div>
+                <div class="variable-box">
+                    <div class="variable-name">Left</div>
+                    <div class="variable-value" id="leftVal" style="color: #ff5722;">-</div>
+                </div>
+                <div class="variable-box">
+                    <div class="variable-name">Right</div>
+                    <div class="variable-value" id="rightVal" style="color: #3f51b5;">-</div>
+                </div>
+                <div class="variable-box">
+                    <div class="variable-name">Sum</div>
+                    <div class="variable-value" id="sumVal">-</div>
+                </div>
+            </div>
+
+            <div class="array-section">
+                <div class="array-label">📥 Sorted Array:</div>
+                <div class="array-container" id="arrayContainer"></div>
+            </div>
+
+            <div class="array-section">
+                <div class="array-label">✅ Found Triplets:</div>
+                <div id="tripletsContainer">
+                    <div style="color: #999; padding: 10px;">No triplets found yet</div>
+                </div>
+            </div>
+        </div>
+        <div class="code-section">
+            <h3>💻 Python Solution</h3>
+            <div class="code-block">
+                <pre><span class="keyword">def</span> <span class="function">three_sum</span>(self, nums: <span class="class-name">List</span>[int]) -> List[List[int]]:
+    nums.<span class="function">sort</span>()
+    result = []
+    
+    <span class="keyword">for</span> i <span class="keyword">in</span> <span class="function">range</span>(<span class="function">len</span>(nums) - <span class="number">2</span>):
+        <span class="keyword">if</span> i > <span class="number">0</span> <span class="keyword">and</span> nums[i] == nums[i-<span class="number">1</span>]:
+            <span class="keyword">continue</span>  <span class="comment"># Skip duplicates</span>
+        
+        left, right = i + <span class="number">1</span>, <span class="function">len</span>(nums) - <span class="number">1</span>
+        
+        <span class="keyword">while</span> left < right:
+            total = nums[i] + nums[left] + nums[right]
+            
+            <span class="keyword">if</span> total < <span class="number">0</span>:
+                left += <span class="number">1</span>
+            <span class="keyword">elif</span> total > <span class="number">0</span>:
+                right -= <span class="number">1</span>
+            <span class="keyword">else</span>:
+                result.<span class="function">append</span>([nums[i], nums[left], nums[right]])
+                <span class="comment"># Skip duplicates</span>
+                <span class="keyword">while</span> left < right <span class="keyword">and</span> nums[left] == nums[left+<span class="number">1</span>]: <span class="class-name">left</span> += <span class="number">1</span>
+                <span class="keyword">while</span> left < right <span class="keyword">and</span> nums[right] == nums[right-<span class="number">1</span>]: <span class="class-name">right</span> -= <span class="number">1</span>
+                left += <span class="number">1</span>
+                right -= <span class="number">1</span>
+                
+    <span class="keyword">return</span> result</pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const originalNums = [-1, 0, 1, 2, -1, -4];
+        const nums = [...originalNums].sort((a, b) => a - b);
+        let i = 0, left = 1, right = nums.length - 1;
+        let triplets = [];
+        let phase = 'init';
+        let autoInterval = null;
+
+        function init() {
+            renderArray();
+            document.getElementById('fixedVal').textContent = '-';
+            document.getElementById('leftVal').textContent = '-';
+            document.getElementById('rightVal').textContent = '-';
+            document.getElementById('sumVal').textContent = '-';
+        }
+
+        function renderArray() {
+            const container = document.getElementById('arrayContainer');
+            container.innerHTML = '';
+            nums.forEach((num, idx) => {
+                const box = document.createElement('div');
+                box.className = 'array-box';
+                box.id = `arr-${idx}`;
+                box.innerHTML = `${num}<span class="index-label">[${idx}]</span>`;
+                
+                if (idx === i) {
+                    box.style.background = '#e1bee7';
+                    box.style.borderColor = '#9c27b0';
+                }
+                if (idx === left && phase !== 'init') {
+                    box.style.background = '#ffccbc';
+                    box.style.borderColor = '#ff5722';
+                }
+                if (idx === right && phase !== 'init') {
+                    box.style.background = '#c5cae9';
+                    box.style.borderColor = '#3f51b5';
+                }
+                
+                container.appendChild(box);
+            });
+        }
+
+        function renderTriplets() {
+            const container = document.getElementById('tripletsContainer');
+            if (triplets.length === 0) {
+                container.innerHTML = '<div style="color: #999; padding: 10px;">No triplets found yet</div>';
+                return;
+            }
+            container.innerHTML = '';
+            triplets.forEach((triplet, idx) => {
+                const tripletDiv = document.createElement('div');
+                tripletDiv.style.cssText = 'display: inline-block; padding: 10px 20px; background: #e8f5e9; border: 2px solid #4caf50; border-radius: 8px; margin: 5px; font-weight: bold;';
+                tripletDiv.textContent = `[${triplet.join(', ')}]`;
+                container.appendChild(tripletDiv);
+            });
+        }
+
+        function step() {
+            if (i >= nums.length - 2) {
+                document.getElementById('statusMessage').className = 'status-message success';
+                document.getElementById('statusMessage').textContent = 
+                    `✅ Done! Found ${triplets.length} unique triplet(s).`;
+                document.getElementById('stepBtn').disabled = true;
+                stopAuto();
+                return;
+            }
+
+            if (phase === 'init') {
+                phase = 'searching';
+                left = i + 1;
+                right = nums.length - 1;
+            }
+
+            // Skip duplicate i values
+            if (i > 0 && nums[i] === nums[i - 1]) {
+                document.getElementById('statusMessage').textContent = 
+                    `Skipping duplicate fixed value: ${nums[i]}`;
+                i++;
+                left = i + 1;
+                right = nums.length - 1;
+                renderArray();
+                return;
+            }
+
+            document.getElementById('fixedVal').textContent = nums[i];
+            document.getElementById('leftVal').textContent = nums[left];
+            document.getElementById('rightVal').textContent = nums[right];
+
+            if (left >= right) {
+                // Move to next i
+                i++;
+                left = i + 1;
+                right = nums.length - 1;
+                document.getElementById('statusMessage').textContent = 
+                    `Pointers crossed. Moving to next fixed value.`;
+                renderArray();
+                return;
+            }
+
+            const total = nums[i] + nums[left] + nums[right];
+            document.getElementById('sumVal').textContent = total;
+
+            if (total < 0) {
+                document.getElementById('statusMessage').textContent = 
+                    `Sum = ${nums[i]} + ${nums[left]} + ${nums[right]} = ${total} < 0. Move left →`;
+                left++;
+            } else if (total > 0) {
+                document.getElementById('statusMessage').textContent = 
+                    `Sum = ${nums[i]} + ${nums[left]} + ${nums[right]} = ${total} > 0. Move right ←`;
+                right--;
+            } else {
+                // Found a triplet!
+                triplets.push([nums[i], nums[left], nums[right]]);
+                renderTriplets();
+                document.getElementById('statusMessage').className = 'status-message success';
+                document.getElementById('statusMessage').textContent = 
+                    `🎯 Found triplet: [${nums[i]}, ${nums[left]}, ${nums[right]}]!`;
+                
+                // Skip duplicates
+                while (left < right && nums[left] === nums[left + 1]) left++;
+                while (left < right && nums[right] === nums[right - 1]) right--;
+                left++;
+                right--;
+            }
+
+            renderArray();
+        }
+
+        function toggleAuto() {
+            if (autoInterval) {
+                stopAuto();
+            } else {
+                document.getElementById('autoBtn').textContent = 'Pause';
+                autoInterval = setInterval(() => {
+                    if (i >= nums.length - 2) {
+                        step();
+                        stopAuto();
+                    } else {
+                        step();
+                    }
+                }, 1000);
+            }
+        }
+
+        function stopAuto() {
+            if (autoInterval) {
+                clearInterval(autoInterval);
+                autoInterval = null;
+            }
+            document.getElementById('autoBtn').textContent = 'Auto Run';
+        }
+
+        function reset() {
+            stopAuto();
+            i = 0;
+            left = 1;
+            right = nums.length - 1;
+            triplets = [];
+            phase = 'init';
+            document.getElementById('stepBtn').disabled = false;
+            document.getElementById('statusMessage').className = 'status-message';
+            document.getElementById('statusMessage').textContent = 'Click "Step" or "Auto Run" to start visualization';
+            document.getElementById('tripletsContainer').innerHTML = '<div style="color: #999; padding: 10px;">No triplets found yet
+
+        </div>';
+            init();
+        }
+
+        init();
+    </script>
+</body>
+</html>

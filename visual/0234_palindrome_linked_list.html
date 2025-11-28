@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LC 234: Palindrome Linked List - Algorithm Visualization</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="problem-info">
+            <h1><span class="problem-number">#234</span> Palindrome Linked List</h1>
+            <p>Given the head of a singly linked list, return true if it is a palindrome or false otherwise.</p>
+            <div class="problem-meta">
+                <span class="meta-tag">🔗 Linked List</span>
+                <span class="meta-tag">👉👈 Two Pointers</span>
+                <span class="meta-tag">⏱️ O(n)</span>
+                <span class="meta-tag">💾 O(1)</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <code>python/0234_palindrome_linked_list/0234_palindrome_linked_list.py</code>
+            </div>
+            </div>
+
+        <div class="explanation-panel">
+            <h4>🧠 How It Works (Layman's Terms)</h4>
+            <p>To check if a linked list is a palindrome in O(1) space:</p>
+            <ul>
+                <li><strong>Step 1:</strong> Find the middle using slow/fast pointers</li>
+                <li><strong>Step 2:</strong> Reverse the second half of the list</li>
+                <li><strong>Step 3:</strong> Compare first half with reversed second half</li>
+                <li><strong>Result:</strong> If all nodes match, it's a palindrome!</li>
+            </ul>
+        </div>
+
+
+        <div class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+            
+            <div class="controls">
+                <button class="btn btn-primary" id="stepBtn" onclick="step()">Step</button>
+                <button class="btn btn-success" id="autoBtn" onclick="toggleAuto()">Auto Run</button>
+                <button class="btn btn-warning" onclick="reset()">Reset</button>
+            </div>
+
+            <div class="status-message" id="statusMessage">
+                Click "Step" to start checking if list is a palindrome
+            </div>
+
+            <div class="variable-display">
+                <div class="variable-box">
+                    <div class="variable-name">Phase</div>
+                    <div class="variable-value" id="phaseVal">Find Middle</div>
+                </div>
+                <div class="variable-box">
+                    <div class="variable-name">Slow</div>
+                    <div class="variable-value" id="slowVal" style="color: #4caf50;">1</div>
+                </div>
+                <div class="variable-box">
+                    <div class="variable-name">Fast</div>
+                    <div class="variable-value" id="fastVal" style="color: #ff5722;">1</div>
+                </div>
+            </div>
+
+            <div class="array-section">
+                <div class="array-label">🔗 Original List:</div>
+                <div id="originalList" class="linked-list-container"></div>
+            </div>
+
+            <div class="array-section">
+                <div class="array-label">🔄 Second Half (Reversed):</div>
+                <div id="secondHalf" class="linked-list-container">
+                    <span style="color: #999;">Will appear after reversing</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="code-section">
+            <h3>💻 Python Solution</h3>
+            <div class="code-block">
+                <pre><span class="keyword">def</span> <span class="function">isPalindrome</span>(self, head):
+    <span class="comment"># Find middle</span>
+    slow = fast = head
+    <span class="keyword">while</span> fast <span class="keyword">and</span> fast.next:
+        slow = slow.next
+        fast = fast.next.next
+    
+    <span class="comment"># Reverse second half</span>
+    prev = <span class="keyword">None</span>
+    <span class="keyword">while</span> slow:
+        temp = slow.next
+        slow.next = prev
+        prev = slow
+        slow = temp
+    
+    <span class="comment"># Compare halves</span>
+    left, right = head, prev
+    <span class="keyword">while</span> right:
+        <span class="keyword">if</span> left.val != right.val:
+            <span class="keyword">return</span> <span class="keyword">False</span>
+        left = left.next
+        right = right.next
+    <span class="keyword">return</span> <span class="keyword">True</span></pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const values = [1, 2, 3, 2, 1];  // Palindrome example
+        let phase = 0;  // 0: find middle, 1: reverse, 2: compare
+        let slowIdx = 0;
+        let fastIdx = 0;
+        let reversedSecondHalf = [];
+        let compareIdx = 0;
+        let reverseProgress = 0;
+        let autoInterval = null;
+
+        function init() {
+            renderOriginalList();
+            document.getElementById('secondHalf').innerHTML = '<span style="color: #999;">Will appear after reversing</span>';
+        }
+
+        function renderOriginalList() {
+            const container = document.getElementById('originalList');
+            container.innerHTML = '';
+            
+            for (let i = 0; i < values.length; i++) {
+                const nodeDiv = document.createElement('div');
+                nodeDiv.className = 'list-node';
+                
+                const box = document.createElement('div');
+                box.className = 'node-box';
+                box.textContent = values[i];
+                
+                if (phase === 0) {
+                    if (i === slowIdx) box.style.background = '#4caf50';
+                    if (i === fastIdx) box.style.border = '3px solid #ff5722';
+                } else if (phase === 2 && i === compareIdx) {
+                    box.style.background = '#2196f3';
+                }
+                
+                nodeDiv.appendChild(box);
+                
+                if (i < values.length - 1) {
+                    const arrow = document.createElement('span');
+                    arrow.className = 'node-arrow';
+                    arrow.textContent = '→';
+                    nodeDiv.appendChild(arrow);
+                }
+                
+                container.appendChild(nodeDiv);
+            }
+        }
+
+        function renderSecondHalf() {
+            const container = document.getElementById('secondHalf');
+            if (reversedSecondHalf.length === 0) {
+                container.innerHTML = '<span style="color: #999;">Reversing...</span>';
+                return;
+            }
+
+            container.innerHTML = '';
+            for (let i = 0; i < reversedSecondHalf.length; i++) {
+                const nodeDiv = document.createElement('div');
+                nodeDiv.className = 'list-node';
+                
+                const box = document.createElement('div');
+                box.className = 'node-box visited';
+                box.textContent = reversedSecondHalf[i];
+                
+                if (phase === 2 && i === compareIdx) {
+                    box.style.background = '#2196f3';
+                }
+                
+                nodeDiv.appendChild(box);
+                
+                if (i < reversedSecondHalf.length - 1) {
+                    const arrow = document.createElement('span');
+                    arrow.className = 'node-arrow';
+                    arrow.textContent = '→';
+                    nodeDiv.appendChild(arrow);
+                }
+                
+                container.appendChild(nodeDiv);
+            }
+        }
+
+        function step() {
+            const mid = Math.ceil(values.length / 2);
+            
+            if (phase === 0) {
+                // Find middle phase
+                if (fastIdx < values.length - 2) {
+                    slowIdx++;
+                    fastIdx += 2;
+                    document.getElementById('slowVal').textContent = values[slowIdx];
+                    document.getElementById('fastVal').textContent = fastIdx < values.length ? values[fastIdx] : 'null';
+                    document.getElementById('statusMessage').textContent = 
+                        `Finding middle: slow at index ${slowIdx}, fast at index ${fastIdx}`;
+                } else {
+                    phase = 1;
+                    reverseProgress = mid;
+                    document.getElementById('phaseVal').textContent = 'Reverse 2nd Half';
+                    document.getElementById('statusMessage').textContent = 
+                        `Middle found at index ${slowIdx}. Now reversing second half...`;
+                }
+                renderOriginalList();
+            } else if (phase === 1) {
+                // Reverse second half
+                if (reverseProgress < values.length) {
+                    reversedSecondHalf.unshift(values[reverseProgress]);
+                    reverseProgress++;
+                    document.getElementById('statusMessage').textContent = 
+                        `Reversing: Added ${values[reverseProgress - 1]} to reversed list`;
+                    renderSecondHalf();
+                } else {
+                    phase = 2;
+                    compareIdx = 0;
+                    document.getElementById('phaseVal').textContent = 'Compare';
+                    document.getElementById('statusMessage').textContent = 'Comparing first half with reversed second half...';
+                }
+            } else if (phase === 2) {
+                // Compare phase
+                if (compareIdx < reversedSecondHalf.length) {
+                    const leftVal = values[compareIdx];
+                    const rightVal = reversedSecondHalf[compareIdx];
+                    
+                    if (leftVal === rightVal) {
+                        document.getElementById('statusMessage').textContent = 
+                            `Comparing: ${leftVal} == ${rightVal} ✓`;
+                        compareIdx++;
+                        renderOriginalList();
+                        renderSecondHalf();
+                    } else {
+                        document.getElementById('statusMessage').className = 'status-message error';
+                        document.getElementById('statusMessage').textContent = 
+                            `❌ Not a palindrome! ${leftVal} != ${rightVal}`;
+                        document.getElementById('stepBtn').disabled = true;
+                        stopAuto();
+                        return;
+                    }
+                    
+                    if (compareIdx >= reversedSecondHalf.length) {
+                        document.getElementById('statusMessage').className = 'status-message success';
+                        document.getElementById('statusMessage').textContent = 
+                            `✅ It's a palindrome! All values match.`;
+                        document.getElementById('stepBtn').disabled = true;
+                        stopAuto();
+                    }
+                }
+            }
+        }
+
+        function toggleAuto() {
+            if (autoInterval) {
+                stopAuto();
+            } else {
+                document.getElementById('autoBtn').textContent = 'Pause';
+                autoInterval = setInterval(step, 800);
+            }
+        }
+
+        function stopAuto() {
+            if (autoInterval) {
+                clearInterval(autoInterval);
+                autoInterval = null;
+            }
+            document.getElementById('autoBtn').textContent = 'Auto Run';
+        }
+
+        function reset() {
+            stopAuto();
+            phase = 0;
+            slowIdx = 0;
+            fastIdx = 0;
+            reversedSecondHalf = [];
+            compareIdx = 0;
+            reverseProgress = 0;
+            document.getElementById('stepBtn').disabled = false;
+            document.getElementById('statusMessage').className = 'status-message';
+            document.getElementById('statusMessage').textContent = 'Click "Step" to start checking if list is a palindrome';
+            document.getElementById('phaseVal').textContent = 'Find Middle';
+            document.getElementById('slowVal').textContent = values[0];
+            document.getElementById('fastVal').textContent = values[0];
+            init();
+        }
+
+        init();
+    </script>
+</body>
+</html>

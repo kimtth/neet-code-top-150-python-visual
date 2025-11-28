@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LC 3: Longest Substring Without Repeating Characters - Algorithm Visualization</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="problem-info">
+            <h1><span class="problem-number">#3</span> Longest Substring Without Repeating Characters</h1>
+            <p>Given a string s, find the length of the longest substring without repeating characters.</p>
+            <div class="problem-meta">
+                <span class="meta-tag">🪟 Sliding Window</span>
+                <span class="meta-tag">🔤 String</span>
+                <span class="meta-tag">⏱️ O(n)</span>
+                <span class="meta-tag">💾 O(min(n, m))</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <code>python/0003 Longest Substring Without Repeating Characters/0003_longest_substring_without_repeating_characters.py</code>
+            </div>
+            </div>
+
+        <div class="explanation-panel">
+            <h4>🧠 How It Works (Layman's Terms)</h4>
+            <p>Imagine a <strong>sliding window</strong> that expands and contracts:</p>
+            <ul>
+                <li><strong>Right pointer (r):</strong> Always moves forward, adding characters</li>
+                <li><strong>Left pointer (l):</strong> Moves forward when we find a duplicate</li>
+                <li><strong>Set (char_set):</strong> Tracks characters currently in our window</li>
+                <li><strong>Duplicate found?</strong> Shrink window from left until the duplicate is gone</li>
+            </ul>
+        </div>
+
+
+        <div class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+            
+            <div class="controls">
+                <input type="text" id="inputString" value="abcabcbb" placeholder="Enter string" style="padding: 8px; border-radius: 5px; border: 2px solid #ddd; width: 150px;">
+                <button class="btn btn-primary" onclick="loadString()">Load</button>
+                <button class="btn btn-primary" onclick="step()">Step</button>
+                <button class="btn btn-success" onclick="autoRun()">Auto Run</button>
+                <button class="btn" style="background: #607d8b; color: white;" onclick="reset()">Reset</button>
+            </div>
+
+            <div class="status-message" id="statusMessage">
+                Load a string and click Step to begin
+            </div>
+
+            <div class="variable-display" id="variables">
+                <div class="var-box">
+                    <span class="var-label">left (l)</span>
+                    <span class="var-value" id="varL">0</span>
+                </div>
+                <div class="var-box">
+                    <span class="var-label">right (r)</span>
+                    <span class="var-value" id="varR">0</span>
+                </div>
+                <div class="var-box">
+                    <span class="var-label">Window Size</span>
+                    <span class="var-value" id="varWindow">0</span>
+                </div>
+                <div class="var-box" style="background: #e8f5e9;">
+                    <span class="var-label">Max Length</span>
+                    <span class="var-value" id="varMax" style="color: #4caf50;">0</span>
+                </div>
+            </div>
+
+            <div style="margin-top: 20px;">
+                <h4 style="margin-bottom: 10px;">🔤 String with Sliding Window</h4>
+                <div id="stringContainer" style="display: flex; gap: 5px; flex-wrap: wrap; padding: 20px; background: #f5f5f5; border-radius: 12px; justify-content: center;">
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 30px; flex-wrap: wrap; margin-top: 20px;">
+                <div style="flex: 1; min-width: 200px;">
+                    <h4 style="margin-bottom: 10px;">📦 Character Set</h4>
+                    <div id="setContainer" style="display: flex; gap: 8px; flex-wrap: wrap; padding: 20px; background: #f5f5f5; border-radius: 12px; min-height: 60px;">
+                        <span style="color: #999;">Empty</span>
+                    </div>
+                </div>
+                <div style="flex: 1; min-width: 200px;">
+                    <h4 style="margin-bottom: 10px;">🏆 Best Substring Found</h4>
+                    <div id="bestContainer" style="padding: 20px; background: #e8f5e9; border-radius: 12px; text-align: center; font-size: 1.5em; font-weight: bold; color: #4caf50;">
+                        -
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="code-section">
+            <h3>💻 Python Solution</h3>
+            <div class="code-block">
+                <pre><span class="keyword">def</span> <span class="function">longest_substring</span>(s):
+    char_set = <span class="function">set</span>()
+    l = <span class="number">0</span>
+    res = <span class="number">0</span>
+
+    <span class="keyword">for</span> r <span class="keyword">in</span> <span class="function">range</span>(<span class="function">len</span>(s)):
+        <span class="comment"># Shrink window until no duplicate</span>
+        <span class="keyword">while</span> s[r] <span class="keyword">in</span> char_set:
+            char_set.<span class="function">remove</span>(s[l])
+            l += <span class="number">1</span>
+        
+        char_set.<span class="function">add</span>(s[r])
+        res = <span class="function">max</span>(res, r - l + <span class="number">1</span>)
+    
+    <span class="keyword">return</span> res</pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let str = "abcabcbb";
+        let charSet = new Set();
+        let left = 0;
+        let right = 0;
+        let maxLen = 0;
+        let bestStart = 0;
+        let isRunning = false;
+        let phase = 'expand'; // 'expand' or 'shrink'
+
+        function loadString() {
+            const input = document.getElementById('inputString').value;
+            if (input.length > 0) {
+                str = input;
+                reset();
+            }
+        }
+
+        function renderString() {
+            const container = document.getElementById('stringContainer');
+            container.innerHTML = str.split('').map((char, i) => {
+                let bgColor = '#fff';
+                let borderColor = '#ddd';
+                let textColor = '#333';
+                
+                if (i >= left && i < right) {
+                    bgColor = '#667eea';
+                    borderColor = '#5a6fd6';
+                    textColor = 'white';
+                } else if (i === right && right < str.length) {
+                    bgColor = phase === 'shrink' ? '#f44336' : '#ff9800';
+                    borderColor = phase === 'shrink' ? '#d32f2f' : '#f57c00';
+                    textColor = 'white';
+                }
+
+                return `
+                    <div style="display: flex; flex-direction: column; align-items: center;">
+                        <div style="width: 45px; height: 45px; display: flex; align-items: center; 
+                                    justify-content: center; background: ${bgColor}; border: 3px solid ${borderColor}; 
+                                    border-radius: 8px; font-size: 1.3em; font-weight: bold; color: ${textColor};">
+                            ${char}
+                        </div>
+                        <span style="font-size: 0.8em; color: #666; margin-top: 5px;">${i}</span>
+                        ${i === left && i === right ? '<span style="font-size: 0.7em; color: #667eea;">L,R</span>' :
+                          i === left ? '<span style="font-size: 0.7em; color: #667eea;">L</span>' :
+                          i === right ? '<span style="font-size: 0.7em; color: #ff9800;">R</span>' : ''}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderSet() {
+            const container = document.getElementById('setContainer');
+            if (charSet.size === 0) {
+                container.innerHTML = '<span style="color: #999;">Empty</span>';
+                return;
+            }
+            
+            container.innerHTML = Array.from(charSet).map(char => `
+                <div style="padding: 10px 15px; background: #667eea; color: white; 
+                            border-radius: 8px; font-weight: bold; font-size: 1.1em;">
+                    ${char}
+
+        </div>
+            `).join('');
+        }
+
+        function updateVariables() {
+            document.getElementById('varL').textContent = left;
+            document.getElementById('varR').textContent = right;
+            document.getElementById('varWindow').textContent = right > left ? right - left : 0;
+            document.getElementById('varMax').textContent = maxLen;
+        }
+
+        function updateBest() {
+            const container = document.getElementById('bestContainer');
+            if (maxLen > 0) {
+                container.textContent = `"${str.substring(bestStart, bestStart + maxLen)}" (length: ${maxLen})`;
+            } else {
+                container.textContent = '-';
+            }
+        }
+
+        function step() {
+            if (right >= str.length && phase === 'expand') {
+                document.getElementById('statusMessage').textContent = 
+                    `Done! Longest substring without repeating characters has length ${maxLen}`;
+                return;
+            }
+
+            if (phase === 'shrink') {
+                // Shrinking phase - remove character at left
+                const leftChar = str[left];
+                charSet.delete(leftChar);
+                left++;
+                
+                document.getElementById('statusMessage').textContent = 
+                    `Shrinking: Removed '${leftChar}', left moved to ${left}`;
+                
+                // Check if we can now add the right character
+                if (!charSet.has(str[right])) {
+                    phase = 'expand';
+                }
+            } else {
+                // Expanding phase
+                const char = str[right];
+                
+                if (charSet.has(char)) {
+                    // Duplicate found - need to shrink
+                    phase = 'shrink';
+                    document.getElementById('statusMessage').textContent = 
+                        `Found duplicate '${char}'! Need to shrink window from left`;
+                } else {
+                    // Add character
+                    charSet.add(char);
+                    right++;
+                    
+                    const windowSize = right - left;
+                    if (windowSize > maxLen) {
+                        maxLen = windowSize;
+                        bestStart = left;
+                    }
+                    
+                    document.getElementById('statusMessage').textContent = 
+                        `Added '${char}'. Window: "${str.substring(left, right)}" (size: ${windowSize})${windowSize === maxLen ? ' - NEW MAX!' : ''}`;
+                }
+            }
+
+            renderString();
+            renderSet();
+            updateVariables();
+            updateBest();
+        }
+
+        function autoRun() {
+            if (isRunning) return;
+            isRunning = true;
+
+            const interval = setInterval(() => {
+                if (right >= str.length && phase === 'expand') {
+                    clearInterval(interval);
+                    isRunning = false;
+                    document.getElementById('statusMessage').textContent = 
+                        `Complete! Answer: ${maxLen} (substring: "${str.substring(bestStart, bestStart + maxLen)}")`;
+                    return;
+                }
+                step();
+            }, 700);
+        }
+
+        function reset() {
+            charSet = new Set();
+            left = 0;
+            right = 0;
+            maxLen = 0;
+            bestStart = 0;
+            isRunning = false;
+            phase = 'expand';
+            
+            document.getElementById('statusMessage').textContent = 
+                'Click Step to find the longest substring without repeating characters';
+            
+            renderString();
+            renderSet();
+            updateVariables();
+            updateBest();
+        }
+
+        reset();
+    </script>
+</body>
+</html>

@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Text Justification - LeetCode 68</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="problem-info">
+            <h1><span class="problem-number">#68</span> Text Justification</h1>
+            <p>Format text with even spacing to fit exactly maxWidth characters per line.</p>
+            <div class="problem-meta">
+                <span class="meta-tag">String</span>
+                <span class="meta-tag">Simulation</span>
+                <span class="meta-tag">Hard</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <code>python/0068_text_justification/0068_text_justification.py</code>
+            </div>
+
+        </div>
+
+        <div class="explanation-panel">
+            <h4>🧠 How It Works (Layman's Terms)</h4>
+            <p>This algorithm solves the problem <strong>step by step</strong>:</p>
+            <ul>
+                <li><strong>Understand:</strong> Parse the input data</li>
+                <li><strong>Process:</strong> Apply the core logic</li>
+                <li><strong>Optimize:</strong> Use efficient data structures</li>
+                <li><strong>Return:</strong> Output the computed result</li>
+            </ul>
+        </div>
+
+
+        <div class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+            <div class="controls">
+                <button id="stepBtn">Step</button>
+                <button id="autoBtn">Auto Run</button>
+                <button id="resetBtn">Reset</button>
+            </div>
+            <svg id="mainSvg" width="800" height="450"></svg>
+            <div class="status-message" id="status">Click "Step" to justify text</div>
+        </div>
+
+        <div class="code-section">
+            <h3>Python Solution</h3>
+            <pre><span class="keyword">def</span> <span class="function">fullJustify</span>(words, maxWidth):
+    result, line, line_len = [], [], <span class="number">0</span>
+    
+    <span class="keyword">for</span> word <span class="keyword">in</span> words:
+        <span class="keyword">if</span> line_len + <span class="function">len</span>(word) + <span class="function">len</span>(line) > maxWidth:
+            <span class="comment"># Justify current line</span>
+            <span class="keyword">for</span> i <span class="keyword">in</span> <span class="function">range</span>(maxWidth - line_len):
+                line[i % <span class="function">max</span>(<span class="function">len</span>(line)<span class="number">-1</span>, <span class="number">1</span>)] += <span class="string">' '</span>
+            result.<span class="function">append</span>(<span class="string">''</span>.<span class="function">join</span>(line))
+            line, line_len = [], <span class="number">0</span>
+        line.<span class="function">append</span>(word)
+        line_len += <span class="function">len</span>(word)
+    
+    <span class="comment"># Last line: left-justified</span>
+    result.<span class="function">append</span>(<span class="string">' '</span>.<span class="function">join</span>(line).<span class="function">ljust</span>(maxWidth))
+    <span class="keyword">return</span> result</pre>
+        </div>
+    </div>
+
+    <script>
+        const words = ["This", "is", "an", "example", "of", "text", "justification."];
+        const maxWidth = 16;
+        
+        let wordIdx = 0;
+        let currentLine = [];
+        let lineLen = 0;
+        let result = [];
+        let phase = 'collecting';
+        
+        const width = 800, height = 450;
+        const svg = d3.select("#mainSvg");
+        let autoTimer = null, autoRunning = false;
+
+        function draw() {
+            svg.selectAll("*").remove();
+
+            svg.append("text").attr("x", width/2).attr("y", 25)
+                .attr("text-anchor", "middle").attr("font-weight", "bold")
+                .text(`Text Justification (maxWidth = ${maxWidth})`);
+
+            // Words remaining
+            svg.append("text").attr("x", 30).attr("y", 60).attr("font-size", "13px")
+                .attr("fill", "#666").text("Words:");
+
+            let wx = 90;
+            words.forEach((word, idx) => {
+                const isProcessed = idx < wordIdx;
+                const isCurrent = idx === wordIdx;
+                const wordWidth = word.length * 10 + 15;
+
+                svg.append("rect").attr("x", wx).attr("y", 45)
+                    .attr("width", wordWidth).attr("height", 25).attr("rx", 4)
+                    .attr("fill", isCurrent ? "#fef3c7" : (isProcessed ? "#e0e0e0" : "#e3f2fd"))
+                    .attr("stroke", isCurrent ? "#f59e0b" : "#1976d2");
+
+                svg.append("text").attr("x", wx + wordWidth/2).attr("y", 63)
+                    .attr("text-anchor", "middle").attr("font-size", "12px")
+                    .text(word);
+
+                wx += wordWidth + 5;
+            });
+
+            // Current line being built
+            svg.append("text").attr("x", 30).attr("y", 110).attr("font-size", "13px")
+                .attr("fill", "#666").text("Current Line:");
+
+            svg.append("rect").attr("x", 130).attr("y", 95)
+                .attr("width", maxWidth * 12 + 10).attr("height", 30).attr("rx", 5)
+                .attr("fill", "#fff").attr("stroke", "#ddd");
+
+            let cx = 135;
+            currentLine.forEach((word, idx) => {
+                const wordWidth = word.length * 10;
+                svg.append("text").attr("x", cx).attr("y", 115)
+                    .attr("font-size", "14px").attr("font-family", "monospace")
+                    .text(word);
+                cx += wordWidth + 12;
+            });
+
+            svg.append("text").attr("x", 130 + maxWidth * 12 + 20).attr("y", 115)
+                .attr("font-size", "12px").attr("fill", "#666")
+                .text(`len: ${lineLen}/${maxWidth}`);
+
+            // Result lines
+            svg.append("text").attr("x", 30).attr("y", 160).attr("font-size", "13px")
+                .attr("font-weight", "bold").text("Result:");
+
+            result.forEach((line, idx) => {
+                const y = 175 + idx * 30;
+                svg.append("rect").attr("x", 90).attr("y", y)
+                    .attr("width", maxWidth * 10 + 10).attr("height", 25).attr("rx", 4)
+                    .attr("fill", "#d1fae5").attr("stroke", "#10b981");
+
+                svg.append("text").attr("x", 95).attr("y", y + 17)
+                    .attr("font-size", "13px").attr("font-family", "monospace")
+                    .text(line);
+
+                svg.append("text").attr("x", 100 + maxWidth * 10 + 15).attr("y", y + 17)
+                    .attr("font-size", "11px").attr("fill", "#666")
+                    .text(`(${line.length})`);
+            });
+
+            // Done message
+            if (phase === 'done') {
+                const doneY = 175 + result.length * 30 + 20;
+                svg.append("rect").attr("x", width/2 - 100).attr("y", doneY)
+                    .attr("width", 200).attr("height", 40).attr("rx", 10)
+                    .attr("fill", "#d1fae5").attr("stroke", "#10b981");
+                svg.append("text").attr("x", width/2).attr("y", doneY + 26)
+                    .attr("text-anchor", "middle").attr("font-weight", "bold")
+                    .attr("fill", "#10b981").text("✓ Justification Complete!");
+            }
+        }
+
+        function justifyLine(line, lineLen, isLast) {
+            if (isLast || line.length === 1) {
+                return line.join(' ').padEnd(maxWidth, ' ');
+            }
+            let spaces = maxWidth - lineLen;
+            const gaps = line.length - 1;
+            const result = [...line];
+            for (let i = 0; i < spaces; i++) {
+                result[i % gaps] += ' ';
+            }
+            return result.join(' ');
+        }
+
+        function step() {
+            if (phase === 'done') return false;
+
+            if (wordIdx >= words.length) {
+                // Justify last line
+                result.push(justifyLine(currentLine, lineLen, true));
+                phase = 'done';
+                document.getElementById("status").textContent = "Last line left-justified. Done!";
+                draw();
+                return false;
+            }
+
+            const word = words[wordIdx];
+            const wouldBe = lineLen + word.length + (currentLine.length > 0 ? 1 : 0);
+
+            if (wouldBe > maxWidth && currentLine.length > 0) {
+                // Justify current line
+                const justified = justifyLine(currentLine, lineLen, false);
+                result.push(justified);
+                document.getElementById("status").textContent = 
+                    `Line full! Justified to "${justified}"`;
+                currentLine = [];
+                lineLen = 0;
+            } else {
+                currentLine.push(word);
+                lineLen += word.length;
+                document.getElementById("status").textContent = 
+                    `Added "${word}". Line length: ${lineLen}`;
+                wordIdx++;
+            }
+
+            draw();
+            return true;
+        }
+
+        function reset() {
+            wordIdx = 0; currentLine = []; lineLen = 0; result = []; phase = 'collecting';
+            if (autoTimer) clearInterval(autoTimer);
+            autoRunning = false;
+            document.getElementById("autoBtn").textContent = "Auto Run";
+            document.getElementById("status").textContent = 'Click "Step" to justify text';
+            draw();
+        }
+
+        function autoRun() {
+            if (autoRunning) { clearInterval(autoTimer); autoRunning = false; document.getElementById("autoBtn").textContent = "Auto Run"; }
+            else {
+                autoRunning = true; document.getElementById("autoBtn").textContent = "Pause";
+                autoTimer = setInterval(() => { if (!step()) { clearInterval(autoTimer); autoRunning = false; document.getElementById("autoBtn").textContent = "Auto Run"; } }, 800);
+            }
+        }
+
+        document.getElementById("stepBtn").addEventListener("click", step);
+        document.getElementById("autoBtn").addEventListener("click", autoRun);
+        document.getElementById("resetBtn").addEventListener("click", reset);
+        reset();
+    </script>
+</body>
+</html>

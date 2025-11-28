@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LC 1899: Merge Triplets to Form Target Triplet - Algorithm Visualization</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="problem-info">
+            <h1><span class="problem-number">#1899</span> Merge Triplets to Form Target Triplet</h1>
+            <p>Given triplets and a target, determine if target can be formed by taking max of each position from selected triplets.</p>
+            <div class="problem-meta">
+                <span class="meta-tag">🎯 Greedy</span>
+                <span class="meta-tag">📊 Array</span>
+                <span class="meta-tag">⏱️ O(n)</span>
+                <span class="meta-tag">💾 O(1)</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <code>python/1899_merge_triplets_to_form_target_triplet/1899_merge_triplets_to_form_target_triplet.py</code>
+            </div>
+            </div>
+
+        <div class="explanation-panel">
+            <h4>🧠 How It Works (Layman's Terms)</h4>
+            <p><strong>Filter → Check</strong> approach:</p>
+            <ul>
+                <li><strong>Invalid:</strong> Skip triplets where ANY value > target (would exceed target)</li>
+                <li><strong>Valid:</strong> Triplets where all values ≤ corresponding target values</li>
+                <li><strong>Collect:</strong> From valid triplets, can we find each target value?</li>
+                <li><strong>Answer:</strong> Yes if we can match all 3 positions from valid triplets</li>
+            </ul>
+        </div>
+
+
+        <div class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+            
+            <div class="controls">
+                <button class="btn btn-primary" id="startBtn" onclick="start()">▶ Start</button>
+                <button class="btn" onclick="stepForward()">Step →</button>
+                <button class="btn btn-warning" onclick="reset()">Reset</button>
+                <button class="btn" onclick="randomize()">🎲 Random</button>
+            </div>
+
+            <div class="status-message" id="statusMessage">
+                Click Start to check if target can be formed
+            </div>
+
+            <div style="display: flex; gap: 30px; flex-wrap: wrap; margin-top: 20px;">
+                <div style="flex: 2; min-width: 350px;">
+                    <h4>📊 Triplets</h4>
+                    <div id="tripletsDisplay" style="padding: 15px; background: #f5f5f5; border-radius: 12px;"></div>
+                </div>
+                <div style="flex: 1; min-width: 200px;">
+                    <h4>🎯 Target</h4>
+                    <div id="targetDisplay" style="display: flex; gap: 10px; padding: 15px; background: #e3f2fd; border-radius: 12px; justify-content: center;"></div>
+                    
+                    <h4 style="margin-top: 20px;">✅ Found Values</h4>
+                    <div id="foundDisplay" style="display: flex; gap: 10px; padding: 15px; background: #e8f5e9; border-radius: 12px; justify-content: center;"></div>
+                    
+                    <h4 style="margin-top: 20px;">📝 Result</h4>
+                    <div id="resultDisplay" style="padding: 25px; background: #fff; border-radius: 12px; text-align: center; font-size: 1.5em; font-weight: bold; border: 2px solid #ddd;">
+                        ?
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="code-section">
+            <h3>💻 Python Solution</h3>
+            <div class="code-block">
+                <pre><span class="keyword">def</span> <span class="function">mergeTriplets</span>(triplets, target):
+    found = [<span class="keyword">False</span>] * <span class="number">3</span>
+    
+    <span class="keyword">for</span> triplet <span class="keyword">in</span> triplets:
+        <span class="comment"># Skip if any value exceeds target</span>
+        <span class="keyword">if</span> triplet[<span class="number">0</span>] > target[<span class="number">0</span>] <span class="keyword">or</span> \
+           triplet[<span class="number">1</span>] > target[<span class="number">1</span>] <span class="keyword">or</span> \
+           triplet[<span class="number">2</span>] > target[<span class="number">2</span>]:
+            <span class="keyword">continue</span>
+        
+        <span class="comment"># Check if triplet contributes any target value</span>
+        <span class="keyword">for</span> i <span class="keyword">in</span> <span class="function">range</span>(<span class="number">3</span>):
+            <span class="keyword">if</span> triplet[i] == target[i]:
+                found[i] = <span class="keyword">True</span>
+    
+    <span class="keyword">return</span> <span class="function">all</span>(found)</pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let triplets = [[2,5,3], [1,8,4], [1,7,5], [2,2,6], [3,4,5]];
+        let target = [2,7,5];
+        let found = [false, false, false];
+        let processedIdx = -1;
+        let isRunning = false;
+        let stepIndex = 0;
+        let steps = [];
+
+        function precomputeSteps() {
+            steps = [];
+            const localFound = [false, false, false];
+            
+            steps.push({
+                type: 'init',
+                tripletIdx: -1,
+                found: [...localFound],
+                message: `Target: [${target.join(', ')}]. Looking for valid triplets...`
+            });
+
+            triplets.forEach((triplet, i) => {
+                const isValid = triplet[0] <= target[0] && 
+                               triplet[1] <= target[1] && 
+                               triplet[2] <= target[2];
+                
+                if (!isValid) {
+                    steps.push({
+                        type: 'skip',
+                        tripletIdx: i,
+                        found: [...localFound],
+                        message: `Skip [${triplet.join(', ')}] - exceeds target at some position`
+                    });
+                } else {
+                    const matches = [];
+                    for (let j = 0; j < 3; j++) {
+                        if (triplet[j] === target[j]) {
+                            localFound[j] = true;
+                            matches.push(j);
+                        }
+                    }
+                    
+                    steps.push({
+                        type: 'valid',
+                        tripletIdx: i,
+                        found: [...localFound],
+                        matches,
+                        message: matches.length > 0 
+                            ? `✓ [${triplet.join(', ')}] matches target at position(s): ${matches.join(', ')}`
+                            : `✓ [${triplet.join(', ')}] is valid but doesn't match exactly`
+                    });
+                }
+            });
+
+            const result = localFound.every(f => f);
+            steps.push({
+                type: 'done',
+                tripletIdx: -1,
+                found: [...localFound],
+                result,
+                message: result 
+                    ? `✅ Can form target! Found all values.`
+                    : `❌ Cannot form target. Missing: ${localFound.map((f, i) => f ? null : `pos ${i}`).filter(Boolean).join(', ')}`
+            });
+        }
+
+        function render() {
+            // Render triplets
+            const tripletsContainer = document.getElementById('tripletsDisplay');
+            tripletsContainer.innerHTML = triplets.map((t, i) => {
+                const step = steps[stepIndex - 1] || {};
+                let bg = 'white';
+                let border = '#ddd';
+                
+                if (step.tripletIdx === i) {
+                    if (step.type === 'skip') {
+                        bg = '#ffebee';
+                        border = '#f44336';
+                    } else if (step.type === 'valid') {
+                        bg = '#e8f5e9';
+                        border = '#4caf50';
+                    }
+                }
+                
+                return `<div style="display: inline-flex; gap: 8px; padding: 12px 15px; margin: 5px; background: ${bg}; border: 2px solid ${border}; border-radius: 8px;">
+                    ${t.map((v, j) => {
+                        const matches = step.type === 'valid' && step.tripletIdx === i && v === target[j];
+                        return `<span style="padding: 5px 12px; background: ${matches ? '#4caf50' : '#667eea'}; color: white; border-radius: 5px; font-weight: bold;">${v}</span>`;
+                    }).join('')}
+                </div>`;
+            }).join('');
+
+            // Render target
+            document.getElementById('targetDisplay').innerHTML = target.map(v => 
+                `<span style="padding: 10px 20px; background: #2196f3; color: white; border-radius: 8px; font-weight: bold; font-size: 1.2em;">${v}</span>`
+            ).join('');
+
+            // Render found
+            document.getElementById('foundDisplay').innerHTML = found.map((f, i) => 
+                `<span style="padding: 10px 20px; background: ${f ? '#4caf50' : '#ccc'}; color: white; border-radius: 8px; font-weight: bold; font-size: 1.2em;">${f ? target[i] : '?'}</span>`
+            ).join('');
+        }
+
+        function stepForward() {
+            if (stepIndex >= steps.length) return;
+            
+            const step = steps[stepIndex];
+            found = step.found;
+            processedIdx = step.tripletIdx;
+            
+            document.getElementById('statusMessage').textContent = step.message;
+            
+            if (step.type === 'done') {
+                const resultEl = document.getElementById('resultDisplay');
+                resultEl.textContent = step.result ? 'TRUE ✓' : 'FALSE ✗';
+                resultEl.style.background = step.result ? '#e8f5e9' : '#ffebee';
+                resultEl.style.color = step.result ? '#4caf50' : '#f44336';
+                resultEl.style.borderColor = step.result ? '#4caf50' : '#f44336';
+                isRunning = false;
+                document.getElementById('startBtn').textContent = '▶ Start';
+            }
+            
+            stepIndex++;
+            render();
+        }
+
+        async function start() {
+            if (isRunning) {
+                isRunning = false;
+                document.getElementById('startBtn').textContent = '▶ Start';
+                return;
+            }
+            
+            isRunning = true;
+            document.getElementById('startBtn').textContent = '⏸ Pause';
+            
+            while (stepIndex < steps.length && isRunning) {
+                stepForward();
+                await new Promise(r => setTimeout(r, 600));
+            }
+        }
+
+        function reset() {
+            isRunning = false;
+            stepIndex = 0;
+            found = [false, false, false];
+            processedIdx = -1;
+            
+            document.getElementById('statusMessage').textContent = 'Click Start to check if target can be formed';
+            document.getElementById('resultDisplay').textContent = '?';
+            document.getElementById('resultDisplay').style.background = '#fff';
+            document.getElementById('resultDisplay').style.color = '#333';
+            document.getElementById('resultDisplay').style.borderColor = '#ddd';
+            document.getElementById('startBtn').textContent = '▶ Start';
+            
+            precomputeSteps();
+            render();
+        }
+
+        function randomize() {
+            target = [
+                Math.floor(Math.random() * 5) + 1,
+                Math.floor(Math.random() * 5) + 1,
+                Math.floor(Math.random() * 5) + 1
+            ];
+            
+            triplets = Array.from({ length: 5 }, () => [
+                Math.floor(Math.random() * 6) + 1,
+                Math.floor(Math.random() * 6) + 1,
+                Math.floor(Math.random() * 6) + 1
+            ]);
+            
+            reset();
+        }
+
+        reset();
+    </script>
+</body>
+</html>

@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>String to Integer (atoi) - LeetCode 8</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="problem-info">
+            <h1><span class="problem-number">#8</span> String to Integer (atoi)</h1>
+            <p>Implement the myAtoi(string s) function, which converts a string to a 32-bit signed integer.</p>
+            <div class="problem-meta">
+                <span class="meta-tag">String</span>
+                <span class="meta-tag">Medium</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <code>python/0008_string_to_integer_atoi/0008_string_to_integer_atoi.py</code>
+            </div>
+
+        </div>
+
+        <div class="explanation-panel">
+            <h4>🧠 How It Works (Layman's Terms)</h4>
+            <p>This algorithm solves the problem <strong>step by step</strong>:</p>
+            <ul>
+                <li><strong>Understand:</strong> Parse the input data</li>
+                <li><strong>Process:</strong> Apply the core logic</li>
+                <li><strong>Optimize:</strong> Use efficient data structures</li>
+                <li><strong>Return:</strong> Output the computed result</li>
+            </ul>
+        </div>
+
+
+        <div class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+            <div class="controls">
+                <button id="stepBtn">Step</button>
+                <button id="autoBtn">Auto Run</button>
+                <button id="resetBtn">Reset</button>
+            </div>
+            <svg id="mainSvg" width="800" height="350"></svg>
+            <div class="status-message" id="status">Click "Step" to parse the string</div>
+        </div>
+
+        <div class="code-section">
+            <h3>Python Solution</h3>
+            <pre><span class="keyword">def</span> <span class="function">myAtoi</span>(s: <span class="class-name">str</span>) -> int:
+    INT_MAX, INT_MIN = <span class="number">2</span>**<span class="number">31</span> - <span class="number">1</span>, <span class="number">-2</span>**<span class="number">31</span>
+    
+    i, n = <span class="number">0</span>, <span class="function">len</span>(s)
+    
+    <span class="comment"># Skip whitespace</span>
+    <span class="keyword">while</span> i < n <span class="keyword">and</span> s[i] == <span class="string">' '</span>:
+        i += <span class="number">1</span>
+    
+    <span class="comment"># Check sign</span>
+    sign = <span class="number">1</span>
+    <span class="keyword">if</span> i < n <span class="keyword">and</span> s[i] <span class="keyword">in</span> [<span class="string">'-'</span>, <span class="string">'+'</span>]:
+        sign = <span class="number">-1</span> <span class="keyword">if</span> s[i] == <span class="string">'-'</span> <span class="keyword">else</span> <span class="number">1</span>
+        i += <span class="number">1</span>
+    
+    <span class="comment"># Parse digits</span>
+    result = <span class="number">0</span>
+    <span class="keyword">while</span> i < n <span class="keyword">and</span> s[i].<span class="function">isdigit</span>():
+        result = result * <span class="number">10</span> + <span class="function">int</span>(s[i])
+        i += <span class="number">1</span>
+    
+    result *= sign
+    
+    <span class="comment"># Clamp to 32-bit range</span>
+    <span class="keyword">return</span> <span class="function">max</span>(INT_MIN, <span class="function">min</span>(INT_MAX, result))</pre>
+        </div>
+    </div>
+
+    <script>
+        const testCases = [
+            "   -42",
+            "4193 with words",
+            "words and 987"
+        ];
+        let currentTest = 0;
+        let s = testCases[currentTest];
+        
+        const width = 800, height = 350;
+        const svg = d3.select("#mainSvg");
+        const INT_MAX = 2147483647, INT_MIN = -2147483648;
+
+        let i = 0;
+        let phase = 'whitespace'; // whitespace, sign, digits, done
+        let sign = 1;
+        let result = 0;
+        let autoTimer = null;
+        let autoRunning = false;
+
+        function draw() {
+            svg.selectAll("*").remove();
+
+            const cellWidth = 40, startX = 50, startY = 80;
+
+            // Title
+            svg.append("text")
+                .attr("x", width / 2).attr("y", 30)
+                .attr("text-anchor", "middle")
+                .attr("font-weight", "bold")
+                .text(`Parsing: "${s}"`);
+
+            // Draw string characters
+            for (let idx = 0; idx < s.length; idx++) {
+                const x = startX + idx * cellWidth;
+                let fill = "#f8fafc", stroke = "#94a3b8";
+
+                if (idx < i) {
+                    fill = "#e0e7ff"; stroke = "#6366f1";
+                } else if (idx === i) {
+                    fill = "#fef3c7"; stroke = "#f59e0b";
+                }
+
+                svg.append("rect")
+                    .attr("x", x).attr("y", startY)
+                    .attr("width", cellWidth - 4).attr("height", 45)
+                    .attr("rx", 6)
+                    .attr("fill", fill).attr("stroke", stroke)
+                    .attr("stroke-width", idx === i ? 3 : 2);
+
+                svg.append("text")
+                    .attr("x", x + (cellWidth - 4) / 2)
+                    .attr("y", startY + 30)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "18px")
+                    .attr("font-weight", "bold")
+                    .text(s[idx] === ' ' ? '␣' : s[idx]);
+
+                svg.append("text")
+                    .attr("x", x + (cellWidth - 4) / 2)
+                    .attr("y", startY + 60)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "10px")
+                    .attr("fill", "#666")
+                    .text(idx);
+            }
+
+            // Pointer
+            if (i < s.length) {
+                svg.append("text")
+                    .attr("x", startX + i * cellWidth + (cellWidth - 4) / 2)
+                    .attr("y", startY - 10)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "12px")
+                    .attr("fill", "#f59e0b")
+                    .text("▼ i");
+            }
+
+            // Variables
+            const varsY = 180;
+            const vars = [
+                { name: "Phase", value: phase },
+                { name: "Sign", value: sign === 1 ? "+" : "-" },
+                { name: "Result", value: result * sign }
+            ];
+
+            vars.forEach((v, idx) => {
+                const x = 100 + idx * 200;
+                
+                svg.append("rect")
+                    .attr("x", x).attr("y", varsY)
+                    .attr("width", 150).attr("height", 50)
+                    .attr("rx", 8)
+                    .attr("fill", "#e8f5e9").attr("stroke", "#4caf50");
+
+                svg.append("text")
+                    .attr("x", x + 75).attr("y", varsY + 20)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "12px")
+                    .attr("fill", "#666")
+                    .text(v.name);
+
+                svg.append("text")
+                    .attr("x", x + 75).attr("y", varsY + 40)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "18px")
+                    .attr("font-weight", "bold")
+                    .text(v.value);
+            });
+
+            // Final result
+            if (phase === 'done') {
+                let finalResult = result * sign;
+                finalResult = Math.max(INT_MIN, Math.min(INT_MAX, finalResult));
+
+                svg.append("rect")
+                    .attr("x", width / 2 - 100).attr("y", 270)
+                    .attr("width", 200).attr("height", 50)
+                    .attr("rx", 10)
+                    .attr("fill", "#d1fae5").attr("stroke", "#10b981");
+
+                svg.append("text")
+                    .attr("x", width / 2).attr("y", 302)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "20px")
+                    .attr("font-weight", "bold")
+                    .attr("fill", "#10b981")
+                    .text(`Result: ${finalResult}`);
+            }
+        }
+
+        function step() {
+            if (phase === 'done') return false;
+
+            if (phase === 'whitespace') {
+                while (i < s.length && s[i] === ' ') {
+                    i++;
+                }
+                document.getElementById("status").textContent = `Skipped whitespace. i = ${i}`;
+                phase = 'sign';
+            } else if (phase === 'sign') {
+                if (i < s.length && (s[i] === '-' || s[i] === '+')) {
+                    sign = s[i] === '-' ? -1 : 1;
+                    document.getElementById("status").textContent = `Found sign: '${s[i]}'. sign = ${sign}`;
+                    i++;
+                } else {
+                    document.getElementById("status").textContent = "No sign found, defaulting to positive";
+                }
+                phase = 'digits';
+            } else if (phase === 'digits') {
+                if (i < s.length && /\d/.test(s[i])) {
+                    result = result * 10 + parseInt(s[i]);
+                    document.getElementById("status").textContent = 
+                        `Parsed digit '${s[i]}'. result = ${result}`;
+                    i++;
+                } else {
+                    phase = 'done';
+                    let finalResult = result * sign;
+                    finalResult = Math.max(INT_MIN, Math.min(INT_MAX, finalResult));
+                    document.getElementById("status").textContent = 
+                        `Done! Final result: ${finalResult}`;
+                }
+            }
+
+            draw();
+            return phase !== 'done';
+        }
+
+        function reset() {
+            i = 0;
+            phase = 'whitespace';
+            sign = 1;
+            result = 0;
+            if (autoTimer) clearInterval(autoTimer);
+            autoRunning = false;
+            document.getElementById("autoBtn").textContent = "Auto Run";
+            document.getElementById("status").textContent = 'Click "Step" to parse the string';
+            draw();
+        }
+
+        function autoRun() {
+            if (autoRunning) {
+                clearInterval(autoTimer);
+                autoRunning = false;
+                document.getElementById("autoBtn").textContent = "Auto Run";
+            } else {
+                autoRunning = true;
+                document.getElementById("autoBtn").textContent = "Pause";
+                autoTimer = setInterval(() => {
+                    if (!step()) {
+                        clearInterval(autoTimer);
+                        autoRunning = false;
+                        document.getElementById("autoBtn").textContent = "Auto Run";
+                    }
+                }, 800);
+            }
+        }
+
+        document.getElementById("stepBtn").addEventListener("click", step);
+        document.getElementById("autoBtn").addEventListener("click", autoRun);
+        document.getElementById("resetBtn").addEventListener("click", reset);
+
+        draw();
+    </script>
+</body>
+</html>

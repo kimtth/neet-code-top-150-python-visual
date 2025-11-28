@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Product of Array Except Self - LeetCode 238</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="problem-info">
+            <h1><span class="problem-number">#0238</span> Product of Array Except Self</h1>
+            <p><strong>Problem:</strong> Given an integer array nums, return an array where each element is the product of all elements except itself. No division allowed!</p>
+            <p><strong>Pattern:</strong> Prefix & Suffix Products</p>
+            <p><strong>File:</strong> 0238_product_of_array_except_self/0238_product_of_array_except_self.py</p>
+            <div class="problem-meta">
+                <span class="meta-tag">📊 Array</span>
+                <span class="meta-tag">⏱️ O(n)</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <code>python/0238_product_of_array_except_self/0238_product_of_array_except_self.py</code>
+            </div>
+
+        </div>
+
+        <div class="explanation-panel">
+            <h4>🧠 How It Works (Layman's Terms)</h4>
+            <p>This algorithm solves the problem <strong>step by step</strong>:</p>
+            <ul>
+                <li><strong>Understand:</strong> Parse the input data</li>
+                <li><strong>Process:</strong> Apply the core logic</li>
+                <li><strong>Optimize:</strong> Use efficient data structures</li>
+                <li><strong>Return:</strong> Output the computed result</li>
+            </ul>
+        </div>
+
+
+        <div class="controls">
+            <button id="stepBtn">Step</button>
+            <button id="autoBtn">Auto Run</button>
+            <button id="resetBtn">Reset</button>
+            <div class="speed-control">
+                <label for="speed">Speed:</label>
+                <input type="range" id="speed" min="100" max="2000" value="800">
+            </div>
+        </div>
+
+        <div class="status" id="status">Click "Step" or "Auto Run" to begin</div>
+
+        <div class="variables">
+            <div class="var-item">
+                <span class="var-label">Phase:</span>
+                <span id="phaseDisplay">Prefix Pass</span>
+            </div>
+            <div class="var-item">
+                <span class="var-label">Current Index:</span>
+                <span id="indexDisplay">-</span>
+            </div>
+            <div class="var-item">
+                <span class="var-label">Running Product:</span>
+                <span id="productDisplay">1</span>
+            </div>
+        </div>
+
+        <div class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+
+            <div class="visualization">
+            <svg id="mainSvg"></svg>
+        </div>
+
+        </div>
+
+        <div class="code-section">
+            <h3>Python Solution</h3>
+            <pre><span class="keyword">def</span> <span class="function">product_except_self</span>(nums):
+    <span class="string">"""
+    Product of array except self without division.
+    Uses prefix products (left to right) then suffix products (right to left).
+    Time: O(n), Space: O(1) extra (result array doesn't count)
+    """</span>
+    n = <span class="function">len</span>(nums)
+    result = [<span class="number">1</span>] * n
+    
+    <span class="comment"># Pass 1: Calculate prefix products (product of all elements to the left)</span>
+    prefix = <span class="number">1</span>
+    <span class="keyword">for</span> i <span class="keyword">in</span> <span class="function">range</span>(n):
+        result[i] = prefix
+        prefix *= nums[i]
+    
+    <span class="comment"># Pass 2: Multiply by suffix products (product of all elements to the right)</span>
+    postfix = <span class="number">1</span>
+    <span class="keyword">for</span> i <span class="keyword">in</span> <span class="function">range</span>(n - <span class="number">1</span>, <span class="number">-1</span>, <span class="number">-1</span>):
+        result[i] *= postfix
+        postfix *= nums[i]
+    
+    <span class="keyword">return</span> result</pre>
+        </div>
+    </div>
+
+    <script>
+        // Visualization state
+        const nums = [1, 2, 3, 4];
+        let result = new Array(nums.length).fill(1);
+        let prefix = 1;
+        let postfix = 1;
+        let phase = "prefix"; // "prefix" or "postfix"
+        let currentIndex = -1;
+        let autoRunning = false;
+        let autoTimer = null;
+
+        // SVG setup
+        const width = 800;
+        const height = 350;
+        const svg = d3.select("#mainSvg")
+            .attr("width", width)
+            .attr("height", height);
+
+        const cellWidth = 80;
+        const cellHeight = 50;
+        const startX = (width - nums.length * cellWidth) / 2;
+
+        function drawArrays() {
+            svg.selectAll("*").remove();
+
+            // Input array label
+            svg.append("text")
+                .attr("x", startX - 80)
+                .attr("y", 50)
+                .attr("class", "label")
+                .text("nums:");
+
+            // Input array
+            const inputCells = svg.selectAll(".input-cell")
+                .data(nums)
+                .enter()
+                .append("g")
+                .attr("transform", (d, i) => `translate(${startX + i * cellWidth}, 25)`);
+
+            inputCells.append("rect")
+                .attr("width", cellWidth - 4)
+                .attr("height", cellHeight)
+                .attr("rx", 5)
+                .attr("class", "cell input-cell-rect")
+                .attr("id", (d, i) => `input-${i}`);
+
+            inputCells.append("text")
+                .attr("x", (cellWidth - 4) / 2)
+                .attr("y", cellHeight / 2)
+                .attr("dy", ".35em")
+                .attr("text-anchor", "middle")
+                .attr("class", "cell-text")
+                .text(d => d);
+
+            // Index labels
+            inputCells.append("text")
+                .attr("x", (cellWidth - 4) / 2)
+                .attr("y", cellHeight + 18)
+                .attr("text-anchor", "middle")
+                .attr("class", "index-label")
+                .text((d, i) => `[${i}]`);
+
+            // Result array label
+            svg.append("text")
+                .attr("x", startX - 80)
+                .attr("y", 150)
+                .attr("class", "label")
+                .text("result:");
+
+            // Result array
+            const resultCells = svg.selectAll(".result-cell")
+                .data(result)
+                .enter()
+                .append("g")
+                .attr("transform", (d, i) => `translate(${startX + i * cellWidth}, 125)`);
+
+            resultCells.append("rect")
+                .attr("width", cellWidth - 4)
+                .attr("height", cellHeight)
+                .attr("rx", 5)
+                .attr("class", "cell result-cell-rect")
+                .attr("id", (d, i) => `result-${i}`);
+
+            resultCells.append("text")
+                .attr("x", (cellWidth - 4) / 2)
+                .attr("y", cellHeight / 2)
+                .attr("dy", ".35em")
+                .attr("text-anchor", "middle")
+                .attr("class", "cell-text result-text")
+                .attr("id", (d, i) => `result-text-${i}`)
+                .text(d => d);
+
+            // Arrows for prefix (left to right)
+            if (phase === "prefix" && currentIndex >= 0) {
+                const arrowY = 210;
+                svg.append("line")
+                    .attr("x1", startX)
+                    .attr("y1", arrowY)
+                    .attr("x2", startX + (currentIndex + 1) * cellWidth - 20)
+                    .attr("y2", arrowY)
+                    .attr("class", "arrow-line prefix-arrow");
+                
+                svg.append("polygon")
+                    .attr("points", `${startX + (currentIndex + 1) * cellWidth - 20},${arrowY - 5} ${startX + (currentIndex + 1) * cellWidth - 20},${arrowY + 5} ${startX + (currentIndex + 1) * cellWidth - 10},${arrowY}`)
+                    .attr("class", "arrow-head prefix-arrow");
+
+                svg.append("text")
+                    .attr("x", startX + (currentIndex + 1) * cellWidth / 2)
+                    .attr("y", arrowY + 25)
+                    .attr("text-anchor", "middle")
+                    .attr("class", "phase-label")
+                    .text(`prefix = ${prefix}`);
+            }
+
+            // Arrows for postfix (right to left)
+            if (phase === "postfix" && currentIndex >= 0 && currentIndex < nums.length) {
+                const arrowY = 250;
+                svg.append("line")
+                    .attr("x1", startX + nums.length * cellWidth)
+                    .attr("y1", arrowY)
+                    .attr("x2", startX + currentIndex * cellWidth + 20)
+                    .attr("y2", arrowY)
+                    .attr("class", "arrow-line postfix-arrow");
+                
+                svg.append("polygon")
+                    .attr("points", `${startX + currentIndex * cellWidth + 20},${arrowY - 5} ${startX + currentIndex * cellWidth + 20},${arrowY + 5} ${startX + currentIndex * cellWidth + 10},${arrowY}`)
+                    .attr("class", "arrow-head postfix-arrow");
+
+                svg.append("text")
+                    .attr("x", startX + (currentIndex + nums.length) * cellWidth / 2)
+                    .attr("y", arrowY + 25)
+                    .attr("text-anchor", "middle")
+                    .attr("class", "phase-label")
+                    .text(`postfix = ${postfix}`);
+            }
+
+            // Final result display
+            if (phase === "done") {
+                svg.append("text")
+                    .attr("x", width / 2)
+                    .attr("y", 320)
+                    .attr("text-anchor", "middle")
+                    .attr("class", "result-final")
+                    .text(`Final Result: [${result.join(", ")}]`);
+            }
+        }
+
+        function step() {
+            if (phase === "prefix") {
+                currentIndex++;
+                if (currentIndex >= nums.length) {
+                    phase = "postfix";
+                    currentIndex = nums.length - 1;
+                    document.getElementById("phaseDisplay").textContent = "Postfix Pass";
+                    document.getElementById("status").textContent = "Prefix pass complete! Starting postfix pass (right to left)...";
+                    highlightCode("postfix = 1");
+                    drawArrays();
+                    return true;
+                }
+
+                result[currentIndex] = prefix;
+                prefix *= nums[currentIndex];
+
+                document.getElementById("indexDisplay").textContent = currentIndex;
+                document.getElementById("productDisplay").textContent = prefix;
+                document.getElementById("status").textContent = 
+                    `Prefix Pass: result[${currentIndex}] = ${result[currentIndex]} (product of elements to the left), then prefix = ${prefix / nums[currentIndex]} × ${nums[currentIndex]} = ${prefix}`;
+                
+                highlightCode("result[i] = prefix");
+                drawArrays();
+                return true;
+            } else if (phase === "postfix") {
+                if (currentIndex < 0) {
+                    phase = "done";
+                    document.getElementById("phaseDisplay").textContent = "Complete!";
+                    document.getElementById("status").textContent = `Done! Result: [${result.join(", ")}]`;
+                    highlightCode("return result");
+                    drawArrays();
+                    return false;
+                }
+
+                result[currentIndex] *= postfix;
+                postfix *= nums[currentIndex];
+
+                document.getElementById("indexDisplay").textContent = currentIndex;
+                document.getElementById("productDisplay").textContent = postfix;
+                document.getElementById("status").textContent = 
+                    `Postfix Pass: result[${currentIndex}] *= ${postfix / nums[currentIndex]} = ${result[currentIndex]}, then postfix = ${postfix / nums[currentIndex]} × ${nums[currentIndex]} = ${postfix}`;
+                
+                highlightCode("result[i] *= postfix");
+                
+                // Highlight current cell
+                svg.select(`#result-${currentIndex}`).attr("class", "cell result-cell-rect current");
+                
+                currentIndex--;
+                drawArrays();
+                return true;
+            }
+            return false;
+        }
+
+        function highlightCode(text) {
+            const codeDisplay = document.getElementById("codeDisplay");
+            const code = codeDisplay.textContent;
+            const highlighted = code.replace(
+                new RegExp(`(.*${text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}.*)`),
+                '<span class="highlight-line">$1</span>'
+            );
+            codeDisplay.innerHTML = highlighted;
+        }
+
+        function reset() {
+            result = new Array(nums.length).fill(1);
+            prefix = 1;
+            postfix = 1;
+            phase = "prefix";
+            currentIndex = -1;
+            autoRunning = false;
+            if (autoTimer) {
+                clearInterval(autoTimer);
+                autoTimer = null;
+            }
+            
+            document.getElementById("phaseDisplay").textContent = "Prefix Pass";
+            document.getElementById("indexDisplay").textContent = "-";
+            document.getElementById("productDisplay").textContent = "1";
+            document.getElementById("status").textContent = 'Click "Step" or "Auto Run" to begin';
+            document.getElementById("autoBtn").textContent = "Auto Run";
+            
+            drawArrays();
+            document.getElementById("codeDisplay").innerHTML = document.getElementById("codeDisplay").textContent;
+        }
+
+        function autoRun() {
+            if (autoRunning) {
+                autoRunning = false;
+                clearInterval(autoTimer);
+                autoTimer = null;
+                document.getElementById("autoBtn").textContent = "Auto Run";
+            } else {
+                autoRunning = true;
+                document.getElementById("autoBtn").textContent = "Pause";
+                const speed = 2100 - document.getElementById("speed").value;
+                autoTimer = setInterval(() => {
+                    if (!step()) {
+                        autoRunning = false;
+                        clearInterval(autoTimer);
+                        autoTimer = null;
+                        document.getElementById("autoBtn").textContent = "Auto Run";
+                    }
+                }, speed);
+            }
+        }
+
+        // Event listeners
+        document.getElementById("stepBtn").addEventListener("click", step);
+        document.getElementById("autoBtn").addEventListener("click", autoRun);
+        document.getElementById("resetBtn").addEventListener("click", reset);
+
+        // Initialize
+        drawArrays();
+    </script>
+
+    <style>
+        .cell {
+            fill: #e3f2fd;
+            stroke: #1976d2;
+            stroke-width: 2;
+        }
+        .cell.current {
+            fill: #fff3e0;
+            stroke: #f57c00;
+            stroke-width: 3;
+        }
+        .cell.result-cell-rect {
+            fill: #e8f5e9;
+            stroke: #43a047;
+        }
+        .cell-text {
+            font-size: 18px;
+            font-weight: bold;
+            fill: #333;
+        }
+        .label {
+            font-size: 16px;
+            font-weight: bold;
+            fill: #333;
+        }
+        .index-label {
+            font-size: 12px;
+            fill: #666;
+        }
+        .arrow-line {
+            stroke-width: 3;
+        }
+        .arrow-head {
+        }
+        .prefix-arrow {
+            stroke: #2196f3;
+            fill: #2196f3;
+        }
+        .postfix-arrow {
+            stroke: #ff9800;
+            fill: #ff9800;
+        }
+        .phase-label {
+            font-size: 14px;
+            fill: #333;
+            font-weight: bold;
+        }
+        .result-final {
+            font-size: 20px;
+            font-weight: bold;
+            fill: #388e3c;
+        }
+    </style>
+</body>
+</html>

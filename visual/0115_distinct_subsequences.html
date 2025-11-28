@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>115 - Distinct Subsequences</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        .string-display { display: flex; justify-content: center; gap: 5px; margin: 15px 0; flex-wrap: wrap; }
+        .char-box { width: 40px; height: 50px; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 8px; font-size: 1.2rem; font-weight: bold; transition: all 0.3s ease; }
+        .char-box.source { background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; }
+        .char-box.target { background: linear-gradient(135deg, #10b981, #34d399); color: white; }
+        .char-box.matched { background: #22c55e !important; color: white !important; }
+        .char-box.current { box-shadow: 0 0 15px #f59e0b; border: 2px solid #f59e0b; }
+        .idx { font-size: 0.6rem; opacity: 0.7; margin-top: 3px; }
+        #dpTable { display: flex; justify-content: center; overflow-x: auto; padding: 10px; }
+        table { border-collapse: collapse; }
+        th, td { min-width: 45px; height: 45px; text-align: center; border: 1px solid #e2e8f0; font-size: 0.85rem; padding: 5px; }
+        th { background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; }
+        td { background: #f8fafc; transition: all 0.3s ease; color: #334155; }
+        td.highlight { background: rgba(34, 197, 94, 0.3); color: #166534; font-weight: bold; }
+        td.current { box-shadow: inset 0 0 10px #f59e0b; border: 2px solid #f59e0b; }
+        .formula { font-family: monospace; background: #f1f5f9; padding: 15px; border-radius: 8px; margin: 15px 0; text-align: center; color: #334155; border: 1px solid #e2e8f0; }
+        .result { font-size: 1.5rem; text-align: center; padding: 20px; border-radius: 8px; margin-top: 15px; background: rgba(34, 197, 94, 0.2); border: 2px solid #22c55e; color: #166534; }
+        input { background: #f8fafc; color: #334155; border: 1px solid #e2e8f0; padding: 10px; border-radius: 8px; font-size: 0.9rem; width: 100px; }
+        input:focus { outline: none; border-color: #6366f1; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <section class="problem-info">
+            <h1><span class="problem-number">#115</span> Distinct Subsequences</h1>
+            <p>Count the number of distinct subsequences of string s that equal string t. A subsequence is formed by deleting some (or none) characters without changing the relative order of remaining characters.</p>
+            <div class="problem-meta">
+                <span class="meta-tag">Hard</span>
+                <span class="meta-tag">Dynamic Programming</span>
+                <span class="meta-tag">String</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <code>python/0115_distinct_subsequences/0115_distinct_subsequences.py</code>
+            </div>
+
+        </section>
+
+        <div class="explanation-panel">
+            <h4>🧠 How It Works (Layman's Terms)</h4>
+            <p>This algorithm solves the problem <strong>step by step</strong>:</p>
+            <ul>
+                <li><strong>Understand:</strong> Parse the input data</li>
+                <li><strong>Process:</strong> Apply the core logic</li>
+                <li><strong>Optimize:</strong> Use efficient data structures</li>
+                <li><strong>Return:</strong> Output the computed result</li>
+            </ul>
+        </div>
+
+
+        <section class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+            <div class="controls">
+                <label>s: <input type="text" id="sInput" value="rabbbit"></label>
+                <label>t: <input type="text" id="tInput" value="rabbit"></label>
+                <button onclick="setInputs()">Set</button>
+                <button id="stepBtn" onclick="step()">Step</button>
+                <button id="autoBtn" onclick="toggleAuto()">▶ Auto Run</button>
+                <button onclick="reset()">Reset</button>
+            </div>
+        </section>
+
+        <section class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+            <div>
+                <div style="text-align: center; margin-bottom: 5px; color: #64748b;">Source string s:</div>
+                <div class="string-display" id="sDisplay"></div>
+            </div>
+            <div style="margin-top: 15px;">
+                <div style="text-align: center; margin-bottom: 5px; color: #64748b;">Target string t:</div>
+                <div class="string-display" id="tDisplay"></div>
+            </div>
+        </section>
+
+        <section class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+            <div class="formula">
+                If s[i-1] == t[j-1]: dp[i][j] = dp[i-1][j-1] + dp[i-1][j]<br>
+                Else: dp[i][j] = dp[i-1][j]
+            </div>
+            <div id="dpTable"></div>
+            <div class="status-message" id="stepDisplay">Ready to start</div>
+            <div id="resultArea"></div>
+        </section>
+
+        <section class="code-section">
+            <h3>💻 Python Solution</h3>
+            <pre><span class="keyword">def</span> <span class="function">numDistinct</span>(s: <span class="class-name">str</span>, t: <span class="class-name">str</span>) -> int:
+    m, n = <span class="function">len</span>(s), <span class="function">len</span>(t)
+    
+    <span class="comment"># dp[i][j] = number of ways to form t[0:j] from s[0:i]</span>
+    dp = [[<span class="number">0</span>] * (n + <span class="number">1</span>) <span class="keyword">for</span> _ <span class="keyword">in</span> <span class="function">range</span>(m + <span class="number">1</span>)]
+    
+    <span class="comment"># Empty t can be formed from any prefix of s in 1 way</span>
+    <span class="keyword">for</span> i <span class="keyword">in</span> <span class="function">range</span>(m + <span class="number">1</span>):
+        dp[i][<span class="number">0</span>] = <span class="number">1</span>
+    
+    <span class="keyword">for</span> i <span class="keyword">in</span> <span class="function">range</span>(<span class="number">1</span>, m + <span class="number">1</span>):
+        <span class="keyword">for</span> j <span class="keyword">in</span> <span class="function">range</span>(<span class="number">1</span>, n + <span class="number">1</span>):
+            <span class="comment"># Always inherit: skip s[i-1]</span>
+            dp[i][j] = dp[i-<span class="number">1</span>][j]
+            
+            <span class="comment"># If characters match, also add ways using s[i-1]</span>
+            <span class="keyword">if</span> s[i-<span class="number">1</span>] == t[j-<span class="number">1</span>]:
+                dp[i][j] += dp[i-<span class="number">1</span>][j-<span class="number">1</span>]
+    
+    <span class="keyword">return</span> dp[m][n]</pre>
+        </section>
+    </div>
+
+    <script>
+        let s = "rabbbit";
+        let t = "rabbit";
+        let dp = [];
+        let steps = [];
+        let stepIndex = 0;
+        let autoInterval = null;
+        let isComplete = false;
+
+        function setInputs() {
+            s = document.getElementById('sInput').value;
+            t = document.getElementById('tInput').value;
+            reset();
+        }
+
+        function reset() {
+            const m = s.length, n = t.length;
+            dp = Array(m + 1).fill(null).map(() => Array(n + 1).fill(0));
+            steps = [];
+            stepIndex = 0;
+            isComplete = false;
+            
+            if (autoInterval) {
+                clearInterval(autoInterval);
+                autoInterval = null;
+                document.getElementById('autoBtn').textContent = '▶ Auto Run';
+            }
+            
+            for (let i = 0; i <= m; i++) {
+                steps.push({ 
+                    i, j: 0, value: 1, 
+                    desc: `Empty target can be formed from s[0:${i}] in 1 way`,
+                    type: 'init'
+                });
+            }
+            
+            for (let i = 1; i <= m; i++) {
+                for (let j = 1; j <= n; j++) {
+                    const skipVal = steps.find(st => st.i === i-1 && st.j === j)?.value || 0;
+                    let matchVal = 0;
+                    
+                    if (s[i-1] === t[j-1]) {
+                        matchVal = steps.find(st => st.i === i-1 && st.j === j-1)?.value || 0;
+                    }
+                    
+                    const newVal = skipVal + matchVal;
+                    let desc, type;
+                    if (s[i-1] === t[j-1]) {
+                        desc = `'${s[i-1]}' == '${t[j-1]}': dp[${i-1}][${j}] + dp[${i-1}][${j-1}] = ${skipVal} + ${matchVal} = ${newVal}`;
+                        type = 'match';
+                    } else {
+                        desc = `'${s[i-1]}' ≠ '${t[j-1]}': dp[${i-1}][${j}] = ${skipVal}`;
+                        type = 'skip';
+                    }
+                    steps.push({ i, j, value: newVal, desc, type });
+                }
+            }
+            render();
+        }
+
+        function step() {
+            if (isComplete || stepIndex >= steps.length) {
+                isComplete = true;
+                render();
+                return;
+            }
+            const st = steps[stepIndex];
+            dp[st.i][st.j] = st.value;
+            stepIndex++;
+            render();
+        }
+
+        function toggleAuto() {
+            if (autoInterval) {
+                clearInterval(autoInterval);
+                autoInterval = null;
+                document.getElementById('autoBtn').textContent = '▶ Auto Run';
+            } else {
+                autoInterval = setInterval(() => {
+                    if (stepIndex >= steps.length) {
+                        clearInterval(autoInterval);
+                        autoInterval = null;
+                        document.getElementById('autoBtn').textContent = '▶ Auto Run';
+                        isComplete = true;
+                        render();
+                    } else {
+                        step();
+                    }
+                }, 300);
+                document.getElementById('autoBtn').textContent = '⏸ Pause';
+            }
+        }
+
+        function render() {
+            const m = s.length, n = t.length;
+            const curStep = stepIndex > 0 ? steps[stepIndex - 1] : null;
+            const curI = curStep?.i ?? -1;
+            const curJ = curStep?.j ?? -1;
+            
+            let sHtml = '';
+            for (let i = 0; i < s.length; i++) {
+                const isCurrent = curI === i + 1;
+                sHtml += `<div class="char-box source ${isCurrent ? 'current' : ''}"><span>${s[i]}</span><span class="idx">${i}</span></div>`;
+            }
+            document.getElementById('sDisplay').innerHTML = sHtml;
+            
+            let tHtml = '';
+            for (let j = 0; j < t.length; j++) {
+                const isCurrent = curJ === j + 1;
+                tHtml += `<div class="char-box target ${isCurrent ? 'current' : ''}"><span>${t[j]}</span><span class="idx">${j}</span></div>`;
+            }
+            document.getElementById('tDisplay').innerHTML = tHtml;
+            
+            let tableHtml = '<table><tr><th></th><th>ε</th>';
+            for (let j = 0; j < n; j++) tableHtml += `<th>${t[j]}</th>`;
+            tableHtml += '</tr>';
+            
+            for (let i = 0; i <= m; i++) {
+                tableHtml += `<tr><th>${i === 0 ? 'ε' : s[i-1]}</th>`;
+                for (let j = 0; j <= n; j++) {
+                    const isCurrent = curI === i && curJ === j;
+                    const hasValue = dp[i][j] > 0;
+                    let cellClass = isCurrent ? 'current' : (hasValue ? 'highlight' : '');
+                    tableHtml += `<td class="${cellClass}">${dp[i][j]}</td>`;
+                }
+                tableHtml += '</tr>';
+            }
+            tableHtml += '</table>';
+            document.getElementById('dpTable').innerHTML = tableHtml;
+            
+            const stepDisplay = document.getElementById('stepDisplay');
+            stepDisplay.textContent = curStep ? curStep.desc : 'Ready to start';
+            stepDisplay.className = 'status-message';
+            
+            if (isComplete) {
+                document.getElementById('resultArea').innerHTML = `<div class="result">🎯 Number of distinct subsequences: <strong>${dp[m][n]}</strong></div>`;
+            } else {
+                document.getElementById('resultArea').innerHTML = '';
+            }
+        }
+
+        reset();
+    </script>
+</body>
+</html>

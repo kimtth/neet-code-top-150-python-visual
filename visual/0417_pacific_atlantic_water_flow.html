@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>417 - Pacific Atlantic Water Flow</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="problem-info">
+            <h1><span class="problem-number">#417</span> Pacific Atlantic Water Flow</h1>
+            <p>
+                Find all cells where water can flow to both Pacific (top/left edges) and 
+                Atlantic (bottom/right edges) oceans. Water flows from higher to lower or equal cells.
+            </p>
+            <div class="problem-meta">
+                <span class="meta-tag">🔗 Graph</span>
+                <span class="meta-tag">⏱️ O(n)</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <code>python/0417_pacific_atlantic_water_flow/0417_pacific_atlantic_water_flow.py</code>
+            </div>
+
+        </div>
+
+        <div class="explanation-panel">
+            <h4>🧠 How It Works (Layman's Terms)</h4>
+            <p>Graph problems are like <strong>exploring a maze</strong>:</p>
+            <ul>
+                <li><strong>Nodes:</strong> Points or locations</li>
+                <li><strong>Edges:</strong> Connections between nodes</li>
+                <li><strong>Traverse:</strong> Use DFS or BFS to explore</li>
+                <li><strong>Track visited:</strong> Avoid infinite loops</li>
+            </ul>
+        </div>
+
+
+        <section class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+            <div class="controls">
+                <button id="pacificBtn" class="btn" style="background: #3b82f6;">Show Pacific Reach</button>
+                <button id="atlanticBtn" class="btn" style="background: #10b981;">Show Atlantic Reach</button>
+                <button id="bothBtn" class="btn btn-success">Show Both Oceans</button>
+                <button id="resetBtn" class="btn btn-danger">Reset</button>
+            </div>
+            <div class="status" id="status">Click buttons to see water flow from each ocean</div>
+            <svg id="visualization"></svg>
+        </section>
+
+        <section class="code-section">
+            <h2>Python Solution</h2>
+            <pre><span class="keyword">def</span> <span class="function">pacificAtlantic</span>(heights):
+    rows, cols = <span class="function">len</span>(heights), <span class="function">len</span>(heights[<span class="number">0</span>])
+    pacific, atlantic = <span class="function">set</span>(), <span class="function">set</span>()
+    
+    <span class="keyword">def</span> <span class="function">dfs</span>(r, c, visited, prev_height):
+        <span class="keyword">if</span> (r < <span class="number">0</span> <span class="keyword">or</span> c < <span class="number">0</span> <span class="keyword">or</span> r >= rows <span class="keyword">or</span> c >= cols <span class="keyword">or</span> 
+            (r,c) <span class="keyword">in</span> visited <span class="keyword">or</span> heights[r][c] < prev_height):
+            <span class="keyword">return</span>
+        visited.<span class="function">add</span>((r, c))
+        <span class="keyword">for</span> dr, dc <span class="keyword">in</span> [(<span class="number">0</span>,<span class="number">1</span>), (<span class="number">0</span>,<span class="number">-1</span>), (<span class="number">1</span>,<span class="number">0</span>), (<span class="number">-1</span>,<span class="number">0</span>)]:
+            <span class="function">dfs</span>(r+dr, c+dc, visited, heights[r][c])
+    
+    <span class="comment"># Start from ocean edges</span>
+    <span class="keyword">for</span> c <span class="keyword">in</span> <span class="function">range</span>(cols):
+        <span class="function">dfs</span>(<span class="number">0</span>, c, pacific, <span class="number">0</span>)       <span class="comment"># Top edge (Pacific)</span>
+        <span class="function">dfs</span>(rows-<span class="number">1</span>, c, atlantic, <span class="number">0</span>) <span class="comment"># Bottom edge (Atlantic)</span>
+    <span class="keyword">for</span> r <span class="keyword">in</span> <span class="function">range</span>(rows):
+        <span class="function">dfs</span>(r, <span class="number">0</span>, pacific, <span class="number">0</span>)       <span class="comment"># Left edge (Pacific)</span>
+        <span class="function">dfs</span>(r, cols-<span class="number">1</span>, atlantic, <span class="number">0</span>) <span class="comment"># Right edge (Atlantic)</span>
+    
+    <span class="keyword">return</span> <span class="function">list</span>(pacific & atlantic)</pre>
+        </section>
+    </div>
+
+    <script>
+        const width = 900;
+        const height = 550;
+
+        const svg = d3.select("#visualization")
+            .attr("width", width)
+            .attr("height", height);
+
+        const heights = [
+            [1, 2, 2, 3, 5],
+            [3, 2, 3, 4, 4],
+            [2, 4, 5, 3, 1],
+            [6, 7, 1, 4, 5],
+            [5, 1, 1, 2, 4]
+        ];
+
+        const rows = heights.length;
+        const cols = heights[0].length;
+
+        let pacificReach = new Set();
+        let atlanticReach = new Set();
+        let showPacific = false;
+        let showAtlantic = false;
+
+        function dfs(r, c, visited, prevHeight) {
+            if (r < 0 || c < 0 || r >= rows || c >= cols) return;
+            const key = `${r},${c}`;
+            if (visited.has(key)) return;
+            if (heights[r][c] < prevHeight) return;
+            
+            visited.add(key);
+            
+            dfs(r + 1, c, visited, heights[r][c]);
+            dfs(r - 1, c, visited, heights[r][c]);
+            dfs(r, c + 1, visited, heights[r][c]);
+            dfs(r, c - 1, visited, heights[r][c]);
+        }
+
+        function computeReachability() {
+            pacificReach = new Set();
+            atlanticReach = new Set();
+
+            // Pacific - top and left edges
+            for (let c = 0; c < cols; c++) {
+                dfs(0, c, pacificReach, 0);
+            }
+            for (let r = 0; r < rows; r++) {
+                dfs(r, 0, pacificReach, 0);
+            }
+
+            // Atlantic - bottom and right edges
+            for (let c = 0; c < cols; c++) {
+                dfs(rows - 1, c, atlanticReach, 0);
+            }
+            for (let r = 0; r < rows; r++) {
+                dfs(r, cols - 1, atlanticReach, 0);
+            }
+        }
+
+        function render() {
+            svg.selectAll("*").remove();
+
+            const cellSize = 70;
+            const startX = 150;
+            const startY = 100;
+
+            // Ocean labels
+            svg.append("text")
+                .attr("x", startX + (cols * cellSize) / 2)
+                .attr("y", startY - 40)
+                .attr("text-anchor", "middle")
+                .attr("font-size", "18px")
+                .attr("font-weight", "bold")
+                .attr("fill", "#3b82f6")
+                .text("🌊 PACIFIC OCEAN 🌊");
+
+            svg.append("text")
+                .attr("x", startX - 60)
+                .attr("y", startY + (rows * cellSize) / 2)
+                .attr("text-anchor", "middle")
+                .attr("font-size", "14px")
+                .attr("font-weight", "bold")
+                .attr("fill", "#3b82f6")
+                .attr("transform", `rotate(-90, ${startX - 60}, ${startY + (rows * cellSize) / 2})`)
+                .text("PACIFIC");
+
+            svg.append("text")
+                .attr("x", startX + (cols * cellSize) / 2)
+                .attr("y", startY + rows * cellSize + 40)
+                .attr("text-anchor", "middle")
+                .attr("font-size", "18px")
+                .attr("font-weight", "bold")
+                .attr("fill", "#10b981")
+                .text("🌊 ATLANTIC OCEAN 🌊");
+
+            svg.append("text")
+                .attr("x", startX + cols * cellSize + 50)
+                .attr("y", startY + (rows * cellSize) / 2)
+                .attr("text-anchor", "middle")
+                .attr("font-size", "14px")
+                .attr("font-weight", "bold")
+                .attr("fill", "#10b981")
+                .attr("transform", `rotate(90, ${startX + cols * cellSize + 50}, ${startY + (rows * cellSize) / 2})`)
+                .text("ATLANTIC");
+
+            // Draw grid
+            for (let r = 0; r < rows; r++) {
+                for (let c = 0; c < cols; c++) {
+                    const x = startX + c * cellSize;
+                    const y = startY + r * cellSize;
+                    const key = `${r},${c}`;
+                    
+                    const canReachPacific = pacificReach.has(key);
+                    const canReachAtlantic = atlanticReach.has(key);
+                    const canReachBoth = canReachPacific && canReachAtlantic;
+
+                    let fillColor = "#f8fafc";
+                    let strokeColor = "#cbd5e1";
+                    let showHighlight = false;
+
+                    if (showPacific && showAtlantic) {
+                        if (canReachBoth) {
+                            fillColor = "#fef3c7";
+                            strokeColor = "#f59e0b";
+                            showHighlight = true;
+                        } else if (canReachPacific) {
+                            fillColor = "#dbeafe";
+                            strokeColor = "#3b82f6";
+                        } else if (canReachAtlantic) {
+                            fillColor = "#d1fae5";
+                            strokeColor = "#10b981";
+                        }
+                    } else if (showPacific && canReachPacific) {
+                        fillColor = "#dbeafe";
+                        strokeColor = "#3b82f6";
+                        showHighlight = true;
+                    } else if (showAtlantic && canReachAtlantic) {
+                        fillColor = "#d1fae5";
+                        strokeColor = "#10b981";
+                        showHighlight = true;
+                    }
+
+                    // Cell with height-based opacity gradient
+                    const heightNorm = heights[r][c] / 7;
+                    
+                    svg.append("rect")
+                        .attr("x", x)
+                        .attr("y", y)
+                        .attr("width", cellSize - 4)
+                        .attr("height", cellSize - 4)
+                        .attr("rx", 6)
+                        .attr("fill", fillColor)
+                        .attr("stroke", strokeColor)
+                        .attr("stroke-width", showHighlight ? 3 : 1);
+
+                    // Height value
+                    svg.append("text")
+                        .attr("x", x + cellSize / 2 - 2)
+                        .attr("y", y + cellSize / 2 + 2)
+                        .attr("text-anchor", "middle")
+                        .attr("dy", "0.35em")
+                        .attr("font-size", "22px")
+                        .attr("font-weight", "bold")
+                        .attr("fill", "#1e293b")
+                        .text(heights[r][c]);
+
+                    // Star marker for cells that reach both
+                    if (showPacific && showAtlantic && canReachBoth) {
+                        svg.append("text")
+                            .attr("x", x + cellSize - 15)
+                            .attr("y", y + 15)
+                            .attr("font-size", "14px")
+                            .text("⭐");
+                    }
+                }
+            }
+
+            // Legend
+            const legend = svg.append("g").attr("transform", `translate(650, 120)`);
+
+            legend.append("rect")
+                .attr("x", 0)
+                .attr("y", 0)
+                .attr("width", 200)
+                .attr("height", 180)
+                .attr("rx", 10)
+                .attr("fill", "#f8fafc")
+                .attr("stroke", "#e2e8f0");
+
+            legend.append("text")
+                .attr("x", 100)
+                .attr("y", 25)
+                .attr("text-anchor", "middle")
+                .attr("font-size", "14px")
+                .attr("font-weight", "bold")
+                .text("Legend");
+
+            legend.append("rect").attr("x", 15).attr("y", 40).attr("width", 20).attr("height", 20).attr("rx", 4).attr("fill", "#dbeafe").attr("stroke", "#3b82f6");
+            legend.append("text").attr("x", 45).attr("y", 55).attr("font-size", "12px").text("Pacific reachable");
+
+            legend.append("rect").attr("x", 15).attr("y", 70).attr("width", 20).attr("height", 20).attr("rx", 4).attr("fill", "#d1fae5").attr("stroke", "#10b981");
+            legend.append("text").attr("x", 45).attr("y", 85).attr("font-size", "12px").text("Atlantic reachable");
+
+            legend.append("rect").attr("x", 15).attr("y", 100).attr("width", 20).attr("height", 20).attr("rx", 4).attr("fill", "#fef3c7").attr("stroke", "#f59e0b");
+            legend.append("text").attr("x", 45).attr("y", 115).attr("font-size", "12px").text("Both oceans ⭐");
+
+            legend.append("text")
+                .attr("x", 15)
+                .attr("y", 145)
+                .attr("font-size", "11px")
+                .attr("fill", "#64748b")
+                .text("Water flows from higher");
+            legend.append("text")
+                .attr("x", 15)
+                .attr("y", 160)
+                .attr("font-size", "11px")
+                .attr("fill", "#64748b")
+                .text("to ≤ height neighbors");
+
+            // Result count
+            if (showPacific && showAtlantic) {
+                const bothCount = [...pacificReach].filter(k => atlanticReach.has(k)).length;
+                svg.append("text")
+                    .attr("x", 750)
+                    .attr("y", 350)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "16px")
+                    .attr("font-weight", "bold")
+                    .attr("fill", "#f59e0b")
+                    .text(`Result: ${bothCount} cells`);
+            }
+        }
+
+        function reset() {
+            showPacific = false;
+            showAtlantic = false;
+            document.getElementById("status").textContent = "Click buttons to see water flow from each ocean";
+            render();
+        }
+
+        computeReachability();
+
+        document.getElementById("pacificBtn").addEventListener("click", () => {
+            showPacific = true;
+            showAtlantic = false;
+            document.getElementById("status").textContent = `Pacific can reach ${pacificReach.size} cells (flows from top/left edges uphill)`;
+            render();
+        });
+
+        document.getElementById("atlanticBtn").addEventListener("click", () => {
+            showPacific = false;
+            showAtlantic = true;
+            document.getElementById("status").textContent = `Atlantic can reach ${atlanticReach.size} cells (flows from bottom/right edges uphill)`;
+            render();
+        });
+
+        document.getElementById("bothBtn").addEventListener("click", () => {
+            showPacific = true;
+            showAtlantic = true;
+            const both = [...pacificReach].filter(k => atlanticReach.has(k));
+            document.getElementById("status").textContent = `${both.length} cells can flow to BOTH oceans (marked with ⭐)`;
+            render();
+        });
+
+        document.getElementById("resetBtn").addEventListener("click", reset);
+
+        render();
+    </script>
+</body>
+</html>

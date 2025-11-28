@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verifying an Alien Dictionary - LeetCode 953</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="problem-info">
+            <h1><span class="problem-number">#953</span> Verifying an Alien Dictionary</h1>
+            <p>In an alien language, the alphabet order is different. Given a list of words and the alien alphabet order, check if the words are sorted lexicographically in this alien language.</p>
+            <div class="problem-meta">
+                <span class="meta-tag">📁 Array & Hashing</span>
+                <span class="meta-tag">🔤 String</span>
+                <span class="meta-tag">⏱️ O(n × m)</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <a href="../python/0953_verifying_an_alien_dictionary/0953_verifying_an_alien_dictionary.py">0953_verifying_an_alien_dictionary.py</a>
+            </div>
+            </div>
+
+        <div class="explanation-panel">
+            <h4>💡 How It Works (Layman's Terms)</h4>
+            <ul>
+                <li><strong>Alien Alphabet:</strong> Instead of a-b-c-d..., aliens might use h-l-a-b... as their order</li>
+                <li><strong>Lexicographic Order:</strong> Like dictionary order, but using the alien alphabet</li>
+                <li><strong>Comparison:</strong> Compare adjacent words character by character</li>
+                <li><strong>Rule 1:</strong> If first different character in word1 comes AFTER word2's in alien order → NOT sorted</li>
+                <li><strong>Rule 2:</strong> If word1 is longer but word2 is a prefix of word1 (like "apple" vs "app") → NOT sorted</li>
+            </ul>
+        </div>
+
+
+        <div class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+            
+            <div class="controls">
+                <button class="btn btn-primary" id="stepBtn" onclick="step()">Step</button>
+                <button class="btn btn-success" id="autoBtn" onclick="toggleAuto()">Auto Run</button>
+                <button class="btn btn-warning" onclick="reset()">Reset</button>
+            </div>
+
+            <div class="status-message" id="statusMessage">
+                Click "Step" or "Auto Run" to check if words are sorted in alien order
+            </div>
+
+            <div class="array-section">
+                <div class="array-label">Alien Alphabet Order:</div>
+                <div class="array-container" id="alphabetContainer" style="gap: 4px;"></div>
+            </div>
+
+            <div class="array-section">
+                <div class="array-label">Words to Check:</div>
+                <div class="array-container" id="wordsContainer"></div>
+            </div>
+
+            <div class="array-section">
+                <div class="array-label">Character Comparison:</div>
+                <div id="comparisonContainer" style="font-size: 1.3em; padding: 20px; background: #f5f5f5; border-radius: 10px;"></div>
+            </div>
+
+            <div class="info-box" id="resultBox" style="display: none;"></div>
+        </div>
+
+        <div class="code-section">
+            <h3>💻 Python Solution</h3>
+            <div class="code-block">
+                <pre><span class="keyword">def</span> <span class="function">isAlienSorted</span>(self, words: List[<span class="class-name">str</span>], order: <span class="class-name">str</span>) -> <span class="class-name">bool</span>:
+    <span class="comment"># Create order map: char -> position</span>
+    order_map = {char: i <span class="keyword">for</span> i, char <span class="keyword">in</span> <span class="function">enumerate</span>(order)}
+    
+    <span class="keyword">for</span> i <span class="keyword">in</span> <span class="function">range</span>(<span class="function">len</span>(words) - <span class="number">1</span>):
+        word1, word2 = words[i], words[i + <span class="number">1</span>]
+        <span class="keyword">for</span> j <span class="keyword">in</span> <span class="function">range</span>(<span class="function">len</span>(word1)):
+            <span class="keyword">if</span> j >= <span class="function">len</span>(word2):  <span class="comment"># word2 is prefix of word1</span>
+                <span class="keyword">return</span> <span class="class-name">False</span>
+            <span class="keyword">if</span> word1[j] != word2[j]:
+                <span class="keyword">if</span> order_map[word2[j]] < order_map[word1[j]]:
+                    <span class="keyword">return</span> <span class="class-name">False</span>
+                <span class="keyword">break</span>
+    <span class="keyword">return</span> <span class="class-name">True</span></pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const alienOrder = "hlabcdefgijkmnopqrstuvwxyz";
+        const words = ["hello", "leetcode"];
+        const orderMap = {};
+        alienOrder.split('').forEach((c, i) => orderMap[c] = i);
+
+        let currentPair = 0;
+        let charIndex = 0;
+        let phase = 'init';
+        let autoInterval = null;
+
+        function init() {
+            renderAlphabet();
+            renderWords();
+            document.getElementById('comparisonContainer').innerHTML = 'Comparison will appear here...';
+            document.getElementById('resultBox').style.display = 'none';
+        }
+
+        function renderAlphabet() {
+            const container = document.getElementById('alphabetContainer');
+            container.innerHTML = '';
+            alienOrder.split('').forEach((char, idx) => {
+                const box = document.createElement('div');
+                box.className = 'array-box small';
+                box.id = `alpha-${char}`;
+                box.style.width = '35px';
+                box.style.height = '35px';
+                box.style.fontSize = '1em';
+                box.innerHTML = `${char}<span class="index-label">${idx}</span>`;
+                container.appendChild(box);
+            });
+        }
+
+        function renderWords() {
+            const container = document.getElementById('wordsContainer');
+            container.innerHTML = '';
+            words.forEach((word, idx) => {
+                const box = document.createElement('div');
+                box.className = 'array-box';
+                box.id = `word-${idx}`;
+                box.style.width = 'auto';
+                box.style.minWidth = '100px';
+                box.style.padding = '10px 20px';
+                box.innerHTML = `"${word}"<span class="index-label">[${idx}]</span>`;
+                container.appendChild(box);
+            });
+        }
+
+        function highlightChar(char) {
+            document.querySelectorAll('[id^="alpha-"]').forEach(b => b.classList.remove('highlight'));
+            if (char && document.getElementById(`alpha-${char}`)) {
+                document.getElementById(`alpha-${char}`).classList.add('highlight');
+            }
+        }
+
+        function step() {
+            if (phase === 'init') {
+                phase = 'comparing';
+                currentPair = 0;
+                charIndex = 0;
+                document.getElementById('statusMessage').textContent = 
+                    `Comparing adjacent pairs: "${words[0]}" vs "${words[1]}"`;
+                document.getElementById(`word-0`).classList.add('current');
+                document.getElementById(`word-1`).classList.add('current');
+            } else if (phase === 'comparing') {
+                if (currentPair >= words.length - 1) {
+                    phase = 'done';
+                    document.getElementById('resultBox').style.display = 'block';
+                    document.getElementById('resultBox').className = 'info-box secondary';
+                    document.getElementById('resultBox').textContent = '✅ All pairs are in correct order! Words are SORTED.';
+                    document.getElementById('statusMessage').textContent = 'Verification complete!';
+                    document.getElementById('stepBtn').disabled = true;
+                    stopAuto();
+                    return;
+                }
+
+                const word1 = words[currentPair];
+                const word2 = words[currentPair + 1];
+
+                if (charIndex >= word1.length) {
+                    // word1 is done, it's valid (word1 <= word2 in length or found difference)
+                    document.getElementById('comparisonContainer').innerHTML = 
+                        `✓ "${word1}" ≤ "${word2}" — All characters matched and word1 ended first or is equal prefix`;
+                    currentPair++;
+                    charIndex = 0;
+                    document.querySelectorAll('[id^="word-"]').forEach(b => b.classList.remove('current'));
+                    if (currentPair < words.length - 1) {
+                        document.getElementById(`word-${currentPair}`).classList.add('current');
+                        document.getElementById(`word-${currentPair + 1}`).classList.add('current');
+                    }
+                    document.getElementById('statusMessage').textContent = 
+                        currentPair < words.length - 1 ? 
+                        `Moving to next pair: "${words[currentPair]}" vs "${words[currentPair + 1]}"` :
+                        'All pairs checked!';
+                    return;
+                }
+
+                if (charIndex >= word2.length) {
+                    // word2 is shorter but word1 still has chars → NOT sorted
+                    phase = 'done';
+                    document.getElementById('comparisonContainer').innerHTML = 
+                        `❌ "${word1}" > "${word2}" — word2 is a prefix of word1!`;
+                    document.getElementById('resultBox').style.display = 'block';
+                    document.getElementById('resultBox').className = 'info-box highlight';
+                    document.getElementById('resultBox').textContent = '❌ NOT SORTED! word2 is prefix of word1.';
+                    document.getElementById('stepBtn').disabled = true;
+                    stopAuto();
+                    return;
+                }
+
+                const c1 = word1[charIndex];
+                const c2 = word2[charIndex];
+                const pos1 = orderMap[c1];
+                const pos2 = orderMap[c2];
+
+                highlightChar(c1);
+
+                if (c1 === c2) {
+                    document.getElementById('comparisonContainer').innerHTML = 
+                        `Comparing char[${charIndex}]: '${c1}' (pos ${pos1}) = '${c2}' (pos ${pos2}) → Same, continue...`;
+                    document.getElementById('statusMessage').textContent = 
+                        `Characters match at index ${charIndex}, checking next character...`;
+                    charIndex++;
+                } else if (pos1 < pos2) {
+                    document.getElementById('comparisonContainer').innerHTML = 
+                        `Comparing char[${charIndex}]: '${c1}' (pos ${pos1}) < '${c2}' (pos ${pos2}) → ✓ Correct order!`;
+                    document.getElementById('statusMessage').textContent = 
+                        `'${c1}' comes before '${c2}' in alien order. This pair is valid!`;
+                    // Move to next pair
+                    currentPair++;
+                    charIndex = 0;
+                    document.querySelectorAll('[id^="word-"]').forEach(b => b.classList.remove('current'));
+                    if (currentPair < words.length - 1) {
+                        document.getElementById(`word-${currentPair}`).classList.add('current');
+                        document.getElementById(`word-${currentPair + 1}`).classList.add('current');
+                    }
+                } else {
+                    document.getElementById('comparisonContainer').innerHTML = 
+                        `Comparing char[${charIndex}]: '${c1}' (pos ${pos1}) > '${c2}' (pos ${pos2}) → ❌ Wrong order!`;
+                    phase = 'done';
+                    document.getElementById('resultBox').style.display = 'block';
+                    document.getElementById('resultBox').className = 'info-box highlight';
+                    document.getElementById('resultBox').textContent = `❌ NOT SORTED! '${c1}' comes after '${c2}' in alien order.`;
+                    document.getElementById('stepBtn').disabled = true;
+                    stopAuto();
+                }
+            }
+        }
+
+        function toggleAuto() {
+            if (autoInterval) {
+                stopAuto();
+            } else {
+                document.getElementById('autoBtn').textContent = 'Pause';
+                autoInterval = setInterval(() => {
+                    if (phase === 'done') {
+                        stopAuto();
+                    } else {
+                        step();
+                    }
+                }, 1200);
+            }
+        }
+
+        function stopAuto() {
+            if (autoInterval) {
+                clearInterval(autoInterval);
+                autoInterval = null;
+            }
+            document.getElementById('autoBtn').textContent = 'Auto Run';
+        }
+
+        function reset() {
+            stopAuto();
+            phase = 'init';
+            currentPair = 0;
+            charIndex = 0;
+            document.getElementById('stepBtn').disabled = false;
+            document.getElementById('statusMessage').textContent = 
+                'Click "Step" or "Auto Run" to check if words are sorted in alien order';
+            document.querySelectorAll('.array-box').forEach(b => {
+                b.classList.remove('highlight', 'current', 'complete');
+            });
+            init();
+        }
+
+        init();
+    </script>
+</body>
+</html>

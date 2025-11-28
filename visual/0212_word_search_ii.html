@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>212 - Word Search II</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="problem-info">
+            <h1><span class="problem-number">#212</span> Word Search II</h1>
+            <p>
+                Given an m x n board of characters and a list of words, return all words on the board.
+                Each word must be constructed from letters of sequentially adjacent cells, where adjacent 
+                cells are horizontally or vertically neighboring. The same letter cell may not be used more 
+                than once in a word.
+            </p>
+            <div class="problem-meta">
+                <span class="meta-tag">🔤 String</span>
+                <span class="meta-tag">🌲 Trie</span>
+                <span class="meta-tag">🔄 Backtracking</span>
+                <span class="meta-tag">⏱️ O(n)</span>
+            </div>
+
+        <h3>Example:</h3>
+            <pre>
+board = [["o","a","a","n"],
+         ["e","t","a","e"],
+         ["i","h","k","r"],
+         ["i","f","l","v"]]
+words = ["oath","pea","eat","rain"]
+Output: ["eat","oath"]
+            </pre>
+        </div>
+
+        <section class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+            <div class="controls">
+                <button id="stepBtn" class="btn">Step</button>
+                <button id="autoBtn" class="btn btn-success">Auto Run</button>
+                <button id="resetBtn" class="btn btn-danger">Reset</button>
+            </div>
+            <div class="status" id="status">Click Step or Auto Run to find words</div>
+            <div id="found-words" style="margin: 10px 0; font-size: 16px; color: #10b981;"></div>
+            <div style="display: flex; gap: 40px; flex-wrap: wrap;">
+                <div>
+                    <h3 style="margin-bottom: 10px;">Board</h3>
+                    <svg id="board"></svg>
+                </div>
+                <div>
+                    <h3 style="margin-bottom: 10px;">Trie</h3>
+                    <svg id="trie"></svg>
+                </div>
+            <div class="file-ref">
+                📄 Python: <code>python/0212_word_search_ii/0212_word_search_ii.py</code>
+            </div>
+            </div>
+
+        <div class="explanation-panel">
+            <h4>🧠 How It Works (Layman's Terms)</h4>
+            <p>Backtracking <strong>explores all possibilities</strong> like solving a maze:</p>
+            <ul>
+                <li><strong>Choose:</strong> Make a decision</li>
+                <li><strong>Explore:</strong> Recursively continue</li>
+                <li><strong>Validate:</strong> Check if path is valid</li>
+                <li><strong>Backtrack:</strong> Undo choice if stuck, try another</li>
+            </ul>
+        </div>
+
+        </section>
+
+        <section class="code-section">
+            <h2>Python Solution</h2>
+            <pre><span class="keyword">class</span> TrieNode:
+    <span class="keyword">def</span> <span class="function">__init__</span>(self):
+        self.children = {}
+        self.is_word = <span class="keyword">False</span>
+        self.word = <span class="keyword">None</span>
+
+<span class="keyword">class</span> Solution:
+    <span class="keyword">def</span> <span class="function">findWords</span>(self, board, words):
+        root = <span class="function">TrieNode</span>()
+        
+        <span class="comment"># Build Trie from words</span>
+        <span class="keyword">for</span> word <span class="keyword">in</span> words:
+            node = root
+            <span class="keyword">for</span> char <span class="keyword">in</span> word:
+                <span class="keyword">if</span> char <span class="keyword">not</span> <span class="keyword">in</span> node.children:
+                    node.children[char] = <span class="function">TrieNode</span>()
+                node = node.children[char]
+            node.is_word = <span class="keyword">True</span>
+            node.word = word
+        
+        result = []
+        rows, cols = <span class="function">len</span>(board), <span class="function">len</span>(board[<span class="number">0</span>])
+        
+        <span class="keyword">def</span> <span class="function">dfs</span>(r, c, node):
+            char = board[r][c]
+            <span class="keyword">if</span> char <span class="keyword">not</span> <span class="keyword">in</span> node.children:
+                <span class="keyword">return</span>
+            
+            next_node = node.children[char]
+            <span class="keyword">if</span> next_node.is_word:
+                result.<span class="function">append</span>(next_node.word)
+                next_node.is_word = <span class="keyword">False</span>  <span class="comment"># Avoid duplicates</span>
+            
+            board[r][c] = <span class="string">'#'</span>  <span class="comment"># Mark visited</span>
+            
+            <span class="keyword">for</span> dr, dc <span class="keyword">in</span> [(<span class="number">0</span>, <span class="number">1</span>), (<span class="number">0</span>, <span class="number">-1</span>), (<span class="number">1</span>, <span class="number">0</span>), (<span class="number">-1</span>, <span class="number">0</span>)]:
+                nr, nc = r + dr, c + dc
+                <span class="keyword">if</span> <span class="number">0</span> <= nr < rows <span class="keyword">and</span> <span class="number">0</span> <= nc < cols <span class="keyword">and</span> board[nr][nc] != <span class="string">'#'</span>:
+                    <span class="function">dfs</span>(nr, nc, next_node)
+            
+            board[r][c] = char  <span class="comment"># Restore</span>
+        
+        <span class="keyword">for</span> r <span class="keyword">in</span> <span class="function">range</span>(rows):
+            <span class="keyword">for</span> c <span class="keyword">in</span> <span class="function">range</span>(cols):
+                <span class="function">dfs</span>(r, c, root)
+        
+        <span class="keyword">return</span> result</pre>
+        </section>
+    </div>
+
+    <script>
+        const boardSvg = d3.select("#board").attr("width", 350).attr("height", 350);
+        const trieSvg = d3.select("#trie").attr("width", 500).attr("height", 350);
+
+        const board = [
+            ["o", "a", "a", "n"],
+            ["e", "t", "a", "e"],
+            ["i", "h", "k", "r"],
+            ["i", "f", "l", "v"]
+        ];
+        const words = ["oath", "pea", "eat", "rain"];
+
+        const cellSize = 70;
+        const rows = board.length;
+        const cols = board[0].length;
+
+        class TrieNode {
+            constructor() {
+                this.children = {};
+                this.isWord = false;
+                this.word = null;
+            }
+        }
+
+        let root;
+        let foundWords = [];
+        let searchSteps = [];
+        let currentStep = 0;
+        let isRunning = false;
+        let currentPath = [];
+
+        function buildTrie() {
+            root = new TrieNode();
+            for (const word of words) {
+                let node = root;
+                for (const char of word) {
+                    if (!node.children[char]) {
+                        node.children[char] = new TrieNode();
+                    }
+                    node = node.children[char];
+                }
+                node.isWord = true;
+                node.word = word;
+            }
+        }
+
+        function generateSearchSteps() {
+            searchSteps = [];
+            foundWords = [];
+            
+            const visited = Array(rows).fill(null).map(() => Array(cols).fill(false));
+            
+            function dfs(r, c, node, path, triePath) {
+                if (r < 0 || r >= rows || c < 0 || c >= cols || visited[r][c]) return;
+                
+                const char = board[r][c];
+                if (!node.children[char]) {
+                    searchSteps.push({
+                        type: "check",
+                        path: [...path, [r, c]],
+                        triePath: [...triePath],
+                        message: `Checking (${r},${c})='${char}' - not in Trie`
+                    });
+                    return;
+                }
+                
+                const nextNode = node.children[char];
+                const newPath = [...path, [r, c]];
+                const newTriePath = [...triePath, char];
+                
+                searchSteps.push({
+                    type: "visit",
+                    path: newPath,
+                    triePath: newTriePath,
+                    message: `Visiting (${r},${c})='${char}' - found in Trie`
+                });
+                
+                if (nextNode.isWord && !foundWords.includes(nextNode.word)) {
+                    foundWords.push(nextNode.word);
+                    searchSteps.push({
+                        type: "found",
+                        path: newPath,
+                        triePath: newTriePath,
+                        word: nextNode.word,
+                        foundWords: [...foundWords],
+                        message: `Found word: "${nextNode.word}"!`
+                    });
+                }
+                
+                visited[r][c] = true;
+                
+                const directions = [[0, 1], [0, -1], [1, 0], [-1, 0]];
+                for (const [dr, dc] of directions) {
+                    dfs(r + dr, c + dc, nextNode, newPath, newTriePath);
+                }
+                
+                visited[r][c] = false;
+                
+                searchSteps.push({
+                    type: "backtrack",
+                    path: path,
+                    triePath: triePath,
+                    message: `Backtracking from (${r},${c})`
+                });
+            }
+            
+            for (let r = 0; r < rows; r++) {
+                for (let c = 0; c < cols; c++) {
+                    searchSteps.push({
+                        type: "start",
+                        path: [],
+                        triePath: ["root"],
+                        message: `Starting search from (${r},${c})`
+                    });
+                    dfs(r, c, root, [], ["root"]);
+                }
+            }
+            
+            searchSteps.push({
+                type: "done",
+                path: [],
+                triePath: [],
+                foundWords: foundWords,
+                message: `Search complete! Found: ${foundWords.join(", ") || "none"}`
+            });
+        }
+
+        function renderBoard(highlightPath = [], visited = []) {
+            boardSvg.selectAll("*").remove();
+
+            for (let r = 0; r < rows; r++) {
+                for (let c = 0; c < cols; c++) {
+                    const x = 20 + c * cellSize;
+                    const y = 20 + r * cellSize;
+                    
+                    const isHighlighted = highlightPath.some(([pr, pc]) => pr === r && pc === c);
+                    const isStart = highlightPath.length > 0 && highlightPath[0][0] === r && highlightPath[0][1] === c;
+                    const isCurrent = highlightPath.length > 0 && 
+                        highlightPath[highlightPath.length - 1][0] === r && 
+                        highlightPath[highlightPath.length - 1][1] === c;
+
+                    boardSvg.append("rect")
+                        .attr("x", x)
+                        .attr("y", y)
+                        .attr("width", cellSize - 4)
+                        .attr("height", cellSize - 4)
+                        .attr("rx", 8)
+                        .attr("fill", () => {
+                            if (isCurrent) return "#fef3c7";
+                            if (isStart) return "#d1fae5";
+                            if (isHighlighted) return "#dbeafe";
+                            return "#f8fafc";
+                        })
+                        .attr("stroke", () => {
+                            if (isCurrent) return "#f59e0b";
+                            if (isHighlighted) return "#3b82f6";
+                            return "#94a3b8";
+                        })
+                        .attr("stroke-width", isHighlighted ? 3 : 2);
+
+                    boardSvg.append("text")
+                        .attr("x", x + cellSize / 2 - 2)
+                        .attr("y", y + cellSize / 2 + 2)
+                        .attr("text-anchor", "middle")
+                        .attr("dy", "0.35em")
+                        .attr("font-size", "24px")
+                        .attr("font-weight", "bold")
+                        .attr("fill", "#1e293b")
+                        .text(board[r][c]);
+                }
+            }
+
+            // Draw path arrows
+            if (highlightPath.length > 1) {
+                for (let i = 0; i < highlightPath.length - 1; i++) {
+                    const [r1, c1] = highlightPath[i];
+                    const [r2, c2] = highlightPath[i + 1];
+                    const x1 = 20 + c1 * cellSize + cellSize / 2 - 2;
+                    const y1 = 20 + r1 * cellSize + cellSize / 2 - 2;
+                    const x2 = 20 + c2 * cellSize + cellSize / 2 - 2;
+                    const y2 = 20 + r2 * cellSize + cellSize / 2 - 2;
+
+                    boardSvg.append("line")
+                        .attr("x1", x1)
+                        .attr("y1", y1)
+                        .attr("x2", x2)
+                        .attr("y2", y2)
+                        .attr("stroke", "#3b82f6")
+                        .attr("stroke-width", 3)
+                        .attr("marker-end", "url(#arrowhead)");
+                }
+            }
+
+            // Arrow marker definition
+            boardSvg.append("defs").append("marker")
+                .attr("id", "arrowhead")
+                .attr("viewBox", "0 -5 10 10")
+                .attr("refX", 8)
+                .attr("refY", 0)
+                .attr("markerWidth", 6)
+                .attr("markerHeight", 6)
+                .attr("orient", "auto")
+                .append("path")
+                .attr("d", "M0,-5L10,0L0,5")
+                .attr("fill", "#3b82f6");
+        }
+
+        function getTrieNodes(node, char = "root", depth = 0) {
+            const result = [{ char, node, depth }];
+            for (const [c, child] of Object.entries(node.children)) {
+                result.push(...getTrieNodes(child, c, depth + 1));
+            }
+            return result;
+        }
+
+        function renderTrie(highlightPath = []) {
+            trieSvg.selectAll("*").remove();
+
+            const nodePositions = {};
+            const levelCounts = {};
+            const levelOffsets = {};
+
+            function assignPositions(node, char = "root", depth = 0) {
+                if (!levelCounts[depth]) levelCounts[depth] = 0;
+                if (!levelOffsets[depth]) levelOffsets[depth] = 0;
+                
+                const x = 60 + levelOffsets[depth] * 60;
+                const y = 40 + depth * 70;
+                
+                nodePositions[char + "_" + depth + "_" + levelCounts[depth]] = { x, y, char, node, depth };
+                levelOffsets[depth]++;
+                
+                for (const [c, child] of Object.entries(node.children)) {
+                    assignPositions(child, c, depth + 1);
+                }
+            }
+
+            assignPositions(root);
+
+            // Recalculate with proper tree layout
+            function buildTree(node, char = "root", parentKey = null) {
+                const key = char + "_" + (parentKey || "root");
+                const children = Object.entries(node.children).map(([c, child]) => 
+                    buildTree(child, c, key)
+                );
+                return { char, node, children, key, parentKey };
+            }
+
+            const tree = buildTree(root);
+            
+            function layoutTree(node, x = 250, y = 40, level = 0) {
+                node.x = x;
+                node.y = y;
+                
+                const spacing = Math.max(40, 200 / (level + 1));
+                const startX = x - (node.children.length - 1) * spacing / 2;
+                
+                node.children.forEach((child, i) => {
+                    layoutTree(child, startX + i * spacing, y + 70, level + 1);
+                });
+            }
+            
+            layoutTree(tree);
+
+            function getAllNodes(node) {
+                return [node, ...node.children.flatMap(getAllNodes)];
+            }
+
+            function getAllLinks(node) {
+                const links = node.children.map(child => ({ source: node, target: child }));
+                return [...links, ...node.children.flatMap(getAllLinks)];
+            }
+
+            const allNodes = getAllNodes(tree);
+            const allLinks = getAllLinks(tree);
+
+            // Draw links
+            allLinks.forEach(link => {
+                const highlighted = highlightPath.includes(link.source.char) && highlightPath.includes(link.target.char);
+                trieSvg.append("line")
+                    .attr("x1", link.source.x)
+                    .attr("y1", link.source.y)
+                    .attr("x2", link.target.x)
+                    .attr("y2", link.target.y)
+                    .attr("stroke", highlighted ? "#3b82f6" : "#94a3b8")
+                    .attr("stroke-width", highlighted ? 3 : 2);
+            });
+
+            // Draw nodes
+            allNodes.forEach(n => {
+                const highlighted = highlightPath.includes(n.char);
+                
+                trieSvg.append("circle")
+                    .attr("cx", n.x)
+                    .attr("cy", n.y)
+                    .attr("r", 20)
+                    .attr("fill", () => {
+                        if (n.node.isWord) return "#ddd6fe";
+                        if (highlighted) return "#dbeafe";
+                        return "#f8fafc";
+                    })
+                    .attr("stroke", () => {
+                        if (n.node.isWord) return "#8b5cf6";
+                        if (highlighted) return "#3b82f6";
+                        return "#64748b";
+                    })
+                    .attr("stroke-width", highlighted ? 3 : 2);
+
+                trieSvg.append("text")
+                    .attr("x", n.x)
+                    .attr("y", n.y)
+                    .attr("text-anchor", "middle")
+                    .attr("dy", "0.35em")
+                    .attr("font-size", "14px")
+                    .attr("font-weight", "bold")
+                    .attr("fill", "#1e293b")
+                    .text(n.char === "root" ? "⊙" : n.char);
+
+                if (n.node.word) {
+                    trieSvg.append("text")
+                        .attr("x", n.x)
+                        .attr("y", n.y + 30)
+                        .attr("text-anchor", "middle")
+                        .attr("font-size", "10px")
+                        .attr("fill", "#8b5cf6")
+                        .text(n.node.word);
+                }
+            });
+        }
+
+        function render(step) {
+            const path = step ? step.path : [];
+            const triePath = step ? step.triePath : ["root"];
+            
+            renderBoard(path);
+            renderTrie(triePath);
+            
+            if (step) {
+                document.getElementById("status").textContent = step.message;
+                if (step.foundWords) {
+                    document.getElementById("found-words").textContent = 
+                        `Found words: ${step.foundWords.join(", ") || "none yet"}`;
+                }
+            }
+        }
+
+        function reset() {
+            buildTrie();
+            generateSearchSteps();
+            currentStep = 0;
+            isRunning = false;
+            foundWords = [];
+            document.getElementById("status").textContent = "Click Step or Auto Run to find words";
+            document.getElementById("found-words").textContent = "";
+            document.getElementById("autoBtn").textContent = "Auto Run";
+            render(null);
+        }
+
+        async function step() {
+            if (currentStep < searchSteps.length) {
+                render(searchSteps[currentStep]);
+                currentStep++;
+            } else {
+                document.getElementById("status").textContent = "Search complete! Click Reset to start over.";
+            }
+        }
+
+        async function autoRun() {
+            if (isRunning) {
+                isRunning = false;
+                document.getElementById("autoBtn").textContent = "Auto Run";
+                return;
+            }
+
+            isRunning = true;
+            document.getElementById("autoBtn").textContent = "Pause";
+
+            while (currentStep < searchSteps.length && isRunning) {
+                render(searchSteps[currentStep]);
+                currentStep++;
+                await new Promise(r => setTimeout(r, 150));
+            }
+
+            isRunning = false;
+            document.getElementById("autoBtn").textContent = "Auto Run";
+        }
+
+        document.getElementById("stepBtn").addEventListener("click", step);
+        document.getElementById("autoBtn").addEventListener("click", autoRun);
+        document.getElementById("resetBtn").addEventListener("click", reset);
+
+        reset();
+    </script>
+</body>
+</html>

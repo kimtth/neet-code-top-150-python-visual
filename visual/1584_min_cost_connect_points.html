@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>1584 - Min Cost to Connect All Points</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        .grid-container { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; margin-bottom: 20px; }
+        .legend { display: flex; justify-content: center; gap: 20px; margin: 15px 0; flex-wrap: wrap; }
+        .legend-item { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: #64748b; }
+        .legend-color { width: 20px; height: 20px; border-radius: 50%; }
+        #graphArea { min-height: 400px; }
+        .edge-list { max-height: 300px; overflow-y: auto; }
+        .edge-item { padding: 8px 12px; margin: 5px 0; border-radius: 6px; font-size: 0.85rem; display: flex; justify-content: space-between; color: #334155; }
+        .edge-item.pending { background: #f1f5f9; }
+        .edge-item.processing { background: rgba(251, 191, 36, 0.3); border: 1px solid #f59e0b; }
+        .edge-item.added { background: rgba(34, 197, 94, 0.3); border: 1px solid #22c55e; }
+        .edge-item.skipped { background: rgba(239, 68, 68, 0.1); text-decoration: line-through; opacity: 0.5; }
+        .cost-display { font-size: 2rem; text-align: center; padding: 20px; background: linear-gradient(135deg, rgba(34, 197, 94, 0.2), rgba(99, 102, 241, 0.2)); border-radius: 12px; margin-top: 15px; color: #166534; }
+        select { background: #f8fafc; color: #334155; border: 1px solid #e2e8f0; padding: 10px; border-radius: 8px; }
+        select:focus { outline: none; border-color: #6366f1; }
+        .info-box { background: #f1f5f9; border-radius: 8px; padding: 15px; margin-bottom: 15px; font-size: 0.9rem; line-height: 1.6; color: #475569; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <section class="problem-info">
+            <h1><span class="problem-number">#1584</span> Min Cost to Connect All Points</h1>
+            <p>Connect all points with minimum total cost using Manhattan distance |x1-x2| + |y1-y2|. This is a Minimum Spanning Tree problem.</p>
+            <div class="problem-meta">
+                <span class="meta-tag">Medium</span>
+                <span class="meta-tag">Graph</span>
+                <span class="meta-tag">Union Find</span>
+                <span class="meta-tag">Minimum Spanning Tree</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <code>python/1584_min_cost_to_connect_all_points/1584_min_cost_to_connect_all_points.py</code>
+            </div>
+
+        </section>
+
+        <div class="explanation-panel">
+            <h4>🧠 How It Works (Layman's Terms)</h4>
+            <p>This algorithm solves the problem <strong>step by step</strong>:</p>
+            <ul>
+                <li><strong>Understand:</strong> Parse the input data</li>
+                <li><strong>Process:</strong> Apply the core logic</li>
+                <li><strong>Optimize:</strong> Use efficient data structures</li>
+                <li><strong>Return:</strong> Output the computed result</li>
+            </ul>
+        </div>
+
+
+        <section class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+            <div class="controls">
+                <select id="algoSelect" onchange="reset()">
+                    <option value="kruskal">Kruskal's Algorithm</option>
+                    <option value="prim">Prim's Algorithm</option>
+                </select>
+                <button id="stepBtn" onclick="step()">Step</button>
+                <button id="autoBtn" onclick="toggleAuto()">▶ Auto Run</button>
+                <button onclick="reset()">Reset</button>
+            </div>
+        </section>
+
+        <div class="grid-container">
+            <section class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+                <div class="info-box">
+                    Connect all points with minimum total Manhattan distance: |x1-x2| + |y1-y2|.
+                    Using Kruskal's: sort edges by cost, add if no cycle. Using Prim's: grow from one node.
+                </div>
+                <div class="legend">
+                    <div class="legend-item"><div class="legend-color" style="background: #6366f1;"></div> Point</div>
+                    <div class="legend-item"><div class="legend-color" style="background: #22c55e;"></div> Connected</div>
+                    <div class="legend-item"><div class="legend-color" style="background: rgba(102, 126, 234, 0.3);"></div> Candidate Edge</div>
+                    <div class="legend-item"><div class="legend-color" style="background: #22c55e; width: 30px; height: 4px; border-radius: 2px;"></div> MST Edge</div>
+                </div>
+                <svg id="graphArea" width="100%" height="400"></svg>
+            </section>
+            <section class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+                <div class="edge-list" id="edgeList"></div>
+                <div class="cost-display">
+                    Total Cost: <span id="totalCost" style="color: #22c55e;">0</span>
+                </div>
+            </section>
+        </div>
+
+        <section class="visualization-section">
+            <div class="status-message" id="stepDisplay">Ready to start</div>
+        </section>
+
+        <section class="code-section">
+            <h3>💻 Python Solution (Kruskal's)</h3>
+            <pre><span class="keyword">def</span> <span class="function">minCostConnectPoints</span>(points: <span class="class-name">List</span>[List[int]]) -> int:
+    n = <span class="function">len</span>(points)
+    
+    <span class="comment"># Build all edges with Manhattan distance</span>
+    edges = []
+    <span class="keyword">for</span> i <span class="keyword">in</span> <span class="function">range</span>(n):
+        <span class="keyword">for</span> j <span class="keyword">in</span> <span class="function">range</span>(i + <span class="number">1</span>, n):
+            dist = <span class="function">abs</span>(points[i][<span class="number">0</span>] - points[j][<span class="number">0</span>]) + <span class="function">abs</span>(points[i][<span class="number">1</span>] - points[j][<span class="number">1</span>])
+            edges.<span class="function">append</span>((dist, i, j))
+    
+    <span class="comment"># Sort edges by cost</span>
+    edges.<span class="function">sort</span>()
+    
+    <span class="comment"># Union-Find</span>
+    parent = <span class="function">list</span>(<span class="function">range</span>(n))
+    
+    <span class="keyword">def</span> <span class="function">find</span>(x):
+        <span class="keyword">if</span> parent[x] != x:
+            parent[x] = <span class="function">find</span>(parent[x])
+        <span class="keyword">return</span> parent[x]
+    
+    <span class="keyword">def</span> <span class="function">union</span>(x, y):
+        px, py = <span class="function">find</span>(x), <span class="function">find</span>(y)
+        <span class="keyword">if</span> px == py:
+            <span class="keyword">return</span> <span class="keyword">False</span>
+        parent[px] = py
+        <span class="keyword">return</span> <span class="keyword">True</span>
+    
+    <span class="comment"># Kruskal's: add edges if no cycle</span>
+    total_cost = <span class="number">0</span>
+    edges_added = <span class="number">0</span>
+    
+    <span class="keyword">for</span> cost, u, v <span class="keyword">in</span> edges:
+        <span class="keyword">if</span> <span class="function">union</span>(u, v):
+            total_cost += cost
+            edges_added += <span class="number">1</span>
+            <span class="keyword">if</span> edges_added == n - <span class="number">1</span>:
+                <span class="keyword">break</span>
+    
+    <span class="keyword">return</span> total_cost</pre>
+        </section>
+    </div>
+
+    <script>
+        const points = [[0, 0], [2, 2], [3, 10], [5, 2], [7, 0]];
+        let edges = [];
+        let mstEdges = [];
+        let parent = [];
+        let stepIndex = 0;
+        let totalCost = 0;
+        let autoInterval = null;
+
+        function manhattanDist(p1, p2) {
+            return Math.abs(p1[0] - p2[0]) + Math.abs(p1[1] - p2[1]);
+        }
+
+        function find(x) {
+            if (parent[x] !== x) parent[x] = find(parent[x]);
+            return parent[x];
+        }
+
+        function reset() {
+            const n = points.length;
+            parent = Array.from({length: n}, (_, i) => i);
+            mstEdges = [];
+            totalCost = 0;
+            stepIndex = 0;
+            
+            edges = [];
+            for (let i = 0; i < n; i++) {
+                for (let j = i + 1; j < n; j++) {
+                    const dist = manhattanDist(points[i], points[j]);
+                    edges.push({ cost: dist, u: i, v: j, status: 'pending' });
+                }
+            }
+            edges.sort((a, b) => a.cost - b.cost);
+            
+            if (autoInterval) {
+                clearInterval(autoInterval);
+                autoInterval = null;
+                document.getElementById('autoBtn').textContent = '▶ Auto Run';
+            }
+            render();
+        }
+
+        function step() {
+            if (stepIndex >= edges.length || mstEdges.length >= points.length - 1) {
+                render();
+                return;
+            }
+            
+            const edge = edges[stepIndex];
+            const pu = find(edge.u);
+            const pv = find(edge.v);
+            
+            if (pu !== pv) {
+                parent[pu] = pv;
+                edge.status = 'added';
+                mstEdges.push(edge);
+                totalCost += edge.cost;
+            } else {
+                edge.status = 'skipped';
+            }
+            
+            stepIndex++;
+            render();
+        }
+
+        function toggleAuto() {
+            if (autoInterval) {
+                clearInterval(autoInterval);
+                autoInterval = null;
+                document.getElementById('autoBtn').textContent = '▶ Auto Run';
+            } else {
+                autoInterval = setInterval(() => {
+                    if (stepIndex >= edges.length || mstEdges.length >= points.length - 1) {
+                        clearInterval(autoInterval);
+                        autoInterval = null;
+                        document.getElementById('autoBtn').textContent = '▶ Auto Run';
+                    } else {
+                        step();
+                    }
+                }, 800);
+                document.getElementById('autoBtn').textContent = '⏸ Pause';
+            }
+        }
+
+        function render() {
+            const svg = d3.select('#graphArea');
+            svg.selectAll('*').remove();
+            
+            const width = svg.node().getBoundingClientRect().width;
+            const height = 400;
+            const margin = 50;
+            
+            const xExtent = d3.extent(points, d => d[0]);
+            const yExtent = d3.extent(points, d => d[1]);
+            
+            const xScale = d3.scaleLinear()
+                .domain([xExtent[0] - 1, xExtent[1] + 1])
+                .range([margin, width - margin]);
+            
+            const yScale = d3.scaleLinear()
+                .domain([yExtent[0] - 1, yExtent[1] + 1])
+                .range([height - margin, margin]);
+            
+            const g = svg.append('g');
+            
+            edges.filter(e => e.status === 'pending').forEach(edge => {
+                g.append('line')
+                    .attr('x1', xScale(points[edge.u][0]))
+                    .attr('y1', yScale(points[edge.u][1]))
+                    .attr('x2', xScale(points[edge.v][0]))
+                    .attr('y2', yScale(points[edge.v][1]))
+                    .attr('stroke', 'rgba(99, 102, 241, 0.2)')
+                    .attr('stroke-width', 1)
+                    .attr('stroke-dasharray', '3,3');
+            });
+            
+            mstEdges.forEach(edge => {
+                g.append('line')
+                    .attr('x1', xScale(points[edge.u][0]))
+                    .attr('y1', yScale(points[edge.u][1]))
+                    .attr('x2', xScale(points[edge.v][0]))
+                    .attr('y2', yScale(points[edge.v][1]))
+                    .attr('stroke', '#22c55e')
+                    .attr('stroke-width', 4);
+                
+                const midX = (xScale(points[edge.u][0]) + xScale(points[edge.v][0])) / 2;
+                const midY = (yScale(points[edge.u][1]) + yScale(points[edge.v][1])) / 2;
+                g.append('text')
+                    .attr('x', midX)
+                    .attr('y', midY - 10)
+                    .attr('text-anchor', 'middle')
+                    .attr('fill', '#166534')
+                    .attr('font-size', '12px')
+                    .attr('font-weight', 'bold')
+                    .text(edge.cost);
+            });
+            
+            const connected = new Set();
+            mstEdges.forEach(e => {
+                connected.add(e.u);
+                connected.add(e.v);
+            });
+            
+            points.forEach((p, i) => {
+                const isConnected = connected.has(i);
+                
+                g.append('circle')
+                    .attr('cx', xScale(p[0]))
+                    .attr('cy', yScale(p[1]))
+                    .attr('r', 20)
+                    .attr('fill', isConnected ? '#22c55e' : '#6366f1')
+                    .attr('stroke', '#fff')
+                    .attr('stroke-width', 2);
+                
+                g.append('text')
+                    .attr('x', xScale(p[0]))
+                    .attr('y', yScale(p[1]) + 5)
+                    .attr('text-anchor', 'middle')
+                    .attr('fill', '#fff')
+                    .attr('font-weight', 'bold')
+                    .text(i);
+                
+                g.append('text')
+                    .attr('x', xScale(p[0]))
+                    .attr('y', yScale(p[1]) + 35)
+                    .attr('text-anchor', 'middle')
+                    .attr('fill', '#94a3b8')
+                    .attr('font-size', '10px')
+                    .text(`(${p[0]},${p[1]})`);
+            });
+            
+            let edgeHtml = '';
+            edges.forEach((edge, i) => {
+                let status = edge.status;
+                if (i === stepIndex - 1) status = 'processing';
+                if (i >= stepIndex) status = 'pending';
+                
+                edgeHtml += `<div class="edge-item ${edge.status}">
+                    <span>${edge.u} ↔ ${edge.v}</span>
+                    <span>Cost: ${edge.cost}</span>
+                </div>`;
+            });
+            document.getElementById('edgeList').innerHTML = edgeHtml;
+            
+            document.getElementById('totalCost').textContent = totalCost;
+            
+            const stepDisplay = document.getElementById('stepDisplay');
+            if (stepIndex === 0) {
+                stepDisplay.textContent = 'Ready. Click Step to process edges by cost.';
+            } else if (mstEdges.length >= points.length - 1) {
+                stepDisplay.textContent = `✅ MST Complete! Total cost: ${totalCost}`;
+            } else {
+                const edge = edges[stepIndex - 1];
+                if (edge.status === 'added') {
+                    stepDisplay.textContent = `Added edge ${edge.u}↔${edge.v} (cost ${edge.cost}). Nodes connected!`;
+                } else {
+                    stepDisplay.textContent = `Skipped edge ${edge.u}↔${edge.v} - would create cycle`;
+                }
+            }
+            stepDisplay.className = 'status-message';
+        }
+
+        reset();
+    </script>
+</body>
+</html>

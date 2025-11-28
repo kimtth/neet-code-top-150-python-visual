@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>45 - Jump Game II</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="problem-info">
+            <h1><span class="problem-number">#45</span> Jump Game II</h1>
+            <p>
+                Find the minimum number of jumps to reach the last index.
+                Uses greedy approach: track current boundary and farthest reachable position.
+            </p>
+            <div class="problem-meta">
+                <span class="meta-tag">🧮 DP</span>
+                <span class="meta-tag">💰 Greedy</span>
+                <span class="meta-tag">⏱️ O(n)</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <code>python/0045_jump_game_ii/0045_jump_game_ii.py</code>
+            </div>
+
+        </div>
+
+        <div class="explanation-panel">
+            <h4>🧠 How It Works (Layman's Terms)</h4>
+            <p>Greedy algorithms make <strong>locally optimal choices</strong>:</p>
+            <ul>
+                <li><strong>Local best:</strong> At each step, pick the best option</li>
+                <li><strong>No backtrack:</strong> Commit to choices</li>
+                <li><strong>Prove:</strong> Local optimal leads to global optimal</li>
+                <li><strong>Efficient:</strong> Usually O(n) time</li>
+            </ul>
+        </div>
+
+
+        <section class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+            <div class="controls">
+                <button id="autoRunBtn" class="btn">▶ Auto Run</button>
+                <button id="stepBtn" class="btn btn-success">Step</button>
+                <button id="resetBtn" class="btn btn-danger">Reset</button>
+            </div>
+            <div class="status" id="status">Click Auto Run to find minimum jumps</div>
+            <svg id="visualization"></svg>
+        </section>
+
+        <section class="code-section">
+            <h2>Python Solution</h2>
+            <pre><span class="keyword">def</span> <span class="function">jump</span>(nums):
+    n = <span class="function">len</span>(nums)
+    <span class="keyword">if</span> n <= <span class="number">1</span>:
+        <span class="keyword">return</span> <span class="number">0</span>
+    
+    jumps = <span class="number">0</span>           <span class="comment"># Number of jumps</span>
+    current_max = <span class="number">0</span>     <span class="comment"># Max index reachable with current jumps</span>
+    farthest = <span class="number">0</span>        <span class="comment"># Farthest index reachable</span>
+    
+    <span class="keyword">for</span> i <span class="keyword">in</span> <span class="function">range</span>(n - <span class="number">1</span>):
+        <span class="comment"># Update farthest</span>
+        farthest = <span class="function">max</span>(farthest, i + nums[i])
+        
+        <span class="comment"># Need to jump when reaching current boundary</span>
+        <span class="keyword">if</span> i == current_max:
+            jumps += <span class="number">1</span>
+            current_max = farthest
+            
+            <span class="keyword">if</span> current_max >= n - <span class="number">1</span>:
+                <span class="keyword">break</span>
+    
+    <span class="keyword">return</span> jumps</pre>
+        </section>
+    </div>
+
+    <script>
+        const width = 900;
+        const height = 500;
+
+        const svg = d3.select("#visualization")
+            .attr("width", width)
+            .attr("height", height);
+
+        const nums = [2, 3, 1, 1, 4];
+        const n = nums.length;
+        const cellWidth = 80;
+        const cellHeight = 50;
+        const offsetX = 80;
+        const offsetY = 100;
+
+        let currentIdx = 0;
+        let jumps = 0;
+        let currentMax = 0;
+        let farthest = 0;
+        let jumpPositions = [0];
+        let animationTimer = null;
+        let done = false;
+
+        function reset() {
+            currentIdx = 0;
+            jumps = 0;
+            currentMax = 0;
+            farthest = 0;
+            jumpPositions = [0];
+            done = false;
+            if (animationTimer) clearInterval(animationTimer);
+            document.getElementById("status").textContent = "Click Auto Run to find minimum jumps";
+            render();
+        }
+
+        function render() {
+            svg.selectAll("*").remove();
+
+            // Title
+            svg.append("text")
+                .attr("x", offsetX + (n * cellWidth) / 2)
+                .attr("y", 40)
+                .attr("text-anchor", "middle")
+                .attr("font-size", "16px")
+                .attr("font-weight", "bold")
+                .attr("fill", "#1e293b")
+                .text("Jump Game II - Greedy Approach");
+
+            // Draw array
+            nums.forEach((val, idx) => {
+                const x = offsetX + idx * cellWidth;
+                const y = offsetY;
+                const isCurrent = idx === currentIdx;
+                const isJumpPos = jumpPositions.includes(idx);
+                const isInRange = idx <= currentMax && idx >= (jumpPositions.length > 1 ? jumpPositions[jumpPositions.length - 2] + 1 : 0);
+                const isFarthest = idx === farthest;
+                const isEnd = idx === n - 1;
+
+                // Cell background
+                svg.append("rect")
+                    .attr("x", x)
+                    .attr("y", y)
+                    .attr("width", cellWidth)
+                    .attr("height", cellHeight)
+                    .attr("fill", () => {
+                        if (isCurrent) return "#fef3c7";
+                        if (isJumpPos) return "#d1fae5";
+                        if (isInRange) return "#dbeafe";
+                        return "#f8fafc";
+                    })
+                    .attr("stroke", () => {
+                        if (isCurrent) return "#f59e0b";
+                        if (isEnd) return "#ec4899";
+                        if (isJumpPos) return "#10b981";
+                        return "#94a3b8";
+                    })
+                    .attr("stroke-width", (isCurrent || isEnd || isJumpPos) ? 3 : 1);
+
+                // Value
+                svg.append("text")
+                    .attr("x", x + cellWidth / 2)
+                    .attr("y", y + cellHeight / 2 + 6)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "20px")
+                    .attr("font-weight", "bold")
+                    .attr("fill", "#1e293b")
+                    .text(val);
+
+                // Index
+                svg.append("text")
+                    .attr("x", x + cellWidth / 2)
+                    .attr("y", y + cellHeight + 20)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "12px")
+                    .attr("fill", "#64748b")
+                    .text(`[${idx}]`);
+            });
+
+            // Draw current max boundary
+            if (currentMax < n) {
+                const boundaryX = offsetX + (currentMax + 1) * cellWidth;
+                svg.append("line")
+                    .attr("x1", boundaryX)
+                    .attr("y1", offsetY - 10)
+                    .attr("x2", boundaryX)
+                    .attr("y2", offsetY + cellHeight + 10)
+                    .attr("stroke", "#3b82f6")
+                    .attr("stroke-width", 3)
+                    .attr("stroke-dasharray", "5,5");
+
+                svg.append("text")
+                    .attr("x", boundaryX)
+                    .attr("y", offsetY - 15)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "11px")
+                    .attr("fill", "#3b82f6")
+                    .text("current_max");
+            }
+
+            // Draw farthest marker
+            if (farthest > 0) {
+                const farthestX = offsetX + farthest * cellWidth + cellWidth / 2;
+                svg.append("polygon")
+                    .attr("points", `${farthestX},${offsetY - 20} ${farthestX - 8},${offsetY - 35} ${farthestX + 8},${offsetY - 35}`)
+                    .attr("fill", "#10b981");
+
+                svg.append("text")
+                    .attr("x", farthestX)
+                    .attr("y", offsetY - 42)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "10px")
+                    .attr("fill", "#10b981")
+                    .text("farthest");
+            }
+
+            // Draw jump arcs
+            for (let i = 0; i < jumpPositions.length - 1; i++) {
+                const from = jumpPositions[i];
+                const to = jumpPositions[i + 1];
+                const x1 = offsetX + from * cellWidth + cellWidth / 2;
+                const x2 = offsetX + to * cellWidth + cellWidth / 2;
+                const arcHeight = 40 + i * 10;
+
+                svg.append("path")
+                    .attr("d", `M ${x1} ${offsetY} Q ${(x1 + x2) / 2} ${offsetY - arcHeight} ${x2} ${offsetY}`)
+                    .attr("fill", "none")
+                    .attr("stroke", "#10b981")
+                    .attr("stroke-width", 2)
+                    .attr("marker-end", "url(#jump-arrow)");
+            }
+
+            // Arrow marker
+            svg.append("defs").append("marker")
+                .attr("id", "jump-arrow")
+                .attr("viewBox", "0 0 10 10")
+                .attr("refX", 5)
+                .attr("refY", 5)
+                .attr("markerWidth", 4)
+                .attr("markerHeight", 4)
+                .attr("orient", "auto")
+                .append("path")
+                .attr("d", "M 0 0 L 10 5 L 0 10 z")
+                .attr("fill", "#10b981");
+
+            // Draw variables panel
+            drawVariables();
+
+            // Draw legend
+            drawLegend();
+
+            // Draw explanation
+            drawExplanation();
+        }
+
+        function drawVariables() {
+            const x = 50;
+            const y = 250;
+
+            svg.append("text")
+                .attr("x", x)
+                .attr("y", y)
+                .attr("font-size", "14px")
+                .attr("font-weight", "bold")
+                .attr("fill", "#1e293b")
+                .text("Variables:");
+
+            const vars = [
+                { name: "i (current)", value: currentIdx },
+                { name: "jumps", value: jumps },
+                { name: "current_max", value: currentMax },
+                { name: "farthest", value: farthest }
+            ];
+
+            vars.forEach((v, idx) => {
+                svg.append("rect")
+                    .attr("x", x + idx * 140)
+                    .attr("y", y + 15)
+                    .attr("width", 130)
+                    .attr("height", 35)
+                    .attr("rx", 4)
+                    .attr("fill", "#f8fafc")
+                    .attr("stroke", "#94a3b8");
+
+                svg.append("text")
+                    .attr("x", x + idx * 140 + 65)
+                    .attr("y", y + 38)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "12px")
+                    .attr("font-weight", "bold")
+                    .attr("fill", "#1e293b")
+                    .text(`${v.name}: ${v.value}`);
+            });
+        }
+
+        function drawLegend() {
+            const x = 600;
+            const y = 250;
+
+            const items = [
+                { color: "#fef3c7", label: "Current position", stroke: "#f59e0b" },
+                { color: "#d1fae5", label: "Jump position", stroke: "#10b981" },
+                { color: "#dbeafe", label: "Current range", stroke: "#3b82f6" }
+            ];
+
+            svg.append("text")
+                .attr("x", x)
+                .attr("y", y)
+                .attr("font-size", "14px")
+                .attr("font-weight", "bold")
+                .attr("fill", "#1e293b")
+                .text("Legend:");
+
+            items.forEach((item, i) => {
+                svg.append("rect")
+                    .attr("x", x)
+                    .attr("y", y + 15 + i * 25)
+                    .attr("width", 18)
+                    .attr("height", 18)
+                    .attr("fill", item.color)
+                    .attr("stroke", item.stroke);
+
+                svg.append("text")
+                    .attr("x", x + 28)
+                    .attr("y", y + 29 + i * 25)
+                    .attr("font-size", "11px")
+                    .attr("fill", "#1e293b")
+                    .text(item.label);
+            });
+        }
+
+        function drawExplanation() {
+            const y = 350;
+
+            svg.append("text")
+                .attr("x", 50)
+                .attr("y", y)
+                .attr("font-size", "12px")
+                .attr("fill", "#64748b")
+                .text("Greedy Strategy: At each position, update farthest reachable. When hitting current boundary, jump!");
+
+            svg.append("text")
+                .attr("x", 50)
+                .attr("y", y + 25)
+                .attr("font-size", "12px")
+                .attr("fill", "#64748b")
+                .text("Time: O(n) - single pass through array");
+
+            // Jump path
+            svg.append("text")
+                .attr("x", 50)
+                .attr("y", y + 60)
+                .attr("font-size", "14px")
+                .attr("font-weight", "bold")
+                .attr("fill", "#1e293b")
+                .text(`Jump Path: ${jumpPositions.join(" → ")}${done ? ` (${jumps} jumps)` : ""}`);
+        }
+
+        function step() {
+            if (done) return;
+
+            if (currentIdx >= n - 1) {
+                done = true;
+                document.getElementById("status").textContent = 
+                    `✓ Reached end! Minimum jumps: ${jumps}`;
+                render();
+                return;
+            }
+
+            // Update farthest
+            const prevFarthest = farthest;
+            farthest = Math.max(farthest, currentIdx + nums[currentIdx]);
+
+            document.getElementById("status").textContent = 
+                `Position ${currentIdx}: Can reach up to index ${currentIdx + nums[currentIdx]}. ` +
+                `Farthest: ${farthest}`;
+
+            // Check if we need to jump
+            if (currentIdx === currentMax) {
+                jumps++;
+                currentMax = farthest;
+                
+                if (currentIdx < n - 1) {
+                    // Find next jump position
+                    for (let i = currentIdx + 1; i <= Math.min(farthest, n - 1); i++) {
+                        if (i === farthest || (i < farthest && i + nums[i] >= farthest)) {
+                            jumpPositions.push(i);
+                            break;
+                        }
+                    }
+                }
+
+                document.getElementById("status").textContent = 
+                    `JUMP! (jump #${jumps}) - Hit boundary at ${currentIdx}. New boundary: ${currentMax}`;
+
+                if (currentMax >= n - 1) {
+                    jumpPositions[jumpPositions.length - 1] = n - 1;
+                    done = true;
+                    render();
+                    document.getElementById("status").textContent = 
+                        `✓ Can reach end! Minimum jumps: ${jumps}`;
+                    return;
+                }
+            }
+
+            currentIdx++;
+            render();
+        }
+
+        function autoRun() {
+            if (animationTimer) {
+                clearInterval(animationTimer);
+                animationTimer = null;
+                document.getElementById("autoRunBtn").textContent = "▶ Auto Run";
+                return;
+            }
+
+            document.getElementById("autoRunBtn").textContent = "⏸ Pause";
+            animationTimer = setInterval(() => {
+                if (done) {
+                    clearInterval(animationTimer);
+                    animationTimer = null;
+                    document.getElementById("autoRunBtn").textContent = "▶ Auto Run";
+                    return;
+                }
+                step();
+            }, 1000);
+        }
+
+        document.getElementById("autoRunBtn").addEventListener("click", autoRun);
+        document.getElementById("stepBtn").addEventListener("click", step);
+        document.getElementById("resetBtn").addEventListener("click", reset);
+
+        reset();
+    </script>
+</body>
+</html>

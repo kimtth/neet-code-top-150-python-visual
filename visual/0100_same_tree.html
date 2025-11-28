@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Same Tree - LeetCode 100</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="problem-info">
+            <h1><span class="problem-number">#0100</span> Same Tree</h1>
+            <p><strong>Problem:</strong> Given the roots of two binary trees, check if they are the same or not. Two trees are the same if they are structurally identical and have the same node values.</p>
+            <p><strong>Pattern:</strong> DFS/Recursion - Compare nodes simultaneously</p>
+            <div class="problem-meta">
+                <span class="meta-tag">🌳 Tree</span>
+                <span class="meta-tag">⏱️ O(n)</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <code>python/0100_same_tree/0100_same_tree.py</code>
+            </div>
+
+        </div>
+
+        <div class="explanation-panel">
+            <h4>🧠 How It Works (Layman's Terms)</h4>
+            <p>Tree traversal is like <strong>exploring a family tree</strong>:</p>
+            <ul>
+                <li><strong>Root:</strong> Start at the top node</li>
+                <li><strong>Recurse:</strong> Visit left and right children</li>
+                <li><strong>Base case:</strong> Stop at null/leaf nodes</li>
+                <li><strong>Combine:</strong> Build answer from subtree results</li>
+            </ul>
+        </div>
+
+
+        <div class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+
+            <div class="visualization">
+            <svg id="mainSvg"></svg>
+        </div>
+
+        <div class="controls">
+            <button id="stepBtn">Step</button>
+            <button id="autoBtn">Auto Run</button>
+            <button id="resetBtn">Reset</button>
+            <div class="speed-control">
+                <label for="speed">Speed:</label>
+                <input type="range" id="speed" min="100" max="2000" value="800">
+            </div>
+        </div>
+
+        <div class="status" id="status">Click "Step" to compare trees node by node</div>
+
+        <div class="variables">
+            <div class="var-item">
+                <span class="var-label">Comparing:</span>
+                <span id="compareDisplay">-</span>
+            </div>
+            <div class="var-item">
+                <span class="var-label">Result:</span>
+                <span id="resultDisplay">-</span>
+            </div>
+        </div>
+
+        </div>
+
+        <div class="code-section">
+            <h3>Python Solution</h3>
+            <pre><span class="keyword">def</span> <span class="function">isSameTree</span>(p, q):
+    <span class="string">"""
+    Recursively check if trees are identical.
+    Time: O(min(n, m)), Space: O(min(h1, h2))
+    """</span>
+    <span class="comment"># Both null = same</span>
+    <span class="keyword">if</span> <span class="keyword">not</span> p <span class="keyword">and</span> <span class="keyword">not</span> q:
+        <span class="keyword">return</span> <span class="keyword">True</span>
+    
+    <span class="comment"># One null, one not = different</span>
+    <span class="keyword">if</span> <span class="keyword">not</span> p <span class="keyword">or</span> <span class="keyword">not</span> q:
+        <span class="keyword">return</span> <span class="keyword">False</span>
+    
+    <span class="comment"># Values different = different</span>
+    <span class="keyword">if</span> p.val != q.val:
+        <span class="keyword">return</span> <span class="keyword">False</span>
+    
+    <span class="comment"># Recursively check left and right subtrees</span>
+    <span class="keyword">return</span> <span class="function">isSameTree</span>(p.left, q.left) <span class="keyword">and</span> \
+           <span class="function">isSameTree</span>(p.right, q.right)</pre>
+        </div>
+    </div>
+
+    <script>
+        // Tree structure: [value, left, right] or null
+        const tree1 = {val: 1, left: {val: 2, left: null, right: null}, right: {val: 3, left: null, right: null}};
+        const tree2 = {val: 1, left: {val: 2, left: null, right: null}, right: {val: 3, left: null, right: null}};
+        
+        let stack = [[tree1, tree2, "root"]];
+        let compared = [];
+        let result = null;
+        let autoRunning = false;
+        let autoTimer = null;
+
+        const width = 800;
+        const height = 350;
+        const svg = d3.select("#mainSvg")
+            .attr("width", width)
+            .attr("height", height);
+
+        function drawTree(tree, x, y, level, side, highlight, treeNum) {
+            if (!tree) return;
+
+            const nodeRadius = 25;
+            const dx = 80 / (level + 1);
+            const dy = 60;
+
+            // Draw edges first
+            if (tree.left) {
+                svg.append("line")
+                    .attr("x1", x)
+                    .attr("y1", y)
+                    .attr("x2", x - dx)
+                    .attr("y2", y + dy)
+                    .attr("stroke", "#ddd")
+                    .attr("stroke-width", 2);
+            }
+            if (tree.right) {
+                svg.append("line")
+                    .attr("x1", x)
+                    .attr("y1", y)
+                    .attr("x2", x + dx)
+                    .attr("y2", y + dy)
+                    .attr("stroke", "#ddd")
+                    .attr("stroke-width", 2);
+            }
+
+            // Node
+            const nodePath = side;
+            const isHighlight = highlight === nodePath;
+            const wasCompared = compared.includes(nodePath);
+
+            svg.append("circle")
+                .attr("cx", x)
+                .attr("cy", y)
+                .attr("r", nodeRadius)
+                .attr("fill", isHighlight ? "#ffeb3b" : 
+                             wasCompared ? "#c8e6c9" : "#e3f2fd")
+                .attr("stroke", isHighlight ? "#f57c00" : 
+                               wasCompared ? "#4caf50" : "#1976d2")
+                .attr("stroke-width", isHighlight ? 3 : 2);
+
+            svg.append("text")
+                .attr("x", x)
+                .attr("y", y + 5)
+                .attr("text-anchor", "middle")
+                .attr("font-size", "18px")
+                .attr("font-weight", "bold")
+                .text(tree.val);
+
+            // Recurse
+            if (tree.left) {
+                drawTree(tree.left, x - dx, y + dy, level + 1, side + "L", highlight, treeNum);
+            }
+            if (tree.right) {
+                drawTree(tree.right, x + dx, y + dy, level + 1, side + "R", highlight, treeNum);
+            }
+        }
+
+        function draw(currentPath = null) {
+            svg.selectAll("*").remove();
+
+            // Labels
+            svg.append("text")
+                .attr("x", 200)
+                .attr("y", 30)
+                .attr("text-anchor", "middle")
+                .attr("font-weight", "bold")
+                .text("Tree p");
+
+            svg.append("text")
+                .attr("x", 600)
+                .attr("y", 30)
+                .attr("text-anchor", "middle")
+                .attr("font-weight", "bold")
+                .text("Tree q");
+
+            // Draw trees
+            drawTree(tree1, 200, 80, 0, "root", currentPath, 1);
+            drawTree(tree2, 600, 80, 0, "root", currentPath, 2);
+
+            // Comparison indicator
+            if (currentPath) {
+                svg.append("text")
+                    .attr("x", 400)
+                    .attr("y", 150)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "30px")
+                    .text("⟺");
+            }
+
+            // Result display
+            if (result !== null) {
+                svg.append("rect")
+                    .attr("x", 300)
+                    .attr("y", 280)
+                    .attr("width", 200)
+                    .attr("height", 50)
+                    .attr("rx", 10)
+                    .attr("fill", result ? "#c8e6c9" : "#ffcdd2")
+                    .attr("stroke", result ? "#4caf50" : "#e53935")
+                    .attr("stroke-width", 2);
+
+                svg.append("text")
+                    .attr("x", 400)
+                    .attr("y", 310)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "20px")
+                    .attr("font-weight", "bold")
+                    .text(result ? "✓ Same Tree" : "✗ Different");
+            }
+        }
+
+        function getNode(tree, path) {
+            if (!tree) return null;
+            if (path === "root") return tree;
+            
+            let node = tree;
+            for (let i = 4; i < path.length; i++) {
+                if (!node) return null;
+                node = path[i] === 'L' ? node.left : node.right;
+            }
+            return node;
+        }
+
+        function step() {
+            if (stack.length === 0 || result === false) {
+                if (result === null) result = true;
+                document.getElementById("status").textContent = 
+                    result ? "Trees are the same!" : "Trees are different!";
+                document.getElementById("resultDisplay").textContent = 
+                    result ? "Same ✓" : "Different ✗";
+                draw();
+                return false;
+            }
+
+            const [p, q, path] = stack.pop();
+            
+            // Both null - same for this subtree
+            if (!p && !q) {
+                document.getElementById("compareDisplay").textContent = `${path}: both null ✓`;
+                document.getElementById("status").textContent = 
+                    `Comparing ${path}: both null - same`;
+                compared.push(path);
+                draw(path);
+                return stack.length > 0;
+            }
+
+            // One null, one not
+            if (!p || !q) {
+                result = false;
+                document.getElementById("compareDisplay").textContent = 
+                    `${path}: one null, one not ✗`;
+                document.getElementById("status").textContent = 
+                    `Comparing ${path}: structure mismatch!`;
+                draw(path);
+                return false;
+            }
+
+            // Compare values
+            if (p.val !== q.val) {
+                result = false;
+                document.getElementById("compareDisplay").textContent = 
+                    `${path}: ${p.val} ≠ ${q.val} ✗`;
+                document.getElementById("status").textContent = 
+                    `Comparing ${path}: values differ (${p.val} vs ${q.val})`;
+                draw(path);
+                return false;
+            }
+
+            // Values match, add children to stack
+            document.getElementById("compareDisplay").textContent = 
+                `${path}: ${p.val} = ${q.val} ✓`;
+            document.getElementById("status").textContent = 
+                `Comparing ${path}: ${p.val} = ${q.val} - match!`;
+
+            compared.push(path);
+            
+            // Add right first so left is processed first (stack is LIFO)
+            stack.push([p.right, q.right, path + "R"]);
+            stack.push([p.left, q.left, path + "L"]);
+
+            draw(path);
+            return true;
+        }
+
+        function reset() {
+            stack = [[tree1, tree2, "root"]];
+            compared = [];
+            result = null;
+            autoRunning = false;
+            if (autoTimer) clearInterval(autoTimer);
+            
+            document.getElementById("compareDisplay").textContent = "-";
+            document.getElementById("resultDisplay").textContent = "-";
+            document.getElementById("status").textContent = 
+                'Click "Step" to compare trees node by node';
+            document.getElementById("autoBtn").textContent = "Auto Run";
+            
+            draw();
+        }
+
+        function autoRun() {
+            if (autoRunning) {
+                autoRunning = false;
+                clearInterval(autoTimer);
+                document.getElementById("autoBtn").textContent = "Auto Run";
+            } else {
+                autoRunning = true;
+                document.getElementById("autoBtn").textContent = "Pause";
+                const speed = 2100 - document.getElementById("speed").value;
+                autoTimer = setInterval(() => {
+                    if (!step()) {
+                        autoRunning = false;
+                        clearInterval(autoTimer);
+                        document.getElementById("autoBtn").textContent = "Auto Run";
+                    }
+                }, speed);
+            }
+        }
+
+        document.getElementById("stepBtn").addEventListener("click", step);
+        document.getElementById("autoBtn").addEventListener("click", autoRun);
+        document.getElementById("resetBtn").addEventListener("click", reset);
+
+        draw();
+    </script>
+</body>
+</html>

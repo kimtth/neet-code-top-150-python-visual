@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>62 - Unique Paths</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="problem-info">
+            <h1><span class="problem-number">#62</span> Unique Paths</h1>
+            <p>
+                A robot on an m×n grid can only move right or down. Count the number of 
+                unique paths from top-left to bottom-right corner.
+            </p>
+            <div class="problem-meta">
+                <span class="meta-tag">🧮 DP</span>
+                <span class="meta-tag">⏱️ O(n)</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <code>python/0062_unique_paths/0062_unique_paths.py</code>
+            </div>
+
+            <h3>Example:</h3>
+            <pre>
+m = 3, n = 7
+Output: 28 unique paths
+            </pre>
+        </div>
+
+        <div class="explanation-panel">
+            <h4>🧠 How It Works (Layman's Terms)</h4>
+            <p>Tree traversal is like <strong>exploring a family tree</strong>:</p>
+            <ul>
+                <li><strong>Root:</strong> Start at the top node</li>
+                <li><strong>Recurse:</strong> Visit left and right children</li>
+                <li><strong>Base case:</strong> Stop at null/leaf nodes</li>
+                <li><strong>Combine:</strong> Build answer from subtree results</li>
+            </ul>
+        </div>
+
+
+        <section class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+            <div class="controls">
+                <button id="stepBtn" class="btn">Step</button>
+                <button id="autoBtn" class="btn btn-success">Auto Run</button>
+                <button id="resetBtn" class="btn btn-danger">Reset</button>
+            </div>
+            <div class="status" id="status">Count paths: robot can only move right or down</div>
+            <svg id="visualization"></svg>
+        </section>
+
+        <section class="code-section">
+            <h2>Python Solution</h2>
+            <pre><span class="keyword">def</span> <span class="function">uniquePaths</span>(m, n):
+    dp = [[<span class="number">1</span>] * n <span class="keyword">for</span> _ <span class="keyword">in</span> <span class="function">range</span>(m)]
+    
+    <span class="keyword">for</span> i <span class="keyword">in</span> <span class="function">range</span>(<span class="number">1</span>, m):
+        <span class="keyword">for</span> j <span class="keyword">in</span> <span class="function">range</span>(<span class="number">1</span>, n):
+            dp[i][j] = dp[i-<span class="number">1</span>][j] + dp[i][j-<span class="number">1</span>]
+    
+    <span class="keyword">return</span> dp[m-<span class="number">1</span>][n-<span class="number">1</span>]</pre>
+        </section>
+    </div>
+
+    <script>
+        const width = 900;
+        const height = 550;
+
+        const svg = d3.select("#visualization")
+            .attr("width", width)
+            .attr("height", height);
+
+        const m = 4;
+        const n = 5;
+        const cellSize = 70;
+
+        let dp = [];
+        let currentI = 0;
+        let currentJ = 0;
+        let isRunning = false;
+        let phase = "init";
+        let samplePath = [];
+
+        function reset() {
+            dp = Array.from({ length: m }, () => Array(n).fill(0));
+            currentI = 0;
+            currentJ = 0;
+            phase = "init";
+            samplePath = [];
+            isRunning = false;
+            document.getElementById("autoBtn").textContent = "Auto Run";
+            document.getElementById("status").textContent = 
+                `Grid: ${m}×${n}. Robot moves right or down only.`;
+            render();
+        }
+
+        function render() {
+            svg.selectAll("*").remove();
+
+            const startX = 80;
+            const startY = 60;
+
+            // Title
+            svg.append("text")
+                .attr("x", startX + (n * cellSize) / 2)
+                .attr("y", 30)
+                .attr("text-anchor", "middle")
+                .attr("font-size", "16px")
+                .attr("font-weight", "bold")
+                .attr("fill", "#1e293b")
+                .text(`${m} × ${n} Grid`);
+
+            // Grid cells
+            for (let i = 0; i < m; i++) {
+                for (let j = 0; j < n; j++) {
+                    const x = startX + j * cellSize;
+                    const y = startY + i * cellSize;
+                    const isActive = i === currentI && j === currentJ && phase === "fill";
+                    const isStart = i === 0 && j === 0;
+                    const isEnd = i === m - 1 && j === n - 1;
+                    const isFilled = phase === "init" ? false :
+                        phase === "base" ? (i === 0 || j === 0) :
+                        (i < currentI || (i === currentI && j <= currentJ)) || phase === "done";
+
+                    // Cell rectangle
+                    svg.append("rect")
+                        .attr("x", x)
+                        .attr("y", y)
+                        .attr("width", cellSize - 2)
+                        .attr("height", cellSize - 2)
+                        .attr("rx", 6)
+                        .attr("fill", () => {
+                            if (isStart) return "#dbeafe";
+                            if (isEnd && phase === "done") return "#d1fae5";
+                            if (isActive) return "#fef3c7";
+                            if (isFilled) return "#f8fafc";
+                            return "#f1f5f9";
+                        })
+                        .attr("stroke", () => {
+                            if (isStart) return "#3b82f6";
+                            if (isEnd) return "#10b981";
+                            if (isActive) return "#f59e0b";
+                            return "#e2e8f0";
+                        })
+                        .attr("stroke-width", (isStart || isEnd || isActive) ? 2 : 1);
+
+                    // Path count
+                    if (isFilled || isStart) {
+                        svg.append("text")
+                            .attr("x", x + (cellSize - 2) / 2)
+                            .attr("y", y + (cellSize - 2) / 2 + 6)
+                            .attr("text-anchor", "middle")
+                            .attr("font-size", "20px")
+                            .attr("font-weight", "bold")
+                            .attr("fill", isEnd ? "#10b981" : "#1e293b")
+                            .text(dp[i][j] || 1);
+                    }
+
+                    // Start/End labels
+                    if (isStart) {
+                        svg.append("text")
+                            .attr("x", x + (cellSize - 2) / 2)
+                            .attr("y", y - 8)
+                            .attr("text-anchor", "middle")
+                            .attr("font-size", "11px")
+                            .attr("fill", "#3b82f6")
+                            .text("START");
+                    }
+                    if (isEnd) {
+                        svg.append("text")
+                            .attr("x", x + (cellSize - 2) / 2)
+                            .attr("y", y - 8)
+                            .attr("text-anchor", "middle")
+                            .attr("font-size", "11px")
+                            .attr("fill", "#10b981")
+                            .text("END");
+                    }
+                }
+            }
+
+            // Draw arrows showing source cells
+            if (phase === "fill" && currentI > 0 && currentJ > 0) {
+                const x = startX + currentJ * cellSize;
+                const y = startY + currentI * cellSize;
+                const cx = x + (cellSize - 2) / 2;
+                const cy = y + (cellSize - 2) / 2;
+
+                // Arrow from top
+                svg.append("line")
+                    .attr("x1", cx)
+                    .attr("y1", y - 15)
+                    .attr("x2", cx)
+                    .attr("y2", y + 5)
+                    .attr("stroke", "#3b82f6")
+                    .attr("stroke-width", 2)
+                    .attr("marker-end", "url(#arrowBlue)");
+
+                // Arrow from left
+                svg.append("line")
+                    .attr("x1", x - 15)
+                    .attr("y1", cy)
+                    .attr("x2", x + 5)
+                    .attr("y2", cy)
+                    .attr("stroke", "#a855f7")
+                    .attr("stroke-width", 2)
+                    .attr("marker-end", "url(#arrowPurple)");
+            }
+
+            // Arrow markers
+            const defs = svg.append("defs");
+            defs.append("marker")
+                .attr("id", "arrowBlue")
+                .attr("viewBox", "0 -5 10 10")
+                .attr("refX", 8)
+                .attr("refY", 0)
+                .attr("markerWidth", 6)
+                .attr("markerHeight", 6)
+                .attr("orient", "auto")
+                .append("path")
+                .attr("d", "M0,-5L10,0L0,5")
+                .attr("fill", "#3b82f6");
+
+            defs.append("marker")
+                .attr("id", "arrowPurple")
+                .attr("viewBox", "0 -5 10 10")
+                .attr("refX", 8)
+                .attr("refY", 0)
+                .attr("markerWidth", 6)
+                .attr("markerHeight", 6)
+                .attr("orient", "auto")
+                .append("path")
+                .attr("d", "M0,-5L10,0L0,5")
+                .attr("fill", "#a855f7");
+
+            // Robot
+            const robotX = startX + (phase === "done" ? (n - 1) : 0) * cellSize + (cellSize - 2) / 2;
+            const robotY = startY + (phase === "done" ? (m - 1) : 0) * cellSize + (cellSize - 2) / 2;
+            
+            svg.append("circle")
+                .attr("cx", robotX)
+                .attr("cy", robotY)
+                .attr("r", 12)
+                .attr("fill", "#f59e0b")
+                .attr("stroke", "#d97706")
+                .attr("stroke-width", 2);
+
+            svg.append("text")
+                .attr("x", robotX)
+                .attr("y", robotY + 4)
+                .attr("text-anchor", "middle")
+                .attr("font-size", "10px")
+                .attr("fill", "white")
+                .text("🤖");
+
+            // Sample path visualization
+            if (phase === "done") {
+                drawSamplePath(startX, startY);
+            }
+
+            // Formula explanation
+            const infoX = startX + n * cellSize + 40;
+            svg.append("text")
+                .attr("x", infoX)
+                .attr("y", startY + 20)
+                .attr("font-size", "14px")
+                .attr("font-weight", "bold")
+                .attr("fill", "#1e293b")
+                .text("Formula:");
+
+            svg.append("text")
+                .attr("x", infoX)
+                .attr("y", startY + 50)
+                .attr("font-size", "12px")
+                .attr("fill", "#64748b")
+                .text("dp[i][j] = dp[i-1][j] + dp[i][j-1]");
+
+            svg.append("text")
+                .attr("x", infoX)
+                .attr("y", startY + 80)
+                .attr("font-size", "12px")
+                .attr("fill", "#64748b")
+                .text("(paths from above) + (paths from left)");
+
+            // Legend
+            const legend = svg.append("g").attr("transform", `translate(${infoX}, ${startY + 120})`);
+
+            legend.append("rect").attr("x", 0).attr("y", 0).attr("width", 15).attr("height", 15).attr("rx", 3).attr("fill", "#dbeafe").attr("stroke", "#3b82f6");
+            legend.append("text").attr("x", 22).attr("y", 12).attr("font-size", "11px").text("Start cell");
+
+            legend.append("rect").attr("x", 0).attr("y", 25).attr("width", 15).attr("height", 15).attr("rx", 3).attr("fill", "#d1fae5").attr("stroke", "#10b981");
+            legend.append("text").attr("x", 22).attr("y", 37).attr("font-size", "11px").text("End cell");
+
+            legend.append("rect").attr("x", 0).attr("y", 50).attr("width", 15).attr("height", 15).attr("rx", 3).attr("fill", "#fef3c7").attr("stroke", "#f59e0b");
+            legend.append("text").attr("x", 22).attr("y", 62).attr("font-size", "11px").text("Current cell");
+
+            // Result
+            if (phase === "done") {
+                svg.append("rect")
+                    .attr("x", 80)
+                    .attr("y", 420)
+                    .attr("width", 450)
+                    .attr("height", 60)
+                    .attr("rx", 10)
+                    .attr("fill", "#d1fae5")
+                    .attr("stroke", "#10b981")
+                    .attr("stroke-width", 2);
+
+                svg.append("text")
+                    .attr("x", 305)
+                    .attr("y", 458)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "18px")
+                    .attr("font-weight", "bold")
+                    .attr("fill", "#10b981")
+                    .text(`✓ ${dp[m-1][n-1]} unique paths from Start to End`);
+            }
+        }
+
+        function drawSamplePath(startX, startY) {
+            // Draw one sample path
+            const path = [[0,0], [0,1], [0,2], [1,2], [2,2], [2,3], [2,4], [3,4]];
+            
+            svg.append("text")
+                .attr("x", startX + n * cellSize + 40)
+                .attr("y", startY + 240)
+                .attr("font-size", "12px")
+                .attr("fill", "#64748b")
+                .text("One sample path shown");
+
+            for (let k = 0; k < path.length - 1; k++) {
+                const [i1, j1] = path[k];
+                const [i2, j2] = path[k + 1];
+                const x1 = startX + j1 * cellSize + (cellSize - 2) / 2;
+                const y1 = startY + i1 * cellSize + (cellSize - 2) / 2;
+                const x2 = startX + j2 * cellSize + (cellSize - 2) / 2;
+                const y2 = startY + i2 * cellSize + (cellSize - 2) / 2;
+
+                svg.append("line")
+                    .attr("x1", x1)
+                    .attr("y1", y1)
+                    .attr("x2", x2)
+                    .attr("y2", y2)
+                    .attr("stroke", "#f59e0b")
+                    .attr("stroke-width", 3)
+                    .attr("stroke-opacity", 0.5);
+            }
+        }
+
+        function step() {
+            if (phase === "done") return;
+
+            if (phase === "init") {
+                // Initialize base cases
+                for (let i = 0; i < m; i++) dp[i][0] = 1;
+                for (let j = 0; j < n; j++) dp[0][j] = 1;
+                phase = "base";
+                currentI = 1;
+                currentJ = 1;
+                document.getElementById("status").textContent = 
+                    "Base cases: first row and column all have 1 path (only one way to reach them)";
+                render();
+                return;
+            }
+
+            if (phase === "base") {
+                phase = "fill";
+                document.getElementById("status").textContent = 
+                    `Filling dp[${currentI}][${currentJ}] = dp[${currentI-1}][${currentJ}] + dp[${currentI}][${currentJ-1}]`;
+                render();
+                return;
+            }
+
+            if (phase === "fill") {
+                dp[currentI][currentJ] = dp[currentI - 1][currentJ] + dp[currentI][currentJ - 1];
+                document.getElementById("status").textContent = 
+                    `dp[${currentI}][${currentJ}] = ${dp[currentI-1][currentJ]} + ${dp[currentI][currentJ-1]} = ${dp[currentI][currentJ]}`;
+
+                render();
+
+                currentJ++;
+                if (currentJ >= n) {
+                    currentJ = 1;
+                    currentI++;
+                    if (currentI >= m) {
+                        phase = "done";
+                        document.getElementById("status").textContent = 
+                            `✓ Total unique paths = ${dp[m-1][n-1]}`;
+                        render();
+                    }
+                }
+            }
+        }
+
+        async function autoRun() {
+            if (isRunning) {
+                isRunning = false;
+                document.getElementById("autoBtn").textContent = "Auto Run";
+                return;
+            }
+
+            isRunning = true;
+            document.getElementById("autoBtn").textContent = "Pause";
+
+            while (phase !== "done" && isRunning) {
+                step();
+                await new Promise(r => setTimeout(r, 200));
+            }
+
+            isRunning = false;
+            document.getElementById("autoBtn").textContent = "Auto Run";
+        }
+
+        document.getElementById("stepBtn").addEventListener("click", step);
+        document.getElementById("autoBtn").addEventListener("click", autoRun);
+        document.getElementById("resetBtn").addEventListener("click", reset);
+
+        reset();
+    </script>
+</body>
+</html>

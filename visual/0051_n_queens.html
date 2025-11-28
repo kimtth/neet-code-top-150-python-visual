@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>51 - N-Queens</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="problem-info">
+            <h1><span class="problem-number">#51</span> N-Queens</h1>
+            <p>
+                Place N queens on an N×N chessboard so that no two queens attack each other. 
+                Queens attack horizontally, vertically, and diagonally.
+            </p>
+            <div class="problem-meta">
+                <span class="meta-tag">🔄 Backtracking</span>
+                <span class="meta-tag">⏱️ O(n!)</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <code>python/0051_n_queens/0051_n_queens.py</code>
+            </div>
+
+            <h3>Example (N=4):</h3>
+            <pre>
+. Q . .      . . Q .
+. . . Q      Q . . .
+Q . . .      . . . Q
+. . Q .      . Q . .
+            </pre>
+        </div>
+
+        <div class="explanation-panel">
+            <h4>🧠 How It Works (Layman's Terms)</h4>
+            <p>Backtracking <strong>explores all possibilities</strong> like solving a maze:</p>
+            <ul>
+                <li><strong>Choose:</strong> Make a decision</li>
+                <li><strong>Explore:</strong> Recursively continue</li>
+                <li><strong>Validate:</strong> Check if path is valid</li>
+                <li><strong>Backtrack:</strong> Undo choice if stuck, try another</li>
+            </ul>
+        </div>
+
+
+        <section class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+            <div class="controls">
+                <button id="stepBtn" class="btn">Step</button>
+                <button id="autoBtn" class="btn btn-success">Auto Run</button>
+                <button id="resetBtn" class="btn btn-danger">Reset</button>
+            </div>
+            <div class="status" id="status">Place N queens so none attack each other</div>
+            <svg id="visualization"></svg>
+        </section>
+
+        <section class="code-section">
+            <h2>Python Solution</h2>
+            <pre><span class="keyword">def</span> <span class="function">solveNQueens</span>(n):
+    cols = <span class="function">set</span>()
+    pos_diag = <span class="function">set</span>()  <span class="comment"># r + c</span>
+    neg_diag = <span class="function">set</span>()  <span class="comment"># r - c</span>
+    result = []
+    board = [[<span class="string">'.'</span>] * n <span class="keyword">for</span> _ <span class="keyword">in</span> <span class="function">range</span>(n)]
+    
+    <span class="keyword">def</span> <span class="function">backtrack</span>(r):
+        <span class="keyword">if</span> r == n:
+            result.<span class="function">append</span>([<span class="string">''</span>.<span class="function">join</span>(row) <span class="keyword">for</span> row <span class="keyword">in</span> board])
+            <span class="keyword">return</span>
+        
+        <span class="keyword">for</span> c <span class="keyword">in</span> <span class="function">range</span>(n):
+            <span class="keyword">if</span> c <span class="keyword">in</span> cols <span class="keyword">or</span> (r+c) <span class="keyword">in</span> pos_diag <span class="keyword">or</span> (r-c) <span class="keyword">in</span> neg_diag:
+                <span class="keyword">continue</span>
+            
+            board[r][c] = <span class="string">'Q'</span>
+            cols.<span class="function">add</span>(c)
+            pos_diag.<span class="function">add</span>(r+c)
+            neg_diag.<span class="function">add</span>(r-c)
+            
+            <span class="function">backtrack</span>(r+<span class="number">1</span>)
+            
+            board[r][c] = <span class="string">'.'</span>
+            cols.<span class="function">remove</span>(c)
+            pos_diag.<span class="function">remove</span>(r+c)
+            neg_diag.<span class="function">remove</span>(r-c)
+    
+    <span class="function">backtrack</span>(<span class="number">0</span>)
+    <span class="keyword">return</span> result</pre>
+        </section>
+    </div>
+
+    <script>
+        const width = 900;
+        const height = 600;
+
+        const svg = d3.select("#visualization")
+            .attr("width", width)
+            .attr("height", height);
+
+        const n = 4;
+        const cellSize = 60;
+
+        let board = [];
+        let cols = new Set();
+        let posDiag = new Set();
+        let negDiag = new Set();
+        let currentRow = 0;
+        let currentCol = 0;
+        let solutions = [];
+        let isRunning = false;
+        let phase = "init";
+        let stack = [];
+        let triedPositions = [];
+
+        function reset() {
+            board = Array.from({ length: n }, () => Array(n).fill('.'));
+            cols = new Set();
+            posDiag = new Set();
+            negDiag = new Set();
+            currentRow = 0;
+            currentCol = 0;
+            solutions = [];
+            stack = [];
+            triedPositions = [];
+            phase = "init";
+            isRunning = false;
+            document.getElementById("autoBtn").textContent = "Auto Run";
+            document.getElementById("status").textContent = 
+                `Place ${n} queens on a ${n}×${n} board. No two queens can attack each other.`;
+            render();
+        }
+
+        function render() {
+            svg.selectAll("*").remove();
+
+            const startX = 50;
+            const startY = 80;
+
+            // Title
+            svg.append("text")
+                .attr("x", startX + (n * cellSize) / 2)
+                .attr("y", 40)
+                .attr("text-anchor", "middle")
+                .attr("font-size", "16px")
+                .attr("font-weight", "bold")
+                .attr("fill", "#1e293b")
+                .text(`${n}-Queens Board`);
+
+            // Draw board
+            for (let r = 0; r < n; r++) {
+                for (let c = 0; c < n; c++) {
+                    const x = startX + c * cellSize;
+                    const y = startY + r * cellSize;
+                    const isDark = (r + c) % 2 === 1;
+                    const isActive = r === currentRow && c === currentCol && phase === "try";
+                    const isTried = triedPositions.some(p => p.r === r && p.c === c);
+                    const isAttacked = isUnderAttack(r, c);
+
+                    // Cell
+                    svg.append("rect")
+                        .attr("x", x)
+                        .attr("y", y)
+                        .attr("width", cellSize)
+                        .attr("height", cellSize)
+                        .attr("fill", () => {
+                            if (isActive && isAttacked) return "#fee2e2";
+                            if (isActive) return "#fef3c7";
+                            if (isTried) return "#f1f5f9";
+                            return isDark ? "#d1d5db" : "#f9fafb";
+                        })
+                        .attr("stroke", () => {
+                            if (isActive) return "#f59e0b";
+                            return "#9ca3af";
+                        })
+                        .attr("stroke-width", isActive ? 2 : 1);
+
+                    // Queen
+                    if (board[r][c] === 'Q') {
+                        svg.append("text")
+                            .attr("x", x + cellSize / 2)
+                            .attr("y", y + cellSize / 2 + 10)
+                            .attr("text-anchor", "middle")
+                            .attr("font-size", "36px")
+                            .text("♛");
+                    }
+
+                    // Attack indicator
+                    if (isActive && isAttacked) {
+                        svg.append("text")
+                            .attr("x", x + cellSize / 2)
+                            .attr("y", y + cellSize / 2 + 6)
+                            .attr("text-anchor", "middle")
+                            .attr("font-size", "24px")
+                            .attr("fill", "#ef4444")
+                            .text("✗");
+                    }
+                }
+            }
+
+            // Draw attack lines from queens
+            for (let r = 0; r < n; r++) {
+                for (let c = 0; c < n; c++) {
+                    if (board[r][c] === 'Q') {
+                        drawAttackLines(r, c, startX, startY);
+                    }
+                }
+            }
+
+            // Constraints display
+            const infoX = startX + n * cellSize + 40;
+            svg.append("text")
+                .attr("x", infoX)
+                .attr("y", startY)
+                .attr("font-size", "14px")
+                .attr("font-weight", "bold")
+                .attr("fill", "#1e293b")
+                .text("Constraints Tracked:");
+
+            svg.append("text")
+                .attr("x", infoX)
+                .attr("y", startY + 30)
+                .attr("font-size", "12px")
+                .attr("fill", "#64748b")
+                .text(`Columns: {${[...cols].join(', ')}}`);
+
+            svg.append("text")
+                .attr("x", infoX)
+                .attr("y", startY + 55)
+                .attr("font-size", "12px")
+                .attr("fill", "#64748b")
+                .text(`Pos diag (r+c): {${[...posDiag].join(', ')}}`);
+
+            svg.append("text")
+                .attr("x", infoX)
+                .attr("y", startY + 80)
+                .attr("font-size", "12px")
+                .attr("fill", "#64748b")
+                .text(`Neg diag (r-c): {${[...negDiag].join(', ')}}`);
+
+            // Current state
+            svg.append("text")
+                .attr("x", infoX)
+                .attr("y", startY + 120)
+                .attr("font-size", "14px")
+                .attr("font-weight", "bold")
+                .attr("fill", "#1e293b")
+                .text("Current State:");
+
+            svg.append("text")
+                .attr("x", infoX)
+                .attr("y", startY + 145)
+                .attr("font-size", "12px")
+                .attr("fill", "#64748b")
+                .text(`Row: ${currentRow}, Col: ${currentCol}`);
+
+            svg.append("text")
+                .attr("x", infoX)
+                .attr("y", startY + 170)
+                .attr("font-size", "12px")
+                .attr("fill", "#64748b")
+                .text(`Solutions found: ${solutions.length}`);
+
+            // Solutions preview
+            if (solutions.length > 0) {
+                const solY = startY + 210;
+                svg.append("text")
+                    .attr("x", infoX)
+                    .attr("y", solY)
+                    .attr("font-size", "14px")
+                    .attr("font-weight", "bold")
+                    .attr("fill", "#10b981")
+                    .text("Found Solutions:");
+
+                solutions.forEach((sol, idx) => {
+                    const miniSize = 15;
+                    const offsetY = solY + 20 + idx * (n * miniSize + 15);
+
+                    for (let r = 0; r < n; r++) {
+                        for (let c = 0; c < n; c++) {
+                            const x = infoX + c * miniSize;
+                            const y = offsetY + r * miniSize;
+
+                            svg.append("rect")
+                                .attr("x", x)
+                                .attr("y", y)
+                                .attr("width", miniSize - 1)
+                                .attr("height", miniSize - 1)
+                                .attr("fill", sol[r][c] === 'Q' ? "#10b981" : "#f3f4f6")
+                                .attr("stroke", "#e5e7eb");
+                        }
+                    }
+                });
+            }
+
+            // Legend
+            const legendY = startY + n * cellSize + 30;
+            svg.append("text")
+                .attr("x", startX)
+                .attr("y", legendY)
+                .attr("font-size", "13px")
+                .attr("fill", "#64748b")
+                .text("Backtracking: Try each column, if safe place queen, recurse to next row.");
+
+            svg.append("text")
+                .attr("x", startX)
+                .attr("y", legendY + 25)
+                .attr("font-size", "13px")
+                .attr("fill", "#64748b")
+                .text("If no valid position found, backtrack and try next column in previous row.");
+
+            // Result
+            if (phase === "done") {
+                svg.append("rect")
+                    .attr("x", startX)
+                    .attr("y", legendY + 50)
+                    .attr("width", 400)
+                    .attr("height", 50)
+                    .attr("rx", 10)
+                    .attr("fill", "#d1fae5")
+                    .attr("stroke", "#10b981")
+                    .attr("stroke-width", 2);
+
+                svg.append("text")
+                    .attr("x", startX + 200)
+                    .attr("y", legendY + 82)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "18px")
+                    .attr("font-weight", "bold")
+                    .attr("fill", "#10b981")
+                    .text(`✓ Found ${solutions.length} solutions!`);
+            }
+        }
+
+        function isUnderAttack(r, c) {
+            return cols.has(c) || posDiag.has(r + c) || negDiag.has(r - c);
+        }
+
+        function drawAttackLines(qr, qc, startX, startY) {
+            const opacity = 0.2;
+            const cx = startX + qc * cellSize + cellSize / 2;
+            const cy = startY + qr * cellSize + cellSize / 2;
+
+            // Vertical line (column)
+            svg.append("line")
+                .attr("x1", cx)
+                .attr("y1", startY)
+                .attr("x2", cx)
+                .attr("y2", startY + n * cellSize)
+                .attr("stroke", "#ef4444")
+                .attr("stroke-width", 2)
+                .attr("stroke-opacity", opacity);
+
+            // Horizontal line (row)
+            svg.append("line")
+                .attr("x1", startX)
+                .attr("y1", cy)
+                .attr("x2", startX + n * cellSize)
+                .attr("y2", cy)
+                .attr("stroke", "#ef4444")
+                .attr("stroke-width", 2)
+                .attr("stroke-opacity", opacity);
+
+            // Positive diagonal
+            for (let d = -n; d <= n; d++) {
+                const nr = qr + d;
+                const nc = qc + d;
+                if (nr >= 0 && nr < n && nc >= 0 && nc < n && d !== 0) {
+                    svg.append("line")
+                        .attr("x1", cx)
+                        .attr("y1", cy)
+                        .attr("x2", startX + nc * cellSize + cellSize / 2)
+                        .attr("y2", startY + nr * cellSize + cellSize / 2)
+                        .attr("stroke", "#f59e0b")
+                        .attr("stroke-width", 2)
+                        .attr("stroke-opacity", opacity);
+                }
+            }
+
+            // Negative diagonal
+            for (let d = -n; d <= n; d++) {
+                const nr = qr + d;
+                const nc = qc - d;
+                if (nr >= 0 && nr < n && nc >= 0 && nc < n && d !== 0) {
+                    svg.append("line")
+                        .attr("x1", cx)
+                        .attr("y1", cy)
+                        .attr("x2", startX + nc * cellSize + cellSize / 2)
+                        .attr("y2", startY + nr * cellSize + cellSize / 2)
+                        .attr("stroke", "#8b5cf6")
+                        .attr("stroke-width", 2)
+                        .attr("stroke-opacity", opacity);
+                }
+            }
+        }
+
+        function step() {
+            if (phase === "done") return;
+
+            if (phase === "init") {
+                phase = "try";
+                document.getElementById("status").textContent = 
+                    `Row ${currentRow}: Try column ${currentCol}`;
+                render();
+                return;
+            }
+
+            if (phase === "try") {
+                if (currentRow === n) {
+                    // Found a solution!
+                    solutions.push(board.map(row => [...row]));
+                    document.getElementById("status").textContent = 
+                        `✓ Solution ${solutions.length} found! Backtracking...`;
+                    
+                    // Backtrack
+                    if (stack.length > 0) {
+                        const prev = stack.pop();
+                        board[prev.r][prev.c] = '.';
+                        cols.delete(prev.c);
+                        posDiag.delete(prev.r + prev.c);
+                        negDiag.delete(prev.r - prev.c);
+                        currentRow = prev.r;
+                        currentCol = prev.c + 1;
+                    } else {
+                        phase = "done";
+                        document.getElementById("status").textContent = 
+                            `✓ Complete! Found ${solutions.length} solutions.`;
+                    }
+                    render();
+                    return;
+                }
+
+                if (currentCol >= n) {
+                    // No valid position in this row, backtrack
+                    if (stack.length > 0) {
+                        const prev = stack.pop();
+                        board[prev.r][prev.c] = '.';
+                        cols.delete(prev.c);
+                        posDiag.delete(prev.r + prev.c);
+                        negDiag.delete(prev.r - prev.c);
+                        currentRow = prev.r;
+                        currentCol = prev.c + 1;
+                        document.getElementById("status").textContent = 
+                            `Backtrack to row ${currentRow}, try column ${currentCol}`;
+                    } else {
+                        phase = "done";
+                        document.getElementById("status").textContent = 
+                            `✓ Complete! Found ${solutions.length} solutions.`;
+                    }
+                    render();
+                    return;
+                }
+
+                const attacked = isUnderAttack(currentRow, currentCol);
+                
+                if (attacked) {
+                    triedPositions.push({ r: currentRow, c: currentCol });
+                    document.getElementById("status").textContent = 
+                        `Row ${currentRow}, Col ${currentCol}: Under attack! Skip.`;
+                    currentCol++;
+                } else {
+                    // Place queen
+                    board[currentRow][currentCol] = 'Q';
+                    cols.add(currentCol);
+                    posDiag.add(currentRow + currentCol);
+                    negDiag.add(currentRow - currentCol);
+                    stack.push({ r: currentRow, c: currentCol });
+                    
+                    document.getElementById("status").textContent = 
+                        `Row ${currentRow}, Col ${currentCol}: Safe! Place queen, move to row ${currentRow + 1}`;
+                    
+                    currentRow++;
+                    currentCol = 0;
+                    triedPositions = [];
+                }
+
+                render();
+            }
+        }
+
+        async function autoRun() {
+            if (isRunning) {
+                isRunning = false;
+                document.getElementById("autoBtn").textContent = "Auto Run";
+                return;
+            }
+
+            isRunning = true;
+            document.getElementById("autoBtn").textContent = "Pause";
+
+            while (phase !== "done" && isRunning) {
+                step();
+                await new Promise(r => setTimeout(r, 200));
+            }
+
+            isRunning = false;
+            document.getElementById("autoBtn").textContent = "Auto Run";
+        }
+
+        document.getElementById("stepBtn").addEventListener("click", step);
+        document.getElementById("autoBtn").addEventListener("click", autoRun);
+        document.getElementById("resetBtn").addEventListener("click", reset);
+
+        reset();
+    </script>
+</body>
+</html>

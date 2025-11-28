@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Swap Nodes in Pairs - LeetCode 24</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="problem-info">
+            <h1><span class="problem-number">#24</span> Swap Nodes in Pairs</h1>
+            <p>Swap every two adjacent nodes in a linked list without modifying values.</p>
+            <div class="problem-meta">
+                <span class="meta-tag">Linked List</span>
+                <span class="meta-tag">Medium</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <code>python/0024_swap_nodes_in_pairs/0024_swap_nodes_in_pairs.py</code>
+            </div>
+
+        </div>
+
+        <div class="explanation-panel">
+            <h4>🧠 How It Works (Layman's Terms)</h4>
+            <p>A linked list is like a <strong>chain of train cars</strong>:</p>
+            <ul>
+                <li><strong>Each node:</strong> Contains data and points to next node</li>
+                <li><strong>Traversal:</strong> Follow the chain one node at a time</li>
+                <li><strong>Modification:</strong> Redirect links to rearrange</li>
+                <li><strong>Two pointers:</strong> Often use slow/fast pointers</li>
+            </ul>
+        </div>
+
+
+        <div class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+            <div class="controls">
+                <button id="stepBtn">Step</button>
+                <button id="autoBtn">Auto Run</button>
+                <button id="resetBtn">Reset</button>
+            </div>
+            <svg id="mainSvg" width="800" height="350"></svg>
+            <div class="status-message" id="status">Click "Step" to swap node pairs</div>
+        </div>
+
+        <div class="code-section">
+            <h3>Python Solution</h3>
+            <pre><span class="keyword">def</span> <span class="function">swapPairs</span>(head: <span class="class-name">ListNode</span>) -> ListNode:
+    dummy = <span class="function">ListNode</span>(<span class="number">0</span>)
+    dummy.next = head
+    current = dummy
+    
+    <span class="keyword">while</span> current.next <span class="keyword">and</span> current.next.next:
+        first = current.next
+        second = current.next.next
+        
+        <span class="comment"># Perform swap</span>
+        first.next = second.next
+        second.next = first
+        current.next = second
+        
+        <span class="comment"># Move to next pair</span>
+        current = first
+    
+    <span class="keyword">return</span> dummy.next</pre>
+        </div>
+    </div>
+
+    <script>
+        const originalList = [1, 2, 3, 4, 5];
+        let nodes = [];
+        let dummyNode = { val: 'D', next: 0 };
+        let currentIdx = -1; // points to dummy initially
+        let phase = 'init';
+        let swapStep = 0;
+        
+        const width = 800, height = 350;
+        const svg = d3.select("#mainSvg");
+        let autoTimer = null;
+        let autoRunning = false;
+
+        function initNodes() {
+            nodes = originalList.map((val, i) => ({
+                val,
+                next: i + 1 < originalList.length ? i + 1 : -1,
+                x: 150 + i * 120,
+                y: 100
+            }));
+            dummyNode = { val: 'D', next: 0, x: 30, y: 100 };
+            currentIdx = -1;
+            phase = 'init';
+            swapStep = 0;
+        }
+
+        function draw() {
+            svg.selectAll("*").remove();
+
+            const nodeWidth = 70, nodeHeight = 45;
+
+            // Title
+            svg.append("text")
+                .attr("x", width / 2).attr("y", 30)
+                .attr("text-anchor", "middle")
+                .attr("font-weight", "bold")
+                .text("Swap Nodes in Pairs");
+
+            // Draw dummy node
+            svg.append("rect")
+                .attr("x", dummyNode.x).attr("y", dummyNode.y)
+                .attr("width", nodeWidth).attr("height", nodeHeight)
+                .attr("rx", 8)
+                .attr("fill", currentIdx === -1 ? "#fef3c7" : "#e0e0e0")
+                .attr("stroke", currentIdx === -1 ? "#f59e0b" : "#999");
+
+            svg.append("text")
+                .attr("x", dummyNode.x + nodeWidth / 2)
+                .attr("y", dummyNode.y + nodeHeight / 2 + 6)
+                .attr("text-anchor", "middle")
+                .attr("font-weight", "bold")
+                .text("Dummy");
+
+            // Draw arrow from dummy
+            if (dummyNode.next >= 0 && nodes[dummyNode.next]) {
+                const target = nodes[dummyNode.next];
+                svg.append("line")
+                    .attr("x1", dummyNode.x + nodeWidth)
+                    .attr("y1", dummyNode.y + nodeHeight / 2)
+                    .attr("x2", target.x - 5)
+                    .attr("y2", target.y + nodeHeight / 2)
+                    .attr("stroke", "#666")
+                    .attr("stroke-width", 2)
+                    .attr("marker-end", "url(#arrow)");
+            }
+
+            // Draw nodes
+            nodes.forEach((node, i) => {
+                let fill = "#e3f2fd", stroke = "#1976d2";
+
+                // Highlight current pair
+                if (currentIdx >= 0) {
+                    const currentNode = currentIdx === -1 ? dummyNode : nodes[currentIdx];
+                    const firstIdx = currentNode.next;
+                    const first = firstIdx >= 0 ? nodes[firstIdx] : null;
+                    const secondIdx = first ? first.next : -1;
+
+                    if (i === firstIdx) {
+                        fill = "#fff3e0"; stroke = "#ff9800";
+                    } else if (i === secondIdx) {
+                        fill = "#e8f5e9"; stroke = "#4caf50";
+                    }
+                }
+
+                svg.append("rect")
+                    .attr("x", node.x).attr("y", node.y)
+                    .attr("width", nodeWidth).attr("height", nodeHeight)
+                    .attr("rx", 8)
+                    .attr("fill", fill).attr("stroke", stroke)
+                    .attr("stroke-width", 2);
+
+                svg.append("text")
+                    .attr("x", node.x + nodeWidth / 2)
+                    .attr("y", node.y + nodeHeight / 2 + 6)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "20px")
+                    .attr("font-weight", "bold")
+                    .text(node.val);
+
+                // Draw arrow to next
+                if (node.next >= 0 && nodes[node.next]) {
+                    const target = nodes[node.next];
+                    svg.append("line")
+                        .attr("x1", node.x + nodeWidth)
+                        .attr("y1", node.y + nodeHeight / 2)
+                        .attr("x2", target.x - 5)
+                        .attr("y2", target.y + nodeHeight / 2)
+                        .attr("stroke", "#666")
+                        .attr("stroke-width", 2)
+                        .attr("marker-end", "url(#arrow)");
+                } else if (node.next === -1) {
+                    svg.append("text")
+                        .attr("x", node.x + nodeWidth + 20)
+                        .attr("y", node.y + nodeHeight / 2 + 5)
+                        .attr("font-size", "14px")
+                        .attr("fill", "#999")
+                        .text("null");
+                }
+            });
+
+            // Arrow marker definition
+            svg.append("defs").append("marker")
+                .attr("id", "arrow")
+                .attr("viewBox", "0 0 10 10")
+                .attr("refX", 9).attr("refY", 5)
+                .attr("markerWidth", 6).attr("markerHeight", 6)
+                .attr("orient", "auto")
+                .append("path")
+                .attr("d", "M 0 0 L 10 5 L 0 10 z")
+                .attr("fill", "#666");
+
+            // Current pointer
+            if (currentIdx === -1) {
+                svg.append("text")
+                    .attr("x", dummyNode.x + nodeWidth / 2)
+                    .attr("y", dummyNode.y - 15)
+                    .attr("text-anchor", "middle")
+                    .attr("fill", "#f59e0b")
+                    .attr("font-size", "12px")
+                    .text("▼ current");
+            } else if (currentIdx >= 0 && nodes[currentIdx]) {
+                svg.append("text")
+                    .attr("x", nodes[currentIdx].x + nodeWidth / 2)
+                    .attr("y", nodes[currentIdx].y - 15)
+                    .attr("text-anchor", "middle")
+                    .attr("fill", "#f59e0b")
+                    .attr("font-size", "12px")
+                    .text("▼ current");
+            }
+
+            // Legend
+            const legendY = 200;
+            svg.append("rect").attr("x", 50).attr("y", legendY).attr("width", 20).attr("height", 20)
+                .attr("fill", "#fff3e0").attr("stroke", "#ff9800");
+            svg.append("text").attr("x", 80).attr("y", legendY + 15).attr("font-size", "12px").text("First");
+
+            svg.append("rect").attr("x", 150).attr("y", legendY).attr("width", 20).attr("height", 20)
+                .attr("fill", "#e8f5e9").attr("stroke", "#4caf50");
+            svg.append("text").attr("x", 180).attr("y", legendY + 15).attr("font-size", "12px").text("Second");
+
+            // Result after all swaps
+            if (phase === 'done') {
+                const resultY = 280;
+                let result = [];
+                let idx = dummyNode.next;
+                while (idx >= 0 && idx < nodes.length) {
+                    result.push(nodes[idx].val);
+                    idx = nodes[idx].next;
+                }
+
+                svg.append("rect")
+                    .attr("x", width / 2 - 150).attr("y", resultY)
+                    .attr("width", 300).attr("height", 45)
+                    .attr("rx", 10)
+                    .attr("fill", "#d1fae5").attr("stroke", "#10b981");
+
+                svg.append("text")
+                    .attr("x", width / 2).attr("y", resultY + 30)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "18px")
+                    .attr("font-weight", "bold")
+                    .attr("fill", "#10b981")
+                    .text(`Result: [${result.join(", ")}]`);
+            }
+        }
+
+        function step() {
+            if (phase === 'done') return false;
+
+            const currentNode = currentIdx === -1 ? dummyNode : nodes[currentIdx];
+            const firstIdx = currentNode.next;
+            
+            if (firstIdx < 0 || nodes[firstIdx].next < 0) {
+                phase = 'done';
+                document.getElementById("status").textContent = "Done! All pairs swapped.";
+                draw();
+                return false;
+            }
+
+            const first = nodes[firstIdx];
+            const secondIdx = first.next;
+            const second = nodes[secondIdx];
+
+            if (swapStep === 0) {
+                document.getElementById("status").textContent = 
+                    `Identified pair to swap: ${first.val} and ${second.val}`;
+                swapStep = 1;
+            } else if (swapStep === 1) {
+                // first.next = second.next
+                first.next = second.next;
+                document.getElementById("status").textContent = 
+                    `first.next = second.next (${first.val} now points to ${second.next >= 0 ? nodes[second.next].val : 'null'})`;
+                swapStep = 2;
+            } else if (swapStep === 2) {
+                // second.next = first
+                second.next = firstIdx;
+                document.getElementById("status").textContent = 
+                    `second.next = first (${second.val} now points to ${first.val})`;
+                swapStep = 3;
+            } else if (swapStep === 3) {
+                // current.next = second
+                currentNode.next = secondIdx;
+                document.getElementById("status").textContent = 
+                    `current.next = second (current now points to ${second.val})`;
+                swapStep = 4;
+            } else if (swapStep === 4) {
+                // Move current to first (which is now second in the pair)
+                currentIdx = firstIdx;
+                document.getElementById("status").textContent = 
+                    `current = first. Moving to next pair...`;
+                swapStep = 0;
+            }
+
+            draw();
+            return true;
+        }
+
+        function reset() {
+            initNodes();
+            if (autoTimer) clearInterval(autoTimer);
+            autoRunning = false;
+            document.getElementById("autoBtn").textContent = "Auto Run";
+            document.getElementById("status").textContent = 'Click "Step" to swap node pairs';
+            draw();
+        }
+
+        function autoRun() {
+            if (autoRunning) {
+                clearInterval(autoTimer);
+                autoRunning = false;
+                document.getElementById("autoBtn").textContent = "Auto Run";
+            } else {
+                autoRunning = true;
+                document.getElementById("autoBtn").textContent = "Pause";
+                autoTimer = setInterval(() => {
+                    if (!step()) {
+                        clearInterval(autoTimer);
+                        autoRunning = false;
+                        document.getElementById("autoBtn").textContent = "Auto Run";
+                    }
+                }, 700);
+            }
+        }
+
+        document.getElementById("stepBtn").addEventListener("click", step);
+        document.getElementById("autoBtn").addEventListener("click", autoRun);
+        document.getElementById("resetBtn").addEventListener("click", reset);
+
+        reset();
+    </script>
+</body>
+</html>

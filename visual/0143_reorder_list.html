@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reorder List - Algorithm Visualization</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    </div>
+
+    <div class="container">
+        <div class="problem-info">
+            <h1><span class="problem-number">#0143</span> Reorder List</h1>
+            <p>
+                Given the head of a singly linked list L0 → L1 → … → Ln-1 → Ln, reorder it to:
+                <br><strong>L0 → Ln → L1 → Ln-1 → L2 → Ln-2 → …</strong>
+            </p>
+            <p><strong>Approach:</strong> 1) Find middle using slow/fast pointers, 2) Reverse second half, 3) Merge two halves</p>
+            <p><strong>Example:</strong> [1,2,3,4,5] → [1,5,2,4,3]</p>
+            <p><strong>Time Complexity:</strong> O(n) | <strong>Space Complexity:</strong> O(1)</p>
+            <div class="problem-meta">
+                <span class="meta-tag">📝 Algorithm</span>
+                <span class="meta-tag">⏱️ O(n)</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <code>python/0143_reorder_list/0143_reorder_list.py</code>
+            </div>
+
+        </div>
+
+        <div class="explanation-panel">
+            <h4>🧠 How It Works (Layman's Terms)</h4>
+            <p>This algorithm solves the problem <strong>step by step</strong>:</p>
+            <ul>
+                <li><strong>Understand:</strong> Parse the input data</li>
+                <li><strong>Process:</strong> Apply the core logic</li>
+                <li><strong>Optimize:</strong> Use efficient data structures</li>
+                <li><strong>Return:</strong> Output the computed result</li>
+            </ul>
+        </div>
+
+
+        <div class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+            <div class="controls">
+                <button id="stepBtn" class="btn">Step</button>
+                <button id="autoBtn" class="btn">Auto Run</button>
+                <button id="resetBtn" class="btn btn-secondary">Reset</button>
+                <div class="speed-control">
+                    <label for="speedSlider">Speed:</label>
+                    <input type="range" id="speedSlider" min="1" max="10" value="5">
+                </div>
+            </div>
+            <svg id="visualization" width="900" height="450"></svg>
+            <div class="variables-display">
+                <div id="varDisplay"></div>
+            </div>
+            <div class="status-message" id="statusMessage">Press "Step" or "Auto Run" to begin</div>
+        </div>
+
+        <div class="code-section">
+            <h3>Python Solution</h3>
+            <pre><span class="keyword">def</span> <span class="function">reorder_list</span>(self, head: <span class="class-name">ListNode</span>) -> <span class="keyword">None</span>:
+    <span class="comment"># Step 1: Find middle</span>
+    slow, fast = head, head
+    <span class="keyword">while</span> fast <span class="keyword">and</span> fast.next:
+        slow = slow.next
+        fast = fast.next.next
+    
+    <span class="comment"># Step 2: Reverse second half</span>
+    prev, curr = <span class="keyword">None</span>, slow
+    <span class="keyword">while</span> curr:
+        temp = curr.next
+        curr.next = prev
+        prev = curr
+        curr = temp
+    
+    <span class="comment"># Step 3: Merge two halves</span>
+    first, second = head, prev
+    <span class="keyword">while</span> second.next:
+        temp = first.next
+        first.next = second
+        first = temp
+        temp = second.next
+        second.next = first
+        second = temp</pre>
+        </div>
+    </div>
+
+    <script>
+        // Data
+        const values = [1, 2, 3, 4, 5];
+        
+        // State
+        let step = 0;
+        let autoRunning = false;
+        let autoInterval = null;
+        
+        // Generate steps
+        const steps = [];
+        
+        function generateSteps() {
+            steps.length = 0;
+            
+            steps.push({
+                phase: 'init',
+                list: [...values],
+                slow: 0,
+                fast: 0,
+                message: 'Original list: [1,2,3,4,5]. Goal: Reorder to [1,5,2,4,3]'
+            });
+            
+            // Phase 1: Find middle
+            let slow = 0, fast = 0;
+            while (fast < values.length - 1 && fast + 1 < values.length) {
+                slow++;
+                fast += 2;
+                steps.push({
+                    phase: 'find_middle',
+                    list: [...values],
+                    slow: slow,
+                    fast: Math.min(fast, values.length - 1),
+                    message: `Finding middle: slow at index ${slow}, fast at index ${Math.min(fast, values.length - 1)}`
+                });
+            }
+            
+            const middleIndex = slow;
+            steps.push({
+                phase: 'middle_found',
+                list: [...values],
+                slow: middleIndex,
+                fast: fast,
+                middleIndex: middleIndex,
+                message: `Middle found at index ${middleIndex} (value ${values[middleIndex]}). Now reverse second half.`
+            });
+            
+            // Phase 2: Reverse second half
+            const firstHalf = values.slice(0, middleIndex + 1);
+            const secondHalf = values.slice(middleIndex);
+            
+            steps.push({
+                phase: 'split',
+                firstHalf: [...firstHalf],
+                secondHalf: [...secondHalf],
+                message: `Split: First half [${firstHalf.join(',')}], Second half [${secondHalf.join(',')}]`
+            });
+            
+            const reversed = secondHalf.slice().reverse();
+            steps.push({
+                phase: 'reversed',
+                firstHalf: [...firstHalf],
+                secondHalf: reversed,
+                message: `Second half reversed: [${reversed.join(',')}]`
+            });
+            
+            // Phase 3: Merge
+            const result = [];
+            let i = 0, j = 0;
+            const first = firstHalf.slice(0, -1); // Remove middle from first (it's in reversed)
+            const second = reversed;
+            
+            steps.push({
+                phase: 'merge_start',
+                first: [...first],
+                second: [...second],
+                result: [],
+                message: 'Start merging: alternate between first and second half'
+            });
+            
+            while (i < first.length || j < second.length) {
+                if (i < first.length) {
+                    result.push(first[i]);
+                    steps.push({
+                        phase: 'merge',
+                        first: [...first],
+                        second: [...second],
+                        result: [...result],
+                        currentFrom: 'first',
+                        currentIndex: i,
+                        message: `Add ${first[i]} from first half`
+                    });
+                    i++;
+                }
+                if (j < second.length) {
+                    result.push(second[j]);
+                    steps.push({
+                        phase: 'merge',
+                        first: [...first],
+                        second: [...second],
+                        result: [...result],
+                        currentFrom: 'second',
+                        currentIndex: j,
+                        message: `Add ${second[j]} from second half (reversed)`
+                    });
+                    j++;
+                }
+            }
+            
+            steps.push({
+                phase: 'done',
+                result: [...result],
+                message: `Done! Reordered list: [${result.join(', ')}]`
+            });
+        }
+        
+        // SVG setup
+        const svg = d3.select("#visualization");
+        const width = 900;
+        const height = 450;
+        
+        function draw(currentStep) {
+            svg.selectAll("*").remove();
+            
+            const data = currentStep || steps[0];
+            const nodeWidth = 50;
+            const nodeHeight = 40;
+            const gap = 70;
+            
+            // Arrow marker
+            svg.append("defs").append("marker")
+                .attr("id", "arrow")
+                .attr("viewBox", "0 0 10 10")
+                .attr("refX", 9)
+                .attr("refY", 5)
+                .attr("markerWidth", 6)
+                .attr("markerHeight", 6)
+                .attr("orient", "auto")
+                .append("path")
+                .attr("d", "M 0 0 L 10 5 L 0 10 z")
+                .attr("fill", "#667eea");
+            
+            if (data.phase === 'init' || data.phase === 'find_middle' || data.phase === 'middle_found') {
+                // Draw original list
+                svg.append("text")
+                    .attr("x", 50)
+                    .attr("y", 80)
+                    .attr("class", "label")
+                    .text("Original List:");
+                
+                data.list.forEach((val, i) => {
+                    const x = 180 + i * gap;
+                    const group = svg.append("g")
+                        .attr("transform", `translate(${x}, 60)`);
+                    
+                    let fill = "#667eea";
+                    if (data.phase === 'middle_found' && i === data.middleIndex) {
+                        fill = "#f59e0b";
+                    }
+                    
+                    group.append("rect")
+                        .attr("width", nodeWidth)
+                        .attr("height", nodeHeight)
+                        .attr("rx", 8)
+                        .attr("fill", fill);
+                    
+                    group.append("text")
+                        .attr("x", nodeWidth / 2)
+                        .attr("y", nodeHeight / 2 + 5)
+                        .attr("text-anchor", "middle")
+                        .attr("fill", "white")
+                        .attr("font-weight", "bold")
+                        .text(val);
+                    
+                    if (i < data.list.length - 1) {
+                        svg.append("line")
+                            .attr("x1", x + nodeWidth)
+                            .attr("y1", 80)
+                            .attr("x2", x + gap - 5)
+                            .attr("y2", 80)
+                            .attr("stroke", "#667eea")
+                            .attr("stroke-width", 2)
+                            .attr("marker-end", "url(#arrow)");
+                    }
+                });
+                
+                // Draw pointers
+                if (data.slow !== undefined) {
+                    const slowX = 180 + data.slow * gap + nodeWidth / 2;
+                    svg.append("polygon")
+                        .attr("points", `${slowX},140 ${slowX - 10},170 ${slowX + 10},170`)
+                        .attr("fill", "#4ade80");
+                    svg.append("text")
+                        .attr("x", slowX)
+                        .attr("y", 190)
+                        .attr("text-anchor", "middle")
+                        .attr("fill", "#16a34a")
+                        .attr("font-weight", "bold")
+                        .text("slow");
+                }
+                
+                if (data.fast !== undefined && data.phase !== 'init') {
+                    const fastX = 180 + Math.min(data.fast, data.list.length - 1) * gap + nodeWidth / 2;
+                    svg.append("polygon")
+                        .attr("points", `${fastX},20 ${fastX - 10},50 ${fastX + 10},50`)
+                        .attr("fill", "#ef4444");
+                    svg.append("text")
+                        .attr("x", fastX)
+                        .attr("y", 15)
+                        .attr("text-anchor", "middle")
+                        .attr("fill", "#dc2626")
+                        .attr("font-weight", "bold")
+                        .text("fast");
+                }
+                
+            } else if (data.phase === 'split' || data.phase === 'reversed') {
+                // Draw split lists
+                svg.append("text")
+                    .attr("x", 50)
+                    .attr("y", 80)
+                    .attr("class", "label")
+                    .text("First Half:");
+                
+                data.firstHalf.forEach((val, i) => {
+                    const x = 180 + i * gap;
+                    const group = svg.append("g")
+                        .attr("transform", `translate(${x}, 60)`);
+                    
+                    group.append("rect")
+                        .attr("width", nodeWidth)
+                        .attr("height", nodeHeight)
+                        .attr("rx", 8)
+                        .attr("fill", "#667eea");
+                    
+                    group.append("text")
+                        .attr("x", nodeWidth / 2)
+                        .attr("y", nodeHeight / 2 + 5)
+                        .attr("text-anchor", "middle")
+                        .attr("fill", "white")
+                        .attr("font-weight", "bold")
+                        .text(val);
+                });
+                
+                svg.append("text")
+                    .attr("x", 50)
+                    .attr("y", 180)
+                    .attr("class", "label")
+                    .text(data.phase === 'reversed' ? "Reversed:" : "Second Half:");
+                
+                data.secondHalf.forEach((val, i) => {
+                    const x = 180 + i * gap;
+                    const group = svg.append("g")
+                        .attr("transform", `translate(${x}, 160)`);
+                    
+                    group.append("rect")
+                        .attr("width", nodeWidth)
+                        .attr("height", nodeHeight)
+                        .attr("rx", 8)
+                        .attr("fill", data.phase === 'reversed' ? "#4ade80" : "#764ba2");
+                    
+                    group.append("text")
+                        .attr("x", nodeWidth / 2)
+                        .attr("y", nodeHeight / 2 + 5)
+                        .attr("text-anchor", "middle")
+                        .attr("fill", "white")
+                        .attr("font-weight", "bold")
+                        .text(val);
+                });
+                
+            } else if (data.phase === 'merge_start' || data.phase === 'merge') {
+                // Draw merge process
+                svg.append("text")
+                    .attr("x", 50)
+                    .attr("y", 50)
+                    .attr("class", "label")
+                    .text("First:");
+                
+                data.first.forEach((val, i) => {
+                    const x = 120 + i * gap;
+                    const group = svg.append("g")
+                        .attr("transform", `translate(${x}, 30)`);
+                    
+                    const isActive = data.currentFrom === 'first' && data.currentIndex === i;
+                    
+                    group.append("rect")
+                        .attr("width", nodeWidth)
+                        .attr("height", nodeHeight)
+                        .attr("rx", 8)
+                        .attr("fill", isActive ? "#4ade80" : "#667eea")
+                        .attr("stroke", isActive ? "#16a34a" : "none")
+                        .attr("stroke-width", 3);
+                    
+                    group.append("text")
+                        .attr("x", nodeWidth / 2)
+                        .attr("y", nodeHeight / 2 + 5)
+                        .attr("text-anchor", "middle")
+                        .attr("fill", "white")
+                        .attr("font-weight", "bold")
+                        .text(val);
+                });
+                
+                svg.append("text")
+                    .attr("x", 50)
+                    .attr("y", 130)
+                    .attr("class", "label")
+                    .text("Second:");
+                
+                data.second.forEach((val, i) => {
+                    const x = 120 + i * gap;
+                    const group = svg.append("g")
+                        .attr("transform", `translate(${x}, 110)`);
+                    
+                    const isActive = data.currentFrom === 'second' && data.currentIndex === i;
+                    
+                    group.append("rect")
+                        .attr("width", nodeWidth)
+                        .attr("height", nodeHeight)
+                        .attr("rx", 8)
+                        .attr("fill", isActive ? "#4ade80" : "#764ba2")
+                        .attr("stroke", isActive ? "#16a34a" : "none")
+                        .attr("stroke-width", 3);
+                    
+                    group.append("text")
+                        .attr("x", nodeWidth / 2)
+                        .attr("y", nodeHeight / 2 + 5)
+                        .attr("text-anchor", "middle")
+                        .attr("fill", "white")
+                        .attr("font-weight", "bold")
+                        .text(val);
+                });
+                
+                // Draw result
+                svg.append("text")
+                    .attr("x", 50)
+                    .attr("y", 230)
+                    .attr("class", "label")
+                    .text("Result:");
+                
+                if (data.result && data.result.length > 0) {
+                    data.result.forEach((val, i) => {
+                        const x = 120 + i * gap;
+                        const group = svg.append("g")
+                            .attr("transform", `translate(${x}, 210)`);
+                        
+                        const isNew = i === data.result.length - 1;
+                        
+                        group.append("rect")
+                            .attr("width", nodeWidth)
+                            .attr("height", nodeHeight)
+                            .attr("rx", 8)
+                            .attr("fill", isNew ? "#f59e0b" : "#06b6d4");
+                        
+                        group.append("text")
+                            .attr("x", nodeWidth / 2)
+                            .attr("y", nodeHeight / 2 + 5)
+                            .attr("text-anchor", "middle")
+                            .attr("fill", "white")
+                            .attr("font-weight", "bold")
+                            .text(val);
+                        
+                        if (i < data.result.length - 1) {
+                            svg.append("line")
+                                .attr("x1", x + nodeWidth)
+                                .attr("y1", 230)
+                                .attr("x2", x + gap - 5)
+                                .attr("y2", 230)
+                                .attr("stroke", "#06b6d4")
+                                .attr("stroke-width", 2);
+                        }
+                    });
+                }
+                
+            } else if (data.phase === 'done') {
+                // Final result
+                svg.append("text")
+                    .attr("x", 50)
+                    .attr("y", 120)
+                    .attr("class", "label")
+                    .text("Original: [1, 2, 3, 4, 5]");
+                
+                svg.append("text")
+                    .attr("x", 50)
+                    .attr("y", 200)
+                    .attr("class", "label")
+                    .text("Reordered:");
+                
+                data.result.forEach((val, i) => {
+                    const x = 180 + i * gap;
+                    const group = svg.append("g")
+                        .attr("transform", `translate(${x}, 180)`);
+                    
+                    group.append("rect")
+                        .attr("width", nodeWidth)
+                        .attr("height", nodeHeight)
+                        .attr("rx", 8)
+                        .attr("fill", "#4ade80");
+                    
+                    group.append("text")
+                        .attr("x", nodeWidth / 2)
+                        .attr("y", nodeHeight / 2 + 5)
+                        .attr("text-anchor", "middle")
+                        .attr("fill", "white")
+                        .attr("font-weight", "bold")
+                        .text(val);
+                    
+                    if (i < data.result.length - 1) {
+                        svg.append("line")
+                            .attr("x1", x + nodeWidth)
+                            .attr("y1", 200)
+                            .attr("x2", x + gap - 5)
+                            .attr("y2", 200)
+                            .attr("stroke", "#4ade80")
+                            .attr("stroke-width", 2)
+                            .attr("marker-end", "url(#arrow)");
+                    }
+                });
+                
+                // Show pattern
+                svg.append("text")
+                    .attr("x", 50)
+                    .attr("y", 300)
+                    .attr("fill", "#6b7280")
+                    .text("Pattern: L0 → Ln → L1 → Ln-1 → L2 → Ln-2 ...");
+                
+                svg.append("text")
+                    .attr("x", 50)
+                    .attr("y", 330)
+                    .attr("fill", "#6b7280")
+                    .text("         1  →  5  → 2  →  4   → 3");
+            }
+            
+            // Update status
+            document.getElementById("statusMessage").textContent = data.message;
+            
+            // Update variables
+            let varHTML = `<span class="var-item">Phase: ${data.phase}</span>`;
+            if (data.slow !== undefined) varHTML += `<span class="var-item">Slow: ${data.slow}</span>`;
+            if (data.fast !== undefined) varHTML += `<span class="var-item">Fast: ${data.fast}</span>`;
+            if (data.result) varHTML += `<span class="var-item">Result: [${data.result.join(', ')}]</span>`;
+            document.getElementById("varDisplay").innerHTML = varHTML;
+        }
+        
+        function doStep() {
+            if (step >= steps.length) {
+                stopAuto();
+                return;
+            }
+            draw(steps[step]);
+            step++;
+        }
+        
+        function stopAuto() {
+            autoRunning = false;
+            if (autoInterval) {
+                clearInterval(autoInterval);
+                autoInterval = null;
+            }
+            document.getElementById("autoBtn").textContent = "Auto Run";
+        }
+        
+        function toggleAuto() {
+            if (autoRunning) {
+                stopAuto();
+            } else {
+                autoRunning = true;
+                document.getElementById("autoBtn").textContent = "Pause";
+                const speed = 11 - document.getElementById("speedSlider").value;
+                autoInterval = setInterval(() => {
+                    if (step >= steps.length) {
+                        stopAuto();
+                        return;
+                    }
+                    doStep();
+                }, speed * 200);
+            }
+        }
+        
+        function reset() {
+            stopAuto();
+            step = 0;
+            draw(steps[0]);
+        }
+        
+        // Initialize
+        generateSteps();
+        draw(steps[0]);
+        
+        // Event listeners
+        document.getElementById("stepBtn").addEventListener("click", doStep);
+        document.getElementById("autoBtn").addEventListener("click", toggleAuto);
+        document.getElementById("resetBtn").addEventListener("click", reset);
+    </script>
+</body>
+</html>

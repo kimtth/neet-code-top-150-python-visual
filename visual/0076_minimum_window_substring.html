@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LC 76: Minimum Window Substring - Algorithm Visualization</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="problem-info">
+            <h1><span class="problem-number">#76</span> Minimum Window Substring</h1>
+            <p>Given strings s and t, find the minimum window substring in s that contains all characters of t (including duplicates).</p>
+            <div class="problem-meta">
+                <span class="meta-tag">🪟 Sliding Window</span>
+                <span class="meta-tag">📚 HashMap</span>
+                <span class="meta-tag">⏱️ O(n)</span>
+                <span class="meta-tag">💾 O(m)</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <code>python/0076_minimum_window_substring/0076_minimum_window_substring.py</code>
+            </div>
+            </div>
+
+        <div class="explanation-panel">
+            <h4>🧠 How It Works (Layman's Terms)</h4>
+            <p>A classic <strong>sliding window</strong> problem with two phases:</p>
+            <ul>
+                <li><strong>Expand (right pointer):</strong> Keep adding characters until we have all of t</li>
+                <li><strong>Contract (left pointer):</strong> Once valid, shrink from left to find minimum</li>
+                <li><strong>Track "formed":</strong> How many unique characters have met their required count</li>
+                <li><strong>Update answer:</strong> Every time we have a valid window, check if it's smallest</li>
+            </ul>
+        </div>
+
+
+        <div class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+            
+            <div class="controls">
+                <button class="btn btn-primary" onclick="step()">Step</button>
+                <button class="btn btn-success" onclick="autoRun()">Auto Run</button>
+                <button class="btn" style="background: #607d8b; color: white;" onclick="reset()">Reset</button>
+            </div>
+
+            <div class="status-message" id="statusMessage">
+                Find minimum window in "ADOBECODEBANC" containing "ABC"
+            </div>
+
+            <div class="variable-display" id="variables">
+                <div class="var-box">
+                    <span class="var-label">left</span>
+                    <span class="var-value" id="varLeft">0</span>
+                </div>
+                <div class="var-box">
+                    <span class="var-label">right</span>
+                    <span class="var-value" id="varRight">0</span>
+                </div>
+                <div class="var-box">
+                    <span class="var-label">formed</span>
+                    <span class="var-value" id="varFormed">0/3</span>
+                </div>
+                <div class="var-box" style="background: #e8f5e9;">
+                    <span class="var-label">Min Window</span>
+                    <span class="var-value" id="varMin" style="color: #4caf50; font-size: 0.8em;">-</span>
+                </div>
+            </div>
+
+            <div style="margin-top: 20px;">
+                <h4 style="margin-bottom: 10px;">🔤 String s = "ADOBECODEBANC" | t = "ABC"</h4>
+                <div id="stringContainer" style="display: flex; gap: 3px; flex-wrap: wrap; padding: 15px; background: #f5f5f5; border-radius: 12px; justify-content: center;">
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 30px; flex-wrap: wrap; margin-top: 20px;">
+                <div style="flex: 1; min-width: 200px;">
+                    <h4 style="margin-bottom: 10px;">📚 Required (from t)</h4>
+                    <div id="requiredContainer" style="display: flex; gap: 10px; flex-wrap: wrap; padding: 15px; background: #fff3e0; border-radius: 12px;">
+                    </div>
+                </div>
+                <div style="flex: 1; min-width: 200px;">
+                    <h4 style="margin-bottom: 10px;">🪟 Window Counts</h4>
+                    <div id="windowContainer" style="display: flex; gap: 10px; flex-wrap: wrap; padding: 15px; background: #e3f2fd; border-radius: 12px;">
+                    </div>
+                </div>
+            </div>
+
+            <div id="resultContainer" style="margin-top: 20px; padding: 20px; background: #e8f5e9; border-radius: 12px; text-align: center;">
+                <h4>🏆 Best Window Found</h4>
+                <div id="bestWindow" style="font-size: 1.5em; font-weight: bold; color: #4caf50;">-</div>
+            </div>
+        </div>
+        <div class="code-section">
+            <h3>💻 Python Solution</h3>
+            <div class="code-block">
+                <pre><span class="keyword">def</span> <span class="function">min_window</span>(s, t):
+    required = <span class="function">Counter</span>(t)  <span class="comment"># Characters we need</span>
+    window = {}            <span class="comment"># Characters in current window</span>
+    formed = <span class="number">0</span>              <span class="comment"># Count of satisfied characters</span>
+    left = <span class="number">0</span>
+    min_len, min_start = <span class="function">float</span>(<span class="string">'inf'</span>), <span class="number">0</span>
+
+    <span class="keyword">for</span> right <span class="keyword">in</span> <span class="function">range</span>(<span class="function">len</span>(s)):
+        <span class="comment"># Expand: add s[right] to window</span>
+        char = s[right]
+        window[char] = window.<span class="function">get</span>(char, <span class="number">0</span>) + <span class="number">1</span>
+        
+        <span class="keyword">if</span> char <span class="keyword">in</span> required <span class="keyword">and</span> window[char] == required[char]:
+            formed += <span class="number">1</span>
+        
+        <span class="comment"># Contract: shrink window while valid</span>
+        <span class="keyword">while</span> formed == <span class="function">len</span>(required):
+            <span class="keyword">if</span> right - left + <span class="number">1</span> < min_len:
+                min_len = right - left + <span class="number">1</span>
+                min_start = left
+            
+            <span class="comment"># Remove s[left] from window</span>
+            window[s[left]] -= <span class="number">1</span>
+            <span class="keyword">if</span> s[left] <span class="keyword">in</span> required <span class="keyword">and</span> window[s[left]] < required[s[left]]:
+                formed -= <span class="number">1</span>
+            left += <span class="number">1</span>
+    
+    <span class="keyword">return</span> <span class="string">""</span> <span class="keyword">if</span> min_len == <span class="function">float</span>(<span class="string">'inf'</span>) <span class="keyword">else</span> s[min_start:<span class="class-name">min_start</span> + min_len]</pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const s = "ADOBECODEBANC";
+        const t = "ABC";
+        
+        let required = {};
+        t.split('').forEach(c => required[c] = (required[c] || 0) + 1);
+        const requiredCount = Object.keys(required).length;
+        
+        let window_counts = {};
+        let left = 0;
+        let right = 0;
+        let formed = 0;
+        let minLen = Infinity;
+        let minStart = 0;
+        let done = false;
+        let isRunning = false;
+        let phase = 'expand'; // 'expand' or 'contract'
+
+        function renderString() {
+            const container = document.getElementById('stringContainer');
+            container.innerHTML = s.split('').map((char, i) => {
+                let bgColor = '#fff';
+                let borderColor = '#ddd';
+                
+                if (i >= left && i < right) {
+                    bgColor = formed === requiredCount ? '#c8e6c9' : '#bbdefb';
+                    borderColor = formed === requiredCount ? '#a5d6a7' : '#90caf9';
+                }
+                if (i === right && !done) {
+                    bgColor = '#ff9800';
+                    borderColor = '#f57c00';
+                }
+                if (i === left && phase === 'contract' && !done) {
+                    borderColor = '#f44336';
+                }
+
+                return `
+                    <div style="width: 40px; height: 45px; display: flex; flex-direction: column;
+                                align-items: center; justify-content: center; background: ${bgColor}; 
+                                border: 3px solid ${borderColor}; border-radius: 6px; font-weight: bold;">
+                        <span style="font-size: 1.2em;">${char}</span>
+                        <span style="font-size: 0.6em; color: #999;">${i}</span>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderRequired() {
+            const container = document.getElementById('requiredContainer');
+            container.innerHTML = Object.entries(required).map(([char, count]) => {
+                const windowCount = window_counts[char] || 0;
+                const satisfied = windowCount >= count;
+                return `
+                    <div style="padding: 10px 15px; background: ${satisfied ? '#4caf50' : '#ff9800'}; 
+                                color: white; border-radius: 8px; text-align: center;">
+                        <div style="font-size: 1.2em; font-weight: bold;">${char}</div>
+                        <div style="font-size: 0.8em;">need: ${count}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderWindow() {
+            const container = document.getElementById('windowContainer');
+            const relevantChars = Object.keys(required);
+            const entries = relevantChars.map(char => [char, window_counts[char] || 0]);
+            
+            container.innerHTML = entries.map(([char, count]) => {
+                const needed = required[char];
+                const satisfied = count >= needed;
+                return `
+                    <div style="padding: 10px 15px; background: ${satisfied ? '#4caf50' : '#667eea'}; 
+                                color: white; border-radius: 8px; text-align: center;">
+                        <div style="font-size: 1.2em; font-weight: bold;">${char}</div>
+                        <div style="font-size: 0.8em;">have: ${count}</div>
+
+        </div>
+                `;
+            }).join('');
+        }
+
+        function updateVariables() {
+            document.getElementById('varLeft').textContent = left;
+            document.getElementById('varRight').textContent = right;
+            document.getElementById('varFormed').textContent = `${formed}/${requiredCount}`;
+            document.getElementById('varMin').textContent = 
+                minLen === Infinity ? '-' : `"${s.substring(minStart, minStart + minLen)}" (${minLen})`;
+        }
+
+        function updateBestWindow() {
+            const container = document.getElementById('bestWindow');
+            if (minLen === Infinity) {
+                container.textContent = '-';
+            } else {
+                container.textContent = `"${s.substring(minStart, minStart + minLen)}" (length: ${minLen})`;
+            }
+        }
+
+        function step() {
+            if (done) {
+                document.getElementById('statusMessage').textContent = 
+                    minLen === Infinity ? 
+                    'No valid window found!' : 
+                    `Done! Minimum window: "${s.substring(minStart, minStart + minLen)}"`;
+                return;
+            }
+
+            if (phase === 'expand') {
+                if (right >= s.length) {
+                    done = true;
+                    document.getElementById('statusMessage').textContent = 
+                        `Complete! Answer: "${s.substring(minStart, minStart + minLen)}"`;
+                    return;
+                }
+
+                const char = s[right];
+                window_counts[char] = (window_counts[char] || 0) + 1;
+
+                if (char in required && window_counts[char] === required[char]) {
+                    formed++;
+                    document.getElementById('statusMessage').textContent = 
+                        `Added '${char}'. Now have enough '${char}'s! (formed: ${formed}/${requiredCount})`;
+                } else {
+                    document.getElementById('statusMessage').textContent = 
+                        `Added '${char}' to window. (formed: ${formed}/${requiredCount})`;
+                }
+
+                right++;
+
+                if (formed === requiredCount) {
+                    phase = 'contract';
+                }
+            } else if (phase === 'contract') {
+                // Check if current window is smaller
+                const windowLen = right - left;
+                if (windowLen < minLen) {
+                    minLen = windowLen;
+                    minStart = left;
+                    document.getElementById('statusMessage').textContent = 
+                        `Valid window found! "${s.substring(left, right)}" (length ${windowLen}) - NEW MINIMUM!`;
+                } else {
+                    document.getElementById('statusMessage').textContent = 
+                        `Valid window "${s.substring(left, right)}" (length ${windowLen}), but not smaller than best.`;
+                }
+
+                // Shrink from left
+                const leftChar = s[left];
+                window_counts[leftChar]--;
+
+                if (leftChar in required && window_counts[leftChar] < required[leftChar]) {
+                    formed--;
+                    phase = 'expand';
+                }
+
+                left++;
+            }
+
+            renderString();
+            renderRequired();
+            renderWindow();
+            updateVariables();
+            updateBestWindow();
+        }
+
+        function autoRun() {
+            if (isRunning) return;
+            isRunning = true;
+
+            const interval = setInterval(() => {
+                if (done) {
+                    clearInterval(interval);
+                    isRunning = false;
+                    return;
+                }
+                step();
+            }, 500);
+        }
+
+        function reset() {
+            window_counts = {};
+            left = 0;
+            right = 0;
+            formed = 0;
+            minLen = Infinity;
+            minStart = 0;
+            done = false;
+            isRunning = false;
+            phase = 'expand';
+
+            document.getElementById('statusMessage').textContent = 
+                `Find minimum window in "${s}" containing "${t}"`;
+            
+            renderString();
+            renderRequired();
+            renderWindow();
+            updateVariables();
+            updateBestWindow();
+        }
+
+        reset();
+    </script>
+</body>
+</html>

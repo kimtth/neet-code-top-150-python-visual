@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Course Schedule II - LeetCode 210</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="problem-info">
+            <h1><span class="problem-number">#0210</span> Course Schedule II</h1>
+            <p><strong>Problem:</strong> Find an ordering of courses such that all prerequisites are satisfied. Return empty if impossible (cycle).</p>
+            <p><strong>Pattern:</strong> Topological Sort (Kahn's Algorithm) - BFS with in-degree tracking</p>
+            <div class="problem-meta">
+                <span class="meta-tag">🔗 Graph</span>
+                <span class="meta-tag">⏱️ O(n)</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <code>python/0210_course_schedule_ii/0210_course_schedule_ii.py</code>
+            </div>
+
+        </div>
+
+        <div class="explanation-panel">
+            <h4>🧠 How It Works (Layman's Terms)</h4>
+            <p>Graph problems are like <strong>exploring a maze</strong>:</p>
+            <ul>
+                <li><strong>Nodes:</strong> Points or locations</li>
+                <li><strong>Edges:</strong> Connections between nodes</li>
+                <li><strong>Traverse:</strong> Use DFS or BFS to explore</li>
+                <li><strong>Track visited:</strong> Avoid infinite loops</li>
+            </ul>
+        </div>
+
+
+        <div class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+
+            <div class="visualization">
+            <svg id="mainSvg"></svg>
+        </div>
+
+        <div class="controls">
+            <button id="stepBtn">Step</button>
+            <button id="autoBtn">Auto Run</button>
+            <button id="resetBtn">Reset</button>
+            <div class="speed-control">
+                <label for="speed">Speed:</label>
+                <input type="range" id="speed" min="100" max="2000" value="800">
+            </div>
+        </div>
+
+        <div class="status" id="status">Click "Step" to find course ordering</div>
+
+        <div class="variables">
+            <div class="var-item">
+                <span class="var-label">Queue (0 in-degree):</span>
+                <span id="queueDisplay">[]</span>
+            </div>
+            <div class="var-item">
+                <span class="var-label">Result Order:</span>
+                <span id="resultDisplay">[]</span>
+            </div>
+        </div>
+
+        </div>
+
+        <div class="code-section">
+            <h3>Python Solution</h3>
+            <pre><span class="keyword">def</span> <span class="function">findOrder</span>(numCourses, prerequisites):
+    <span class="string">"""
+    Topological sort using Kahn's algorithm (BFS).
+    Time: O(V + E), Space: O(V + E)
+    """</span>
+    graph = <span class="function">defaultdict</span>(list)
+    in_degree = [<span class="number">0</span>] * numCourses
+    
+    <span class="keyword">for</span> course, prereq <span class="keyword">in</span> prerequisites:
+        graph[prereq].<span class="function">append</span>(course)
+        in_degree[course] += <span class="number">1</span>
+    
+    <span class="comment"># Start with courses having no prerequisites</span>
+    queue = <span class="function">deque</span>([i <span class="keyword">for</span> i <span class="keyword">in</span> <span class="function">range</span>(numCourses) 
+                   <span class="keyword">if</span> in_degree[i] == <span class="number">0</span>])
+    result = []
+    
+    <span class="keyword">while</span> queue:
+        course = queue.<span class="function">popleft</span>()
+        result.<span class="function">append</span>(course)
+        
+        <span class="keyword">for</span> next_course <span class="keyword">in</span> graph[course]:
+            in_degree[next_course] -= <span class="number">1</span>
+            <span class="keyword">if</span> in_degree[next_course] == <span class="number">0</span>:
+                queue.<span class="function">append</span>(next_course)
+    
+    <span class="keyword">return</span> result <span class="keyword">if</span> <span class="function">len</span>(result) == numCourses <span class="keyword">else</span> []</pre>
+        </div>
+    </div>
+
+    <script>
+        // 4 courses, prerequisites: [[1,0],[2,0],[3,1],[3,2]]
+        // 0 → 1 → 3
+        //   → 2 ↗
+        const numCourses = 4;
+        const prerequisites = [[1, 0], [2, 0], [3, 1], [3, 2]];
+
+        let graph = {};
+        let inDegree = [];
+        let nodeStates = {}; // course -> 'queue' | 'processing' | 'done'
+        let queue = [];
+        let result = [];
+        let autoRunning = false;
+        let autoTimer = null;
+        let initialized = false;
+
+        const width = 700;
+        const height = 380;
+        const svg = d3.select("#mainSvg")
+            .attr("width", width)
+            .attr("height", height);
+
+        const positions = [
+            {x: 150, y: 180},  // Course 0
+            {x: 350, y: 100},  // Course 1
+            {x: 350, y: 260},  // Course 2
+            {x: 550, y: 180}   // Course 3
+        ];
+
+        function initGraph() {
+            graph = {};
+            inDegree = new Array(numCourses).fill(0);
+            
+            for (let i = 0; i < numCourses; i++) {
+                graph[i] = [];
+            }
+            
+            for (const [course, prereq] of prerequisites) {
+                graph[prereq].push(course);
+                inDegree[course]++;
+            }
+        }
+
+        function draw() {
+            svg.selectAll("*").remove();
+
+            svg.append("text")
+                .attr("x", width / 2).attr("y", 25)
+                .attr("text-anchor", "middle")
+                .attr("font-weight", "bold")
+                .text("Topological Sort: Course Ordering");
+
+            // Draw edges
+            for (const [course, prereq] of prerequisites) {
+                const from = positions[prereq];
+                const to = positions[course];
+                
+                // Arrow
+                const dx = to.x - from.x;
+                const dy = to.y - from.y;
+                const len = Math.sqrt(dx * dx + dy * dy);
+                const ux = dx / len;
+                const uy = dy / len;
+                
+                const startX = from.x + ux * 30;
+                const startY = from.y + uy * 30;
+                const endX = to.x - ux * 35;
+                const endY = to.y - uy * 35;
+
+                svg.append("line")
+                    .attr("x1", startX).attr("y1", startY)
+                    .attr("x2", endX).attr("y2", endY)
+                    .attr("stroke", "#999")
+                    .attr("stroke-width", 2)
+                    .attr("marker-end", "url(#arrowhead)");
+            }
+
+            // Arrow marker
+            svg.append("defs").append("marker")
+                .attr("id", "arrowhead")
+                .attr("viewBox", "0 -5 10 10")
+                .attr("refX", 8)
+                .attr("refY", 0)
+                .attr("markerWidth", 6)
+                .attr("markerHeight", 6)
+                .attr("orient", "auto")
+                .append("path")
+                .attr("d", "M0,-5L10,0L0,5")
+                .attr("fill", "#999");
+
+            // Draw nodes
+            for (let i = 0; i < numCourses; i++) {
+                const pos = positions[i];
+                const state = nodeStates[i];
+                const deg = initialized ? inDegree[i] : 0;
+
+                let fill = "#e3f2fd", stroke = "#1976d2";
+                if (state === 'queue') {
+                    fill = "#fff3e0"; stroke = "#ff9800";
+                } else if (state === 'processing') {
+                    fill = "#ffeb3b"; stroke = "#f57c00";
+                } else if (state === 'done') {
+                    fill = "#c8e6c9"; stroke = "#4caf50";
+                }
+
+                svg.append("circle")
+                    .attr("cx", pos.x).attr("cy", pos.y).attr("r", 30)
+                    .attr("fill", fill).attr("stroke", stroke).attr("stroke-width", 2);
+
+                svg.append("text")
+                    .attr("x", pos.x).attr("y", pos.y + 6)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "20px")
+                    .attr("font-weight", "bold")
+                    .text(i);
+
+                // In-degree label
+                if (initialized) {
+                    svg.append("circle")
+                        .attr("cx", pos.x + 25).attr("cy", pos.y - 25)
+                        .attr("r", 14)
+                        .attr("fill", deg === 0 ? "#a5d6a7" : "#ffcc80")
+                        .attr("stroke", deg === 0 ? "#4caf50" : "#ff9800");
+
+                    svg.append("text")
+                        .attr("x", pos.x + 25).attr("y", pos.y - 21)
+                        .attr("text-anchor", "middle")
+                        .attr("font-size", "12px")
+                        .attr("font-weight", "bold")
+                        .text(deg);
+                }
+            }
+
+            // Result visualization
+            svg.append("text")
+                .attr("x", 50).attr("y", height - 55)
+                .attr("font-weight", "bold")
+                .text("Course Order:");
+
+            result.forEach((course, i) => {
+                svg.append("rect")
+                    .attr("x", 150 + i * 50).attr("y", height - 70)
+                    .attr("width", 40).attr("height", 35)
+                    .attr("rx", 5)
+                    .attr("fill", "#c8e6c9").attr("stroke", "#4caf50");
+
+                svg.append("text")
+                    .attr("x", 170 + i * 50).attr("y", height - 47)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "18px")
+                    .attr("font-weight", "bold")
+                    .text(course);
+
+                if (i < result.length - 1) {
+                    svg.append("text")
+                        .attr("x", 200 + i * 50).attr("y", height - 47)
+                        .attr("text-anchor", "middle")
+                        .attr("font-size", "16px")
+                        .text("→");
+                }
+            });
+
+            // Legend
+            svg.append("text")
+                .attr("x", 10).attr("y", height - 15)
+                .attr("font-size", "11px")
+                .text("Circle number = in-degree (prerequisites remaining)");
+        }
+
+        function step() {
+            if (!initialized) {
+                initGraph();
+                initialized = true;
+                
+                // Add nodes with 0 in-degree to queue
+                for (let i = 0; i < numCourses; i++) {
+                    if (inDegree[i] === 0) {
+                        queue.push(i);
+                        nodeStates[i] = 'queue';
+                    }
+                }
+                
+                document.getElementById("queueDisplay").textContent = 
+                    `[${queue.join(', ')}]`;
+                document.getElementById("status").textContent = 
+                    `Initialized. Courses with no prerequisites: [${queue.join(', ')}]`;
+                draw();
+                return true;
+            }
+
+            if (queue.length === 0) {
+                if (result.length === numCourses) {
+                    document.getElementById("status").textContent = 
+                        `Done! Valid ordering: [${result.join(' → ')}]`;
+                } else {
+                    document.getElementById("status").textContent = 
+                        `Cycle detected! Cannot complete all courses.`;
+                }
+                draw();
+                return false;
+            }
+
+            const course = queue.shift();
+            nodeStates[course] = 'processing';
+            
+            document.getElementById("status").textContent = 
+                `Processing course ${course}...`;
+
+            // Add to result
+            result.push(course);
+            document.getElementById("resultDisplay").textContent = 
+                `[${result.join(', ')}]`;
+
+            // Reduce in-degree of neighbors
+            for (const next of graph[course]) {
+                inDegree[next]--;
+                if (inDegree[next] === 0) {
+                    queue.push(next);
+                    nodeStates[next] = 'queue';
+                }
+            }
+
+            nodeStates[course] = 'done';
+            document.getElementById("queueDisplay").textContent = 
+                `[${queue.join(', ')}]`;
+            document.getElementById("status").textContent = 
+                `Completed course ${course}. Updated neighbor in-degrees.`;
+
+            draw();
+            return queue.length > 0 || result.length < numCourses;
+        }
+
+        function reset() {
+            graph = {};
+            inDegree = [];
+            nodeStates = {};
+            queue = [];
+            result = [];
+            initialized = false;
+            autoRunning = false;
+            if (autoTimer) clearInterval(autoTimer);
+            
+            document.getElementById("queueDisplay").textContent = "[]";
+            document.getElementById("resultDisplay").textContent = "[]";
+            document.getElementById("status").textContent = 
+                'Click "Step" to find course ordering';
+            document.getElementById("autoBtn").textContent = "Auto Run";
+            
+            draw();
+        }
+
+        function autoRun() {
+            if (autoRunning) {
+                autoRunning = false;
+                clearInterval(autoTimer);
+                document.getElementById("autoBtn").textContent = "Auto Run";
+            } else {
+                autoRunning = true;
+                document.getElementById("autoBtn").textContent = "Pause";
+                const speed = 2100 - document.getElementById("speed").value;
+                autoTimer = setInterval(() => {
+                    if (!step()) {
+                        autoRunning = false;
+                        clearInterval(autoTimer);
+                        document.getElementById("autoBtn").textContent = "Auto Run";
+                    }
+                }, speed);
+            }
+        }
+
+        document.getElementById("stepBtn").addEventListener("click", step);
+        document.getElementById("autoBtn").addEventListener("click", autoRun);
+        document.getElementById("resetBtn").addEventListener("click", reset);
+
+        draw();
+    </script>
+</body>
+</html>

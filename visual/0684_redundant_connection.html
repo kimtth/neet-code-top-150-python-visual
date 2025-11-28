@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Redundant Connection - LeetCode 684</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="problem-info">
+            <h1><span class="problem-number">#0684</span> Redundant Connection</h1>
+            <p><strong>Problem:</strong> Find the edge that, if removed, would result in a tree (no cycle). Return the last such edge.</p>
+            <p><strong>Pattern:</strong> Union-Find - The edge that connects two already-connected nodes creates a cycle</p>
+            <div class="problem-meta">
+                <span class="meta-tag">🔗 Union Find</span>
+                <span class="meta-tag">⏱️ O(n)</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <code>python/0684_redundant_connection/0684_redundant_connection.py</code>
+            </div>
+
+        </div>
+
+        <div class="explanation-panel">
+            <h4>🧠 How It Works (Layman's Terms)</h4>
+            <p>This algorithm solves the problem <strong>step by step</strong>:</p>
+            <ul>
+                <li><strong>Understand:</strong> Parse the input data</li>
+                <li><strong>Process:</strong> Apply the core logic</li>
+                <li><strong>Optimize:</strong> Use efficient data structures</li>
+                <li><strong>Return:</strong> Output the computed result</li>
+            </ul>
+        </div>
+
+
+        <div class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+
+            <div class="visualization">
+            <svg id="mainSvg"></svg>
+        </div>
+
+        <div class="controls">
+            <button id="stepBtn">Step</button>
+            <button id="autoBtn">Auto Run</button>
+            <button id="resetBtn">Reset</button>
+            <div class="speed-control">
+                <label for="speed">Speed:</label>
+                <input type="range" id="speed" min="100" max="2000" value="800">
+            </div>
+        </div>
+
+        <div class="status" id="status">Click "Step" to find redundant edge</div>
+
+        <div class="variables">
+            <div class="var-item">
+                <span class="var-label">Processing Edge:</span>
+                <span id="edgeDisplay">-</span>
+            </div>
+            <div class="var-item">
+                <span class="var-label">Parents:</span>
+                <span id="parentDisplay">[1, 2, 3, 4]</span>
+            </div>
+            <div class="var-item">
+                <span class="var-label">Redundant Edge:</span>
+                <span id="resultDisplay">-</span>
+            </div>
+        </div>
+
+        </div>
+
+        <div class="code-section">
+            <h3>Python Solution</h3>
+            <pre><span class="keyword">def</span> <span class="function">findRedundantConnection</span>(edges):
+    <span class="string">"""
+    Union-Find: first edge creating a cycle is redundant.
+    Time: O(N * α(N)), Space: O(N)
+    """</span>
+    n = <span class="function">len</span>(edges)
+    parent = <span class="function">list</span>(<span class="function">range</span>(n + <span class="number">1</span>))
+    rank = [<span class="number">1</span>] * (n + <span class="number">1</span>)
+    
+    <span class="keyword">def</span> <span class="function">find</span>(x):
+        <span class="keyword">if</span> parent[x] != x:
+            parent[x] = <span class="function">find</span>(parent[x])
+        <span class="keyword">return</span> parent[x]
+    
+    <span class="keyword">def</span> <span class="function">union</span>(x, y):
+        px, py = <span class="function">find</span>(x), <span class="function">find</span>(y)
+        <span class="keyword">if</span> px == py:
+            <span class="keyword">return</span> <span class="keyword">False</span>  <span class="comment"># Cycle detected!</span>
+        <span class="keyword">if</span> rank[px] < rank[py]:
+            px, py = py, px
+        parent[py] = px
+        rank[px] += rank[py]
+        <span class="keyword">return</span> <span class="keyword">True</span>
+    
+    <span class="keyword">for</span> u, v <span class="keyword">in</span> edges:
+        <span class="keyword">if</span> <span class="keyword">not</span> <span class="function">union</span>(u, v):
+            <span class="keyword">return</span> [u, v]
+    
+    <span class="keyword">return</span> []</pre>
+        </div>
+    </div>
+
+    <script>
+        // Edges that form a cycle: [[1,2], [1,3], [2,3]]
+        // The edge [2,3] creates the cycle
+        const edges = [[1, 2], [1, 3], [2, 3]];
+        const n = 3;
+
+        let parent = [];
+        let rank = [];
+        let edgeIndex = 0;
+        let edgeStates = {}; // idx -> 'processing' | 'added' | 'redundant'
+        let redundantEdge = null;
+        let autoRunning = false;
+        let autoTimer = null;
+
+        const width = 700;
+        const height = 380;
+        const svg = d3.select("#mainSvg")
+            .attr("width", width)
+            .attr("height", height);
+
+        const positions = {
+            1: {x: 200, y: 120},
+            2: {x: 350, y: 260},
+            3: {x: 500, y: 120}
+        };
+
+        function init() {
+            parent = Array.from({length: n + 1}, (_, i) => i);
+            rank = new Array(n + 1).fill(1);
+            edgeIndex = 0;
+            edgeStates = {};
+            redundantEdge = null;
+        }
+
+        function find(x) {
+            if (parent[x] !== x) {
+                parent[x] = find(parent[x]);
+            }
+            return parent[x];
+        }
+
+        function union(x, y) {
+            const px = find(x);
+            const py = find(y);
+            
+            if (px === py) return false; // Cycle!
+            
+            if (rank[px] < rank[py]) {
+                parent[px] = py;
+            } else {
+                parent[py] = px;
+                if (rank[px] === rank[py]) rank[px]++;
+            }
+            
+            return true;
+        }
+
+        function draw() {
+            svg.selectAll("*").remove();
+
+            svg.append("text")
+                .attr("x", width / 2).attr("y", 25)
+                .attr("text-anchor", "middle")
+                .attr("font-weight", "bold")
+                .text("Finding Redundant Connection (Cycle Edge)");
+
+            // Draw edges
+            edges.forEach(([u, v], i) => {
+                const from = positions[u];
+                const to = positions[v];
+                const state = edgeStates[i];
+
+                let stroke = "#ddd", strokeWidth = 2, dash = "5,5";
+                if (state === 'added') {
+                    stroke = "#4caf50"; strokeWidth = 3; dash = "none";
+                } else if (state === 'redundant') {
+                    stroke = "#e53935"; strokeWidth = 4; dash = "none";
+                } else if (state === 'processing') {
+                    stroke = "#ff9800"; strokeWidth = 3; dash = "none";
+                }
+
+                svg.append("line")
+                    .attr("x1", from.x).attr("y1", from.y)
+                    .attr("x2", to.x).attr("y2", to.y)
+                    .attr("stroke", stroke)
+                    .attr("stroke-width", strokeWidth)
+                    .attr("stroke-dasharray", dash);
+
+                // Edge label
+                const midX = (from.x + to.x) / 2;
+                const midY = (from.y + to.y) / 2;
+                
+                svg.append("rect")
+                    .attr("x", midX - 25).attr("y", midY - 12)
+                    .attr("width", 50).attr("height", 20)
+                    .attr("rx", 4)
+                    .attr("fill", state === 'redundant' ? "#ffcdd2" : 
+                                  state === 'added' ? "#c8e6c9" : "#f5f5f5")
+                    .attr("stroke", state === 'redundant' ? "#e53935" : 
+                                    state === 'added' ? "#4caf50" : "#ddd");
+
+                svg.append("text")
+                    .attr("x", midX).attr("y", midY + 4)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "12px")
+                    .attr("font-weight", state ? "bold" : "normal")
+                    .text(`[${u},${v}]`);
+            });
+
+            // Draw nodes
+            for (let i = 1; i <= n; i++) {
+                const pos = positions[i];
+
+                svg.append("circle")
+                    .attr("cx", pos.x).attr("cy", pos.y).attr("r", 30)
+                    .attr("fill", "#e3f2fd")
+                    .attr("stroke", "#1976d2")
+                    .attr("stroke-width", 2);
+
+                svg.append("text")
+                    .attr("x", pos.x).attr("y", pos.y + 6)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "20px")
+                    .attr("font-weight", "bold")
+                    .text(i);
+
+                // Parent arrow
+                if (parent[i] !== i) {
+                    const parentPos = positions[parent[i]];
+                    if (parentPos) {
+                        svg.append("text")
+                            .attr("x", pos.x + 35).attr("y", pos.y)
+                            .attr("font-size", "10px")
+                            .attr("fill", "#666")
+                            .text(`→${parent[i]}`);
+                    }
+                }
+            }
+
+            // Legend
+            const legend = [
+                {color: "#ddd", dash: true, label: "Pending"},
+                {color: "#ff9800", dash: false, label: "Processing"},
+                {color: "#4caf50", dash: false, label: "Added"},
+                {color: "#e53935", dash: false, label: "Redundant"}
+            ];
+
+            legend.forEach((item, i) => {
+                svg.append("line")
+                    .attr("x1", 20 + i * 120).attr("y1", height - 20)
+                    .attr("x2", 45 + i * 120).attr("y2", height - 20)
+                    .attr("stroke", item.color)
+                    .attr("stroke-width", 3)
+                    .attr("stroke-dasharray", item.dash ? "5,5" : "none");
+                svg.append("text")
+                    .attr("x", 50 + i * 120).attr("y", height - 15)
+                    .attr("font-size", "11px")
+                    .text(item.label);
+            });
+
+            // Result
+            if (redundantEdge) {
+                svg.append("rect")
+                    .attr("x", width - 200).attr("y", height - 70)
+                    .attr("width", 190).attr("height", 45)
+                    .attr("rx", 10)
+                    .attr("fill", "#ffcdd2").attr("stroke", "#e53935");
+
+                svg.append("text")
+                    .attr("x", width - 105).attr("y", height - 40)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "16px")
+                    .attr("font-weight", "bold")
+                    .text(`Redundant: [${redundantEdge.join(', ')}]`);
+            }
+        }
+
+        function step() {
+            if (redundantEdge || edgeIndex >= edges.length) {
+                if (!redundantEdge) {
+                    document.getElementById("status").textContent = "No redundant edge found";
+                }
+                draw();
+                return false;
+            }
+
+            const [u, v] = edges[edgeIndex];
+            edgeStates[edgeIndex] = 'processing';
+            document.getElementById("edgeDisplay").textContent = `[${u}, ${v}]`;
+
+            draw();
+
+            // Check if union creates cycle
+            setTimeout(() => {
+                if (union(u, v)) {
+                    edgeStates[edgeIndex] = 'added';
+                    document.getElementById("status").textContent = 
+                        `Edge [${u}, ${v}]: Different components, merged!`;
+                } else {
+                    edgeStates[edgeIndex] = 'redundant';
+                    redundantEdge = [u, v];
+                    document.getElementById("resultDisplay").textContent = 
+                        `[${u}, ${v}]`;
+                    document.getElementById("status").textContent = 
+                        `Edge [${u}, ${v}]: Same component! This is the redundant edge.`;
+                }
+
+                edgeIndex++;
+                document.getElementById("parentDisplay").textContent = 
+                    `[${parent.slice(1).join(', ')}]`;
+
+                draw();
+            }, 200);
+
+            return !redundantEdge && edgeIndex < edges.length;
+        }
+
+        function reset() {
+            init();
+            autoRunning = false;
+            if (autoTimer) clearInterval(autoTimer);
+            
+            document.getElementById("edgeDisplay").textContent = "-";
+            document.getElementById("parentDisplay").textContent = 
+                `[${parent.slice(1).join(', ')}]`;
+            document.getElementById("resultDisplay").textContent = "-";
+            document.getElementById("status").textContent = 
+                'Click "Step" to find redundant edge';
+            document.getElementById("autoBtn").textContent = "Auto Run";
+            
+            draw();
+        }
+
+        function autoRun() {
+            if (autoRunning) {
+                autoRunning = false;
+                clearInterval(autoTimer);
+                document.getElementById("autoBtn").textContent = "Auto Run";
+            } else {
+                autoRunning = true;
+                document.getElementById("autoBtn").textContent = "Pause";
+                const speed = 2100 - document.getElementById("speed").value;
+                autoTimer = setInterval(() => {
+                    if (!step()) {
+                        autoRunning = false;
+                        clearInterval(autoTimer);
+                        document.getElementById("autoBtn").textContent = "Auto Run";
+                    }
+                }, speed);
+            }
+        }
+
+        document.getElementById("stepBtn").addEventListener("click", step);
+        document.getElementById("autoBtn").addEventListener("click", autoRun);
+        document.getElementById("resetBtn").addEventListener("click", reset);
+
+        init();
+        draw();
+    </script>
+</body>
+</html>

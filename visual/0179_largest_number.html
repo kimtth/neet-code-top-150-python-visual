@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LC 179: Largest Number - Algorithm Visualization</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="problem-info">
+            <h1><span class="problem-number">#179</span> Largest Number</h1>
+            <p>Given a list of non-negative integers, arrange them to form the largest number.</p>
+            <div class="problem-meta">
+                <span class="meta-tag">📊 Sorting</span>
+                <span class="meta-tag">🎯 Greedy</span>
+                <span class="meta-tag">⏱️ O(n log n)</span>
+                <span class="meta-tag">💾 O(n)</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <code>python/0179_largest_number/0179_largest_number.py</code>
+            </div>
+            </div>
+
+        <div class="explanation-panel">
+            <h4>🧠 How It Works (Layman's Terms)</h4>
+            <p>Use <strong>custom comparator</strong> for sorting:</p>
+            <ul>
+                <li><strong>Key Insight:</strong> Compare "a + b" vs "b + a" as strings</li>
+                <li><strong>Example:</strong> For 3 and 30: "330" > "303", so 3 comes first</li>
+                <li><strong>Sort:</strong> Using this comparison gives optimal order</li>
+                <li><strong>Edge Case:</strong> All zeros → return "0"</li>
+            </ul>
+        </div>
+
+
+        <div class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+            
+            <div class="controls">
+                <button class="btn btn-primary" id="startBtn" onclick="start()">▶ Start Sort</button>
+                <button class="btn" onclick="stepForward()">Step →</button>
+                <button class="btn btn-warning" onclick="reset()">Reset</button>
+                <button class="btn" onclick="randomize()">🎲 Random</button>
+            </div>
+
+            <div class="status-message" id="statusMessage">
+                Click Start to see the custom sorting in action
+            </div>
+
+            <div style="margin-top: 20px;">
+                <h4>📊 Current Array</h4>
+                <div id="arrayDisplay" style="display: flex; flex-wrap: wrap; gap: 10px; padding: 20px; background: #f5f5f5; border-radius: 12px; min-height: 60px;"></div>
+            </div>
+
+            <div id="comparisonBox" style="margin-top: 20px; padding: 20px; background: #e3f2fd; border-radius: 12px; display: none;">
+                <h4 style="margin-bottom: 15px;">🔄 Comparing</h4>
+                <div style="display: flex; justify-content: center; align-items: center; gap: 30px; font-size: 1.3em;">
+                    <div id="compareLeft" style="padding: 15px 25px; background: #ffcc80; border-radius: 10px; font-weight: bold;"></div>
+                    <span>vs</span>
+                    <div id="compareRight" style="padding: 15px 25px; background: #90caf9; border-radius: 10px; font-weight: bold;"></div>
+                </div>
+                <div style="text-align: center; margin-top: 15px;">
+                    <div id="concatResult" style="font-family: monospace; font-size: 1.2em;"></div>
+                </div>
+            </div>
+
+            <div style="margin-top: 25px; padding: 25px; background: linear-gradient(135deg, #667eea, #764ba2); border-radius: 12px; text-align: center;">
+                <h4 style="color: white; margin-bottom: 10px;">🏆 Largest Number</h4>
+                <div id="resultDisplay" style="font-size: 2em; font-weight: bold; color: white; font-family: monospace;">-</div>
+            </div>
+        </div>
+
+        <div class="code-section">
+            <h3>💻 Python Solution</h3>
+            <div class="code-block">
+                <pre><span class="keyword">from</span> functools <span class="keyword">import</span> cmp_to_key
+
+<span class="keyword">def</span> <span class="function">largestNumber</span>(nums):
+    <span class="comment"># Custom comparator: compare a+b vs b+a</span>
+    <span class="keyword">def</span> <span class="function">compare</span>(a, b):
+        <span class="keyword">if</span> a + b > b + a:
+            <span class="keyword">return</span> <span class="number">-1</span>  <span class="comment"># a should come first</span>
+        <span class="keyword">elif</span> a + b < b + a:
+            <span class="keyword">return</span> <span class="number">1</span>   <span class="comment"># b should come first</span>
+        <span class="keyword">return</span> <span class="number">0</span>
+    
+    <span class="comment"># Convert to strings and sort</span>
+    strs = [<span class="function">str</span>(n) <span class="keyword">for</span> n <span class="keyword">in</span> nums]
+    strs.<span class="function">sort</span>(key=<span class="function">cmp_to_key</span>(compare))
+    
+    <span class="comment"># Handle edge case: all zeros</span>
+    <span class="keyword">if</span> strs[<span class="number">0</span>] == <span class="string">'0'</span>:
+        <span class="keyword">return</span> <span class="string">'0'</span>
+    
+    <span class="keyword">return</span> <span class="string">''</span>.<span class="function">join</span>(strs)</pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let nums = [3, 30, 34, 5, 9];
+        let strs = [];
+        let isRunning = false;
+        let stepIndex = 0;
+        let steps = [];
+
+        function precomputeSteps() {
+            steps = [];
+            strs = nums.map(n => String(n));
+            
+            steps.push({
+                type: 'init',
+                array: [...strs],
+                message: `Convert to strings: [${strs.join(', ')}]`
+            });
+
+            // Bubble sort with comparisons to visualize
+            const arr = [...strs];
+            for (let i = 0; i < arr.length - 1; i++) {
+                for (let j = 0; j < arr.length - i - 1; j++) {
+                    const a = arr[j];
+                    const b = arr[j + 1];
+                    const ab = a + b;
+                    const ba = b + a;
+                    
+                    steps.push({
+                        type: 'compare',
+                        array: [...arr],
+                        i: j,
+                        j: j + 1,
+                        a, b, ab, ba,
+                        shouldSwap: ab < ba,
+                        message: `Compare: "${a}${b}" (${ab}) vs "${b}${a}" (${ba})`
+                    });
+
+                    if (ab < ba) {
+                        [arr[j], arr[j + 1]] = [arr[j + 1], arr[j]];
+                        steps.push({
+                            type: 'swap',
+                            array: [...arr],
+                            i: j,
+                            j: j + 1,
+                            message: `Swap! ${b} comes before ${a}`
+                        });
+                    }
+                }
+            }
+
+            const result = arr[0] === '0' ? '0' : arr.join('');
+            steps.push({
+                type: 'done',
+                array: [...arr],
+                result,
+                message: `Done! Largest number: ${result}`
+            });
+        }
+
+        function render() {
+            const container = document.getElementById('arrayDisplay');
+            container.innerHTML = strs.map((s, i) => {
+                const step = steps[stepIndex - 1] || {};
+                let bg = '#667eea';
+                if (step.i === i || step.j === i) {
+                    bg = step.i === i ? '#ffcc80' : '#90caf9';
+                }
+                if (step.type === 'done') bg = '#4caf50';
+                
+                return `<div style="padding: 15px 25px; background: ${bg}; color: white; border-radius: 10px; font-weight: bold; font-size: 1.2em; transition: all 0.3s;">${s}</div>`;
+            }).join('');
+        }
+
+        function stepForward() {
+            if (stepIndex >= steps.length) return;
+            
+            const step = steps[stepIndex];
+            strs = step.array;
+            
+            const compBox = document.getElementById('comparisonBox');
+            
+            if (step.type === 'compare') {
+                compBox.style.display = 'block';
+                document.getElementById('compareLeft').textContent = step.a;
+                document.getElementById('compareRight').textContent = step.b;
+                document.getElementById('concatResult').innerHTML = 
+                    `"${step.ab}" ${step.ab > step.ba ? '>' : step.ab < step.ba ? '<' : '='} "${step.ba}"<br>
+                    <span style="color: ${step.shouldSwap ? '#f44336' : '#4caf50'}">
+                        ${step.shouldSwap ? '→ Need to swap!' : '→ Order is correct'}
+                    </span>`;
+            } else if (step.type === 'swap') {
+                // Keep comparison box visible during swap
+            } else {
+                compBox.style.display = 'none';
+            }
+            
+            if (step.type === 'done') {
+                document.getElementById('resultDisplay').textContent = step.result;
+                isRunning = false;
+                document.getElementById('startBtn').textContent = '▶ Start Sort';
+            }
+            
+            document.getElementById('statusMessage').textContent = step.message;
+            stepIndex++;
+            render();
+        }
+
+        async function start() {
+            if (isRunning) {
+                isRunning = false;
+                document.getElementById('startBtn').textContent = '▶ Start Sort';
+                return;
+            }
+            
+            isRunning = true;
+            document.getElementById('startBtn').textContent = '⏸ Pause';
+            
+            while (stepIndex < steps.length && isRunning) {
+                stepForward();
+                await new Promise(r => setTimeout(r, 700));
+            }
+        }
+
+        function reset() {
+            isRunning = false;
+            stepIndex = 0;
+            strs = nums.map(n => String(n));
+            
+            document.getElementById('statusMessage').textContent = 'Click Start to see the custom sorting in action';
+            document.getElementById('resultDisplay').textContent = '-';
+            document.getElementById('comparisonBox').style.display = 'none';
+            document.getElementById('startBtn').textContent = '▶ Start Sort';
+            
+            precomputeSteps();
+            render();
+        }
+
+        function randomize() {
+            nums = Array.from({ length: 5 }, () => Math.floor(Math.random() * 100));
+            reset();
+        }
+
+        reset();
+    </script>
+</body>
+</html>

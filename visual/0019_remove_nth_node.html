@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Remove Nth Node From End - Algorithm Visualization</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    </div>
+
+    <div class="container">
+        <div class="problem-info">
+            <h1><span class="problem-number">#0019</span> Remove Nth Node From End of List</h1>
+            <p>
+                Given the head of a linked list, remove the <strong>nth node from the end</strong> of the list 
+                and return its head. Uses a two-pointer technique with a gap of n+1 nodes.
+            </p>
+            <p><strong>Example:</strong> head = [1,2,3,4,5], n = 2 → Output: [1,2,3,5]</p>
+            <p><strong>Time Complexity:</strong> O(n) - single pass</p>
+            <p><strong>Space Complexity:</strong> O(1)</p>
+            <div class="problem-meta">
+                <span class="meta-tag">🔗 Linked List</span>
+                <span class="meta-tag">⏱️ O(n)</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <code>python/0019_remove_nth_node_from_end_of_list/0019_remove_nth_node_from_end_of_list.py</code>
+            </div>
+
+        </div>
+
+        <div class="explanation-panel">
+            <h4>🧠 How It Works (Layman's Terms)</h4>
+            <p>A linked list is like a <strong>chain of train cars</strong>:</p>
+            <ul>
+                <li><strong>Each node:</strong> Contains data and points to next node</li>
+                <li><strong>Traversal:</strong> Follow the chain one node at a time</li>
+                <li><strong>Modification:</strong> Redirect links to rearrange</li>
+                <li><strong>Two pointers:</strong> Often use slow/fast pointers</li>
+            </ul>
+        </div>
+
+
+        <div class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+            <div class="controls">
+                <button id="stepBtn" class="btn">Step</button>
+                <button id="autoBtn" class="btn">Auto Run</button>
+                <button id="resetBtn" class="btn btn-secondary">Reset</button>
+                <div class="speed-control">
+                    <label for="speedSlider">Speed:</label>
+                    <input type="range" id="speedSlider" min="1" max="10" value="5">
+                </div>
+            </div>
+            <svg id="visualization" width="900" height="400"></svg>
+            <div class="variables-display">
+                <div id="varDisplay"></div>
+            </div>
+            <div class="status-message" id="statusMessage">Press "Step" or "Auto Run" to begin</div>
+        </div>
+
+        <div class="code-section">
+            <h3>Python Solution</h3>
+            <pre><span class="keyword">def</span> <span class="function">remove_nth_from_end</span>(self, head: <span class="class-name">ListNode</span>, n: <span class="class-name">int</span>) -> ListNode:
+    dummy = <span class="function">ListNode</span>(<span class="number">0</span>)
+    dummy.next = head
+    
+    first = dummy
+    second = dummy
+    
+    <span class="comment"># Advance first pointer by n+1 steps</span>
+    <span class="keyword">for</span> i <span class="keyword">in</span> <span class="function">range</span>(n + <span class="number">1</span>):
+        first = first.next
+    
+    <span class="comment"># Move both until first reaches end</span>
+    <span class="keyword">while</span> first:
+        first = first.next
+        second = second.next
+    
+    <span class="comment"># Remove the nth node</span>
+    second.next = second.next.next
+    
+    <span class="keyword">return</span> dummy.next</pre>
+        </div>
+    </div>
+
+    <script>
+        // Data
+        const values = [1, 2, 3, 4, 5];
+        const n = 2;  // Remove 2nd from end (node with value 4)
+        
+        // State
+        let step = 0;
+        let autoRunning = false;
+        let autoInterval = null;
+        
+        // Generate steps
+        const steps = [];
+        
+        function generateSteps() {
+            steps.length = 0;
+            const nodes = ['dummy', ...values.map(String)];
+            
+            steps.push({
+                type: 'init',
+                nodes: [...nodes],
+                first: 0,
+                second: 0,
+                removed: -1,
+                message: 'Initialize: Create dummy node, both pointers at dummy'
+            });
+            
+            // Advance first by n+1 steps
+            for (let i = 1; i <= n + 1; i++) {
+                steps.push({
+                    type: 'advance_first',
+                    nodes: [...nodes],
+                    first: i,
+                    second: 0,
+                    removed: -1,
+                    message: `Advance first pointer: step ${i} of ${n + 1}`
+                });
+            }
+            
+            // Move both until first reaches end
+            let firstPos = n + 1;
+            let secondPos = 0;
+            
+            while (firstPos < nodes.length) {
+                firstPos++;
+                secondPos++;
+                steps.push({
+                    type: 'move_both',
+                    nodes: [...nodes],
+                    first: firstPos,
+                    second: secondPos,
+                    removed: -1,
+                    message: `Move both pointers. Gap maintained at ${n + 1}`
+                });
+            }
+            
+            // Show what we're about to remove
+            const toRemove = secondPos + 1;
+            steps.push({
+                type: 'identify',
+                nodes: [...nodes],
+                first: firstPos,
+                second: secondPos,
+                toRemove: toRemove,
+                removed: -1,
+                message: `First reached end. Second.next (node ${toRemove}) is the ${n}th from end`
+            });
+            
+            // Remove the node
+            const newNodes = nodes.filter((_, i) => i !== toRemove);
+            steps.push({
+                type: 'remove',
+                nodes: newNodes,
+                originalNodes: [...nodes],
+                first: firstPos,
+                second: secondPos,
+                removed: toRemove,
+                message: `Remove node with value ${nodes[toRemove]}. Link second.next to second.next.next`
+            });
+            
+            steps.push({
+                type: 'done',
+                nodes: newNodes,
+                first: -1,
+                second: -1,
+                removed: -1,
+                message: `Done! Result: [${newNodes.slice(1).join(', ')}]`
+            });
+        }
+        
+        // SVG setup
+        const svg = d3.select("#visualization");
+        const width = 900;
+        const height = 400;
+        
+        function draw(currentStep) {
+            svg.selectAll("*").remove();
+            
+            const data = currentStep || steps[0];
+            const nodeWidth = 60;
+            const nodeHeight = 40;
+            const gap = 90;
+            const startX = 80;
+            const startY = 150;
+            
+            // Arrow marker
+            svg.append("defs").append("marker")
+                .attr("id", "arrow")
+                .attr("viewBox", "0 0 10 10")
+                .attr("refX", 9)
+                .attr("refY", 5)
+                .attr("markerWidth", 6)
+                .attr("markerHeight", 6)
+                .attr("orient", "auto")
+                .append("path")
+                .attr("d", "M 0 0 L 10 5 L 0 10 z")
+                .attr("fill", "#667eea");
+            
+            // Draw original nodes with removal effect
+            if (data.type === 'remove' && data.originalNodes) {
+                data.originalNodes.forEach((val, i) => {
+                    const x = startX + i * gap;
+                    const isRemoved = i === data.removed;
+                    
+                    if (isRemoved) {
+                        const group = svg.append("g")
+                            .attr("transform", `translate(${x}, ${startY})`);
+                        
+                        group.append("rect")
+                            .attr("width", nodeWidth)
+                            .attr("height", nodeHeight)
+                            .attr("rx", 8)
+                            .attr("fill", "#fee2e2")
+                            .attr("stroke", "#ef4444")
+                            .attr("stroke-width", 2)
+                            .attr("stroke-dasharray", "5,5")
+                            .attr("opacity", 0.5);
+                        
+                        group.append("text")
+                            .attr("x", nodeWidth / 2)
+                            .attr("y", nodeHeight / 2 + 5)
+                            .attr("text-anchor", "middle")
+                            .attr("fill", "#ef4444")
+                            .attr("font-weight", "bold")
+                            .attr("text-decoration", "line-through")
+                            .text(val);
+                        
+                        // Draw bypass arrow
+                        const prevX = startX + (i - 1) * gap + nodeWidth;
+                        const nextX = startX + (i + 1) * gap;
+                        
+                        svg.append("path")
+                            .attr("d", `M ${prevX} ${startY + nodeHeight / 2} Q ${x + nodeWidth / 2} ${startY - 40} ${nextX} ${startY + nodeHeight / 2}`)
+                            .attr("fill", "none")
+                            .attr("stroke", "#4ade80")
+                            .attr("stroke-width", 3)
+                            .attr("marker-end", "url(#arrow)");
+                    }
+                });
+            }
+            
+            // Draw nodes
+            const displayNodes = data.nodes || ['dummy', '1', '2', '3', '4', '5'];
+            displayNodes.forEach((val, i) => {
+                const x = startX + i * gap;
+                const group = svg.append("g")
+                    .attr("transform", `translate(${x}, ${startY})`);
+                
+                let fillColor = val === 'dummy' ? '#9ca3af' : '#667eea';
+                let strokeColor = 'none';
+                let strokeWidth = 0;
+                
+                if (data.toRemove === i) {
+                    fillColor = '#ef4444';
+                    strokeColor = '#991b1b';
+                    strokeWidth = 3;
+                }
+                
+                group.append("rect")
+                    .attr("width", nodeWidth)
+                    .attr("height", nodeHeight)
+                    .attr("rx", 8)
+                    .attr("fill", fillColor)
+                    .attr("stroke", strokeColor)
+                    .attr("stroke-width", strokeWidth);
+                
+                group.append("text")
+                    .attr("x", nodeWidth / 2)
+                    .attr("y", nodeHeight / 2 + 5)
+                    .attr("text-anchor", "middle")
+                    .attr("fill", "white")
+                    .attr("font-weight", "bold")
+                    .attr("font-size", val === 'dummy' ? "12px" : "16px")
+                    .text(val);
+                
+                // Draw arrows between nodes
+                if (i < displayNodes.length - 1) {
+                    svg.append("line")
+                        .attr("x1", x + nodeWidth)
+                        .attr("y1", startY + nodeHeight / 2)
+                        .attr("x2", x + gap - 5)
+                        .attr("y2", startY + nodeHeight / 2)
+                        .attr("stroke", "#667eea")
+                        .attr("stroke-width", 2)
+                        .attr("marker-end", "url(#arrow)");
+                }
+            });
+            
+            // Draw first pointer
+            if (data.first >= 0 && data.first <= displayNodes.length) {
+                const firstX = startX + data.first * gap + nodeWidth / 2;
+                const firstY = startY - 60;
+                
+                svg.append("polygon")
+                    .attr("points", `${firstX},${firstY + 30} ${firstX - 10},${firstY} ${firstX + 10},${firstY}`)
+                    .attr("fill", "#ef4444");
+                
+                svg.append("text")
+                    .attr("x", firstX)
+                    .attr("y", firstY - 10)
+                    .attr("text-anchor", "middle")
+                    .attr("fill", "#ef4444")
+                    .attr("font-weight", "bold")
+                    .text("first");
+            }
+            
+            // Draw second pointer
+            if (data.second >= 0 && data.second < displayNodes.length) {
+                const secondX = startX + data.second * gap + nodeWidth / 2;
+                const secondY = startY + nodeHeight + 60;
+                
+                svg.append("polygon")
+                    .attr("points", `${secondX},${secondY - 30} ${secondX - 10},${secondY} ${secondX + 10},${secondY}`)
+                    .attr("fill", "#4ade80");
+                
+                svg.append("text")
+                    .attr("x", secondX)
+                    .attr("y", secondY + 20)
+                    .attr("text-anchor", "middle")
+                    .attr("fill", "#16a34a")
+                    .attr("font-weight", "bold")
+                    .text("second");
+            }
+            
+            // Draw gap indicator
+            if (data.first > 0 && data.second >= 0 && data.first <= displayNodes.length && data.type !== 'done') {
+                const gapValue = data.first - data.second;
+                svg.append("text")
+                    .attr("x", 750)
+                    .attr("y", 50)
+                    .attr("text-anchor", "middle")
+                    .attr("class", "label")
+                    .text(`Gap: ${gapValue} (n+1 = ${n + 1})`);
+            }
+            
+            // Draw n value
+            svg.append("text")
+                .attr("x", 750)
+                .attr("y", 90)
+                .attr("text-anchor", "middle")
+                .attr("fill", "#6b7280")
+                .text(`n = ${n} (remove ${n}th from end)`);
+            
+            // Legend
+            const legendY = 320;
+            svg.append("rect").attr("x", 50).attr("y", legendY).attr("width", 20).attr("height", 20).attr("fill", "#ef4444");
+            svg.append("text").attr("x", 80).attr("y", legendY + 15).attr("fill", "#4b5563").text("First pointer");
+            
+            svg.append("rect").attr("x", 200).attr("y", legendY).attr("width", 20).attr("height", 20).attr("fill", "#4ade80");
+            svg.append("text").attr("x", 230).attr("y", legendY + 15).attr("fill", "#4b5563").text("Second pointer");
+            
+            // Update status
+            document.getElementById("statusMessage").textContent = data.message;
+            
+            // Update variables
+            document.getElementById("varDisplay").innerHTML = `
+                <span class="var-item">First: ${data.first >= 0 ? data.first : 'N/A'}</span>
+                <span class="var-item">Second: ${data.second >= 0 ? data.second : 'N/A'}</span>
+                <span class="var-item">n: ${n}</span>
+                <span class="var-item">Gap: ${data.first > 0 && data.second >= 0 ? data.first - data.second : 'N/A'}</span>
+            `;
+        }
+        
+        function doStep() {
+            if (step >= steps.length) {
+                stopAuto();
+                return;
+            }
+            draw(steps[step]);
+            step++;
+        }
+        
+        function stopAuto() {
+            autoRunning = false;
+            if (autoInterval) {
+                clearInterval(autoInterval);
+                autoInterval = null;
+            }
+            document.getElementById("autoBtn").textContent = "Auto Run";
+        }
+        
+        function toggleAuto() {
+            if (autoRunning) {
+                stopAuto();
+            } else {
+                autoRunning = true;
+                document.getElementById("autoBtn").textContent = "Pause";
+                const speed = 11 - document.getElementById("speedSlider").value;
+                autoInterval = setInterval(() => {
+                    if (step >= steps.length) {
+                        stopAuto();
+                        return;
+                    }
+                    doStep();
+                }, speed * 200);
+            }
+        }
+        
+        function reset() {
+            stopAuto();
+            step = 0;
+            draw(steps[0]);
+        }
+        
+        // Initialize
+        generateSteps();
+        draw(steps[0]);
+        
+        // Event listeners
+        document.getElementById("stepBtn").addEventListener("click", doStep);
+        document.getElementById("autoBtn").addEventListener("click", toggleAuto);
+        document.getElementById("resetBtn").addEventListener("click", reset);
+    </script>
+</body>
+</html>

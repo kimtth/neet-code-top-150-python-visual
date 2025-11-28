@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LC 121: Best Time to Buy and Sell Stock - Algorithm Visualization</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="problem-info">
+            <h1><span class="problem-number">#121</span> Best Time to Buy and Sell Stock</h1>
+            <p>Given an array prices where prices[i] is the price of a stock on day i, find the maximum profit from one transaction (buy then sell).</p>
+            <div class="problem-meta">
+                <span class="meta-tag">📁 Array</span>
+                <span class="meta-tag">🪟 Sliding Window</span>
+                <span class="meta-tag">⏱️ O(n)</span>
+                <span class="meta-tag">💾 O(1)</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <code>python/0121_best_time_to_buy_and_sell_stock/0121_best_time_to_buy_and_sell_stock.py</code>
+            </div>
+            </div>
+
+        <div class="explanation-panel">
+            <h4>🧠 How It Works (Layman's Terms)</h4>
+            <p>Imagine you're traveling through time, seeing stock prices each day:</p>
+            <ul>
+                <li><strong>Track minimum:</strong> Always remember the lowest price you've seen so far</li>
+                <li><strong>Calculate profit:</strong> At each day, calculate: "If I bought at the lowest and sold today, what's my profit?"</li>
+                <li><strong>Track maximum profit:</strong> Keep updating the best profit you could have made</li>
+                <li><strong>Why it works:</strong> For any selling day, the best buying day is always the minimum price before it</li>
+            </ul>
+        </div>
+
+
+        <div class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+            
+            <div class="controls">
+                <button class="btn btn-primary" id="stepBtn" onclick="step()">Step</button>
+                <button class="btn btn-success" id="autoBtn" onclick="toggleAuto()">Auto Run</button>
+                <button class="btn btn-warning" onclick="reset()">Reset</button>
+            </div>
+
+            <div class="status-message" id="statusMessage">
+                Click "Step" or "Auto Run" to start visualization
+            </div>
+
+            <div class="variable-display">
+                <div class="variable-box">
+                    <div class="variable-name">Current Day</div>
+                    <div class="variable-value" id="currentDay">0</div>
+                </div>
+                <div class="variable-box">
+                    <div class="variable-name">Min Price (Buy)</div>
+                    <div class="variable-value" id="minPrice" style="color: #4caf50;">-</div>
+                </div>
+                <div class="variable-box">
+                    <div class="variable-name">Current Profit</div>
+                    <div class="variable-value" id="currentProfit">0</div>
+                </div>
+                <div class="variable-box">
+                    <div class="variable-name">Max Profit</div>
+                    <div class="variable-value" id="maxProfit" style="color: #2196f3;">0</div>
+                </div>
+            </div>
+
+            <div class="svg-container">
+                <svg id="visualization" width="700" height="300"></svg>
+            </div>
+
+            <div class="array-section">
+                <div class="array-label">📊 Price Array:</div>
+                <div class="array-container" id="priceContainer"></div>
+            </div>
+        </div>
+
+        <div class="code-section">
+            <h3>💻 Python Solution</h3>
+            <div class="code-block">
+                <pre><span class="keyword">def</span> <span class="function">max_profit</span>(self, prices: List[<span class="class-name">int</span>]) -> <span class="class-name">int</span>:
+    max_profit = <span class="number">0</span>
+    min_price = prices[<span class="number">0</span>]
+    
+    <span class="keyword">for</span> price <span class="keyword">in</span> prices:
+        min_price = <span class="function">min</span>(min_price, price)
+        current_profit = price - min_price
+        max_profit = <span class="function">max</span>(max_profit, current_profit)
+        
+    <span class="keyword">return</span> max_profit</pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const prices = [7, 1, 5, 3, 6, 4];
+        let currentIndex = 0;
+        let minPrice = Infinity;
+        let maxProfit = 0;
+        let minPriceIndex = -1;
+        let bestBuyIndex = -1;
+        let bestSellIndex = -1;
+        let autoInterval = null;
+
+        const svg = d3.select("#visualization");
+        const margin = { top: 20, right: 30, bottom: 40, left: 50 };
+        const width = 700 - margin.left - margin.right;
+        const height = 250 - margin.top - margin.bottom;
+
+        const g = svg.append("g")
+            .attr("transform", `translate(${margin.left},${margin.top})`);
+
+        const xScale = d3.scaleLinear()
+            .domain([0, prices.length - 1])
+            .range([0, width]);
+
+        const yScale = d3.scaleLinear()
+            .domain([0, Math.max(...prices) + 1])
+            .range([height, 0]);
+
+        // Draw line chart
+        const line = d3.line()
+            .x((d, i) => xScale(i))
+            .y(d => yScale(d));
+
+        g.append("path")
+            .datum(prices)
+            .attr("fill", "none")
+            .attr("stroke", "#667eea")
+            .attr("stroke-width", 3)
+            .attr("d", line);
+
+        // Add axes
+        g.append("g")
+            .attr("transform", `translate(0,${height})`)
+            .call(d3.axisBottom(xScale).ticks(prices.length - 1).tickFormat(d => `Day ${d}`));
+
+        g.append("g")
+            .call(d3.axisLeft(yScale).tickFormat(d => `$${d}`));
+
+        function init() {
+            renderPrices();
+            renderChart();
+        }
+
+        function renderPrices() {
+            const container = document.getElementById('priceContainer');
+            container.innerHTML = '';
+            prices.forEach((price, idx) => {
+                const box = document.createElement('div');
+                box.className = 'array-box';
+                box.id = `price-${idx}`;
+                box.innerHTML = `$${price}<span class="index-label">Day ${idx}</span>`;
+                
+                if (idx === minPriceIndex) {
+                    box.style.background = '#c8e6c9';
+                    box.style.borderColor = '#4caf50';
+                }
+                if (idx === currentIndex && currentIndex < prices.length) {
+                    box.classList.add('highlight');
+                }
+                if (idx === bestSellIndex && maxProfit > 0) {
+                    box.style.background = '#bbdefb';
+                    box.style.borderColor = '#2196f3';
+                }
+                
+                container.appendChild(box);
+            });
+        }
+
+        function renderChart() {
+            // Remove old markers
+            g.selectAll(".marker").remove();
+            g.selectAll(".profit-line").remove();
+
+            // Draw points
+            g.selectAll(".marker")
+                .data(prices.slice(0, currentIndex + 1))
+                .enter()
+                .append("circle")
+                .attr("class", "marker")
+                .attr("cx", (d, i) => xScale(i))
+                .attr("cy", d => yScale(d))
+                .attr("r", (d, i) => i === currentIndex ? 8 : 5)
+                .attr("fill", (d, i) => {
+                    if (i === minPriceIndex) return "#4caf50";
+                    if (i === currentIndex) return "#ff9800";
+                    return "#667eea";
+                })
+                .attr("stroke", "#fff")
+                .attr("stroke-width", 2);
+
+            // Draw profit line if we have a min price
+            if (minPriceIndex >= 0 && currentIndex > minPriceIndex) {
+                g.append("line")
+                    .attr("class", "profit-line")
+                    .attr("x1", xScale(minPriceIndex))
+                    .attr("y1", yScale(prices[minPriceIndex]))
+                    .attr("x2", xScale(currentIndex))
+                    .attr("y2", yScale(prices[currentIndex]))
+                    .attr("stroke", "#4caf50")
+                    .attr("stroke-width", 2)
+                    .attr("stroke-dasharray", "5,5");
+            }
+        }
+
+        function step() {
+            if (currentIndex >= prices.length) {
+                document.getElementById('statusMessage').className = 'status-message success';
+                document.getElementById('statusMessage').textContent = 
+                    `✅ Done! Maximum profit = $${maxProfit} (Buy day ${bestBuyIndex} at $${prices[bestBuyIndex]}, Sell day ${bestSellIndex} at $${prices[bestSellIndex]})`;
+                document.getElementById('stepBtn').disabled = true;
+                stopAuto();
+                return;
+            }
+
+            const price = prices[currentIndex];
+            
+            // Update min price
+            if (price < minPrice) {
+                minPrice = price;
+                minPriceIndex = currentIndex;
+                document.getElementById('statusMessage').textContent = 
+                    `Day ${currentIndex}: Price $${price} is new minimum! Updated min_price.`;
+            }
+
+            // Calculate current profit
+            const currentProfit = price - minPrice;
+            document.getElementById('currentProfit').textContent = `$${currentProfit}`;
+
+            // Update max profit
+            if (currentProfit > maxProfit) {
+                maxProfit = currentProfit;
+                bestBuyIndex = minPriceIndex;
+                bestSellIndex = currentIndex;
+                document.getElementById('statusMessage').textContent = 
+                    `Day ${currentIndex}: New max profit! Buy at $${minPrice} (day ${minPriceIndex}), sell at $${price} = $${currentProfit}`;
+            } else if (price >= minPrice) {
+                document.getElementById('statusMessage').textContent = 
+                    `Day ${currentIndex}: Price $${price}. Profit if sold = $${currentProfit}. Max profit still $${maxProfit}.`;
+            }
+
+            document.getElementById('currentDay').textContent = currentIndex;
+            document.getElementById('minPrice').textContent = `$${minPrice}`;
+            document.getElementById('maxProfit').textContent = `$${maxProfit}`;
+
+            renderPrices();
+            renderChart();
+            currentIndex++;
+        }
+
+        function toggleAuto() {
+            if (autoInterval) {
+                stopAuto();
+            } else {
+                document.getElementById('autoBtn').textContent = 'Pause';
+                autoInterval = setInterval(() => {
+                    if (currentIndex >= prices.length) {
+                        step();
+                        stopAuto();
+                    } else {
+                        step();
+                    }
+                }, 1000);
+            }
+        }
+
+        function stopAuto() {
+            if (autoInterval) {
+                clearInterval(autoInterval);
+                autoInterval = null;
+            }
+            document.getElementById('autoBtn').textContent = 'Auto Run';
+        }
+
+        function reset() {
+            stopAuto();
+            currentIndex = 0;
+            minPrice = Infinity;
+            maxProfit = 0;
+            minPriceIndex = -1;
+            bestBuyIndex = -1;
+            bestSellIndex = -1;
+            document.getElementById('stepBtn').disabled = false;
+            document.getElementById('statusMessage').className = 'status-message';
+            document.getElementById('statusMessage').textContent = 'Click "Step" or "Auto Run" to start visualization';
+            document.getElementById('currentDay').textContent = '0';
+            document.getElementById('minPrice').textContent = '-';
+            document.getElementById('currentProfit').textContent = '0';
+            document.getElementById('maxProfit').textContent = '0';
+            
+            // Clear chart markers
+            g.selectAll(".marker").remove();
+            g.selectAll(".profit-line").remove();
+            
+            init();
+        }
+
+        init();
+    </script>
+</body>
+</html>

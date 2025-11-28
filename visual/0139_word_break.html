@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LC 139: Word Break - Algorithm Visualization</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="problem-info">
+            <h1><span class="problem-number">#139</span> Word Break</h1>
+            <p>Given a string s and a dictionary of words, determine if s can be segmented into a space-separated sequence of one or more dictionary words.</p>
+            <div class="problem-meta">
+                <span class="meta-tag">📊 Dynamic Programming</span>
+                <span class="meta-tag">🔤 String</span>
+                <span class="meta-tag">⏱️ O(n²)</span>
+                <span class="meta-tag">💾 O(n)</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <code>python/0139_word_break/0139_word_break.py</code>
+            </div>
+            </div>
+
+        <div class="explanation-panel">
+            <h4>🧠 How It Works (Layman's Terms)</h4>
+            <p>We ask: <strong>"Can I break this string into dictionary words?"</strong></p>
+            <ul>
+                <li><strong>dp[i]:</strong> "Can s[0:i] be broken into valid words?"</li>
+                <li><strong>Base case:</strong> dp[0] = True (empty string is valid)</li>
+                <li><strong>For each position i:</strong> Check all possible splits. If dp[j] is true AND s[j:i] is a word, then dp[i] = True!</li>
+                <li><strong>Answer:</strong> dp[len(s)] tells us if the whole string can be broken</li>
+            </ul>
+        </div>
+
+
+        <div class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+            
+            <div class="controls">
+                <select id="exampleSelect" style="padding: 8px; border-radius: 5px; border: 2px solid #ddd;">
+                    <option value="0">"leetcode" → ["leet", "code"]</option>
+                    <option value="1">"applepenapple" → ["apple", "pen"]</option>
+                    <option value="2">"catsandog" → ["cats", "dog", "sand", "and", "cat"]</option>
+                </select>
+                <button class="btn btn-primary" onclick="loadExample()">Load</button>
+                <button class="btn btn-primary" onclick="step()">Step</button>
+                <button class="btn btn-success" onclick="autoRun()">Auto Run</button>
+                <button class="btn" style="background: #607d8b; color: white;" onclick="reset()">Reset</button>
+            </div>
+
+            <div class="status-message" id="statusMessage">
+                Click Step to check if the string can be broken into words
+            </div>
+
+            <div style="margin-top: 20px;">
+                <h4 style="margin-bottom: 10px;">🔤 String</h4>
+                <div id="stringContainer" style="display: flex; gap: 3px; flex-wrap: wrap; padding: 15px; background: #f5f5f5; border-radius: 12px; justify-content: center;">
+                </div>
+            </div>
+
+            <div style="margin-top: 20px;">
+                <h4 style="margin-bottom: 10px;">📊 DP Array: dp[i] = "Can s[0:i] be broken?"</h4>
+                <div id="dpContainer" style="display: flex; gap: 5px; flex-wrap: wrap; padding: 15px; background: #e3f2fd; border-radius: 12px; justify-content: center;">
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 30px; flex-wrap: wrap; margin-top: 20px;">
+                <div style="flex: 1; min-width: 200px;">
+                    <h4 style="margin-bottom: 10px;">📚 Dictionary</h4>
+                    <div id="dictContainer" style="display: flex; flex-wrap: wrap; gap: 8px; padding: 15px; background: #f5f5f5; border-radius: 12px;">
+                    </div>
+                </div>
+                <div style="flex: 1; min-width: 200px;">
+                    <h4 style="margin-bottom: 10px;">🔍 Current Check</h4>
+                    <div id="checkContainer" style="padding: 15px; background: #fff3e0; border-radius: 12px; min-height: 80px;">
+                        <span style="color: #999;">-</span>
+                    </div>
+                    
+                    <h4 style="margin-top: 20px; margin-bottom: 10px;">✅ Result</h4>
+                    <div id="resultContainer" style="padding: 20px; background: #e8f5e9; border-radius: 12px; text-align: center; font-size: 1.3em; font-weight: bold;">
+                        -
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="code-section">
+            <h3>💻 Python Solution</h3>
+            <div class="code-block">
+                <pre><span class="keyword">def</span> <span class="function">word_break</span>(s, wordDict):
+    dp = [<span class="keyword">False</span>] * (<span class="function">len</span>(s) + <span class="number">1</span>)
+    dp[<span class="number">0</span>] = <span class="keyword">True</span>  <span class="comment"># Empty string is valid</span>
+    word_set = <span class="function">set</span>(wordDict)
+    
+    <span class="keyword">for</span> i <span class="keyword">in</span> <span class="function">range</span>(<span class="number">1</span>, <span class="function">len</span>(s) + <span class="number">1</span>):
+        <span class="keyword">for</span> j <span class="keyword">in</span> <span class="function">range</span>(i - <span class="number">1</span>, <span class="number">-1</span>, <span class="number">-1</span>):
+            <span class="comment"># If s[0:j] is valid AND s[j:i] is a word</span>
+            <span class="keyword">if</span> dp[j] <span class="keyword">and</span> s[j:<span class="class-name">i</span>] <span class="keyword">in</span> word_set:
+                dp[i] = <span class="keyword">True</span>
+                <span class="keyword">break</span>
+    
+    <span class="keyword">return</span> dp[<span class="function">len</span>(s)]</pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const examples = [
+            { s: "leetcode", dict: ["leet", "code"], result: true },
+            { s: "applepenapple", dict: ["apple", "pen"], result: true },
+            { s: "catsandog", dict: ["cats", "dog", "sand", "and", "cat"], result: false }
+        ];
+
+        let currentExample = examples[0];
+        let s = currentExample.s;
+        let wordDict = new Set(currentExample.dict);
+        let dp = [];
+        let i = 1;
+        let j = 0;
+        let done = false;
+        let isRunning = false;
+        let foundMatch = false;
+        let currentSubstr = '';
+        let highlightStart = -1;
+        let highlightEnd = -1;
+
+        function loadExample() {
+            const idx = parseInt(document.getElementById('exampleSelect').value);
+            currentExample = examples[idx];
+            s = currentExample.s;
+            wordDict = new Set(currentExample.dict);
+            reset();
+        }
+
+        function renderString() {
+            const container = document.getElementById('stringContainer');
+            container.innerHTML = s.split('').map((char, idx) => {
+                let bgColor = '#fff';
+                let borderColor = '#ddd';
+                
+                if (idx >= highlightStart && idx < highlightEnd) {
+                    bgColor = '#ff9800';
+                    borderColor = '#f57c00';
+                } else if (idx < i) {
+                    bgColor = dp[idx + 1] ? '#c8e6c9' : '#ffcdd2';
+                    borderColor = dp[idx + 1] ? '#a5d6a7' : '#ef9a9a';
+                }
+
+                return `
+                    <div style="width: 35px; height: 40px; display: flex; flex-direction: column;
+                                align-items: center; justify-content: center; background: ${bgColor}; 
+                                border: 2px solid ${borderColor}; border-radius: 6px; font-weight: bold;">
+                        <span>${char}</span>
+                        <span style="font-size: 0.6em; color: #999;">${idx}</span>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderDP() {
+            const container = document.getElementById('dpContainer');
+            container.innerHTML = dp.map((val, idx) => `
+                <div style="display: flex; flex-direction: column; align-items: center; padding: 8px 12px;
+                            background: ${val ? '#4caf50' : '#e0e0e0'}; 
+                            border: 2px solid ${idx === i ? '#ff9800' : (val ? '#388e3c' : '#bdbdbd')}; 
+                            border-radius: 6px; min-width: 45px;
+                            ${idx === i ? 'box-shadow: 0 0 10px rgba(255,152,0,0.5);' : ''}">
+                    <span style="font-size: 0.7em; color: ${val ? 'white' : '#666'};">dp[${idx}]</span>
+                    <span style="font-weight: bold; color: ${val ? 'white' : '#333'};">${val ? 'T' : 'F'}</span>
+                </div>
+            `).join('');
+        }
+
+        function renderDict() {
+            const container = document.getElementById('dictContainer');
+            container.innerHTML = Array.from(wordDict).map(word => `
+                <div style="padding: 8px 15px; background: ${word === currentSubstr ? '#4caf50' : '#667eea'}; 
+                            color: white; border-radius: 6px; font-weight: bold;">
+                    ${word}
+                </div>
+            `).join('');
+        }
+
+        function renderCheck() {
+            const container = document.getElementById('checkContainer');
+            if (i > s.length) {
+                container.innerHTML = '<span style="color: #999;">Done</span>';
+                return;
+            }
+
+            const substr = s.substring(j, i);
+            const isWord = wordDict.has(substr);
+            const dpValid = dp[j];
+
+            container.innerHTML = `
+                <div style="margin-bottom: 10px;">
+                    <strong>Checking position i=${i}:</strong>
+                </div>
+                <div style="margin-bottom: 5px;">
+                    s[${j}:${i}] = "<span style="color: ${isWord ? '#4caf50' : '#f44336'}; font-weight: bold;">${substr}</span>"
+                </div>
+                <div style="margin-bottom: 5px;">
+                    In dictionary? <span style="color: ${isWord ? '#4caf50' : '#f44336'}; font-weight: bold;">${isWord ? 'YES' : 'NO'}</span>
+                </div>
+                <div>
+                    dp[${j}] = ${dpValid} → ${dpValid && isWord ? '✅ dp[' + i + '] = True!' : '❌ Try next j'}
+
+        </div>
+            `;
+        }
+
+        function step() {
+            if (done) {
+                return;
+            }
+
+            if (i > s.length) {
+                done = true;
+                const result = dp[s.length];
+                document.getElementById('resultContainer').innerHTML = 
+                    result ? '<span style="color: #4caf50;">✅ Can be broken!</span>' : 
+                             '<span style="color: #f44336;">❌ Cannot be broken</span>';
+                document.getElementById('statusMessage').textContent = 
+                    result ? `Success! "${s}" can be segmented into dictionary words.` :
+                             `Failed! "${s}" cannot be segmented into dictionary words.`;
+                highlightStart = highlightEnd = -1;
+                renderString();
+                return;
+            }
+
+            const substr = s.substring(j, i);
+            currentSubstr = wordDict.has(substr) ? substr : '';
+            highlightStart = j;
+            highlightEnd = i;
+
+            if (dp[j] && wordDict.has(substr)) {
+                dp[i] = true;
+                document.getElementById('statusMessage').textContent = 
+                    `Found! dp[${j}]=True AND "${substr}" is a word → dp[${i}]=True`;
+                
+                // Move to next i
+                i++;
+                j = i - 1;
+                foundMatch = false;
+            } else {
+                if (j > 0) {
+                    j--;
+                    document.getElementById('statusMessage').textContent = 
+                        `s[${j+1}:${i}]="${s.substring(j+1, i)}" not valid, trying j=${j}...`;
+                } else {
+                    document.getElementById('statusMessage').textContent = 
+                        `No valid split for position ${i}, dp[${i}] stays False`;
+                    i++;
+                    j = i - 1;
+                }
+            }
+
+            renderString();
+            renderDP();
+            renderDict();
+            renderCheck();
+        }
+
+        function autoRun() {
+            if (isRunning) return;
+            isRunning = true;
+
+            const interval = setInterval(() => {
+                if (done) {
+                    clearInterval(interval);
+                    isRunning = false;
+                    return;
+                }
+                step();
+            }, 600);
+        }
+
+        function reset() {
+            dp = new Array(s.length + 1).fill(false);
+            dp[0] = true;
+            i = 1;
+            j = 0;
+            done = false;
+            isRunning = false;
+            foundMatch = false;
+            currentSubstr = '';
+            highlightStart = highlightEnd = -1;
+
+            document.getElementById('statusMessage').textContent = 
+                `Check if "${s}" can be broken into words: [${Array.from(wordDict).join(', ')}]`;
+            document.getElementById('resultContainer').textContent = '-';
+            
+            renderString();
+            renderDP();
+            renderDict();
+            renderCheck();
+        }
+
+        reset();
+    </script>
+</body>
+</html>

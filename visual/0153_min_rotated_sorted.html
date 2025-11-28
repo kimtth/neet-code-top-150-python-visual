@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Find Minimum in Rotated Sorted Array - LeetCode 153</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="problem-info">
+            <h1><span class="problem-number">#153</span> Find Minimum in Rotated Sorted Array</h1>
+            <p>Find the minimum element in a rotated sorted array. Use binary search to find the "pivot" point where the rotation occurred!</p>
+            <div class="problem-meta">
+                <span class="meta-tag">🔍 Binary Search</span>
+                <span class="meta-tag">🔢 Array</span>
+                <span class="meta-tag">⏱️ O(log n)</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <a href="../python/0153_minimum_in_rotated_sorted_array/0153_minimum_in_rotated_sorted_array.py">0153_minimum_in_rotated_sorted_array.py</a>
+            </div>
+            </div>
+
+        <div class="explanation-panel">
+            <h4>💡 How It Works (Layman's Terms)</h4>
+            <ul>
+                <li><strong>Rotated array:</strong> A sorted array that's been "rotated" - part of the end moved to the beginning</li>
+                <li><strong>Example:</strong> [1,2,3,4,5] rotated 3 times → [3,4,5,1,2]</li>
+                <li><strong>Key insight:</strong> The array has two sorted portions. The minimum is at the "pivot" point.</li>
+                <li><strong>If nums[left] < nums[right]:</strong> The current range is fully sorted, min is at left</li>
+                <li><strong>If nums[left] <= nums[mid]:</strong> Left half is sorted, so min must be in right half</li>
+                <li><strong>Otherwise:</strong> Right half is sorted, so min must be in left half</li>
+            </ul>
+        </div>
+
+
+        <div class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+            
+            <div class="controls">
+                <button class="btn btn-primary" id="stepBtn" onclick="step()">Step</button>
+                <button class="btn btn-success" id="autoBtn" onclick="toggleAuto()">Auto Run</button>
+                <button class="btn btn-warning" onclick="reset()">Reset</button>
+            </div>
+
+            <div class="status-message" id="statusMessage">
+                Click "Step" or "Auto Run" to find the minimum in the rotated array
+            </div>
+
+            <div class="variable-display">
+                <div class="variable-box">
+                    <div class="variable-name">Left</div>
+                    <div class="variable-value" id="leftVal">0</div>
+                </div>
+                <div class="variable-box">
+                    <div class="variable-name">Mid</div>
+                    <div class="variable-value" id="midVal">-</div>
+                </div>
+                <div class="variable-box">
+                    <div class="variable-name">Right</div>
+                    <div class="variable-value" id="rightVal">4</div>
+                </div>
+                <div class="variable-box">
+                    <div class="variable-name">Current Min</div>
+                    <div class="variable-value" id="minVal">-</div>
+                </div>
+            </div>
+
+            <div class="array-section">
+                <div class="array-label">Rotated Array (original: [1,2,3,4,5] rotated 3 times):</div>
+                <div class="array-container" id="arrayContainer"></div>
+            </div>
+
+            <div class="svg-container">
+                <svg id="chartSvg" width="600" height="200"></svg>
+            </div>
+
+            <div class="info-box" id="resultBox" style="display: none;"></div>
+        </div>
+        <div class="code-section">
+            <h3>💻 Python Solution</h3>
+            <div class="code-block">
+                <pre><span class="keyword">def</span> <span class="function">findMin</span>(self, nums: <span class="class-name">List</span>[int]) -> int:
+    left, right = <span class="number">0</span>, <span class="function">len</span>(nums) - <span class="number">1</span>
+    result = nums[<span class="number">0</span>]
+    
+    <span class="keyword">while</span> left <= right:
+        <span class="comment"># If left portion is sorted, min is at left</span>
+        <span class="keyword">if</span> nums[left] < nums[right]:
+            result = <span class="function">min</span>(result, nums[left])
+            <span class="keyword">break</span>
+        
+        mid = (left + right) // <span class="number">2</span>
+        result = <span class="function">min</span>(result, nums[mid])
+        
+        <span class="comment"># If left half is sorted, min is in right half</span>
+        <span class="keyword">if</span> nums[left] <= nums[mid]:
+            left = mid + <span class="number">1</span>
+        <span class="keyword">else</span>:
+            right = mid - <span class="number">1</span>
+    
+    <span class="keyword">return</span> result</pre>
+            </div>
+        </div>
+
+        </div>
+
+    <script>
+        const nums = [3, 4, 5, 1, 2];
+        let left = 0;
+        let right = nums.length - 1;
+        let mid = -1;
+        let result = nums[0];
+        let phase = 'init';
+        let autoInterval = null;
+
+        function init() {
+            left = 0;
+            right = nums.length - 1;
+            mid = -1;
+            result = nums[0];
+            renderArray();
+            drawChart();
+            document.getElementById('leftVal').textContent = '0';
+            document.getElementById('rightVal').textContent = (nums.length - 1).toString();
+            document.getElementById('midVal').textContent = '-';
+            document.getElementById('minVal').textContent = nums[0];
+            document.getElementById('resultBox').style.display = 'none';
+        }
+
+        function renderArray() {
+            const container = document.getElementById('arrayContainer');
+            container.innerHTML = '';
+            
+            nums.forEach((num, idx) => {
+                const box = document.createElement('div');
+                box.className = 'array-box';
+                
+                if (idx === left) box.classList.add('pointer-left');
+                if (idx === right) box.classList.add('pointer-right');
+                if (idx === mid) box.classList.add('highlight');
+                if (idx < left || idx > right) box.style.opacity = '0.3';
+                
+                box.innerHTML = `${num}<span class="index-label">[${idx}]</span>`;
+                container.appendChild(box);
+            });
+
+            // Pointer labels
+            let labelHtml = '<div style="display: flex; gap: 8px; margin-top: 5px;">';
+            for (let i = 0; i < nums.length; i++) {
+                labelHtml += '<div style="width: 60px; text-align: center; font-size: 0.8em;">';
+                if (i === left) labelHtml += '<span style="color: #ff5722;">L</span>';
+                if (i === mid) labelHtml += '<span style="color: #667eea; margin: 0 3px;">M</span>';
+                if (i === right) labelHtml += '<span style="color: #3f51b5;">R</span>';
+                labelHtml += '</div>';
+            }
+            labelHtml += '
+
+        </div>';
+            container.insertAdjacentHTML('afterend', labelHtml);
+        }
+
+        function drawChart() {
+            const svg = d3.select("#chartSvg");
+            svg.selectAll("*").remove();
+
+            const margin = {top: 20, right: 30, bottom: 30, left: 40};
+            const width = 600 - margin.left - margin.right;
+            const height = 200 - margin.top - margin.bottom;
+
+            const g = svg.append("g")
+                .attr("transform", `translate(${margin.left},${margin.top})`);
+
+            const x = d3.scaleLinear()
+                .domain([0, nums.length - 1])
+                .range([0, width]);
+
+            const y = d3.scaleLinear()
+                .domain([0, Math.max(...nums) + 1])
+                .range([height, 0]);
+
+            // Bars
+            g.selectAll("rect")
+                .data(nums)
+                .enter()
+                .append("rect")
+                .attr("x", (d, i) => x(i) - 20)
+                .attr("y", d => y(d))
+                .attr("width", 40)
+                .attr("height", d => height - y(d))
+                .attr("fill", (d, i) => {
+                    if (i === mid) return "#667eea";
+                    if (i < left || i > right) return "#e0e0e0";
+                    return "#4caf50";
+                })
+                .attr("rx", 4);
+
+            // Value labels
+            g.selectAll(".label")
+                .data(nums)
+                .enter()
+                .append("text")
+                .attr("x", (d, i) => x(i))
+                .attr("y", d => y(d) - 5)
+                .attr("text-anchor", "middle")
+                .attr("font-size", "12px")
+                .attr("font-weight", "bold")
+                .text(d => d);
+
+            // Highlight minimum
+            const minIdx = nums.indexOf(Math.min(...nums));
+            g.append("text")
+                .attr("x", x(minIdx))
+                .attr("y", height + 20)
+                .attr("text-anchor", "middle")
+                .attr("font-size", "10px")
+                .attr("fill", "#f44336")
+                .text("← Min");
+        }
+
+        function step() {
+            // Remove old pointer labels
+            const oldLabels = document.querySelector('.array-section + div');
+            if (oldLabels && !oldLabels.classList.contains('array-section')) {
+                oldLabels.remove();
+            }
+
+            if (phase === 'init') {
+                phase = 'searching';
+                document.getElementById('statusMessage').textContent = 
+                    'Binary search for the minimum (pivot point)...';
+            }
+
+            if (phase === 'searching') {
+                if (left > right) {
+                    phase = 'done';
+                    document.getElementById('resultBox').style.display = 'block';
+                    document.getElementById('resultBox').className = 'info-box secondary';
+                    document.getElementById('resultBox').textContent = `✅ Minimum found: ${result}`;
+                    document.getElementById('statusMessage').textContent = 'Search complete!';
+                    document.getElementById('stepBtn').disabled = true;
+                    stopAuto();
+                    return;
+                }
+
+                // Check if already sorted
+                if (nums[left] < nums[right]) {
+                    result = Math.min(result, nums[left]);
+                    phase = 'done';
+                    document.getElementById('minVal').textContent = result;
+                    document.getElementById('resultBox').style.display = 'block';
+                    document.getElementById('resultBox').className = 'info-box secondary';
+                    document.getElementById('resultBox').textContent = `✅ Minimum found: ${result}`;
+                    document.getElementById('statusMessage').textContent = 
+                        `nums[${left}] < nums[${right}] → Range is sorted, min = nums[${left}] = ${nums[left]}`;
+                    document.getElementById('stepBtn').disabled = true;
+                    stopAuto();
+                    return;
+                }
+
+                mid = Math.floor((left + right) / 2);
+                result = Math.min(result, nums[mid]);
+
+                document.getElementById('midVal').textContent = mid;
+                document.getElementById('minVal').textContent = result;
+                document.getElementById('leftVal').textContent = left;
+                document.getElementById('rightVal').textContent = right;
+
+                renderArray();
+                drawChart();
+
+                if (nums[left] <= nums[mid]) {
+                    document.getElementById('statusMessage').textContent = 
+                        `nums[${left}]=${nums[left]} ≤ nums[${mid}]=${nums[mid]} → Left half sorted, min in right half. left = ${mid + 1}`;
+                    left = mid + 1;
+                } else {
+                    document.getElementById('statusMessage').textContent = 
+                        `nums[${left}]=${nums[left]} > nums[${mid}]=${nums[mid]} → Right half sorted, min in left half. right = ${mid - 1}`;
+                    right = mid - 1;
+                }
+            }
+        }
+
+        function toggleAuto() {
+            if (autoInterval) {
+                stopAuto();
+            } else {
+                document.getElementById('autoBtn').textContent = 'Pause';
+                autoInterval = setInterval(() => {
+                    if (phase === 'done') {
+                        stopAuto();
+                    } else {
+                        step();
+                    }
+                }, 1500);
+            }
+        }
+
+        function stopAuto() {
+            if (autoInterval) {
+                clearInterval(autoInterval);
+                autoInterval = null;
+            }
+            document.getElementById('autoBtn').textContent = 'Auto Run';
+        }
+
+        function reset() {
+            stopAuto();
+            phase = 'init';
+            const oldLabels = document.querySelector('.array-section + div');
+            if (oldLabels && !oldLabels.classList.contains('array-section')) {
+                oldLabels.remove();
+            }
+            document.getElementById('stepBtn').disabled = false;
+            document.getElementById('statusMessage').textContent = 
+                'Click "Step" or "Auto Run" to find the minimum in the rotated array';
+            init();
+        }
+
+        init();
+    </script>
+</body>
+</html>

@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>287 - Find the Duplicate Number</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="problem-info">
+            <h1><span class="problem-number">#287</span> Find the Duplicate Number</h1>
+            <p>
+                Given an array containing n+1 integers where each integer is between 1 and n,
+                find the duplicate using Floyd's Cycle Detection (Tortoise and Hare) algorithm
+                in O(1) space without modifying the array.
+            </p>
+
+            <h3>Key Insight:</h3>
+            <p>
+                Treat array indices as nodes and values as next pointers. The duplicate creates a cycle!
+            </p>
+            <div class="problem-meta">
+                <span class="meta-tag">📊 Array</span>
+                <span class="meta-tag">⏱️ O(n)</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <code>python/0287_find_the_duplicate_number/0287_find_the_duplicate_number.py</code>
+            </div>
+
+        </div>
+
+        <div class="explanation-panel">
+            <h4>🧠 How It Works (Layman's Terms)</h4>
+            <p>This algorithm solves the problem <strong>step by step</strong>:</p>
+            <ul>
+                <li><strong>Understand:</strong> Parse the input data</li>
+                <li><strong>Process:</strong> Apply the core logic</li>
+                <li><strong>Optimize:</strong> Use efficient data structures</li>
+                <li><strong>Return:</strong> Output the computed result</li>
+            </ul>
+        </div>
+
+
+        <section class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+            <div class="controls">
+                <button id="stepBtn" class="btn">Step</button>
+                <button id="autoBtn" class="btn btn-success">Auto Run</button>
+                <button id="resetBtn" class="btn btn-danger">Reset</button>
+            </div>
+            <div class="status" id="status">Find duplicate using Floyd's Cycle Detection</div>
+            <svg id="visualization"></svg>
+        </section>
+
+        <section class="code-section">
+            <h2>Python Solution</h2>
+            <pre><span class="keyword">def</span> <span class="function">findDuplicate</span>(nums):
+    <span class="comment"># Phase 1: Find intersection point</span>
+    slow = nums[<span class="number">0</span>]
+    fast = nums[nums[<span class="number">0</span>]]
+    <span class="keyword">while</span> slow != fast:
+        slow = nums[slow]
+        fast = nums[nums[fast]]
+    
+    <span class="comment"># Phase 2: Find cycle entrance (the duplicate)</span>
+    slow = <span class="number">0</span>
+    <span class="keyword">while</span> slow != fast:
+        slow = nums[slow]
+        fast = nums[fast]
+    
+    <span class="keyword">return</span> slow</pre>
+        </section>
+    </div>
+
+    <script>
+        const width = 900;
+        const height = 550;
+
+        const svg = d3.select("#visualization")
+            .attr("width", width)
+            .attr("height", height);
+
+        const nums = [1, 3, 4, 2, 2]; // The duplicate is 2
+
+        let phase = 1;
+        let slow = 0;
+        let fast = 0;
+        let steps = [];
+        let currentStep = 0;
+        let isRunning = false;
+        let found = false;
+
+        function generateSteps() {
+            steps = [];
+            let s = nums[0];
+            let f = nums[nums[0]];
+            steps.push({ phase: 1, slow: s, fast: f, message: "Phase 1: slow = nums[0], fast = nums[nums[0]]" });
+
+            // Phase 1: Find intersection
+            while (s !== f) {
+                s = nums[s];
+                f = nums[nums[f]];
+                steps.push({ phase: 1, slow: s, fast: f, message: `Phase 1: slow → ${s}, fast → ${f}` });
+            }
+
+            steps.push({ phase: 1.5, slow: s, fast: f, message: `Intersection found at ${s}! Starting Phase 2...` });
+
+            // Phase 2: Find entrance
+            s = 0;
+            steps.push({ phase: 2, slow: s, fast: f, message: "Phase 2: Reset slow to 0" });
+
+            while (s !== f) {
+                s = nums[s];
+                f = nums[f];
+                steps.push({ phase: 2, slow: s, fast: f, message: `Phase 2: slow → ${s}, fast → ${f}` });
+            }
+
+            steps.push({ phase: 3, slow: s, fast: f, duplicate: s, message: `Found duplicate: ${s}!` });
+        }
+
+        function render(step) {
+            svg.selectAll("*").remove();
+
+            const currentPhase = step ? step.phase : 1;
+            const slowPos = step ? step.slow : 0;
+            const fastPos = step ? step.fast : 0;
+
+            // Draw array view
+            svg.append("text")
+                .attr("x", 50)
+                .attr("y", 40)
+                .attr("font-size", "16px")
+                .attr("font-weight", "bold")
+                .attr("fill", "#1e293b")
+                .text("Array View:");
+
+            const boxSize = 60;
+            const startX = 80;
+            const startY = 60;
+
+            nums.forEach((val, idx) => {
+                svg.append("rect")
+                    .attr("x", startX + idx * (boxSize + 10))
+                    .attr("y", startY)
+                    .attr("width", boxSize)
+                    .attr("height", boxSize)
+                    .attr("rx", 8)
+                    .attr("fill", () => {
+                        if (idx === slowPos && idx === fastPos) return "#fef3c7";
+                        if (idx === slowPos) return "#dbeafe";
+                        if (idx === fastPos) return "#d1fae5";
+                        return "#f8fafc";
+                    })
+                    .attr("stroke", () => {
+                        if (idx === slowPos && idx === fastPos) return "#f59e0b";
+                        if (idx === slowPos) return "#3b82f6";
+                        if (idx === fastPos) return "#10b981";
+                        return "#94a3b8";
+                    })
+                    .attr("stroke-width", (idx === slowPos || idx === fastPos) ? 3 : 2);
+
+                svg.append("text")
+                    .attr("x", startX + idx * (boxSize + 10) + boxSize / 2)
+                    .attr("y", startY - 10)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "12px")
+                    .attr("fill", "#64748b")
+                    .text(`idx=${idx}`);
+
+                svg.append("text")
+                    .attr("x", startX + idx * (boxSize + 10) + boxSize / 2)
+                    .attr("y", startY + boxSize / 2 + 6)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "20px")
+                    .attr("font-weight", "bold")
+                    .attr("fill", "#1e293b")
+                    .text(val);
+            });
+
+            // Draw linked list / cycle view
+            svg.append("text")
+                .attr("x", 50)
+                .attr("y", 200)
+                .attr("font-size", "16px")
+                .attr("font-weight", "bold")
+                .attr("fill", "#1e293b")
+                .text("Linked List View (index → nums[index]):");
+
+            // Node positions for the cycle
+            const nodePositions = {
+                0: { x: 100, y: 300 },
+                1: { x: 220, y: 300 },
+                3: { x: 340, y: 300 },
+                4: { x: 460, y: 340 },
+                2: { x: 340, y: 380 }
+            };
+
+            // Draw arrows first
+            const arrows = [
+                [0, nums[0]],
+                [1, nums[1]],
+                [2, nums[2]],
+                [3, nums[3]],
+                [4, nums[4]]
+            ];
+
+            // Arrow marker
+            svg.append("defs").append("marker")
+                .attr("id", "arrow")
+                .attr("viewBox", "0 -5 10 10")
+                .attr("refX", 25)
+                .attr("refY", 0)
+                .attr("markerWidth", 6)
+                .attr("markerHeight", 6)
+                .attr("orient", "auto")
+                .append("path")
+                .attr("d", "M0,-5L10,0L0,5")
+                .attr("fill", "#64748b");
+
+            arrows.forEach(([from, to]) => {
+                const fromPos = nodePositions[from];
+                const toPos = nodePositions[to];
+                if (fromPos && toPos) {
+                    const dx = toPos.x - fromPos.x;
+                    const dy = toPos.y - fromPos.y;
+                    const len = Math.sqrt(dx * dx + dy * dy);
+
+                    // For the cycle edge (2 → 4 or 4 → 2), draw curved
+                    if ((from === 2 && to === 4) || (from === 4 && to === 2)) {
+                        const midX = (fromPos.x + toPos.x) / 2;
+                        const midY = (fromPos.y + toPos.y) / 2 + 40;
+                        svg.append("path")
+                            .attr("d", `M ${fromPos.x} ${fromPos.y} Q ${midX} ${midY} ${toPos.x} ${toPos.y}`)
+                            .attr("fill", "none")
+                            .attr("stroke", from === 4 ? "#ef4444" : "#64748b")
+                            .attr("stroke-width", from === 4 ? 3 : 2)
+                            .attr("marker-end", "url(#arrow)");
+                    } else {
+                        svg.append("line")
+                            .attr("x1", fromPos.x)
+                            .attr("y1", fromPos.y)
+                            .attr("x2", toPos.x)
+                            .attr("y2", toPos.y)
+                            .attr("stroke", "#64748b")
+                            .attr("stroke-width", 2)
+                            .attr("marker-end", "url(#arrow)");
+                    }
+                }
+            });
+
+            // Draw nodes
+            Object.entries(nodePositions).forEach(([idx, pos]) => {
+                const i = parseInt(idx);
+                const isSlow = i === slowPos;
+                const isFast = i === fastPos;
+                const isDuplicate = step && step.duplicate === i;
+
+                svg.append("circle")
+                    .attr("cx", pos.x)
+                    .attr("cy", pos.y)
+                    .attr("r", 25)
+                    .attr("fill", () => {
+                        if (isDuplicate) return "#fef3c7";
+                        if (isSlow && isFast) return "#fef3c7";
+                        if (isSlow) return "#dbeafe";
+                        if (isFast) return "#d1fae5";
+                        return "#f8fafc";
+                    })
+                    .attr("stroke", () => {
+                        if (isDuplicate) return "#f59e0b";
+                        if (isSlow) return "#3b82f6";
+                        if (isFast) return "#10b981";
+                        return "#64748b";
+                    })
+                    .attr("stroke-width", (isSlow || isFast || isDuplicate) ? 3 : 2);
+
+                svg.append("text")
+                    .attr("x", pos.x)
+                    .attr("y", pos.y + 5)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "18px")
+                    .attr("font-weight", "bold")
+                    .attr("fill", "#1e293b")
+                    .text(i);
+            });
+
+            // Highlight cycle
+            svg.append("text")
+                .attr("x", 400)
+                .attr("y", 430)
+                .attr("text-anchor", "middle")
+                .attr("font-size", "14px")
+                .attr("fill", "#ef4444")
+                .text("← Cycle (caused by duplicate value 2)");
+
+            // Phase indicator
+            svg.append("text")
+                .attr("x", 700)
+                .attr("y", 250)
+                .attr("font-size", "16px")
+                .attr("font-weight", "bold")
+                .attr("fill", "#1e293b")
+                .text(`Phase: ${currentPhase < 2 ? 1 : currentPhase === 3 ? "Done" : 2}`);
+
+            svg.append("text")
+                .attr("x", 700)
+                .attr("y", 280)
+                .attr("font-size", "14px")
+                .attr("fill", currentPhase < 2 ? "#3b82f6" : "#64748b")
+                .text("1: Find intersection");
+
+            svg.append("text")
+                .attr("x", 700)
+                .attr("y", 305)
+                .attr("font-size", "14px")
+                .attr("fill", currentPhase >= 2 ? "#10b981" : "#64748b")
+                .text("2: Find cycle entrance");
+
+            // Legend
+            const legend = svg.append("g").attr("transform", `translate(700, 340)`);
+
+            legend.append("circle").attr("cx", 10).attr("cy", 0).attr("r", 10).attr("fill", "#dbeafe").attr("stroke", "#3b82f6");
+            legend.append("text").attr("x", 30).attr("y", 5).attr("font-size", "12px").text("Slow pointer");
+
+            legend.append("circle").attr("cx", 10).attr("cy", 30).attr("r", 10).attr("fill", "#d1fae5").attr("stroke", "#10b981");
+            legend.append("text").attr("x", 30).attr("y", 35).attr("font-size", "12px").text("Fast pointer");
+
+            legend.append("circle").attr("cx", 10).attr("cy", 60).attr("r", 10).attr("fill", "#fef3c7").attr("stroke", "#f59e0b");
+            legend.append("text").attr("x", 30).attr("y", 65).attr("font-size", "12px").text("Both / Duplicate");
+
+            // Pointer values
+            svg.append("text")
+                .attr("x", 700)
+                .attr("y", 450)
+                .attr("font-size", "14px")
+                .attr("fill", "#3b82f6")
+                .text(`Slow: ${slowPos}`);
+
+            svg.append("text")
+                .attr("x", 780)
+                .attr("y", 450)
+                .attr("font-size", "14px")
+                .attr("fill", "#10b981")
+                .text(`Fast: ${fastPos}`);
+        }
+
+        function reset() {
+            generateSteps();
+            currentStep = 0;
+            isRunning = false;
+            found = false;
+            document.getElementById("autoBtn").textContent = "Auto Run";
+            document.getElementById("status").textContent = "Find duplicate using Floyd's Cycle Detection";
+            render(null);
+        }
+
+        function step() {
+            if (currentStep < steps.length) {
+                const s = steps[currentStep];
+                render(s);
+                document.getElementById("status").textContent = s.message;
+                currentStep++;
+            } else {
+                document.getElementById("status").textContent = "Algorithm complete! The duplicate is 2.";
+            }
+        }
+
+        async function autoRun() {
+            if (isRunning) {
+                isRunning = false;
+                document.getElementById("autoBtn").textContent = "Auto Run";
+                return;
+            }
+
+            isRunning = true;
+            document.getElementById("autoBtn").textContent = "Pause";
+
+            while (currentStep < steps.length && isRunning) {
+                step();
+                await new Promise(r => setTimeout(r, 1000));
+            }
+
+            isRunning = false;
+            document.getElementById("autoBtn").textContent = "Auto Run";
+        }
+
+        document.getElementById("stepBtn").addEventListener("click", step);
+        document.getElementById("autoBtn").addEventListener("click", autoRun);
+        document.getElementById("resetBtn").addEventListener("click", reset);
+
+        reset();
+    </script>
+</body>
+</html>

@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LC 322: Coin Change - Algorithm Visualization</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="problem-info">
+            <h1><span class="problem-number">#322</span> Coin Change</h1>
+            <p>Given coins of different denominations and a total amount, find the fewest number of coins needed to make up that amount. Return -1 if impossible.</p>
+            <div class="problem-meta">
+                <span class="meta-tag">📈 Dynamic Programming</span>
+                <span class="meta-tag">💰 Unbounded Knapsack</span>
+                <span class="meta-tag">⏱️ O(amount × coins)</span>
+                <span class="meta-tag">💾 O(amount)</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <code>python/0322_coin_change/0322_coin_change.py</code>
+            </div>
+            </div>
+
+        <div class="explanation-panel">
+            <h4>🧠 How It Works (Layman's Terms)</h4>
+            <p>Build up from small amounts to the target. For each amount, try every coin:</p>
+            <ul>
+                <li><strong>dp[a]:</strong> Minimum coins needed to make amount 'a'</li>
+                <li><strong>For each coin:</strong> If we use this coin, we need 1 + dp[a - coin] coins</li>
+                <li><strong>Take the best:</strong> min of all possibilities across all coins</li>
+                <li><strong>Build up:</strong> Solutions for larger amounts depend on smaller ones</li>
+            </ul>
+        </div>
+
+
+        <div class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+            
+            <div class="controls">
+                <button class="btn btn-primary" id="stepBtn" onclick="step()">Step</button>
+                <button class="btn btn-success" id="autoBtn" onclick="toggleAuto()">Auto Run</button>
+                <button class="btn btn-warning" onclick="reset()">Reset</button>
+            </div>
+
+            <div class="info-box secondary" style="margin-bottom: 20px;">
+                💰 Coins: <strong>[1, 2, 5]</strong> | 🎯 Target Amount: <strong>11</strong>
+            </div>
+
+            <div class="status-message" id="statusMessage">
+                Click "Step" or "Auto Run" to start visualization
+            </div>
+
+            <div class="array-section">
+                <div class="array-label">💰 Available Coins:</div>
+                <div class="array-container" id="coinsContainer"></div>
+            </div>
+
+            <div class="array-section">
+                <div class="array-label">📊 DP Array (dp[i] = min coins for amount i):</div>
+                <div class="array-container" id="dpContainer" style="flex-wrap: wrap;"></div>
+            </div>
+
+            <div class="explanation-panel" style="margin-top: 20px;">
+                <h4>📝 Current Calculation</h4>
+                <div id="calculationDisplay" style="font-size: 1.1em; padding: 10px;">
+                    Waiting to start...
+                </div>
+            </div>
+
+            <div id="treeContainer" style="width: 100%; height: 200px; margin-top: 20px; background: #f5f5f5; border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+                <div id="coinStack" style="display: flex; gap: 10px; flex-wrap: wrap; justify-content: center;"></div>
+            </div>
+        </div>
+
+        <div class="code-section">
+            <h3>💻 Python Solution</h3>
+            <div class="code-block">
+                <pre><span class="keyword">def</span> <span class="function">coin_change</span>(self, coins: <span class="class-name">List</span>[<span class="class-name">int</span>], amount: <span class="class-name">int</span>) -> <span class="class-name">int</span>:
+    dp = [amount + <span class="number">1</span>] * (amount + <span class="number">1</span>)
+    dp[<span class="number">0</span>] = <span class="number">0</span>  <span class="comment"># 0 coins needed for amount 0</span>
+    
+    <span class="keyword">for</span> a <span class="keyword">in</span> <span class="function">range</span>(<span class="number">1</span>, amount + <span class="number">1</span>):
+        <span class="keyword">for</span> coin <span class="keyword">in</span> coins:
+            <span class="keyword">if</span> a - coin >= <span class="number">0</span>:
+                dp[a] = <span class="function">min</span>(dp[a], <span class="number">1</span> + dp[a - coin])
+    
+    <span class="keyword">return</span> dp[amount] <span class="keyword">if</span> dp[amount] != amount + <span class="number">1</span> <span class="keyword">else</span> -<span class="number">1</span></pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const coins = [1, 2, 5];
+        const amount = 11;
+        let dp = new Array(amount + 1).fill(amount + 1);
+        dp[0] = 0;
+        let currentAmount = 0;
+        let currentCoinIdx = 0;
+        let autoInterval = null;
+        let completed = false;
+
+        function init() {
+            renderCoins();
+            renderDP();
+            renderCoinStack(0);
+        }
+
+        function renderCoins() {
+            const container = document.getElementById('coinsContainer');
+            container.innerHTML = '';
+            
+            coins.forEach((coin, i) => {
+                const box = document.createElement('div');
+                box.className = 'array-box';
+                box.id = `coin-${i}`;
+                box.innerHTML = `$${coin}`;
+                box.style.background = '#fff3e0';
+                box.style.borderColor = '#ff9800';
+                box.style.width = '50px';
+                
+                if (currentAmount > 0 && i === currentCoinIdx) {
+                    box.classList.add('highlight');
+                }
+                
+                container.appendChild(box);
+            });
+        }
+
+        function renderDP() {
+            const container = document.getElementById('dpContainer');
+            container.innerHTML = '';
+            
+            for (let i = 0; i <= amount; i++) {
+                const box = document.createElement('div');
+                box.className = 'array-box';
+                box.id = `dp-${i}`;
+                const val = dp[i] > amount ? '∞' : dp[i];
+                box.innerHTML = `${val}<span class="index-label">${i}</span>`;
+                box.style.width = '45px';
+                box.style.height = '45px';
+                box.style.fontSize = '0.9em';
+                
+                if (i < currentAmount) {
+                    box.style.background = '#c8e6c9';
+                    box.style.borderColor = '#4caf50';
+                }
+                if (i === currentAmount && currentAmount > 0) {
+                    box.classList.add('highlight');
+                }
+                if (dp[i] > amount && i > 0) {
+                    box.style.background = '#ffcdd2';
+                }
+                
+                container.appendChild(box);
+            }
+        }
+
+        function renderCoinStack(targetAmount) {
+            const container = document.getElementById('coinStack');
+            container.innerHTML = '';
+            
+            if (targetAmount === 0 || dp[targetAmount] > amount) {
+                container.innerHTML = '<span style="color: #666;">No coins needed or impossible</span>';
+                return;
+            }
+            
+            // Trace back to find which coins were used
+            let remaining = targetAmount;
+            const usedCoins = [];
+            
+            while (remaining > 0) {
+                for (const coin of coins.slice().reverse()) {
+                    if (remaining >= coin && dp[remaining] === dp[remaining - coin] + 1) {
+                        usedCoins.push(coin);
+                        remaining -= coin;
+                        break;
+                    }
+                }
+                if (usedCoins.length > 20) break; // Safety limit
+            }
+            
+            if (usedCoins.length === 0) {
+                container.innerHTML = '<span style="color: #666;">Computing...</span>';
+                return;
+            }
+
+            container.innerHTML = `<strong style="margin-right: 10px;">$${targetAmount} =</strong>`;
+            usedCoins.forEach((coin, i) => {
+                const coinEl = document.createElement('div');
+                coinEl.style.cssText = `
+                    width: 40px;
+                    height: 40px;
+                    border-radius: 50%;
+                    background: linear-gradient(135deg, #ffd700, #ffb700);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    font-weight: bold;
+                    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+                    border: 2px solid #cc9900;
+                `;
+                coinEl.textContent = `$${coin}`;
+                container.appendChild(coinEl);
+                
+                if (i < usedCoins.length - 1) {
+                    const plus = document.createElement('span');
+                    plus.textContent = '+';
+                    plus.style.margin = '0 5px';
+                    plus.style.fontWeight = 'bold';
+                    container.appendChild(plus);
+                }
+            });
+        }
+
+        function step() {
+            if (completed) return;
+
+            if (currentAmount === 0) {
+                currentAmount = 1;
+                currentCoinIdx = 0;
+                document.getElementById('statusMessage').textContent = 
+                    `Starting: dp[0] = 0 (0 coins needed for amount 0)`;
+                document.getElementById('calculationDisplay').textContent = 
+                    'Base case: dp[0] = 0';
+                renderDP();
+                renderCoins();
+                return;
+            }
+
+            const coin = coins[currentCoinIdx];
+            
+            if (currentAmount - coin >= 0) {
+                const newVal = 1 + dp[currentAmount - coin];
+                const oldVal = dp[currentAmount];
+                
+                if (newVal < oldVal) {
+                    dp[currentAmount] = newVal;
+                    document.getElementById('statusMessage').textContent = 
+                        `Amount ${currentAmount}: Using coin $${coin} gives ${newVal} coins (1 + dp[${currentAmount - coin}])`;
+                    document.getElementById('calculationDisplay').innerHTML = 
+                        `dp[${currentAmount}] = min(${oldVal > amount ? '∞' : oldVal}, 1 + dp[${currentAmount - coin}])<br>` +
+                        `dp[${currentAmount}] = min(${oldVal > amount ? '∞' : oldVal}, 1 + ${dp[currentAmount - coin]})<br>` +
+                        `<strong>dp[${currentAmount}] = ${newVal}</strong> ← Updated!`;
+                } else {
+                    document.getElementById('statusMessage').textContent = 
+                        `Amount ${currentAmount}: Coin $${coin} gives ${newVal} (not better than ${oldVal > amount ? '∞' : oldVal})`;
+                    document.getElementById('calculationDisplay').innerHTML = 
+                        `dp[${currentAmount}] = min(${oldVal > amount ? '∞' : oldVal}, 1 + dp[${currentAmount - coin}])<br>` +
+                        `dp[${currentAmount}] = min(${oldVal > amount ? '∞' : oldVal}, ${newVal})<br>` +
+                        `dp[${currentAmount}] stays at ${dp[currentAmount]}`;
+                }
+            } else {
+                document.getElementById('statusMessage').textContent = 
+                    `Amount ${currentAmount}: Coin $${coin} is too large to use`;
+                document.getElementById('calculationDisplay').textContent = 
+                    `Cannot use $${coin} coin for amount ${currentAmount} (${currentAmount} - ${coin} < 0)`;
+            }
+
+            currentCoinIdx++;
+            if (currentCoinIdx >= coins.length) {
+                currentCoinIdx = 0;
+                renderCoinStack(currentAmount);
+                currentAmount++;
+                
+                if (currentAmount > amount) {
+                    completed = true;
+                    document.getElementById('statusMessage').className = 'status-message success';
+                    const result = dp[amount] > amount ? -1 : dp[amount];
+                    document.getElementById('statusMessage').textContent = 
+                        `✅ Done! Minimum coins for $${amount}: ${result === -1 ? 'Impossible' : result}`;
+                    document.getElementById('stepBtn').disabled = true;
+                    stopAuto();
+                    renderCoinStack(amount);
+                }
+            }
+
+            renderDP();
+            renderCoins();
+        }
+
+        function toggleAuto() {
+            if (autoInterval) {
+                stopAuto();
+            } else {
+                document.getElementById('autoBtn').textContent = 'Pause';
+                autoInterval = setInterval(() => {
+                    if (completed) {
+                        stopAuto();
+                    } else {
+                        step();
+                    }
+                }, 400);
+            }
+        }
+
+        function stopAuto() {
+            if (autoInterval) {
+                clearInterval(autoInterval);
+                autoInterval = null;
+            }
+            document.getElementById('autoBtn').textContent = 'Auto Run';
+        }
+
+        function reset() {
+            stopAuto();
+            dp = new Array(amount + 1).fill(amount + 1);
+            dp[0] = 0;
+            currentAmount = 0;
+            currentCoinIdx = 0;
+            completed = false;
+            document.getElementById('stepBtn').disabled = false;
+            document.getElementById('statusMessage').className = 'status-message';
+            document.getElementById('statusMessage').textContent = 'Click "Step" or "Auto Run" to start visualization';
+            document.getElementById('calculationDisplay').textContent = 'Waiting to start...';
+            init();
+        }
+
+        init();
+    </script>
+</body>
+</html>

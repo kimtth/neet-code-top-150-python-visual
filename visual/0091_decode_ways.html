@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>091 - Decode Ways</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="problem-info">
+            <h1><span class="problem-number">#091</span> Decode Ways</h1>
+            <p>
+                Given a string of digits, count the ways to decode it as letters (A=1, B=2, ..., Z=26).
+                Uses dynamic programming: dp[i] = dp[i-1] (single digit) + dp[i-2] (two digits if valid).
+            </p>
+            <div class="problem-meta">
+                <span class="meta-tag">🔤 String</span>
+                <span class="meta-tag">🧮 DP</span>
+                <span class="meta-tag">⏱️ O(n)</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <code>python/0091_decode_ways/0091_decode_ways.py</code>
+            </div>
+
+        </div>
+
+        <div class="explanation-panel">
+            <h4>🧠 How It Works (Layman's Terms)</h4>
+            <p>Dynamic Programming <strong>breaks big problems into smaller ones</strong>:</p>
+            <ul>
+                <li><strong>Subproblems:</strong> Solve smaller versions first</li>
+                <li><strong>Memoization:</strong> Cache results to avoid recalculation</li>
+                <li><strong>Build up:</strong> Combine small solutions for final answer</li>
+                <li><strong>State:</strong> Define what each position represents</li>
+            </ul>
+        </div>
+
+
+        <section class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+            <div class="controls">
+                <button id="autoRunBtn" class="btn">▶ Auto Run</button>
+                <button id="stepBtn" class="btn btn-success">Step</button>
+                <button id="resetBtn" class="btn btn-danger">Reset</button>
+            </div>
+            <div class="status" id="status">Click Auto Run to decode "226"</div>
+            <svg id="visualization"></svg>
+        </section>
+
+        <section class="code-section">
+            <h2>Python Solution</h2>
+            <pre><span class="keyword">def</span> <span class="function">numDecodings</span>(s):
+    <span class="keyword">if</span> <span class="keyword">not</span> s <span class="keyword">or</span> s[<span class="number">0</span>] == <span class="string">'0'</span>:
+        <span class="keyword">return</span> <span class="number">0</span>
+    
+    prev2, prev1 = <span class="number">1</span>, <span class="number">1</span>
+    
+    <span class="keyword">for</span> i <span class="keyword">in</span> <span class="function">range</span>(<span class="number">1</span>, <span class="function">len</span>(s)):
+        current = <span class="number">0</span>
+        
+        <span class="comment"># Single digit (1-9)</span>
+        <span class="keyword">if</span> s[i] != <span class="string">'0'</span>:
+            current += prev1
+        
+        <span class="comment"># Two digits (10-26)</span>
+        two_digit = <span class="function">int</span>(s[i-<span class="number">1</span>:<span class="class-name">i</span>+<span class="number">1</span>])
+        <span class="keyword">if</span> <span class="number">10</span> <= two_digit <= <span class="number">26</span>:
+            current += prev2
+        
+        prev2, prev1 = prev1, current
+    
+    <span class="keyword">return</span> prev1</pre>
+        </section>
+    </div>
+
+    <script>
+        const width = 900;
+        const height = 550;
+
+        const svg = d3.select("#visualization")
+            .attr("width", width)
+            .attr("height", height);
+
+        const s = "226";
+        let dp = [];
+        let currentIdx = 0;
+        let prev2 = 1;
+        let prev1 = 1;
+        let decodings = [];
+        let animationTimer = null;
+
+        // Mapping
+        const charMap = {};
+        for (let i = 1; i <= 26; i++) {
+            charMap[i] = String.fromCharCode(64 + i);
+        }
+
+        function reset() {
+            dp = [1];  // dp[0] = 1 for empty prefix
+            currentIdx = 0;
+            prev2 = 1;
+            prev1 = 1;
+            decodings = [];
+            
+            // Calculate all decodings
+            calculateDecodings(s, 0, '');
+            
+            if (animationTimer) clearInterval(animationTimer);
+            document.getElementById("status").textContent = `Decoding "${s}" - found ${decodings.length} possible decodings`;
+            render();
+        }
+
+        function calculateDecodings(str, idx, current) {
+            if (idx === str.length) {
+                decodings.push(current);
+                return;
+            }
+            
+            // Single digit
+            if (str[idx] !== '0') {
+                const digit = parseInt(str[idx]);
+                calculateDecodings(str, idx + 1, current + charMap[digit]);
+            }
+            
+            // Two digits
+            if (idx + 1 < str.length) {
+                const twoDigit = parseInt(str.substring(idx, idx + 2));
+                if (twoDigit >= 10 && twoDigit <= 26) {
+                    calculateDecodings(str, idx + 2, current + charMap[twoDigit]);
+                }
+            }
+        }
+
+        function render() {
+            svg.selectAll("*").remove();
+
+            // Draw input string
+            drawInput();
+
+            // Draw DP table
+            drawDPTable();
+
+            // Draw character mapping
+            drawMapping();
+
+            // Draw possible decodings
+            drawDecodings();
+        }
+
+        function drawInput() {
+            svg.append("text")
+                .attr("x", 30)
+                .attr("y", 40)
+                .attr("font-size", "14px")
+                .attr("font-weight", "bold")
+                .attr("fill", "#1e293b")
+                .text("Input String:");
+
+            s.split('').forEach((ch, idx) => {
+                const x = 140 + idx * 50;
+                const isProcessed = idx < currentIdx;
+                const isCurrent = idx === currentIdx;
+
+                svg.append("rect")
+                    .attr("x", x)
+                    .attr("y", 20)
+                    .attr("width", 45)
+                    .attr("height", 45)
+                    .attr("rx", 8)
+                    .attr("fill", () => {
+                        if (isCurrent) return "#fef3c7";
+                        if (isProcessed) return "#d1fae5";
+                        return "#f8fafc";
+                    })
+                    .attr("stroke", () => {
+                        if (isCurrent) return "#f59e0b";
+                        if (isProcessed) return "#10b981";
+                        return "#94a3b8";
+                    })
+                    .attr("stroke-width", isCurrent ? 3 : 2);
+
+                svg.append("text")
+                    .attr("x", x + 22)
+                    .attr("y", 50)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "20px")
+                    .attr("font-weight", "bold")
+                    .attr("fill", "#1e293b")
+                    .text(ch);
+
+                // Index label
+                svg.append("text")
+                    .attr("x", x + 22)
+                    .attr("y", 80)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "11px")
+                    .attr("fill", "#64748b")
+                    .text(`i=${idx}`);
+            });
+        }
+
+        function drawDPTable() {
+            const startX = 30;
+            const startY = 130;
+
+            svg.append("text")
+                .attr("x", startX)
+                .attr("y", startY)
+                .attr("font-size", "14px")
+                .attr("font-weight", "bold")
+                .attr("fill", "#1e293b")
+                .text("DP Values (ways to decode s[0:i]):");
+
+            // Draw dp values
+            for (let i = 0; i <= s.length; i++) {
+                const x = startX + i * 70;
+                const y = startY + 25;
+                const value = i < dp.length ? dp[i] : "?";
+                const isCalculated = i < dp.length;
+
+                svg.append("rect")
+                    .attr("x", x)
+                    .attr("y", y)
+                    .attr("width", 60)
+                    .attr("height", 40)
+                    .attr("rx", 6)
+                    .attr("fill", isCalculated ? "#dbeafe" : "#f8fafc")
+                    .attr("stroke", isCalculated ? "#3b82f6" : "#94a3b8")
+                    .attr("stroke-width", 2);
+
+                svg.append("text")
+                    .attr("x", x + 30)
+                    .attr("y", y - 5)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "11px")
+                    .attr("fill", "#64748b")
+                    .text(`dp[${i}]`);
+
+                svg.append("text")
+                    .attr("x", x + 30)
+                    .attr("y", y + 28)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "18px")
+                    .attr("font-weight", "bold")
+                    .attr("fill", "#1e293b")
+                    .text(value);
+            }
+
+            // Formula explanation
+            svg.append("text")
+                .attr("x", startX)
+                .attr("y", startY + 100)
+                .attr("font-size", "12px")
+                .attr("fill", "#64748b")
+                .text("Formula: dp[i] = dp[i-1] (if s[i-1] valid) + dp[i-2] (if s[i-2:i] in 10-26)");
+        }
+
+        function drawMapping() {
+            const startX = 30;
+            const startY = 260;
+
+            svg.append("text")
+                .attr("x", startX)
+                .attr("y", startY)
+                .attr("font-size", "14px")
+                .attr("font-weight", "bold")
+                .attr("fill", "#1e293b")
+                .text("Character Mapping:");
+
+            // Show relevant mappings
+            const relevantMappings = [1, 2, 6, 22, 26];
+            relevantMappings.forEach((num, idx) => {
+                const x = startX + idx * 80;
+
+                svg.append("rect")
+                    .attr("x", x)
+                    .attr("y", startY + 15)
+                    .attr("width", 70)
+                    .attr("height", 30)
+                    .attr("rx", 5)
+                    .attr("fill", "#e0e7ff")
+                    .attr("stroke", "#6366f1")
+                    .attr("stroke-width", 1);
+
+                svg.append("text")
+                    .attr("x", x + 35)
+                    .attr("y", startY + 36)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "12px")
+                    .attr("fill", "#1e293b")
+                    .text(`${num} → ${charMap[num]}`);
+            });
+        }
+
+        function drawDecodings() {
+            const startX = 30;
+            const startY = 340;
+
+            svg.append("text")
+                .attr("x", startX)
+                .attr("y", startY)
+                .attr("font-size", "14px")
+                .attr("font-weight", "bold")
+                .attr("fill", "#1e293b")
+                .text(`Possible Decodings (${decodings.length} ways):`);
+
+            decodings.forEach((decoding, idx) => {
+                const x = startX + (idx % 4) * 150;
+                const y = startY + 25 + Math.floor(idx / 4) * 45;
+
+                // Show the decoding with its grouping
+                let grouping = getGrouping(decoding);
+
+                svg.append("rect")
+                    .attr("x", x)
+                    .attr("y", y)
+                    .attr("width", 140)
+                    .attr("height", 35)
+                    .attr("rx", 6)
+                    .attr("fill", "#d1fae5")
+                    .attr("stroke", "#10b981")
+                    .attr("stroke-width", 2);
+
+                svg.append("text")
+                    .attr("x", x + 70)
+                    .attr("y", y + 15)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "14px")
+                    .attr("font-weight", "bold")
+                    .attr("fill", "#1e293b")
+                    .text(decoding);
+
+                svg.append("text")
+                    .attr("x", x + 70)
+                    .attr("y", y + 28)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "10px")
+                    .attr("fill", "#64748b")
+                    .text(grouping);
+            });
+
+            // Time/Space complexity
+            svg.append("text")
+                .attr("x", startX)
+                .attr("y", 500)
+                .attr("font-size", "12px")
+                .attr("fill", "#64748b")
+                .text("Time: O(n), Space: O(1) using two variables instead of array");
+        }
+
+        function getGrouping(decoding) {
+            // Reconstruct the grouping from the decoding
+            let result = [];
+            let remaining = s;
+            
+            for (const char of decoding) {
+                const code = char.charCodeAt(0) - 64;
+                const codeStr = code.toString();
+                if (remaining.startsWith(codeStr)) {
+                    result.push(codeStr);
+                    remaining = remaining.substring(codeStr.length);
+                }
+            }
+            
+            return `(${result.join(' ')})`;
+        }
+
+        function step() {
+            if (currentIdx >= s.length) {
+                document.getElementById("status").textContent = 
+                    `✓ Complete! "${s}" has ${dp[dp.length - 1]} decoding ways`;
+                return;
+            }
+
+            if (currentIdx === 0) {
+                // First character
+                if (s[0] === '0') {
+                    dp.push(0);
+                    document.getElementById("status").textContent = 
+                        `s[0]='0' is invalid. dp[1] = 0`;
+                } else {
+                    dp.push(1);
+                    document.getElementById("status").textContent = 
+                        `s[0]='${s[0]}' → '${charMap[parseInt(s[0])]}'. dp[1] = 1`;
+                }
+                currentIdx++;
+            } else {
+                let current = 0;
+                let explanation = [];
+
+                // Single digit
+                if (s[currentIdx] !== '0') {
+                    current += dp[currentIdx];
+                    explanation.push(`single '${s[currentIdx]}' → ${charMap[parseInt(s[currentIdx])]}: +dp[${currentIdx}]=${dp[currentIdx]}`);
+                }
+
+                // Two digits
+                const twoDigit = parseInt(s.substring(currentIdx - 1, currentIdx + 1));
+                if (twoDigit >= 10 && twoDigit <= 26) {
+                    current += dp[currentIdx - 1];
+                    explanation.push(`pair '${s.substring(currentIdx - 1, currentIdx + 1)}' → ${charMap[twoDigit]}: +dp[${currentIdx - 1}]=${dp[currentIdx - 1]}`);
+                }
+
+                dp.push(current);
+                document.getElementById("status").textContent = 
+                    `dp[${currentIdx + 1}] = ${current}. ${explanation.join(', ')}`;
+                currentIdx++;
+            }
+
+            render();
+        }
+
+        function autoRun() {
+            if (animationTimer) {
+                clearInterval(animationTimer);
+                animationTimer = null;
+                document.getElementById("autoRunBtn").textContent = "▶ Auto Run";
+                return;
+            }
+
+            document.getElementById("autoRunBtn").textContent = "⏸ Pause";
+            animationTimer = setInterval(() => {
+                if (currentIdx >= s.length) {
+                    clearInterval(animationTimer);
+                    animationTimer = null;
+                    document.getElementById("autoRunBtn").textContent = "▶ Auto Run";
+                    return;
+                }
+                step();
+            }, 1200);
+        }
+
+        document.getElementById("autoRunBtn").addEventListener("click", autoRun);
+        document.getElementById("stepBtn").addEventListener("click", step);
+        document.getElementById("resetBtn").addEventListener("click", reset);
+
+        reset();
+    </script>
+</body>
+</html>

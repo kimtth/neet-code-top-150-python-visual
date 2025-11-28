@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Median of Two Sorted Arrays - LeetCode 4</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="problem-info">
+            <h1><span class="problem-number">#4</span> Median of Two Sorted Arrays</h1>
+            <p>Find the median of two sorted arrays. The binary search partition approach achieves O(log(min(m,n))) time complexity!</p>
+            <div class="problem-meta">
+                <span class="meta-tag">🔍 Binary Search</span>
+                <span class="meta-tag">🔢 Array</span>
+                <span class="meta-tag">⏱️ O(log(min(m,n)))</span>
+                <span class="meta-tag">🔴 Hard</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <a href="../python/0004_median_of_two_sorted_arrays/0004_median_of_two_sorted_arrays.py">0004_median_of_two_sorted_arrays.py</a>
+            </div>
+            </div>
+
+        <div class="explanation-panel">
+            <h4>💡 How It Works (Layman's Terms)</h4>
+            <ul>
+                <li><strong>Median:</strong> The middle value when both arrays are merged and sorted</li>
+                <li><strong>Key idea:</strong> Instead of merging, find the "partition" that divides both arrays into two halves</li>
+                <li><strong>Left half:</strong> All elements that would be on the left of median in merged array</li>
+                <li><strong>Right half:</strong> All elements on the right of median</li>
+                <li><strong>Valid partition:</strong> max(left elements) ≤ min(right elements)</li>
+                <li><strong>Binary search:</strong> Adjust partition position on the smaller array until we find valid partition</li>
+            </ul>
+        </div>
+
+
+        <div class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+            
+            <div class="controls">
+                <button class="btn btn-primary" id="stepBtn" onclick="step()">Step</button>
+                <button class="btn btn-success" id="autoBtn" onclick="toggleAuto()">Auto Run</button>
+                <button class="btn btn-warning" onclick="reset()">Reset</button>
+            </div>
+
+            <div class="status-message" id="statusMessage">
+                Click "Step" or "Auto Run" to find the median using binary search partitioning
+            </div>
+
+            <div class="array-section">
+                <div class="array-label">Array 1 (nums1):</div>
+                <div class="array-container" id="array1Container"></div>
+            </div>
+
+            <div class="array-section">
+                <div class="array-label">Array 2 (nums2):</div>
+                <div class="array-container" id="array2Container"></div>
+            </div>
+
+            <div class="variable-display">
+                <div class="variable-box">
+                    <div class="variable-name">Partition X</div>
+                    <div class="variable-value" id="partXVal">-</div>
+                </div>
+                <div class="variable-box">
+                    <div class="variable-name">Partition Y</div>
+                    <div class="variable-value" id="partYVal">-</div>
+                </div>
+                <div class="variable-box">
+                    <div class="variable-name">Low</div>
+                    <div class="variable-value" id="lowVal">0</div>
+                </div>
+                <div class="variable-box">
+                    <div class="variable-name">High</div>
+                    <div class="variable-value" id="highVal">-</div>
+                </div>
+            </div>
+
+            <div id="partitionViz" style="margin: 20px 0; padding: 15px; background: #f5f5f5; border-radius: 10px;"></div>
+
+            <div class="info-box" id="resultBox" style="display: none;"></div>
+        </div>
+        <div class="code-section">
+            <h3>💻 Python Solution</h3>
+            <div class="code-block">
+                <pre><span class="keyword">def</span> <span class="function">findMedianSortedArrays</span>(self, nums1, nums2) -> float:
+    <span class="keyword">if</span> <span class="function">len</span>(nums1) > <span class="function">len</span>(nums2):
+        nums1, nums2 = nums2, nums1  <span class="comment"># Ensure nums1 is smaller</span>
+    
+    x, y = <span class="function">len</span>(nums1), <span class="function">len</span>(nums2)
+    low, high = <span class="number">0</span>, x
+    
+    <span class="keyword">while</span> low <= high:
+        partition_x = (low + high) // <span class="number">2</span>
+        partition_y = (x + y + <span class="number">1</span>) // <span class="number">2</span> - partition_x
+        
+        max_x_left = nums1[partition_x - <span class="number">1</span>] <span class="keyword">if</span> partition_x > <span class="number">0</span> <span class="keyword">else</span> -∞
+        min_x_right = nums1[partition_x] <span class="keyword">if</span> partition_x < x <span class="keyword">else</span> ∞
+        max_y_left = nums2[partition_y - <span class="number">1</span>] <span class="keyword">if</span> partition_y > <span class="number">0</span> <span class="keyword">else</span> -∞
+        min_y_right = nums2[partition_y] <span class="keyword">if</span> partition_y < y <span class="keyword">else</span> ∞
+        
+        <span class="keyword">if</span> max_x_left <= min_y_right <span class="keyword">and</span> max_y_left <= min_x_right:
+            <span class="comment"># Found correct partition!</span>
+            <span class="keyword">if</span> (x + y) % <span class="number">2</span> != <span class="number">0</span>:
+                <span class="keyword">return</span> <span class="function">max</span>(max_x_left, max_y_left)
+            <span class="keyword">return</span> (<span class="function">max</span>(max_x_left, max_y_left) + <span class="function">min</span>(min_x_right, min_y_right)) / <span class="number">2</span></pre>
+            </div>
+        </div>
+
+        </div>
+
+    <script>
+        const nums1 = [1, 3];
+        const nums2 = [2];
+        
+        let low = 0;
+        let high = nums1.length;
+        let partitionX = 0;
+        let partitionY = 0;
+        let phase = 'init';
+        let autoInterval = null;
+
+        function init() {
+            low = 0;
+            high = nums1.length;
+            renderArrays();
+            document.getElementById('partXVal').textContent = '-';
+            document.getElementById('partYVal').textContent = '-';
+            document.getElementById('lowVal').textContent = '0';
+            document.getElementById('highVal').textContent = nums1.length;
+            document.getElementById('partitionViz').innerHTML = '<span style="color: #999;">Partition visualization will appear here...</span>';
+            document.getElementById('resultBox').style.display = 'none';
+        }
+
+        function renderArrays() {
+            renderArray('array1Container', nums1, partitionX);
+            renderArray('array2Container', nums2, partitionY);
+        }
+
+        function renderArray(containerId, arr, partition) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = '';
+            
+            arr.forEach((num, idx) => {
+                const box = document.createElement('div');
+                box.className = 'array-box';
+                if (idx < partition) {
+                    box.style.background = '#e8f5e9';
+                    box.style.borderColor = '#4caf50';
+                } else {
+                    box.style.background = '#ffebee';
+                    box.style.borderColor = '#f44336';
+                }
+                box.innerHTML = `${num}<span class="index-label">[${idx}]</span>`;
+                container.appendChild(box);
+
+                // Add partition marker
+                if (idx === partition - 1 || (partition === 0 && idx === 0)) {
+                    if (idx === partition - 1) {
+                        const marker = document.createElement('div');
+                        marker.style.cssText = 'width: 3px; background: #667eea; margin: 0 3px; border-radius: 2px;';
+                        container.appendChild(marker);
+                    }
+                }
+            });
+        }
+
+        function renderPartitionViz() {
+            const x = nums1.length;
+            const y = nums2.length;
+            
+            const maxXLeft = partitionX === 0 ? '-∞' : nums1[partitionX - 1];
+            const minXRight = partitionX === x ? '∞' : nums1[partitionX];
+            const maxYLeft = partitionY === 0 ? '-∞' : nums2[partitionY - 1];
+            const minYRight = partitionY === y ? '∞' : nums2[partitionY];
+
+            const html = `
+                <div style="display: flex; justify-content: space-around; text-align: center;">
+                    <div>
+                        <div style="font-weight: bold; color: #4caf50;">Left Half</div>
+                        <div>nums1: [...${maxXLeft}]</div>
+                        <div>nums2: [...${maxYLeft}]</div>
+                        <div style="margin-top: 10px;">Max Left = max(${maxXLeft}, ${maxYLeft}) = <strong>${Math.max(maxXLeft === '-∞' ? -Infinity : maxXLeft, maxYLeft === '-∞' ? -Infinity : maxYLeft) === -Infinity ? '-∞' : Math.max(maxXLeft === '-∞' ? -Infinity : maxXLeft, maxYLeft === '-∞' ? -Infinity : maxYLeft)}</strong></div>
+                    </div>
+                    <div style="width: 3px; background: #667eea;"></div>
+                    <div>
+                        <div style="font-weight: bold; color: #f44336;">Right Half</div>
+                        <div>nums1: [${minXRight}...]</div>
+                        <div>nums2: [${minYRight}...]</div>
+                        <div style="margin-top: 10px;">Min Right = min(${minXRight}, ${minYRight}) = <strong>${Math.min(minXRight === '∞' ? Infinity : minXRight, minYRight === '∞' ? Infinity : minYRight) === Infinity ? '∞' : Math.min(minXRight === '∞' ? Infinity : minXRight, minYRight === '∞' ? Infinity : minYRight)}</strong></div>
+                    </div>
+
+        </div>
+            `;
+            document.getElementById('partitionViz').innerHTML = html;
+        }
+
+        function step() {
+            if (phase === 'init') {
+                phase = 'searching';
+                document.getElementById('statusMessage').textContent = 
+                    'Binary search for correct partition position...';
+            }
+
+            if (phase === 'searching') {
+                if (low > high) {
+                    phase = 'done';
+                    document.getElementById('statusMessage').textContent = 'Search complete (should not happen with valid input)';
+                    document.getElementById('stepBtn').disabled = true;
+                    stopAuto();
+                    return;
+                }
+
+                partitionX = Math.floor((low + high) / 2);
+                partitionY = Math.floor((nums1.length + nums2.length + 1) / 2) - partitionX;
+
+                document.getElementById('partXVal').textContent = partitionX;
+                document.getElementById('partYVal').textContent = partitionY;
+                document.getElementById('lowVal').textContent = low;
+                document.getElementById('highVal').textContent = high;
+
+                renderArrays();
+                renderPartitionViz();
+
+                const x = nums1.length;
+                const y = nums2.length;
+                const maxXLeft = partitionX === 0 ? -Infinity : nums1[partitionX - 1];
+                const minXRight = partitionX === x ? Infinity : nums1[partitionX];
+                const maxYLeft = partitionY === 0 ? -Infinity : nums2[partitionY - 1];
+                const minYRight = partitionY === y ? Infinity : nums2[partitionY];
+
+                if (maxXLeft <= minYRight && maxYLeft <= minXRight) {
+                    // Found!
+                    phase = 'done';
+                    let median;
+                    if ((x + y) % 2 !== 0) {
+                        median = Math.max(maxXLeft, maxYLeft);
+                    } else {
+                        median = (Math.max(maxXLeft, maxYLeft) + Math.min(minXRight, minYRight)) / 2;
+                    }
+                    
+                    document.getElementById('resultBox').style.display = 'block';
+                    document.getElementById('resultBox').className = 'info-box secondary';
+                    document.getElementById('resultBox').textContent = `✅ Found! Median = ${median}`;
+                    document.getElementById('statusMessage').textContent = 
+                        `Valid partition found! maxLeft ≤ minRight for both arrays.`;
+                    document.getElementById('stepBtn').disabled = true;
+                    stopAuto();
+                } else if (maxXLeft > minYRight) {
+                    document.getElementById('statusMessage').textContent = 
+                        `maxXLeft (${maxXLeft}) > minYRight (${minYRight}) → Move partition left, high = ${partitionX - 1}`;
+                    high = partitionX - 1;
+                } else {
+                    document.getElementById('statusMessage').textContent = 
+                        `maxYLeft (${maxYLeft}) > minXRight (${minXRight}) → Move partition right, low = ${partitionX + 1}`;
+                    low = partitionX + 1;
+                }
+            }
+        }
+
+        function toggleAuto() {
+            if (autoInterval) {
+                stopAuto();
+            } else {
+                document.getElementById('autoBtn').textContent = 'Pause';
+                autoInterval = setInterval(() => {
+                    if (phase === 'done') {
+                        stopAuto();
+                    } else {
+                        step();
+                    }
+                }, 1500);
+            }
+        }
+
+        function stopAuto() {
+            if (autoInterval) {
+                clearInterval(autoInterval);
+                autoInterval = null;
+            }
+            document.getElementById('autoBtn').textContent = 'Auto Run';
+        }
+
+        function reset() {
+            stopAuto();
+            phase = 'init';
+            partitionX = 0;
+            partitionY = 0;
+            document.getElementById('stepBtn').disabled = false;
+            document.getElementById('statusMessage').textContent = 
+                'Click "Step" or "Auto Run" to find the median using binary search partitioning';
+            init();
+        }
+
+        init();
+    </script>
+</body>
+</html>

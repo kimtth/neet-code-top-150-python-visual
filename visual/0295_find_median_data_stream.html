@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>295 - Find Median from Data Stream</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="problem-info">
+            <h1><span class="problem-number">#295</span> Find Median from Data Stream</h1>
+            <p>
+                Design a data structure that supports adding integers from a data stream and finding 
+                the median of all elements added so far. The median is the middle value in an ordered 
+                list. If the list size is even, the median is the mean of the two middle values.
+            </p>
+
+            <h3>Approach: Two Heaps</h3>
+            <p>
+                Use a max-heap for the lower half and a min-heap for the upper half. 
+                Keep the heaps balanced (differ by at most 1 element).
+            </p>
+            <div class="problem-meta">
+                <span class="meta-tag">⛰️ Heap</span>
+                <span class="meta-tag">⏱️ O(n)</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <code>python/0295_find_median_from_data_stream/0295_find_median_from_data_stream.py</code>
+            </div>
+
+        </div>
+
+        <div class="explanation-panel">
+            <h4>🧠 How It Works (Layman's Terms)</h4>
+            <p>A heap is like a <strong>priority queue</strong> - always access the best element:</p>
+            <ul>
+                <li><strong>Min heap:</strong> Smallest element always on top</li>
+                <li><strong>Max heap:</strong> Largest element always on top</li>
+                <li><strong>Insert/Remove:</strong> O(log n) to maintain order</li>
+                <li><strong>Use case:</strong> Great for "top K" problems</li>
+            </ul>
+        </div>
+
+
+        <section class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+            <div class="controls">
+                <input type="number" id="numInput" placeholder="Enter number" style="padding: 8px; width: 120px; border-radius: 4px; border: 1px solid #ccc;">
+                <button id="addBtn" class="btn">Add Number</button>
+                <button id="autoBtn" class="btn btn-success">Auto Add</button>
+                <button id="resetBtn" class="btn btn-danger">Reset</button>
+            </div>
+            <div class="status" id="status">Add numbers to find the running median</div>
+            <svg id="visualization"></svg>
+        </section>
+
+        <section class="code-section">
+            <h2>Python Solution</h2>
+            <pre><span class="keyword">import</span> heapq
+
+<span class="keyword">class</span> MedianFinder:
+    <span class="keyword">def</span> <span class="function">__init__</span>(self):
+        self.lo = []  <span class="comment"># Max heap (lower half) - store negatives</span>
+        self.hi = []  <span class="comment"># Min heap (upper half)</span>
+
+    <span class="keyword">def</span> <span class="function">addNum</span>(self, num: <span class="class-name">int</span>) -> <span class="keyword">None</span>:
+        heapq.<span class="function">heappush</span>(self.lo, -num)
+        heapq.<span class="function">heappush</span>(self.hi, -heapq.<span class="function">heappop</span>(self.lo))
+        <span class="keyword">if</span> <span class="function">len</span>(self.lo) < <span class="function">len</span>(self.hi):
+            heapq.<span class="function">heappush</span>(self.lo, -heapq.<span class="function">heappop</span>(self.hi))
+
+    <span class="keyword">def</span> <span class="function">findMedian</span>(self) -> float:
+        <span class="keyword">if</span> <span class="function">len</span>(self.lo) > <span class="function">len</span>(self.hi):
+            <span class="keyword">return</span> -self.lo[<span class="number">0</span>]
+        <span class="keyword">return</span> (-self.lo[<span class="number">0</span>] + self.hi[<span class="number">0</span>]) / <span class="number">2</span></pre>
+        </section>
+    </div>
+
+    <script>
+        const width = 900;
+        const height = 500;
+
+        const svg = d3.select("#visualization")
+            .attr("width", width)
+            .attr("height", height);
+
+        let maxHeap = []; // Lower half (stored as negatives)
+        let minHeap = []; // Upper half
+        let allNumbers = [];
+        let isRunning = false;
+
+        function heapPush(heap, val, isMax = false) {
+            heap.push(isMax ? -val : val);
+            heapifyUp(heap, heap.length - 1, isMax);
+        }
+
+        function heapPop(heap, isMax = false) {
+            if (heap.length === 0) return null;
+            const val = heap[0];
+            heap[0] = heap[heap.length - 1];
+            heap.pop();
+            heapifyDown(heap, 0, isMax);
+            return isMax ? -val : val;
+        }
+
+        function heapifyUp(heap, i, isMax) {
+            while (i > 0) {
+                const parent = Math.floor((i - 1) / 2);
+                if ((isMax && heap[i] > heap[parent]) || (!isMax && heap[i] < heap[parent])) {
+                    [heap[i], heap[parent]] = [heap[parent], heap[i]];
+                    i = parent;
+                } else break;
+            }
+        }
+
+        function heapifyDown(heap, i, isMax) {
+            while (true) {
+                const left = 2 * i + 1;
+                const right = 2 * i + 2;
+                let best = i;
+                if (left < heap.length && ((isMax && heap[left] > heap[best]) || (!isMax && heap[left] < heap[best]))) {
+                    best = left;
+                }
+                if (right < heap.length && ((isMax && heap[right] > heap[best]) || (!isMax && heap[right] < heap[best]))) {
+                    best = right;
+                }
+                if (best !== i) {
+                    [heap[i], heap[best]] = [heap[best], heap[i]];
+                    i = best;
+                } else break;
+            }
+        }
+
+        function getMedian() {
+            if (maxHeap.length === 0) return null;
+            if (maxHeap.length > minHeap.length) {
+                return -maxHeap[0];
+            }
+            return (-maxHeap[0] + minHeap[0]) / 2;
+        }
+
+        function addNumber(num) {
+            allNumbers.push(num);
+            
+            // Add to max heap first
+            heapPush(maxHeap, num, true);
+            
+            // Move top of max heap to min heap
+            const moved = heapPop(maxHeap, true);
+            heapPush(minHeap, moved, false);
+            
+            // Balance: max heap should have >= min heap elements
+            if (maxHeap.length < minHeap.length) {
+                const val = heapPop(minHeap, false);
+                heapPush(maxHeap, val, true);
+            }
+        }
+
+        function renderHeap(heap, x, y, title, isMax, color) {
+            const g = svg.append("g").attr("transform", `translate(${x}, ${y})`);
+            
+            g.append("text")
+                .attr("x", 0)
+                .attr("y", -20)
+                .attr("text-anchor", "middle")
+                .attr("font-size", "18px")
+                .attr("font-weight", "bold")
+                .attr("fill", color)
+                .text(title);
+
+            if (heap.length === 0) {
+                g.append("text")
+                    .attr("x", 0)
+                    .attr("y", 60)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "14px")
+                    .attr("fill", "#64748b")
+                    .text("Empty");
+                return;
+            }
+
+            const levels = Math.ceil(Math.log2(heap.length + 1));
+            const nodeRadius = 25;
+
+            for (let i = 0; i < heap.length; i++) {
+                const level = Math.floor(Math.log2(i + 1));
+                const posInLevel = i - (Math.pow(2, level) - 1);
+                const nodesInLevel = Math.pow(2, level);
+                const levelWidth = 200;
+                const spacing = levelWidth / (nodesInLevel + 1);
+                
+                const nx = -levelWidth / 2 + spacing * (posInLevel + 1);
+                const ny = level * 60;
+
+                // Draw connection to parent
+                if (i > 0) {
+                    const parentIdx = Math.floor((i - 1) / 2);
+                    const parentLevel = Math.floor(Math.log2(parentIdx + 1));
+                    const parentPos = parentIdx - (Math.pow(2, parentLevel) - 1);
+                    const parentNodesInLevel = Math.pow(2, parentLevel);
+                    const parentSpacing = levelWidth / (parentNodesInLevel + 1);
+                    const px = -levelWidth / 2 + parentSpacing * (parentPos + 1);
+                    const py = parentLevel * 60;
+
+                    g.append("line")
+                        .attr("x1", px)
+                        .attr("y1", py + nodeRadius)
+                        .attr("x2", nx)
+                        .attr("y2", ny - nodeRadius)
+                        .attr("stroke", "#94a3b8")
+                        .attr("stroke-width", 2);
+                }
+
+                // Highlight root
+                const isRoot = i === 0;
+                g.append("circle")
+                    .attr("cx", nx)
+                    .attr("cy", ny)
+                    .attr("r", nodeRadius)
+                    .attr("fill", isRoot ? color : "#f8fafc")
+                    .attr("stroke", color)
+                    .attr("stroke-width", isRoot ? 3 : 2);
+
+                const displayVal = isMax ? -heap[i] : heap[i];
+                g.append("text")
+                    .attr("x", nx)
+                    .attr("y", ny)
+                    .attr("text-anchor", "middle")
+                    .attr("dy", "0.35em")
+                    .attr("font-size", "14px")
+                    .attr("font-weight", "bold")
+                    .attr("fill", isRoot ? "white" : "#1e293b")
+                    .text(displayVal);
+            }
+
+            // Show heap type indicator
+            g.append("text")
+                .attr("x", 0)
+                .attr("y", 180)
+                .attr("text-anchor", "middle")
+                .attr("font-size", "12px")
+                .attr("fill", "#64748b")
+                .text(`Size: ${heap.length}`);
+        }
+
+        function render() {
+            svg.selectAll("*").remove();
+
+            // Title
+            svg.append("text")
+                .attr("x", width / 2)
+                .attr("y", 30)
+                .attr("text-anchor", "middle")
+                .attr("font-size", "20px")
+                .attr("font-weight", "bold")
+                .attr("fill", "#1e293b")
+                .text("Two-Heap Median Finder");
+
+            // Render heaps
+            renderHeap(maxHeap, 200, 100, "Max Heap (Lower Half)", true, "#3b82f6");
+            renderHeap(minHeap, 700, 100, "Min Heap (Upper Half)", false, "#10b981");
+
+            // Median display
+            const median = getMedian();
+            const medianG = svg.append("g").attr("transform", `translate(${width / 2}, 150)`);
+            
+            medianG.append("rect")
+                .attr("x", -80)
+                .attr("y", -30)
+                .attr("width", 160)
+                .attr("height", 60)
+                .attr("rx", 10)
+                .attr("fill", "#fef3c7")
+                .attr("stroke", "#f59e0b")
+                .attr("stroke-width", 3);
+
+            medianG.append("text")
+                .attr("x", 0)
+                .attr("y", -5)
+                .attr("text-anchor", "middle")
+                .attr("font-size", "14px")
+                .attr("fill", "#92400e")
+                .text("Median");
+
+            medianG.append("text")
+                .attr("x", 0)
+                .attr("y", 20)
+                .attr("text-anchor", "middle")
+                .attr("font-size", "24px")
+                .attr("font-weight", "bold")
+                .attr("fill", "#92400e")
+                .text(median !== null ? median.toFixed(1) : "-");
+
+            // All numbers display
+            svg.append("text")
+                .attr("x", width / 2)
+                .attr("y", height - 80)
+                .attr("text-anchor", "middle")
+                .attr("font-size", "14px")
+                .attr("fill", "#64748b")
+                .text("Numbers added:");
+
+            const sorted = [...allNumbers].sort((a, b) => a - b);
+            const numbersG = svg.append("g").attr("transform", `translate(${width / 2}, ${height - 50})`);
+            
+            const boxWidth = 35;
+            const startX = -(sorted.length * boxWidth) / 2;
+            const midIndex = sorted.length > 0 ? (sorted.length - 1) / 2 : -1;
+
+            sorted.forEach((num, i) => {
+                const isMedian = sorted.length % 2 === 1 
+                    ? i === Math.floor(midIndex)
+                    : (i === Math.floor(midIndex) || i === Math.ceil(midIndex));
+
+                numbersG.append("rect")
+                    .attr("x", startX + i * boxWidth)
+                    .attr("y", -15)
+                    .attr("width", boxWidth - 4)
+                    .attr("height", 30)
+                    .attr("rx", 4)
+                    .attr("fill", isMedian ? "#fef3c7" : "#f8fafc")
+                    .attr("stroke", isMedian ? "#f59e0b" : "#94a3b8")
+                    .attr("stroke-width", isMedian ? 2 : 1);
+
+                numbersG.append("text")
+                    .attr("x", startX + i * boxWidth + boxWidth / 2 - 2)
+                    .attr("y", 5)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "14px")
+                    .attr("font-weight", isMedian ? "bold" : "normal")
+                    .attr("fill", isMedian ? "#92400e" : "#1e293b")
+                    .text(num);
+            });
+
+            // Legend
+            const legend = svg.append("g").attr("transform", `translate(20, ${height - 40})`);
+            
+            legend.append("circle").attr("cx", 10).attr("cy", 0).attr("r", 8).attr("fill", "#3b82f6");
+            legend.append("text").attr("x", 25).attr("y", 5).attr("font-size", "12px").text("Max Heap Root");
+            
+            legend.append("circle").attr("cx", 150).attr("cy", 0).attr("r", 8).attr("fill", "#10b981");
+            legend.append("text").attr("x", 165).attr("y", 5).attr("font-size", "12px").text("Min Heap Root");
+        }
+
+        function reset() {
+            maxHeap = [];
+            minHeap = [];
+            allNumbers = [];
+            isRunning = false;
+            document.getElementById("autoBtn").textContent = "Auto Add";
+            document.getElementById("status").textContent = "Add numbers to find the running median";
+            render();
+        }
+
+        async function handleAdd() {
+            const input = document.getElementById("numInput");
+            const num = parseInt(input.value);
+            if (isNaN(num)) {
+                document.getElementById("status").textContent = "Please enter a valid number";
+                return;
+            }
+            addNumber(num);
+            document.getElementById("status").textContent = `Added ${num}. Median: ${getMedian().toFixed(1)}`;
+            input.value = "";
+            render();
+        }
+
+        async function autoRun() {
+            if (isRunning) {
+                isRunning = false;
+                document.getElementById("autoBtn").textContent = "Auto Add";
+                return;
+            }
+
+            isRunning = true;
+            document.getElementById("autoBtn").textContent = "Stop";
+            
+            const testNumbers = [5, 15, 1, 3, 2, 8, 7, 9, 4, 6];
+            
+            for (const num of testNumbers) {
+                if (!isRunning) break;
+                addNumber(num);
+                document.getElementById("status").textContent = `Added ${num}. Median: ${getMedian().toFixed(1)}`;
+                render();
+                await new Promise(r => setTimeout(r, 1000));
+            }
+
+            isRunning = false;
+            document.getElementById("autoBtn").textContent = "Auto Add";
+            document.getElementById("status").textContent = `Complete! Final median: ${getMedian().toFixed(1)}`;
+        }
+
+        document.getElementById("addBtn").addEventListener("click", handleAdd);
+        document.getElementById("numInput").addEventListener("keypress", (e) => {
+            if (e.key === "Enter") handleAdd();
+        });
+        document.getElementById("autoBtn").addEventListener("click", autoRun);
+        document.getElementById("resetBtn").addEventListener("click", reset);
+
+        render();
+    </script>
+</body>
+</html>

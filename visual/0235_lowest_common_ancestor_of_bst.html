@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>235 - Lowest Common Ancestor of BST</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="problem-info">
+            <h1><span class="problem-number">#235</span> Lowest Common Ancestor of BST</h1>
+            <p>
+                Find the lowest common ancestor (LCA) of two nodes in a BST.
+                Use BST property: if both nodes are smaller, go left; if both larger, go right; else current is LCA.
+            </p>
+            <div class="problem-meta">
+                <span class="meta-tag">🌳 Tree</span>
+                <span class="meta-tag">⏱️ O(n)</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <code>python/0235_lowest_common_ancestor_of_a_binary_search_tree/0235_lowest_common_ancestor_of_a_binary_search_tree.py</code>
+            </div>
+
+        </div>
+
+        <div class="explanation-panel">
+            <h4>🧠 How It Works (Layman's Terms)</h4>
+            <p>Tree traversal is like <strong>exploring a family tree</strong>:</p>
+            <ul>
+                <li><strong>Root:</strong> Start at the top node</li>
+                <li><strong>Recurse:</strong> Visit left and right children</li>
+                <li><strong>Base case:</strong> Stop at null/leaf nodes</li>
+                <li><strong>Combine:</strong> Build answer from subtree results</li>
+            </ul>
+        </div>
+
+
+        <section class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+            <div class="controls">
+                <button id="autoRunBtn" class="btn">▶ Auto Run</button>
+                <button id="stepBtn" class="btn btn-success">Step</button>
+                <button id="resetBtn" class="btn btn-danger">Reset</button>
+                <select id="pSelect" class="btn" style="background: #f8fafc; color: #1e293b;">
+                    <option value="2">p = 2</option>
+                    <option value="0">p = 0</option>
+                    <option value="4">p = 4</option>
+                    <option value="8">p = 8</option>
+                </select>
+                <select id="qSelect" class="btn" style="background: #f8fafc; color: #1e293b;">
+                    <option value="8">q = 8</option>
+                    <option value="4">q = 4</option>
+                    <option value="7">q = 7</option>
+                    <option value="9">q = 9</option>
+                </select>
+            </div>
+            <div class="status" id="status">Click Auto Run to find LCA of p and q</div>
+            <svg id="visualization"></svg>
+        </section>
+
+        <section class="code-section">
+            <h2>Python Solution</h2>
+            <pre><span class="keyword">def</span> <span class="function">lowestCommonAncestor</span>(root, p, q):
+    current = root
+    
+    <span class="keyword">while</span> current:
+        <span class="keyword">if</span> p.val > current.val <span class="keyword">and</span> q.val > current.val:
+            current = current.right  <span class="comment"># Both in right subtree</span>
+        <span class="keyword">elif</span> p.val < current.val <span class="keyword">and</span> q.val < current.val:
+            current = current.left   <span class="comment"># Both in left subtree</span>
+        <span class="keyword">else</span>:
+            <span class="keyword">return</span> current  <span class="comment"># Split point = LCA</span>
+    
+    <span class="keyword">return</span> <span class="keyword">None</span></pre>
+        </section>
+    </div>
+
+    <script>
+        const width = 900;
+        const height = 550;
+
+        const svg = d3.select("#visualization")
+            .attr("width", width)
+            .attr("height", height);
+
+        // BST: [6,2,8,0,4,7,9,null,null,3,5]
+        const tree = {
+            val: 6,
+            left: {
+                val: 2,
+                left: { val: 0, left: null, right: null },
+                right: {
+                    val: 4,
+                    left: { val: 3, left: null, right: null },
+                    right: { val: 5, left: null, right: null }
+                }
+            },
+            right: {
+                val: 8,
+                left: { val: 7, left: null, right: null },
+                right: { val: 9, left: null, right: null }
+            }
+        };
+
+        let pVal = 2;
+        let qVal = 8;
+        let currentNode = null;
+        let lca = null;
+        let pathNodes = [];
+        let animationTimer = null;
+
+        function reset() {
+            pVal = parseInt(document.getElementById("pSelect").value);
+            qVal = parseInt(document.getElementById("qSelect").value);
+            currentNode = tree;
+            lca = null;
+            pathNodes = [tree.val];
+            if (animationTimer) clearInterval(animationTimer);
+            document.getElementById("status").textContent = 
+                `Finding LCA of p=${pVal} and q=${qVal}`;
+            render();
+        }
+
+        function render() {
+            svg.selectAll("*").remove();
+
+            // Draw tree
+            drawTree(tree, 450, 100, 0);
+
+            // Draw legend
+            drawLegend();
+
+            // Draw explanation
+            drawExplanation();
+        }
+
+        function drawTree(node, x, y, level) {
+            if (!node) return;
+
+            const spacing = 150 / (level + 1);
+
+            // Draw edges
+            if (node.left) {
+                svg.append("line")
+                    .attr("x1", x)
+                    .attr("y1", y)
+                    .attr("x2", x - spacing)
+                    .attr("y2", y + 70)
+                    .attr("stroke", "#94a3b8")
+                    .attr("stroke-width", 2);
+                drawTree(node.left, x - spacing, y + 70, level + 1);
+            }
+            if (node.right) {
+                svg.append("line")
+                    .attr("x1", x)
+                    .attr("y1", y)
+                    .attr("x2", x + spacing)
+                    .attr("y2", y + 70)
+                    .attr("stroke", "#94a3b8")
+                    .attr("stroke-width", 2);
+                drawTree(node.right, x + spacing, y + 70, level + 1);
+            }
+
+            // Determine node color
+            const isP = node.val === pVal;
+            const isQ = node.val === qVal;
+            const isLCA = lca && node.val === lca.val;
+            const isCurrent = currentNode && node.val === currentNode.val && !lca;
+            const isOnPath = pathNodes.includes(node.val);
+
+            let fill = "#f8fafc";
+            let stroke = "#94a3b8";
+
+            if (isLCA) {
+                fill = "#d1fae5";
+                stroke = "#10b981";
+            } else if (isP || isQ) {
+                fill = "#fce7f3";
+                stroke = "#ec4899";
+            } else if (isCurrent) {
+                fill = "#fef3c7";
+                stroke = "#f59e0b";
+            } else if (isOnPath) {
+                fill = "#dbeafe";
+                stroke = "#3b82f6";
+            }
+
+            // Draw node
+            svg.append("circle")
+                .attr("cx", x)
+                .attr("cy", y)
+                .attr("r", 25)
+                .attr("fill", fill)
+                .attr("stroke", stroke)
+                .attr("stroke-width", isLCA || isCurrent ? 4 : 2);
+
+            svg.append("text")
+                .attr("x", x)
+                .attr("y", y + 6)
+                .attr("text-anchor", "middle")
+                .attr("font-size", "16px")
+                .attr("font-weight", "bold")
+                .attr("fill", "#1e293b")
+                .text(node.val);
+
+            // Labels for p and q
+            if (isP || isQ) {
+                svg.append("text")
+                    .attr("x", x)
+                    .attr("y", y - 32)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "12px")
+                    .attr("font-weight", "bold")
+                    .attr("fill", "#ec4899")
+                    .text(isP && isQ ? "p, q" : (isP ? "p" : "q"));
+            }
+
+            // LCA label
+            if (isLCA) {
+                svg.append("text")
+                    .attr("x", x)
+                    .attr("y", y - 32)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "14px")
+                    .attr("font-weight", "bold")
+                    .attr("fill", "#10b981")
+                    .text("LCA");
+            }
+        }
+
+        function drawLegend() {
+            const x = 50;
+            const y = 80;
+
+            const items = [
+                { color: "#fce7f3", stroke: "#ec4899", label: "Target nodes (p, q)" },
+                { color: "#fef3c7", stroke: "#f59e0b", label: "Current node" },
+                { color: "#dbeafe", stroke: "#3b82f6", label: "Visited path" },
+                { color: "#d1fae5", stroke: "#10b981", label: "LCA found" }
+            ];
+
+            svg.append("text")
+                .attr("x", x)
+                .attr("y", y - 20)
+                .attr("font-size", "14px")
+                .attr("font-weight", "bold")
+                .attr("fill", "#1e293b")
+                .text("Legend:");
+
+            items.forEach((item, i) => {
+                svg.append("circle")
+                    .attr("cx", x + 10)
+                    .attr("cy", y + i * 25)
+                    .attr("r", 8)
+                    .attr("fill", item.color)
+                    .attr("stroke", item.stroke);
+
+                svg.append("text")
+                    .attr("x", x + 25)
+                    .attr("y", y + i * 25 + 5)
+                    .attr("font-size", "11px")
+                    .attr("fill", "#1e293b")
+                    .text(item.label);
+            });
+        }
+
+        function drawExplanation() {
+            const y = 430;
+
+            svg.append("text")
+                .attr("x", 50)
+                .attr("y", y)
+                .attr("font-size", "14px")
+                .attr("font-weight", "bold")
+                .attr("fill", "#1e293b")
+                .text("BST Property for LCA:");
+
+            svg.append("text")
+                .attr("x", 50)
+                .attr("y", y + 25)
+                .attr("font-size", "12px")
+                .attr("fill", "#64748b")
+                .text("• If both p and q are greater than current → go RIGHT");
+
+            svg.append("text")
+                .attr("x", 50)
+                .attr("y", y + 45)
+                .attr("font-size", "12px")
+                .attr("fill", "#64748b")
+                .text("• If both p and q are smaller than current → go LEFT");
+
+            svg.append("text")
+                .attr("x", 50)
+                .attr("y", y + 65)
+                .attr("font-size", "12px")
+                .attr("fill", "#64748b")
+                .text("• Otherwise (split point) → current is the LCA");
+
+            svg.append("text")
+                .attr("x", 50)
+                .attr("y", y + 90)
+                .attr("font-size", "12px")
+                .attr("fill", "#64748b")
+                .text("Time: O(h) where h is tree height | Space: O(1) iterative");
+        }
+
+        function step() {
+            if (lca) {
+                document.getElementById("status").textContent = 
+                    `✓ LCA of ${pVal} and ${qVal} is ${lca.val}`;
+                return;
+            }
+
+            if (!currentNode) {
+                document.getElementById("status").textContent = "Node not found!";
+                return;
+            }
+
+            const currVal = currentNode.val;
+
+            if (pVal > currVal && qVal > currVal) {
+                document.getElementById("status").textContent = 
+                    `Both ${pVal} and ${qVal} > ${currVal}. Go RIGHT.`;
+                currentNode = currentNode.right;
+                if (currentNode) pathNodes.push(currentNode.val);
+            } else if (pVal < currVal && qVal < currVal) {
+                document.getElementById("status").textContent = 
+                    `Both ${pVal} and ${qVal} < ${currVal}. Go LEFT.`;
+                currentNode = currentNode.left;
+                if (currentNode) pathNodes.push(currentNode.val);
+            } else {
+                lca = currentNode;
+                document.getElementById("status").textContent = 
+                    `✓ Split point! LCA of ${pVal} and ${qVal} is ${lca.val}`;
+            }
+
+            render();
+        }
+
+        function autoRun() {
+            if (animationTimer) {
+                clearInterval(animationTimer);
+                animationTimer = null;
+                document.getElementById("autoRunBtn").textContent = "▶ Auto Run";
+                return;
+            }
+
+            document.getElementById("autoRunBtn").textContent = "⏸ Pause";
+            animationTimer = setInterval(() => {
+                if (lca) {
+                    clearInterval(animationTimer);
+                    animationTimer = null;
+                    document.getElementById("autoRunBtn").textContent = "▶ Auto Run";
+                    return;
+                }
+                step();
+            }, 1000);
+        }
+
+        document.getElementById("autoRunBtn").addEventListener("click", autoRun);
+        document.getElementById("stepBtn").addEventListener("click", step);
+        document.getElementById("resetBtn").addEventListener("click", reset);
+        document.getElementById("pSelect").addEventListener("change", reset);
+        document.getElementById("qSelect").addEventListener("change", reset);
+
+        reset();
+    </script>
+</body>
+</html>

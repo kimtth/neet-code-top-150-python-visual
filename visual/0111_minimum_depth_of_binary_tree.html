@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LC 111: Minimum Depth of Binary Tree - Algorithm Visualization</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="problem-info">
+            <h1><span class="problem-number">#111</span> Minimum Depth of Binary Tree</h1>
+            <p>Given a binary tree, find its minimum depth — the number of nodes along the shortest path from root to the nearest leaf.</p>
+            <div class="problem-meta">
+                <span class="meta-tag">🌳 Tree</span>
+                <span class="meta-tag">🔍 BFS</span>
+                <span class="meta-tag">⏱️ O(n)</span>
+                <span class="meta-tag">💾 O(n)</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <code>python/0111_minimum_depth_of_binary_tree/0111_minimum_depth_of_binary_tree.py</code>
+            </div>
+            </div>
+
+        <div class="explanation-panel">
+            <h4>🧠 How It Works (Layman's Terms)</h4>
+            <p>Use <strong>BFS (level-order traversal)</strong> to find the first leaf node:</p>
+            <ul>
+                <li><strong>Level by Level:</strong> Process nodes layer by layer</li>
+                <li><strong>Leaf Check:</strong> First node with no children = answer!</li>
+                <li><strong>Why BFS?</strong> Guarantees we find shortest path first</li>
+                <li><strong>DFS Alternative:</strong> Must explore all paths to find minimum</li>
+            </ul>
+        </div>
+
+
+        <div class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+            
+            <div class="controls">
+                <button class="btn btn-primary" id="startBtn" onclick="start()">▶ Start BFS</button>
+                <button class="btn" onclick="stepForward()">Step →</button>
+                <button class="btn btn-warning" onclick="reset()">Reset</button>
+                <select id="treeSelect" onchange="changeTree()" style="padding: 8px; border-radius: 5px;">
+                    <option value="balanced">Balanced Tree</option>
+                    <option value="leftHeavy">Left Heavy</option>
+                    <option value="rightHeavy">Right Heavy</option>
+                </select>
+            </div>
+
+            <div class="status-message" id="statusMessage">
+                Click Start to begin BFS from root
+            </div>
+
+            <div style="display: flex; gap: 20px; flex-wrap: wrap; margin-top: 20px;">
+                <div style="flex: 2; min-width: 400px;">
+                    <svg id="treeViz" width="100%" height="350"></svg>
+                </div>
+                <div style="flex: 1; min-width: 200px;">
+                    <h4>📊 BFS Queue</h4>
+                    <div id="queueDisplay" style="padding: 15px; background: #e3f2fd; border-radius: 12px; margin-bottom: 15px; font-family: monospace; min-height: 50px;"></div>
+                    
+                    <h4>🔢 Current Level</h4>
+                    <div id="levelDisplay" style="padding: 20px; background: #fff3e0; border-radius: 12px; margin-bottom: 15px; font-size: 2em; text-align: center; font-weight: bold; color: #ff9800;">
+                        1
+                    </div>
+                    
+                    <h4>🎯 Min Depth</h4>
+                    <div id="answerDisplay" style="padding: 20px; background: #e8f5e9; border-radius: 12px; font-size: 2em; text-align: center; font-weight: bold; color: #4caf50;">
+                        ?
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="code-section">
+            <h3>💻 Python Solution (BFS)</h3>
+            <div class="code-block">
+                <pre><span class="keyword">from</span> collections <span class="keyword">import</span> deque
+
+<span class="keyword">def</span> <span class="function">minDepth</span>(root):
+    <span class="keyword">if not</span> root:
+        <span class="keyword">return</span> <span class="number">0</span>
+    
+    queue = deque([(root, <span class="number">1</span>)])  <span class="comment"># (node, depth)</span>
+    
+    <span class="keyword">while</span> queue:
+        node, depth = queue.<span class="function">popleft</span>()
+        
+        <span class="comment"># Found a leaf node - first leaf is minimum depth</span>
+        <span class="keyword">if not</span> node.left <span class="keyword">and not</span> node.right:
+            <span class="keyword">return</span> depth
+        
+        <span class="keyword">if</span> node.left:
+            queue.<span class="function">append</span>((node.left, depth + <span class="number">1</span>))
+        <span class="keyword">if</span> node.right:
+            queue.<span class="function">append</span>((node.right, depth + <span class="number">1</span>))
+    
+    <span class="keyword">return</span> <span class="number">0</span></pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const trees = {
+            balanced: {
+                val: 3, level: 1, id: 1,
+                left: { val: 9, level: 2, id: 2, left: null, right: null },
+                right: { 
+                    val: 20, level: 2, id: 3,
+                    left: { val: 15, level: 3, id: 4, left: null, right: null },
+                    right: { val: 7, level: 3, id: 5, left: null, right: null }
+                }
+            },
+            leftHeavy: {
+                val: 1, level: 1, id: 1,
+                left: { 
+                    val: 2, level: 2, id: 2,
+                    left: { 
+                        val: 4, level: 3, id: 4,
+                        left: { val: 8, level: 4, id: 8, left: null, right: null },
+                        right: null
+                    },
+                    right: { val: 5, level: 3, id: 5, left: null, right: null }
+                },
+                right: { val: 3, level: 2, id: 3, left: null, right: null }
+            },
+            rightHeavy: {
+                val: 1, level: 1, id: 1,
+                left: null,
+                right: { 
+                    val: 2, level: 2, id: 2,
+                    left: null,
+                    right: { val: 3, level: 3, id: 3, left: null, right: null }
+                }
+            }
+        };
+
+        let tree = trees.balanced;
+        let queue = [];
+        let visited = new Set();
+        let currentNode = null;
+        let currentLevel = 1;
+        let foundLeaf = null;
+        let isRunning = false;
+        let stepIndex = 0;
+        let steps = [];
+
+        function flattenTree(node, positions = [], x = 250, y = 40, dx = 120) {
+            if (!node) return positions;
+            positions.push({ ...node, x, y });
+            flattenTree(node.left, positions, x - dx, y + 70, dx / 2);
+            flattenTree(node.right, positions, x + dx, y + 70, dx / 2);
+            return positions;
+        }
+
+        function precomputeSteps() {
+            steps = [];
+            const localQueue = [[tree, 1]];
+            const localVisited = new Set();
+            
+            steps.push({
+                type: 'init',
+                queue: [[tree.val, 1]],
+                visited: new Set(),
+                level: 1,
+                message: `Initialize: Add root (${tree.val}) to queue at level 1`
+            });
+
+            while (localQueue.length > 0) {
+                const [node, level] = localQueue.shift();
+                localVisited.add(node.id);
+                
+                const isLeaf = !node.left && !node.right;
+                
+                steps.push({
+                    type: 'visit',
+                    nodeId: node.id,
+                    nodeVal: node.val,
+                    level,
+                    queue: localQueue.map(([n, l]) => [n.val, l]),
+                    visited: new Set(localVisited),
+                    isLeaf,
+                    message: isLeaf 
+                        ? `🎯 Found leaf node ${node.val} at level ${level}! Minimum depth = ${level}`
+                        : `Visit node ${node.val} at level ${level} (not a leaf)`
+                });
+
+                if (isLeaf) {
+                    steps.push({
+                        type: 'done',
+                        answer: level,
+                        visited: new Set(localVisited),
+                        leafId: node.id,
+                        message: `Done! Minimum depth = ${level}`
+                    });
+                    return;
+                }
+
+                if (node.left) {
+                    localQueue.push([node.left, level + 1]);
+                    steps.push({
+                        type: 'enqueue',
+                        nodeVal: node.left.val,
+                        level: level + 1,
+                        queue: localQueue.map(([n, l]) => [n.val, l]),
+                        visited: new Set(localVisited),
+                        message: `Enqueue left child ${node.left.val} at level ${level + 1}`
+                    });
+                }
+                if (node.right) {
+                    localQueue.push([node.right, level + 1]);
+                    steps.push({
+                        type: 'enqueue',
+                        nodeVal: node.right.val,
+                        level: level + 1,
+                        queue: localQueue.map(([n, l]) => [n.val, l]),
+                        visited: new Set(localVisited),
+                        message: `Enqueue right child ${node.right.val} at level ${level + 1}`
+                    });
+                }
+            }
+        }
+
+        function render() {
+            const svg = d3.select("#treeViz");
+            svg.selectAll("*").remove();
+
+            const container = svg.node().parentElement;
+            const width = container.clientWidth;
+            const height = 350;
+            svg.attr("viewBox", `0 0 ${width} ${height}`);
+
+            const nodes = flattenTree(tree);
+            const g = svg.append("g").attr("transform", `translate(${(width - 500) / 2}, 0)`);
+
+            // Draw edges
+            function drawEdges(node) {
+                if (!node) return;
+                const pos = nodes.find(n => n.id === node.id);
+                if (node.left) {
+                    const leftPos = nodes.find(n => n.id === node.left.id);
+                    g.append("line")
+                        .attr("x1", pos.x).attr("y1", pos.y)
+                        .attr("x2", leftPos.x).attr("y2", leftPos.y)
+                        .attr("stroke", "#ccc").attr("stroke-width", 2);
+                    drawEdges(node.left);
+                }
+                if (node.right) {
+                    const rightPos = nodes.find(n => n.id === node.right.id);
+                    g.append("line")
+                        .attr("x1", pos.x).attr("y1", pos.y)
+                        .attr("x2", rightPos.x).attr("y2", rightPos.y)
+                        .attr("stroke", "#ccc").attr("stroke-width", 2);
+                    drawEdges(node.right);
+                }
+            }
+            drawEdges(tree);
+
+            // Draw nodes
+            nodes.forEach(node => {
+                const isVisited = visited.has(node.id);
+                const isCurrent = currentNode === node.id;
+                const isFoundLeaf = foundLeaf === node.id;
+                const isLeaf = !node.left && !node.right;
+                
+                let fill = "#667eea";
+                if (isVisited) fill = "#90caf9";
+                if (isCurrent) fill = "#ff9800";
+                if (isFoundLeaf) fill = "#4caf50";
+
+                g.append("circle")
+                    .attr("cx", node.x).attr("cy", node.y).attr("r", 25)
+                    .attr("fill", fill)
+                    .attr("stroke", isLeaf ? "#e91e63" : "#5a6fd6")
+                    .attr("stroke-width", isLeaf ? 3 : 2)
+                    .attr("stroke-dasharray", isLeaf && !isFoundLeaf ? "4,2" : "none");
+
+                g.append("text")
+                    .attr("x", node.x).attr("y", node.y + 6)
+                    .attr("text-anchor", "middle")
+                    .attr("fill", "white").attr("font-weight", "bold").attr("font-size", "16px")
+                    .text(node.val);
+
+                if (isLeaf) {
+                    g.append("text")
+                        .attr("x", node.x).attr("y", node.y + 45)
+                        .attr("text-anchor", "middle")
+                        .attr("font-size", "10px").attr("fill", "#e91e63")
+                        .text("leaf");
+                }
+            });
+
+            // Level labels
+            for (let l = 1; l <= 4; l++) {
+                const y = 40 + (l - 1) * 70;
+                g.append("text")
+                    .attr("x", -30).attr("y", y + 5)
+                    .attr("font-size", "11px")
+                    .attr("fill", l === currentLevel ? "#ff9800" : "#999")
+                    .attr("font-weight", l === currentLevel ? "bold" : "normal")
+                    .text(`L${l}`);
+            }
+
+            updateQueueDisplay();
+        }
+
+        function updateQueueDisplay() {
+            const container = document.getElementById('queueDisplay');
+            if (queue.length === 0) {
+                container.textContent = '(empty)';
+                return;
+            }
+            container.innerHTML = queue.map(([val, level]) => 
+                `<span style="background: #bbdefb; padding: 5px 12px; margin: 3px; border-radius: 8px; display: inline-block;">(${val}, L${level})</span>`
+            ).join(' ');
+        }
+
+        function stepForward() {
+            if (stepIndex >= steps.length) return;
+            
+            const step = steps[stepIndex];
+            queue = step.queue || [];
+            visited = step.visited || new Set();
+            
+            if (step.type === 'visit') {
+                currentNode = step.nodeId;
+                currentLevel = step.level;
+                document.getElementById('levelDisplay').textContent = step.level;
+            } else if (step.type === 'done') {
+                foundLeaf = step.leafId;
+                currentNode = null;
+                document.getElementById('answerDisplay').textContent = step.answer;
+                document.getElementById('startBtn').textContent = '▶ Start BFS';
+                isRunning = false;
+            }
+            
+            document.getElementById('statusMessage').textContent = step.message;
+            stepIndex++;
+            render();
+        }
+
+        async function start() {
+            if (isRunning) {
+                isRunning = false;
+                document.getElementById('startBtn').textContent = '▶ Start BFS';
+                return;
+            }
+            
+            isRunning = true;
+            document.getElementById('startBtn').textContent = '⏸ Pause';
+            
+            while (stepIndex < steps.length && isRunning) {
+                stepForward();
+                await new Promise(r => setTimeout(r, 700));
+            }
+        }
+
+        function reset() {
+            isRunning = false;
+            stepIndex = 0;
+            queue = [[tree.val, 1]];
+            visited = new Set();
+            currentNode = null;
+            currentLevel = 1;
+            foundLeaf = null;
+            
+            document.getElementById('statusMessage').textContent = 'Click Start to begin BFS from root';
+            document.getElementById('levelDisplay').textContent = '1';
+            document.getElementById('answerDisplay').textContent = '?';
+            document.getElementById('startBtn').textContent = '▶ Start BFS';
+            
+            precomputeSteps();
+            render();
+        }
+
+        function changeTree() {
+            const selected = document.getElementById('treeSelect').value;
+            tree = trees[selected];
+            reset();
+        }
+
+        reset();
+        window.addEventListener('resize', render);
+    </script>
+</body>
+</html>

@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LC 146: LRU Cache - Algorithm Visualization</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="problem-info">
+            <h1><span class="problem-number">#146</span> LRU Cache</h1>
+            <p>Design a data structure that follows Least Recently Used (LRU) cache constraints. Implement get and put operations in O(1) time.</p>
+            <div class="problem-meta">
+                <span class="meta-tag">🎨 Design</span>
+                <span class="meta-tag">🔗 Linked List</span>
+                <span class="meta-tag">📚 HashMap</span>
+                <span class="meta-tag">⏱️ O(1)</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <code>python/0146_lru_cache/0146_lru_cache.py</code>
+            </div>
+            </div>
+
+        <div class="explanation-panel">
+            <h4>🧠 How It Works (Layman's Terms)</h4>
+            <p>LRU Cache combines a <strong>HashMap + Doubly Linked List</strong>:</p>
+            <ul>
+                <li><strong>HashMap:</strong> O(1) lookup by key → node</li>
+                <li><strong>Doubly Linked List:</strong> O(1) remove/insert for ordering</li>
+                <li><strong>Head = Most Recent:</strong> Recently accessed items go to the front</li>
+                <li><strong>Tail = Least Recent:</strong> When cache is full, evict from the back</li>
+            </ul>
+        </div>
+
+
+        <div class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+            
+            <div class="controls">
+                <input type="number" id="keyInput" placeholder="Key" style="width: 60px; padding: 8px; border-radius: 5px; border: 2px solid #ddd;">
+                <input type="number" id="valueInput" placeholder="Val" style="width: 60px; padding: 8px; border-radius: 5px; border: 2px solid #ddd;">
+                <button class="btn btn-primary" onclick="putOp()">Put</button>
+                <button class="btn btn-success" onclick="getOp()">Get</button>
+                <button class="btn" style="background: #607d8b; color: white;" onclick="reset()">Reset</button>
+            </div>
+
+            <div class="status-message" id="statusMessage">
+                Enter a key-value pair and click Put, or enter a key and click Get
+            </div>
+
+            <div style="display: flex; gap: 30px; flex-wrap: wrap; margin-top: 20px;">
+                <div style="flex: 1; min-width: 300px;">
+                    <h4 style="margin-bottom: 10px;">🔗 Doubly Linked List (Most Recent → Least Recent)</h4>
+                    <svg id="listViz" width="100%" height="120"></svg>
+                </div>
+                <div style="flex: 1; min-width: 200px;">
+                    <h4 style="margin-bottom: 10px;">📚 HashMap</h4>
+                    <div id="hashContainer" style="padding: 15px; background: #f5f5f5; border-radius: 12px; min-height: 100px;">
+                        <span style="color: #999;">Empty</span>
+                    </div>
+                </div>
+            </div>
+
+            <div style="margin-top: 20px;">
+                <h4 style="margin-bottom: 10px;">📝 Operations Log</h4>
+                <div id="logContainer" style="padding: 15px; background: #f5f5f5; border-radius: 12px; max-height: 200px; overflow-y: auto;">
+                    <div style="color: #999;">Operations will appear here...</div>
+                </div>
+            </div>
+
+            <div class="info-box" style="margin-top: 20px;">
+                <h4>🔑 Try This Sequence</h4>
+                <p>Put(1,1) → Put(2,2) → Get(1) → Put(3,3) → Get(2) → Put(4,4)</p>
+                <p>Watch how items move to front on access, and how LRU items get evicted!</p>
+            </div>
+        </div>
+        <div class="code-section">
+            <h3>💻 Python Solution</h3>
+            <div class="code-block">
+                <pre><span class="keyword">class</span> LRUCache:
+    <span class="keyword">def</span> <span class="function">__init__</span>(self, capacity):
+        self.capacity = capacity
+        self.cache = {}  <span class="comment"># key → Node</span>
+        <span class="comment"># Doubly linked list with dummy head/tail</span>
+        self.head, self.tail = <span class="function">Node</span>(<span class="number">0</span>, <span class="number">0</span>), <span class="function">Node</span>(<span class="number">0</span>, <span class="number">0</span>)
+        self.head.next = self.tail
+        self.tail.prev = self.head
+
+    <span class="keyword">def</span> <span class="function">get</span>(self, key):
+        <span class="keyword">if</span> key <span class="keyword">not</span> <span class="keyword">in</span> self.cache:
+            <span class="keyword">return</span> <span class="number">-1</span>
+        node = self.cache[key]
+        self.<span class="function">_remove</span>(node)         <span class="comment"># Remove from current position</span>
+        self.<span class="function">_insert_at_head</span>(node) <span class="comment"># Move to front (most recent)</span>
+        <span class="keyword">return</span> node.value
+
+    <span class="keyword">def</span> <span class="function">put</span>(self, key, value):
+        <span class="keyword">if</span> key <span class="keyword">in</span> self.cache:
+            self.<span class="function">_remove</span>(self.cache[key])
+        <span class="keyword">elif</span> <span class="function">len</span>(self.cache) == self.capacity:
+            <span class="comment"># Evict LRU (tail.prev)</span>
+            lru = self.tail.prev
+            self.<span class="function">_remove</span>(lru)
+            del self.cache[lru.key]
+        new_node = <span class="function">Node</span>(key, value)
+        self.cache[key] = new_node
+        self.<span class="function">_insert_at_head</span>(new_node)</pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const capacity = 2;
+        let cache = new Map(); // key → {key, value}
+        let order = []; // Array representing the list order (head to tail)
+        let logs = [];
+
+        function drawList() {
+            const svg = d3.select("#listViz");
+            svg.selectAll("*").remove();
+
+            const container = svg.node().parentElement;
+            const width = container.clientWidth;
+            const height = 120;
+            svg.attr("viewBox", `0 0 ${width} ${height}`);
+
+            const g = svg.append("g");
+            const nodeWidth = 80;
+            const nodeHeight = 50;
+            const gap = 60;
+
+            // Draw dummy head
+            const headX = 30;
+            g.append("rect")
+                .attr("x", headX)
+                .attr("y", 35)
+                .attr("width", 40)
+                .attr("height", 40)
+                .attr("fill", "#e0e0e0")
+                .attr("stroke", "#bdbdbd")
+                .attr("stroke-width", 2)
+                .attr("rx", 5);
+            g.append("text")
+                .attr("x", headX + 20)
+                .attr("y", 60)
+                .attr("text-anchor", "middle")
+                .attr("font-size", "12px")
+                .attr("fill", "#666")
+                .text("HEAD");
+
+            let x = headX + 40 + gap;
+
+            // Draw nodes
+            order.forEach((item, i) => {
+                // Arrow from previous
+                g.append("line")
+                    .attr("x1", x - gap + 10)
+                    .attr("y1", 55)
+                    .attr("x2", x - 10)
+                    .attr("y2", 55)
+                    .attr("stroke", "#667eea")
+                    .attr("stroke-width", 2)
+                    .attr("marker-end", "url(#arrowhead)");
+
+                // Node
+                const isFirst = i === 0;
+                const isLast = i === order.length - 1;
+
+                g.append("rect")
+                    .attr("x", x)
+                    .attr("y", 30)
+                    .attr("width", nodeWidth)
+                    .attr("height", nodeHeight)
+                    .attr("fill", isFirst ? "#4caf50" : (isLast ? "#ffcdd2" : "#667eea"))
+                    .attr("stroke", isFirst ? "#388e3c" : (isLast ? "#ef9a9a" : "#5a6fd6"))
+                    .attr("stroke-width", 2)
+                    .attr("rx", 8);
+
+                g.append("text")
+                    .attr("x", x + nodeWidth / 2)
+                    .attr("y", 50)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "14px")
+                    .attr("font-weight", "bold")
+                    .attr("fill", "white")
+                    .text(`K:${item.key}`);
+
+                g.append("text")
+                    .attr("x", x + nodeWidth / 2)
+                    .attr("y", 68)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "12px")
+                    .attr("fill", "white")
+                    .text(`V:${item.value}`);
+
+                // Label
+                if (isFirst) {
+                    g.append("text")
+                        .attr("x", x + nodeWidth / 2)
+                        .attr("y", 20)
+                        .attr("text-anchor", "middle")
+                        .attr("font-size", "10px")
+                        .attr("fill", "#4caf50")
+                        .text("Most Recent");
+                }
+                if (isLast) {
+                    g.append("text")
+                        .attr("x", x + nodeWidth / 2)
+                        .attr("y", 100)
+                        .attr("text-anchor", "middle")
+                        .attr("font-size", "10px")
+                        .attr("fill", "#f44336")
+                        .text("LRU (evict next)");
+                }
+
+                x += nodeWidth + gap;
+            });
+
+            // Arrow to tail
+            if (order.length > 0) {
+                g.append("line")
+                    .attr("x1", x - gap + 10)
+                    .attr("y1", 55)
+                    .attr("x2", x - 10)
+                    .attr("y2", 55)
+                    .attr("stroke", "#667eea")
+                    .attr("stroke-width", 2)
+                    .attr("marker-end", "url(#arrowhead)");
+            } else {
+                g.append("line")
+                    .attr("x1", headX + 50)
+                    .attr("y1", 55)
+                    .attr("x2", x - 10)
+                    .attr("y2", 55)
+                    .attr("stroke", "#667eea")
+                    .attr("stroke-width", 2)
+                    .attr("marker-end", "url(#arrowhead)");
+            }
+
+            // Draw dummy tail
+            g.append("rect")
+                .attr("x", x)
+                .attr("y", 35)
+                .attr("width", 40)
+                .attr("height", 40)
+                .attr("fill", "#e0e0e0")
+                .attr("stroke", "#bdbdbd")
+                .attr("stroke-width", 2)
+                .attr("rx", 5);
+            g.append("text")
+                .attr("x", x + 20)
+                .attr("y", 60)
+                .attr("text-anchor", "middle")
+                .attr("font-size", "12px")
+                .attr("fill", "#666")
+                .text("TAIL");
+
+            // Arrow marker
+            svg.append("defs").append("marker")
+                .attr("id", "arrowhead")
+                .attr("viewBox", "0 -5 10 10")
+                .attr("refX", 5)
+                .attr("refY", 0)
+                .attr("markerWidth", 6)
+                .attr("markerHeight", 6)
+                .attr("orient", "auto")
+                .append("path")
+                .attr("d", "M0,-5L10,0L0,5")
+                .attr("fill", "#667eea");
+        }
+
+        function renderHash() {
+            const container = document.getElementById('hashContainer');
+            if (cache.size === 0) {
+                container.innerHTML = '<span style="color: #999;">Empty</span>';
+                return;
+            }
+            container.innerHTML = Array.from(cache.entries()).map(([key, item]) => `
+                <div style="padding: 8px 12px; margin: 5px 0; background: #e3f2fd; 
+                            border-radius: 6px; display: flex; justify-content: space-between;">
+                    <span>Key: <strong>${key}</strong></span>
+                    <span>→ Node(${key}, ${item.value})</span>
+                </div>
+            `).join('');
+        }
+
+        function addLog(op, msg, color = '#e3f2fd') {
+            logs.push({ op, msg, color });
+            if (logs.length > 15) logs.shift();
+            renderLogs();
+        }
+
+        function renderLogs() {
+            const container = document.getElementById('logContainer');
+            if (logs.length === 0) {
+                container.innerHTML = '<div style="color: #999;">Operations will appear here...</div>';
+                return;
+            }
+            container.innerHTML = logs.map(log => `
+                <div style="padding: 8px; margin: 3px 0; background: ${log.color}; 
+                            border-radius: 5px; font-size: 0.9em;">
+                    <strong>${log.op}:</strong> ${log.msg}
+
+        </div>
+            `).join('');
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function putOp() {
+            const key = parseInt(document.getElementById('keyInput').value);
+            const value = parseInt(document.getElementById('valueInput').value);
+            
+            if (isNaN(key) || isNaN(value)) {
+                document.getElementById('statusMessage').textContent = '⚠️ Please enter valid key and value';
+                return;
+            }
+
+            let msg = '';
+
+            if (cache.has(key)) {
+                // Update existing
+                const idx = order.findIndex(item => item.key === key);
+                order.splice(idx, 1);
+                msg = `Updated key ${key} to value ${value}. Moved to front.`;
+            } else if (cache.size >= capacity) {
+                // Evict LRU
+                const lru = order.pop();
+                cache.delete(lru.key);
+                msg = `Cache full! Evicted LRU (key ${lru.key}). Added key ${key}.`;
+                addLog('EVICT', `Removed key ${lru.key}`, '#ffebee');
+            } else {
+                msg = `Added key ${key} with value ${value}`;
+            }
+
+            const newItem = { key, value };
+            cache.set(key, newItem);
+            order.unshift(newItem);
+
+            document.getElementById('statusMessage').textContent = msg;
+            addLog('PUT', `put(${key}, ${value})`, '#e8f5e9');
+
+            drawList();
+            renderHash();
+        }
+
+        function getOp() {
+            const key = parseInt(document.getElementById('keyInput').value);
+            
+            if (isNaN(key)) {
+                document.getElementById('statusMessage').textContent = '⚠️ Please enter a valid key';
+                return;
+            }
+
+            if (!cache.has(key)) {
+                document.getElementById('statusMessage').textContent = `Get(${key}): -1 (not found)`;
+                addLog('GET', `get(${key}) → -1 (not found)`, '#fff3e0');
+                return;
+            }
+
+            const item = cache.get(key);
+            const idx = order.findIndex(i => i.key === key);
+            order.splice(idx, 1);
+            order.unshift(item);
+
+            document.getElementById('statusMessage').textContent = 
+                `Get(${key}): ${item.value}. Moved to front (most recent).`;
+            addLog('GET', `get(${key}) → ${item.value}`, '#e3f2fd');
+
+            drawList();
+            renderHash();
+        }
+
+        function reset() {
+            cache = new Map();
+            order = [];
+            logs = [];
+
+            document.getElementById('keyInput').value = '';
+            document.getElementById('valueInput').value = '';
+            document.getElementById('statusMessage').textContent = 
+                'Enter a key-value pair and click Put, or enter a key and click Get';
+            
+            drawList();
+            renderHash();
+            renderLogs();
+        }
+
+        reset();
+        window.addEventListener('resize', drawList);
+    </script>
+</body>
+</html>

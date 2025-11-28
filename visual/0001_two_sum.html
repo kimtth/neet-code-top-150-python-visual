@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>001 - Two Sum</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="problem-info">
+            <h1><span class="problem-number">#001</span> Two Sum</h1>
+            <p>
+                Given an array of integers nums and an integer target, return indices of the 
+                two numbers such that they add up to target. Use a hash map for O(n) solution.
+            </p>
+            <div class="problem-meta">
+                <span class="meta-tag">📊 Array</span>
+                <span class="meta-tag">🗂️ Hash Map</span>
+                <span class="meta-tag">⏱️ O(n)</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <code>python/0001_two_sum/0001_two_sum.py</code>
+            </div>
+
+        </div>
+
+        <div class="explanation-panel">
+            <h4>🧠 How It Works (Layman's Terms)</h4>
+            <p>Think of it like finding two puzzle pieces that fit together. Instead of checking every pair, we use a <strong>hash map</strong> as our "memory".</p>
+            <ul>
+                <li><strong>For each number:</strong> Calculate what partner we need (target - current)</li>
+                <li><strong>Check memory:</strong> Have we seen this partner before?</li>
+                <li><strong>Found it?</strong> Return both indices immediately</li>
+                <li><strong>Not found?</strong> Remember current number and continue</li>
+            </ul>
+        </div>
+
+
+        <section class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+            <div class="controls">
+                <button id="autoRunBtn" class="btn">▶ Auto Run</button>
+                <button id="stepBtn" class="btn btn-success">Step</button>
+                <button id="resetBtn" class="btn btn-danger">Reset</button>
+            </div>
+            <div class="status" id="status">Find two numbers that add up to target = 9</div>
+            <svg id="visualization"></svg>
+        </section>
+
+        <section class="code-section">
+            <h2>Python Solution</h2>
+            <pre><span class="keyword">def</span> <span class="function">twoSum</span>(nums, target):
+    hashmap = {}  <span class="comment"># value -> index</span>
+    
+    <span class="keyword">for</span> i, num <span class="keyword">in</span> <span class="function">enumerate</span>(nums):
+        complement = target - num
+        
+        <span class="keyword">if</span> complement <span class="keyword">in</span> hashmap:
+            <span class="keyword">return</span> [hashmap[complement], i]
+        
+        hashmap[num] = i
+    
+    <span class="keyword">return</span> []</pre>
+        </section>
+    </div>
+
+    <script>
+        const width = 900;
+        const height = 500;
+
+        const svg = d3.select("#visualization")
+            .attr("width", width)
+            .attr("height", height);
+
+        const nums = [2, 7, 11, 15];
+        const target = 9;
+        
+        let hashmap = {};
+        let currentIndex = 0;
+        let phase = "init";
+        let animationTimer = null;
+        let found = false;
+        let result = null;
+        let currentComplement = null;
+
+        function reset() {
+            hashmap = {};
+            currentIndex = 0;
+            phase = "init";
+            found = false;
+            result = null;
+            currentComplement = null;
+            
+            if (animationTimer) clearInterval(animationTimer);
+            animationTimer = null;
+            document.getElementById("autoRunBtn").textContent = "▶ Auto Run";
+            document.getElementById("status").textContent = `Find two numbers that add up to target = ${target}`;
+            render();
+        }
+
+        function render() {
+            svg.selectAll("*").remove();
+
+            const cellWidth = 80;
+            const startX = 100;
+            const arrayY = 80;
+
+            // Title
+            svg.append("text")
+                .attr("x", 30)
+                .attr("y", 35)
+                .attr("font-size", "14px")
+                .attr("font-weight", "bold")
+                .attr("fill", "#1e293b")
+                .text(`Array: [${nums.join(', ')}]  |  Target: ${target}`);
+
+            // Draw array
+            svg.append("text")
+                .attr("x", 30)
+                .attr("y", arrayY + 30)
+                .attr("font-size", "13px")
+                .attr("font-weight", "bold")
+                .attr("fill", "#64748b")
+                .text("nums:");
+
+            nums.forEach((num, idx) => {
+                const x = startX + idx * cellWidth;
+                const isCurrent = idx === currentIndex && !found;
+                const isResult = result && (idx === result[0] || idx === result[1]);
+                const isInMap = hashmap.hasOwnProperty(num) && idx < currentIndex;
+
+                svg.append("rect")
+                    .attr("x", x)
+                    .attr("y", arrayY)
+                    .attr("width", cellWidth - 10)
+                    .attr("height", 50)
+                    .attr("rx", 8)
+                    .attr("fill", () => {
+                        if (isResult) return "#d1fae5";
+                        if (isCurrent) return "#fef3c7";
+                        if (isInMap) return "#e0e7ff";
+                        return "#f8fafc";
+                    })
+                    .attr("stroke", () => {
+                        if (isResult) return "#10b981";
+                        if (isCurrent) return "#f59e0b";
+                        if (isInMap) return "#6366f1";
+                        return "#94a3b8";
+                    })
+                    .attr("stroke-width", isCurrent || isResult ? 3 : 2);
+
+                svg.append("text")
+                    .attr("x", x + (cellWidth - 10) / 2)
+                    .attr("y", arrayY + 32)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "20px")
+                    .attr("font-weight", "bold")
+                    .attr("fill", "#1e293b")
+                    .text(num);
+
+                // Index label
+                svg.append("text")
+                    .attr("x", x + (cellWidth - 10) / 2)
+                    .attr("y", arrayY + 70)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "12px")
+                    .attr("fill", "#64748b")
+                    .text(`i=${idx}`);
+
+                // Current pointer
+                if (isCurrent) {
+                    svg.append("text")
+                        .attr("x", x + (cellWidth - 10) / 2)
+                        .attr("y", arrayY - 15)
+                        .attr("text-anchor", "middle")
+                        .attr("font-size", "12px")
+                        .attr("font-weight", "bold")
+                        .attr("fill", "#f59e0b")
+                        .text("▼ current");
+                }
+            });
+
+            // Draw hashmap
+            const mapY = 200;
+            svg.append("text")
+                .attr("x", 30)
+                .attr("y", mapY)
+                .attr("font-size", "14px")
+                .attr("font-weight", "bold")
+                .attr("fill", "#1e293b")
+                .text("HashMap: { value → index }");
+
+            const mapEntries = Object.entries(hashmap);
+            if (mapEntries.length === 0) {
+                svg.append("text")
+                    .attr("x", 30)
+                    .attr("y", mapY + 35)
+                    .attr("font-size", "13px")
+                    .attr("fill", "#94a3b8")
+                    .text("(empty)");
+            } else {
+                mapEntries.forEach(([val, idx], i) => {
+                    const x = 30 + i * 120;
+                    const isComplement = currentComplement !== null && parseInt(val) === currentComplement;
+
+                    svg.append("rect")
+                        .attr("x", x)
+                        .attr("y", mapY + 15)
+                        .attr("width", 110)
+                        .attr("height", 40)
+                        .attr("rx", 8)
+                        .attr("fill", isComplement ? "#d1fae5" : "#e0e7ff")
+                        .attr("stroke", isComplement ? "#10b981" : "#6366f1")
+                        .attr("stroke-width", isComplement ? 3 : 2);
+
+                    svg.append("text")
+                        .attr("x", x + 55)
+                        .attr("y", mapY + 42)
+                        .attr("text-anchor", "middle")
+                        .attr("font-size", "14px")
+                        .attr("font-weight", "bold")
+                        .attr("fill", "#1e293b")
+                        .text(`${val} → ${idx}`);
+                });
+            }
+
+            // Current calculation
+            if (phase === "checking" && !found) {
+                const calcY = 310;
+                const currentNum = nums[currentIndex];
+                const complement = target - currentNum;
+
+                svg.append("rect")
+                    .attr("x", 30)
+                    .attr("y", calcY)
+                    .attr("width", 400)
+                    .attr("height", 70)
+                    .attr("rx", 10)
+                    .attr("fill", "#eff6ff")
+                    .attr("stroke", "#3b82f6");
+
+                svg.append("text")
+                    .attr("x", 230)
+                    .attr("y", calcY + 28)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "14px")
+                    .attr("fill", "#1e293b")
+                    .text(`Current: nums[${currentIndex}] = ${currentNum}`);
+
+                svg.append("text")
+                    .attr("x", 230)
+                    .attr("y", calcY + 52)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "14px")
+                    .attr("fill", "#1e293b")
+                    .text(`Complement: ${target} - ${currentNum} = ${complement}`);
+            }
+
+            // Result
+            if (found && result) {
+                svg.append("rect")
+                    .attr("x", 30)
+                    .attr("y", 400)
+                    .attr("width", 500)
+                    .attr("height", 60)
+                    .attr("rx", 10)
+                    .attr("fill", "#d1fae5")
+                    .attr("stroke", "#10b981")
+                    .attr("stroke-width", 2);
+
+                svg.append("text")
+                    .attr("x", 280)
+                    .attr("y", 440)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "18px")
+                    .attr("font-weight", "bold")
+                    .attr("fill", "#10b981")
+                    .text(`✓ Found! nums[${result[0]}] + nums[${result[1]}] = ${nums[result[0]]} + ${nums[result[1]]} = ${target}`);
+            }
+
+            // Algorithm explanation
+            const algoX = 500;
+            svg.append("text")
+                .attr("x", algoX)
+                .attr("y", 200)
+                .attr("font-size", "13px")
+                .attr("font-weight", "bold")
+                .attr("fill", "#1e293b")
+                .text("Algorithm:");
+
+            const steps = [
+                "1. For each number, calculate complement",
+                "2. Check if complement exists in hashmap",
+                "3. If found: return [map[complement], i]",
+                "4. If not: add current num to hashmap"
+            ];
+
+            steps.forEach((step, i) => {
+                svg.append("text")
+                    .attr("x", algoX)
+                    .attr("y", 225 + i * 22)
+                    .attr("font-size", "12px")
+                    .attr("fill", "#64748b")
+                    .text(step);
+            });
+        }
+
+        function step() {
+            if (found || currentIndex >= nums.length) {
+                if (!found) {
+                    document.getElementById("status").textContent = "No solution found!";
+                }
+                return;
+            }
+
+            const num = nums[currentIndex];
+            const complement = target - num;
+            currentComplement = complement;
+            phase = "checking";
+
+            if (hashmap.hasOwnProperty(complement)) {
+                // Found!
+                found = true;
+                result = [hashmap[complement], currentIndex];
+                document.getElementById("status").textContent = 
+                    `✓ Found! Complement ${complement} exists at index ${hashmap[complement]}`;
+            } else {
+                // Add to hashmap and continue
+                hashmap[num] = currentIndex;
+                document.getElementById("status").textContent = 
+                    `Complement ${complement} not in map. Added ${num} → ${currentIndex}`;
+                currentIndex++;
+                
+                if (currentIndex >= nums.length) {
+                    document.getElementById("status").textContent = "Search complete. No pair found.";
+                }
+            }
+
+            render();
+        }
+
+        function autoRun() {
+            if (animationTimer) {
+                clearInterval(animationTimer);
+                animationTimer = null;
+                document.getElementById("autoRunBtn").textContent = "▶ Auto Run";
+                return;
+            }
+
+            document.getElementById("autoRunBtn").textContent = "⏸ Pause";
+            animationTimer = setInterval(() => {
+                if (found || currentIndex >= nums.length) {
+                    clearInterval(animationTimer);
+                    animationTimer = null;
+                    document.getElementById("autoRunBtn").textContent = "▶ Auto Run";
+                    return;
+                }
+                step();
+            }, 1200);
+        }
+
+        document.getElementById("autoRunBtn").addEventListener("click", autoRun);
+        document.getElementById("stepBtn").addEventListener("click", step);
+        document.getElementById("resetBtn").addEventListener("click", reset);
+
+        reset();
+    </script>
+</body>
+</html>

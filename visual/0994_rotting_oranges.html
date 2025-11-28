@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rotting Oranges - LeetCode 994</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="problem-info">
+            <h1><span class="problem-number">#0994</span> Rotting Oranges</h1>
+            <p><strong>Problem:</strong> Every minute, fresh oranges adjacent to rotten oranges become rotten. Return the minimum minutes until no fresh oranges remain, or -1 if impossible.</p>
+            <p><strong>Pattern:</strong> Multi-source BFS - Start from all rotten oranges simultaneously</p>
+            <div class="problem-meta">
+                <span class="meta-tag">📝 Algorithm</span>
+                <span class="meta-tag">⏱️ O(n)</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <code>python/0994_rotting_oranges/0994_rotting_oranges.py</code>
+            </div>
+
+        </div>
+
+        <div class="explanation-panel">
+            <h4>🧠 How It Works (Layman's Terms)</h4>
+            <p>This algorithm solves the problem <strong>step by step</strong>:</p>
+            <ul>
+                <li><strong>Understand:</strong> Parse the input data</li>
+                <li><strong>Process:</strong> Apply the core logic</li>
+                <li><strong>Optimize:</strong> Use efficient data structures</li>
+                <li><strong>Return:</strong> Output the computed result</li>
+            </ul>
+        </div>
+
+
+        <div class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+
+            <div class="visualization">
+            <svg id="mainSvg"></svg>
+        </div>
+
+        <div class="controls">
+            <button id="stepBtn">Step (1 minute)</button>
+            <button id="autoBtn">Auto Run</button>
+            <button id="resetBtn">Reset</button>
+            <div class="speed-control">
+                <label for="speed">Speed:</label>
+                <input type="range" id="speed" min="100" max="2000" value="800">
+            </div>
+        </div>
+
+        <div class="status" id="status">Click "Step" to simulate rotting process (BFS)</div>
+
+        <div class="variables">
+            <div class="var-item">
+                <span class="var-label">Minutes Elapsed:</span>
+                <span id="minutesDisplay">0</span>
+            </div>
+            <div class="var-item">
+                <span class="var-label">Fresh Remaining:</span>
+                <span id="freshDisplay">-</span>
+            </div>
+            <div class="var-item">
+                <span class="var-label">Queue Size:</span>
+                <span id="queueDisplay">-</span>
+            </div>
+        </div>
+
+        </div>
+
+        <div class="code-section">
+            <h3>Python Solution</h3>
+            <pre><span class="keyword">def</span> <span class="function">orangesRotting</span>(grid):
+    <span class="string">"""
+    Multi-source BFS from all rotten oranges.
+    Time: O(m*n), Space: O(m*n)
+    """</span>
+    <span class="keyword">from</span> collections <span class="keyword">import</span> deque
+    
+    m, n = <span class="function">len</span>(grid), <span class="function">len</span>(grid[<span class="number">0</span>])
+    queue = <span class="function">deque</span>()
+    fresh = <span class="number">0</span>
+    
+    <span class="comment"># Find all rotten oranges and count fresh</span>
+    <span class="keyword">for</span> i <span class="keyword">in</span> <span class="function">range</span>(m):
+        <span class="keyword">for</span> j <span class="keyword">in</span> <span class="function">range</span>(n):
+            <span class="keyword">if</span> grid[i][j] == <span class="number">2</span>:
+                queue.<span class="function">append</span>((i, j))
+            <span class="keyword">elif</span> grid[i][j] == <span class="number">1</span>:
+                fresh += <span class="number">1</span>
+    
+    minutes = <span class="number">0</span>
+    directions = [(<span class="number">0</span>, <span class="number">1</span>), (<span class="number">0</span>, <span class="number">-1</span>), (<span class="number">1</span>, <span class="number">0</span>), (<span class="number">-1</span>, <span class="number">0</span>)]
+    
+    <span class="keyword">while</span> queue <span class="keyword">and</span> fresh > <span class="number">0</span>:
+        minutes += <span class="number">1</span>
+        <span class="keyword">for</span> _ <span class="keyword">in</span> <span class="function">range</span>(<span class="function">len</span>(queue)):
+            r, c = queue.<span class="function">popleft</span>()
+            <span class="keyword">for</span> dr, dc <span class="keyword">in</span> directions:
+                nr, nc = r + dr, c + dc
+                <span class="keyword">if</span> <span class="number">0</span> <= nr < m <span class="keyword">and</span> <span class="number">0</span> <= nc < n <span class="keyword">and</span> grid[nr][nc] == <span class="number">1</span>:
+                    grid[nr][nc] = <span class="number">2</span>
+                    fresh -= <span class="number">1</span>
+                    queue.<span class="function">append</span>((nr, nc))
+    
+    <span class="keyword">return</span> minutes <span class="keyword">if</span> fresh == <span class="number">0</span> <span class="keyword">else</span> <span class="number">-1</span></pre>
+        </div>
+    </div>
+
+    <script>
+        const originalGrid = [
+            [2, 1, 1],
+            [1, 1, 0],
+            [0, 1, 1]
+        ];
+        
+        let grid = JSON.parse(JSON.stringify(originalGrid));
+        const m = grid.length;
+        const n = grid[0].length;
+        
+        let queue = [];
+        let fresh = 0;
+        let minutes = 0;
+        let justRotted = [];
+        let autoRunning = false;
+        let autoTimer = null;
+
+        const width = 700;
+        const height = 400;
+        const svg = d3.select("#mainSvg")
+            .attr("width", width)
+            .attr("height", height);
+
+        const cellSize = 70;
+        const startX = (width - n * cellSize) / 2;
+        const startY = 50;
+
+        function initializeQueue() {
+            queue = [];
+            fresh = 0;
+            for (let i = 0; i < m; i++) {
+                for (let j = 0; j < n; j++) {
+                    if (grid[i][j] === 2) {
+                        queue.push([i, j]);
+                    } else if (grid[i][j] === 1) {
+                        fresh++;
+                    }
+                }
+            }
+            document.getElementById("freshDisplay").textContent = fresh;
+            document.getElementById("queueDisplay").textContent = queue.length;
+        }
+
+        function draw() {
+            svg.selectAll("*").remove();
+
+            // Legend
+            const legendY = 15;
+            const legendItems = [
+                { color: "#e0e0e0", text: "Empty (0)" },
+                { color: "#ff9800", text: "Fresh (1)" },
+                { color: "#795548", text: "Rotten (2)" },
+                { color: "#ffeb3b", text: "Just Rotted" }
+            ];
+
+            legendItems.forEach((item, idx) => {
+                svg.append("rect")
+                    .attr("x", 80 + idx * 150)
+                    .attr("y", legendY)
+                    .attr("width", 20)
+                    .attr("height", 20)
+                    .attr("rx", 4)
+                    .attr("fill", item.color)
+                    .attr("stroke", "#333");
+
+                svg.append("text")
+                    .attr("x", 105 + idx * 150)
+                    .attr("y", legendY + 15)
+                    .attr("font-size", "12px")
+                    .text(item.text);
+            });
+
+            // Grid
+            for (let i = 0; i < m; i++) {
+                for (let j = 0; j < n; j++) {
+                    const x = startX + j * cellSize;
+                    const y = startY + i * cellSize;
+                    const val = grid[i][j];
+                    const isJustRotted = justRotted.some(([r, c]) => r === i && c === j);
+
+                    let fill, stroke, emoji;
+                    if (val === 0) {
+                        fill = "#e0e0e0";
+                        stroke = "#bdbdbd";
+                        emoji = "";
+                    } else if (val === 1) {
+                        fill = "#ff9800";
+                        stroke = "#f57c00";
+                        emoji = "🍊";
+                    } else {
+                        fill = isJustRotted ? "#ffeb3b" : "#795548";
+                        stroke = isJustRotted ? "#f57c00" : "#5d4037";
+                        emoji = "🤢";
+                    }
+
+                    svg.append("rect")
+                        .attr("x", x)
+                        .attr("y", y)
+                        .attr("width", cellSize - 4)
+                        .attr("height", cellSize - 4)
+                        .attr("rx", 8)
+                        .attr("fill", fill)
+                        .attr("stroke", stroke)
+                        .attr("stroke-width", isJustRotted ? 4 : 2);
+
+                    svg.append("text")
+                        .attr("x", x + (cellSize - 4) / 2)
+                        .attr("y", y + (cellSize - 4) / 2 + 8)
+                        .attr("text-anchor", "middle")
+                        .attr("font-size", "28px")
+                        .text(emoji);
+                }
+            }
+
+            // Timer display
+            svg.append("rect")
+                .attr("x", width / 2 - 60)
+                .attr("y", startY + m * cellSize + 20)
+                .attr("width", 120)
+                .attr("height", 50)
+                .attr("rx", 10)
+                .attr("fill", fresh === 0 ? "#c8e6c9" : "#e3f2fd")
+                .attr("stroke", fresh === 0 ? "#4caf50" : "#1976d2")
+                .attr("stroke-width", 2);
+
+            svg.append("text")
+                .attr("x", width / 2)
+                .attr("y", startY + m * cellSize + 52)
+                .attr("text-anchor", "middle")
+                .attr("font-size", "20px")
+                .attr("font-weight", "bold")
+                .text(`⏱️ ${minutes} min`);
+
+            // Queue visualization
+            const queueY = startY + m * cellSize + 90;
+            svg.append("text")
+                .attr("x", 50)
+                .attr("y", queueY)
+                .attr("font-weight", "bold")
+                .text("BFS Queue:");
+
+            queue.forEach(([r, c], idx) => {
+                svg.append("rect")
+                    .attr("x", 150 + idx * 50)
+                    .attr("y", queueY - 15)
+                    .attr("width", 45)
+                    .attr("height", 25)
+                    .attr("rx", 4)
+                    .attr("fill", "#795548")
+                    .attr("stroke", "#5d4037");
+
+                svg.append("text")
+                    .attr("x", 150 + idx * 50 + 22)
+                    .attr("y", queueY + 3)
+                    .attr("text-anchor", "middle")
+                    .attr("fill", "white")
+                    .attr("font-size", "11px")
+                    .text(`(${r},${c})`);
+            });
+        }
+
+        function step() {
+            if (fresh === 0) {
+                document.getElementById("status").textContent = 
+                    `Complete! All oranges rotted in ${minutes} minutes`;
+                return false;
+            }
+
+            if (queue.length === 0) {
+                document.getElementById("status").textContent = 
+                    `Impossible! ${fresh} fresh oranges cannot be reached`;
+                return false;
+            }
+
+            minutes++;
+            justRotted = [];
+            const directions = [[0, 1], [0, -1], [1, 0], [-1, 0]];
+            const queueSize = queue.length;
+
+            for (let i = 0; i < queueSize; i++) {
+                const [r, c] = queue.shift();
+                
+                for (const [dr, dc] of directions) {
+                    const nr = r + dr;
+                    const nc = c + dc;
+                    
+                    if (nr >= 0 && nr < m && nc >= 0 && nc < n && grid[nr][nc] === 1) {
+                        grid[nr][nc] = 2;
+                        fresh--;
+                        queue.push([nr, nc]);
+                        justRotted.push([nr, nc]);
+                    }
+                }
+            }
+
+            document.getElementById("minutesDisplay").textContent = minutes;
+            document.getElementById("freshDisplay").textContent = fresh;
+            document.getElementById("queueDisplay").textContent = queue.length;
+            
+            draw();
+
+            if (fresh === 0) {
+                document.getElementById("status").textContent = 
+                    `Complete! All oranges rotted in ${minutes} minutes`;
+                return false;
+            } else if (justRotted.length === 0) {
+                document.getElementById("status").textContent = 
+                    `No more spreading possible. ${fresh} fresh remain unreachable.`;
+                return false;
+            } else {
+                document.getElementById("status").textContent = 
+                    `Minute ${minutes}: ${justRotted.length} oranges just rotted`;
+                return true;
+            }
+        }
+
+        function reset() {
+            grid = JSON.parse(JSON.stringify(originalGrid));
+            minutes = 0;
+            justRotted = [];
+            autoRunning = false;
+            if (autoTimer) clearInterval(autoTimer);
+            
+            initializeQueue();
+            
+            document.getElementById("minutesDisplay").textContent = "0";
+            document.getElementById("status").textContent = 
+                'Click "Step" to simulate rotting process (BFS)';
+            document.getElementById("autoBtn").textContent = "Auto Run";
+            
+            draw();
+        }
+
+        function autoRun() {
+            if (autoRunning) {
+                autoRunning = false;
+                clearInterval(autoTimer);
+                document.getElementById("autoBtn").textContent = "Auto Run";
+            } else {
+                autoRunning = true;
+                document.getElementById("autoBtn").textContent = "Pause";
+                const speed = 2100 - document.getElementById("speed").value;
+                autoTimer = setInterval(() => {
+                    if (!step()) {
+                        autoRunning = false;
+                        clearInterval(autoTimer);
+                        document.getElementById("autoBtn").textContent = "Auto Run";
+                    }
+                }, speed);
+            }
+        }
+
+        document.getElementById("stepBtn").addEventListener("click", step);
+        document.getElementById("autoBtn").addEventListener("click", autoRun);
+        document.getElementById("resetBtn").addEventListener("click", reset);
+
+        initializeQueue();
+        draw();
+    </script>
+</body>
+</html>

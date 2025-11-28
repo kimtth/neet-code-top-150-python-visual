@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LC 20: Valid Parentheses - Algorithm Visualization</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="problem-info">
+            <h1><span class="problem-number">#20</span> Valid Parentheses</h1>
+            <p>Given a string s containing just the characters '(', ')', '{', '}', '[' and ']', determine if the input string is valid.</p>
+            <div class="problem-meta">
+                <span class="meta-tag">🔤 String</span>
+                <span class="meta-tag">📚 Stack</span>
+                <span class="meta-tag">⏱️ O(n)</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <code>python/0020_valid_parentheses/0020_valid_parentheses.py</code>
+            </div>
+            </div>
+
+        <div class="explanation-panel">
+            <h4>🧠 How It Works (Layman's Terms)</h4>
+            <p>Think of stacking plates (LIFO - Last In, First Out):</p>
+            <ul>
+                <li><strong>Opening bracket:</strong> Push it onto the stack (like adding a plate)</li>
+                <li><strong>Closing bracket:</strong> Pop the top plate and check if it matches</li>
+                <li><strong>Mismatch:</strong> Wrong plate on top → Invalid!</li>
+                <li><strong>Empty stack when closing:</strong> Nothing to match → Invalid!</li>
+                <li><strong>Non-empty stack at end:</strong> Unclosed brackets → Invalid!</li>
+            </ul>
+        </div>
+
+
+        <div class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+            
+            <div class="controls">
+                <button class="btn btn-primary" id="stepBtn" onclick="step()">Step</button>
+                <button class="btn btn-success" id="autoBtn" onclick="toggleAuto()">Auto Run</button>
+                <button class="btn btn-warning" onclick="reset()">Reset</button>
+            </div>
+
+            <div class="status-message" id="statusMessage">
+                Click "Step" or "Auto Run" to start visualization
+            </div>
+
+            <div class="array-section">
+                <div class="array-label">📥 Input String:</div>
+                <div class="array-container" id="inputContainer"></div>
+            </div>
+
+            <div style="display: flex; gap: 30px; flex-wrap: wrap;">
+                <div class="array-section" style="flex: 1; min-width: 200px;">
+                    <div class="array-label">📚 Stack:</div>
+                    <div id="stackContainer" style="min-height: 200px; background: #f5f5f5; border-radius: 12px; border: 2px dashed #ccc; padding: 20px; display: flex; flex-direction: column-reverse; align-items: center; gap: 5px;">
+                        <div style="color: #999;">Empty Stack</div>
+                    </div>
+                </div>
+
+                <div class="array-section" style="flex: 1; min-width: 200px;">
+                    <div class="array-label">🔗 Bracket Mapping:</div>
+                    <div style="background: #f5f5f5; border-radius: 12px; padding: 20px;">
+                        <div style="margin: 10px 0; font-size: 1.2em;"><span style="color: #f44336;">)</span> → <span style="color: #4caf50;">(</span></div>
+                        <div style="margin: 10px 0; font-size: 1.2em;"><span style="color: #f44336;">]</span> → <span style="color: #4caf50;">[</span></div>
+                        <div style="margin: 10px 0; font-size: 1.2em;"><span style="color: #f44336;">}</span> → <span style="color: #4caf50;">{</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="info-box" id="resultBox" style="display: none; margin-top: 20px;">
+                Result will appear here
+            </div>
+        </div>
+        <div class="code-section">
+            <h3>💻 Python Solution</h3>
+            <div class="code-block">
+                <pre><span class="keyword">def</span> <span class="function">is_valid</span>(self, s: <span class="class-name">str</span>) -> bool:
+    stack = []
+    brackets_map = {<span class="string">')'</span>: <span class="string">'('</span>, <span class="string">'}'</span>: <span class="string">'{'</span>, <span class="string">']'</span>: <span class="string">'['</span>}
+    
+    <span class="keyword">for</span> char <span class="keyword">in</span> s:
+        <span class="keyword">if</span> char <span class="keyword">in</span> brackets_map:  <span class="comment"># Closing bracket</span>
+            top = stack.<span class="function">pop</span>() <span class="keyword">if</span> stack <span class="keyword">else</span> <span class="string">'#'</span>
+            <span class="keyword">if</span> brackets_map[char] != top:
+                <span class="keyword">return</span> <span class="keyword">False</span>
+        <span class="keyword">else</span>:  <span class="comment"># Opening bracket</span>
+            stack.<span class="function">append</span>(char)
+    
+    <span class="keyword">return</span> <span class="keyword">not</span> stack  <span class="comment"># Valid if stack is empty</span></pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const inputStr = "{[()]}";
+        const chars = inputStr.split('');
+        let stack = [];
+        let currentIndex = 0;
+        let autoInterval = null;
+        const bracketsMap = { ')': '(', '}': '{', ']': '[' };
+        const bracketColors = {
+            '(': '#4caf50', ')': '#4caf50',
+            '[': '#2196f3', ']': '#2196f3',
+            '{': '#ff9800', '}': '#ff9800'
+        };
+
+        function init() {
+            renderInput();
+            renderStack();
+        }
+
+        function renderInput() {
+            const container = document.getElementById('inputContainer');
+            container.innerHTML = '';
+            chars.forEach((char, idx) => {
+                const box = document.createElement('div');
+                box.className = 'array-box';
+                box.id = `input-${idx}`;
+                box.style.fontSize = '1.5em';
+                box.style.color = bracketColors[char] || '#333';
+                box.textContent = char;
+                if (idx < currentIndex) {
+                    box.style.opacity = '0.5';
+                }
+                if (idx === currentIndex) {
+                    box.classList.add('highlight');
+                }
+                container.appendChild(box);
+            });
+        }
+
+        function renderStack() {
+            const container = document.getElementById('stackContainer');
+            container.innerHTML = '';
+            
+            if (stack.length === 0) {
+                container.innerHTML = '<div style="color: #999;">Empty Stack
+
+        </div>';
+                return;
+            }
+
+            stack.forEach((item, idx) => {
+                const stackItem = document.createElement('div');
+                stackItem.style.cssText = `
+                    width: 60px;
+                    height: 50px;
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    font-size: 1.8em;
+                    font-weight: bold;
+                    background: ${bracketColors[item]};
+                    color: white;
+                    border-radius: 8px;
+                    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+                `;
+                stackItem.textContent = item;
+                stackItem.id = `stack-${idx}`;
+                container.appendChild(stackItem);
+            });
+        }
+
+        function step() {
+            if (currentIndex >= chars.length) {
+                // Check if stack is empty
+                if (stack.length === 0) {
+                    document.getElementById('statusMessage').className = 'status-message success';
+                    document.getElementById('statusMessage').textContent = 'Stack is empty - all brackets matched!';
+                    document.getElementById('resultBox').style.display = 'block';
+                    document.getElementById('resultBox').className = 'info-box secondary';
+                    document.getElementById('resultBox').textContent = '✅ TRUE - Valid parentheses!';
+                } else {
+                    document.getElementById('statusMessage').className = 'status-message error';
+                    document.getElementById('statusMessage').textContent = `Stack not empty - ${stack.length} unclosed bracket(s)!`;
+                    document.getElementById('resultBox').style.display = 'block';
+                    document.getElementById('resultBox').className = 'info-box highlight';
+                    document.getElementById('resultBox').textContent = '❌ FALSE - Invalid parentheses!';
+                }
+                document.getElementById('stepBtn').disabled = true;
+                stopAuto();
+                return;
+            }
+
+            const char = chars[currentIndex];
+
+            if (char in bracketsMap) {
+                // Closing bracket
+                if (stack.length === 0) {
+                    document.getElementById('statusMessage').className = 'status-message error';
+                    document.getElementById('statusMessage').textContent = 
+                        `'${char}' - No opening bracket to match!`;
+                    document.getElementById('resultBox').style.display = 'block';
+                    document.getElementById('resultBox').className = 'info-box highlight';
+                    document.getElementById('resultBox').textContent = '❌ FALSE - Invalid parentheses!';
+                    document.getElementById('stepBtn').disabled = true;
+                    stopAuto();
+                    return;
+                }
+
+                const top = stack.pop();
+                if (bracketsMap[char] !== top) {
+                    document.getElementById('statusMessage').className = 'status-message error';
+                    document.getElementById('statusMessage').textContent = 
+                        `'${char}' expects '${bracketsMap[char]}' but found '${top}'!`;
+                    document.getElementById('resultBox').style.display = 'block';
+                    document.getElementById('resultBox').className = 'info-box highlight';
+                    document.getElementById('resultBox').textContent = '❌ FALSE - Invalid parentheses!';
+                    document.getElementById('stepBtn').disabled = true;
+                    stopAuto();
+                    return;
+                }
+
+                document.getElementById('statusMessage').textContent = 
+                    `'${char}' matches '${top}' ✓ - Popped from stack`;
+            } else {
+                // Opening bracket
+                stack.push(char);
+                document.getElementById('statusMessage').textContent = 
+                    `'${char}' is opening bracket - Pushed to stack`;
+            }
+
+            currentIndex++;
+            renderInput();
+            renderStack();
+        }
+
+        function toggleAuto() {
+            if (autoInterval) {
+                stopAuto();
+            } else {
+                document.getElementById('autoBtn').textContent = 'Pause';
+                autoInterval = setInterval(() => {
+                    if (currentIndex >= chars.length) {
+                        step();
+                        stopAuto();
+                    } else {
+                        step();
+                    }
+                }, 800);
+            }
+        }
+
+        function stopAuto() {
+            if (autoInterval) {
+                clearInterval(autoInterval);
+                autoInterval = null;
+            }
+            document.getElementById('autoBtn').textContent = 'Auto Run';
+        }
+
+        function reset() {
+            stopAuto();
+            stack = [];
+            currentIndex = 0;
+            document.getElementById('stepBtn').disabled = false;
+            document.getElementById('statusMessage').className = 'status-message';
+            document.getElementById('statusMessage').textContent = 'Click "Step" or "Auto Run" to start visualization';
+            document.getElementById('resultBox').style.display = 'none';
+            init();
+        }
+
+        init();
+    </script>
+</body>
+</html>

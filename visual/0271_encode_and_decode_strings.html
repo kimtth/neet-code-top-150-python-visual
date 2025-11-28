@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Encode and Decode Strings - LeetCode 271</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="problem-info">
+            <h1><span class="problem-number">#271</span> Encode and Decode Strings</h1>
+            <p>Design an algorithm to encode a list of strings to a single string, then decode it back. The trick is handling strings that may contain any character, including delimiters!</p>
+            <div class="problem-meta">
+                <span class="meta-tag">📁 Array & Hashing</span>
+                <span class="meta-tag">🔤 String Encoding</span>
+                <span class="meta-tag">⏱️ O(n)</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <a href="../python/0271_encode_and_decode_strings/0271_encode_and_decode_strings.py">0271_encode_and_decode_strings.py</a>
+            </div>
+            </div>
+
+        <div class="explanation-panel">
+            <h4>💡 How It Works (Layman's Terms)</h4>
+            <ul>
+                <li><strong>Problem:</strong> How do you combine multiple strings into one, then split them back? You can't just use a comma—what if a string contains a comma?</li>
+                <li><strong>Solution:</strong> Before each string, write its length followed by #. Like "5#Hello5#World"</li>
+                <li><strong>Encoding:</strong> For each string, prepend "[length]#" so we know exactly how many characters to read</li>
+                <li><strong>Decoding:</strong> Read until #, get the length, read that many characters, repeat</li>
+                <li><strong>Why it works:</strong> Even if a string contains "#" or numbers, we always know exactly how many characters belong to each string</li>
+            </ul>
+        </div>
+
+
+        <div class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+            
+            <div class="controls">
+                <button class="btn btn-primary" id="stepBtn" onclick="step()">Step</button>
+                <button class="btn btn-success" id="autoBtn" onclick="toggleAuto()">Auto Run</button>
+                <button class="btn btn-warning" onclick="reset()">Reset</button>
+            </div>
+
+            <div class="phase-indicator">
+                <div class="phase-box" id="encodePhase">
+                    <div class="phase-title">Encoding</div>
+                    <div class="phase-description">Build "length#string"</div>
+                </div>
+                <div class="phase-box" id="decodePhase">
+                    <div class="phase-title">Decoding</div>
+                    <div class="phase-description">Parse back to list</div>
+                </div>
+            </div>
+
+            <div class="status-message" id="statusMessage">
+                Click "Step" or "Auto Run" to visualize encode/decode process
+            </div>
+
+            <div class="array-section">
+                <div class="array-label">Input Strings:</div>
+                <div class="array-container" id="inputContainer"></div>
+            </div>
+
+            <div class="array-section">
+                <div class="array-label">Encoded String:</div>
+                <div id="encodedContainer" style="font-family: monospace; font-size: 1.4em; background: #f5f5f5; padding: 15px; border-radius: 10px; word-break: break-all;"></div>
+            </div>
+
+            <div class="array-section">
+                <div class="array-label">Decoded Result:</div>
+                <div class="array-container" id="decodedContainer"></div>
+            </div>
+        </div>
+
+        <div class="code-section">
+            <h3>💻 Python Solution - Length Prefix Encoding</h3>
+            <div class="code-block">
+                <pre><span class="keyword">def</span> <span class="function">encode</span>(self, strs: List[<span class="class-name">str</span>]) -> <span class="class-name">str</span>:
+    <span class="comment"># Format: "length#string" for each string</span>
+    result = <span class="string">''</span>
+    <span class="keyword">for</span> s <span class="keyword">in</span> strs:
+        result += <span class="function">str</span>(<span class="function">len</span>(s)) + <span class="string">'#'</span> + s
+    <span class="keyword">return</span> result
+
+<span class="keyword">def</span> <span class="function">decode</span>(self, s: <span class="class-name">str</span>) -> List[<span class="class-name">str</span>]:
+    result = []
+    i = <span class="number">0</span>
+    <span class="keyword">while</span> i < <span class="function">len</span>(s):
+        j = i
+        <span class="keyword">while</span> s[j] != <span class="string">'#'</span>:
+            j += <span class="number">1</span>
+        length = <span class="function">int</span>(s[i:j])
+        i = j + <span class="number">1</span>
+        result.<span class="function">append</span>(s[i:i + length])
+        i += length
+    <span class="keyword">return</span> result</pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const inputStrings = ["Hello", "World", "#test", "12#ab"];
+        let encoded = '';
+        let decoded = [];
+        let phase = 'init'; // init, encoding, betweenPhases, decoding, done
+        let currentIndex = 0;
+        let autoInterval = null;
+        let decodePos = 0;
+
+        function init() {
+            renderInput();
+            document.getElementById('encodedContainer').innerHTML = '<span style="color: #999;">Will appear here...</span>';
+            renderDecoded([]);
+            document.getElementById('encodePhase').classList.remove('active');
+            document.getElementById('decodePhase').classList.remove('active');
+        }
+
+        function renderInput() {
+            const container = document.getElementById('inputContainer');
+            container.innerHTML = '';
+            inputStrings.forEach((str, idx) => {
+                const box = document.createElement('div');
+                box.className = 'array-box';
+                box.id = `input-${idx}`;
+                box.style.width = 'auto';
+                box.style.minWidth = '80px';
+                box.style.padding = '10px 15px';
+                box.innerHTML = `"${str}"<span class="index-label">[${idx}]</span>`;
+                container.appendChild(box);
+            });
+        }
+
+        function renderEncoded(highlight = -1, highlightEnd = -1) {
+            const container = document.getElementById('encodedContainer');
+            if (encoded === '') {
+                container.innerHTML = '<span style="color: #999;">Building...</span>';
+                return;
+            }
+            let html = '';
+            for (let i = 0; i < encoded.length; i++) {
+                let style = '';
+                if (i >= highlight && i < highlightEnd && highlight >= 0) {
+                    style = 'background: #ffeb3b; padding: 2px;';
+                }
+                html += `<span style="${style}">${encoded[i] === '#' ? '<span style="color: #f44336; font-weight: bold;">#</span>' : encoded[i]}</span>`;
+            }
+            container.innerHTML = `"${html}"`;
+        }
+
+        function renderDecoded(arr) {
+            const container = document.getElementById('decodedContainer');
+            container.innerHTML = '';
+            arr.forEach((str, idx) => {
+                const box = document.createElement('div');
+                box.className = 'array-box complete';
+                box.id = `decoded-${idx}`;
+                box.style.width = 'auto';
+                box.style.minWidth = '80px';
+                box.style.padding = '10px 15px';
+                box.innerHTML = `"${str}"<span class="index-label">[${idx}]</span>`;
+                container.appendChild(box);
+            });
+        }
+
+        function step() {
+            if (phase === 'init') {
+                phase = 'encoding';
+                currentIndex = 0;
+                encoded = '';
+                document.getElementById('encodePhase').classList.add('active');
+                document.getElementById('statusMessage').textContent = 'Starting to encode each string with length prefix...';
+            } else if (phase === 'encoding') {
+                if (currentIndex < inputStrings.length) {
+                    const str = inputStrings[currentIndex];
+                    const prefix = str.length + '#';
+                    encoded += prefix + str;
+                    
+                    // Highlight current input
+                    document.querySelectorAll('.array-box').forEach(b => b.classList.remove('highlight'));
+                    document.getElementById(`input-${currentIndex}`).classList.add('highlight');
+                    
+                    renderEncoded();
+                    document.getElementById('statusMessage').textContent = 
+                        `Encoding "${str}": Add "${prefix}" (length=${str.length}) + "${str}" → Total: "${encoded}"`;
+                    
+                    currentIndex++;
+                } else {
+                    phase = 'betweenPhases';
+                    document.getElementById('encodePhase').classList.remove('active');
+                    document.querySelectorAll('.array-box').forEach(b => b.classList.remove('highlight'));
+                    document.getElementById('statusMessage').textContent = 
+                        `Encoding complete! Result: "${encoded}" — Now let's decode it back...`;
+                }
+            } else if (phase === 'betweenPhases') {
+                phase = 'decoding';
+                decodePos = 0;
+                decoded = [];
+                document.getElementById('decodePhase').classList.add('active');
+                document.getElementById('statusMessage').textContent = 'Starting decode: Read length, then read that many characters...';
+            } else if (phase === 'decoding') {
+                if (decodePos < encoded.length) {
+                    // Find the #
+                    let j = decodePos;
+                    while (encoded[j] !== '#') j++;
+                    const length = parseInt(encoded.substring(decodePos, j));
+                    const start = j + 1;
+                    const str = encoded.substring(start, start + length);
+                    decoded.push(str);
+                    
+                    renderEncoded(decodePos, start + length);
+                    renderDecoded(decoded);
+                    
+                    document.getElementById('statusMessage').textContent = 
+                        `Read length=${length} at position ${decodePos}, then read "${str}" (${length} chars). Decoded: [${decoded.map(s => `"${s}"`).join(', ')}]`;
+                    
+                    decodePos = start + length;
+                } else {
+                    phase = 'done';
+                    document.getElementById('decodePhase').classList.remove('active');
+                    renderEncoded();
+                    document.getElementById('statusMessage').textContent = 
+                        `✅ Done! Successfully decoded back to: [${decoded.map(s => `"${s}"`).join(', ')}]`;
+                    document.getElementById('stepBtn').disabled = true;
+                    stopAuto();
+                }
+            }
+        }
+
+        function toggleAuto() {
+            if (autoInterval) {
+                stopAuto();
+            } else {
+                document.getElementById('autoBtn').textContent = 'Pause';
+                autoInterval = setInterval(() => {
+                    if (phase === 'done') {
+                        stopAuto();
+                    } else {
+                        step();
+                    }
+                }, 1500);
+            }
+        }
+
+        function stopAuto() {
+            if (autoInterval) {
+                clearInterval(autoInterval);
+                autoInterval = null;
+            }
+            document.getElementById('autoBtn').textContent = 'Auto Run';
+        }
+
+        function reset() {
+            stopAuto();
+            phase = 'init';
+            currentIndex = 0;
+            encoded = '';
+            decoded = [];
+            decodePos = 0;
+            document.getElementById('stepBtn').disabled = false;
+            document.getElementById('statusMessage').textContent = 
+                'Click "Step" or "Auto Run" to visualize encode/decode process';
+            init();
+        }
+
+        init();
+    </script>
+</body>
+</html>

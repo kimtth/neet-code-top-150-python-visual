@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meeting Rooms - LeetCode 252</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="problem-info">
+            <h1><span class="problem-number">#0252</span> Meeting Rooms</h1>
+            <p><strong>Problem:</strong> Given an array of meeting time intervals, determine if a person can attend all meetings (no overlaps).</p>
+            <p><strong>Pattern:</strong> Sort + Linear Scan - Sort by start time and check for overlaps</p>
+            <div class="problem-meta">
+                <span class="meta-tag">📏 Intervals</span>
+                <span class="meta-tag">⏱️ O(n log n)</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <code>python/0252_meeting_rooms/0252_meeting_rooms.py</code>
+            </div>
+
+        </div>
+
+        <div class="explanation-panel">
+            <h4>🧠 How It Works (Layman's Terms)</h4>
+            <p>Interval problems deal with <strong>ranges and overlaps</strong>:</p>
+            <ul>
+                <li><strong>Sort:</strong> Usually sort by start time</li>
+                <li><strong>Merge:</strong> Combine overlapping intervals</li>
+                <li><strong>Compare:</strong> Check if intervals overlap</li>
+                <li><strong>Track:</strong> Maintain current merged interval</li>
+            </ul>
+        </div>
+
+
+        <div class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+
+            <div class="visualization">
+            <svg id="mainSvg"></svg>
+        </div>
+
+        <div class="controls">
+            <button id="stepBtn">Step</button>
+            <button id="autoBtn">Auto Run</button>
+            <button id="resetBtn">Reset</button>
+            <div class="speed-control">
+                <label for="speed">Speed:</label>
+                <input type="range" id="speed" min="100" max="2000" value="800">
+            </div>
+        </div>
+
+        <div class="status" id="status">Click "Step" to check for meeting conflicts</div>
+
+        <div class="variables">
+            <div class="var-item">
+                <span class="var-label">Comparing:</span>
+                <span id="compareDisplay">-</span>
+            </div>
+            <div class="var-item">
+                <span class="var-label">Can Attend All:</span>
+                <span id="resultDisplay">-</span>
+            </div>
+        </div>
+
+        </div>
+
+        <div class="code-section">
+            <h3>Python Solution</h3>
+            <pre><span class="keyword">def</span> <span class="function">canAttendMeetings</span>(intervals):
+    <span class="string">"""
+    Sort by start time, check adjacent meetings.
+    Time: O(n log n), Space: O(1)
+    """</span>
+    <span class="keyword">if</span> <span class="keyword">not</span> intervals:
+        <span class="keyword">return</span> <span class="keyword">True</span>
+    
+    <span class="comment"># Sort by start time</span>
+    intervals.<span class="function">sort</span>(key=<span class="keyword">lambda</span> x: <span class="class-name">x</span>[<span class="number">0</span>])
+    
+    <span class="comment"># Check for overlaps</span>
+    <span class="keyword">for</span> i <span class="keyword">in</span> <span class="function">range</span>(<span class="number">1</span>, <span class="function">len</span>(intervals)):
+        <span class="keyword">if</span> intervals[i][<span class="number">0</span>] < intervals[i-<span class="number">1</span>][<span class="number">1</span>]:
+            <span class="keyword">return</span> <span class="keyword">False</span>  <span class="comment"># Overlap found!</span>
+    
+    <span class="keyword">return</span> <span class="keyword">True</span></pre>
+        </div>
+    </div>
+
+    <script>
+        // Intervals: [[0,30], [5,10], [15,20]]
+        const intervals = [[0, 30], [5, 10], [15, 20]];
+        
+        let sorted = [];
+        let checkIdx = 0;
+        let phase = 'sort'; // 'sort' | 'check' | 'done'
+        let intervalStates = {}; // idx -> 'checking' | 'ok' | 'conflict'
+        let canAttend = null;
+        let autoRunning = false;
+        let autoTimer = null;
+
+        const width = 700;
+        const height = 350;
+        const svg = d3.select("#mainSvg")
+            .attr("width", width)
+            .attr("height", height);
+
+        const colors = ["#e3f2fd", "#c8e6c9", "#fff3e0", "#f3e5f5"];
+        const strokes = ["#1976d2", "#4caf50", "#ff9800", "#7b1fa2"];
+
+        function draw() {
+            svg.selectAll("*").remove();
+
+            svg.append("text")
+                .attr("x", width / 2).attr("y", 25)
+                .attr("text-anchor", "middle")
+                .attr("font-weight", "bold")
+                .text("Meeting Rooms: Checking for Overlaps");
+
+            // Timeline
+            const timelineY = 180;
+            const timelineStart = 80;
+            const timelineEnd = width - 80;
+            const maxTime = 35;
+            const scale = (timelineEnd - timelineStart) / maxTime;
+
+            svg.append("line")
+                .attr("x1", timelineStart).attr("y1", timelineY)
+                .attr("x2", timelineEnd).attr("y2", timelineY)
+                .attr("stroke", "#333").attr("stroke-width", 2);
+
+            // Time labels
+            for (let t = 0; t <= maxTime; t += 5) {
+                const x = timelineStart + t * scale;
+                svg.append("line")
+                    .attr("x1", x).attr("y1", timelineY - 5)
+                    .attr("x2", x).attr("y2", timelineY + 5)
+                    .attr("stroke", "#333");
+                svg.append("text")
+                    .attr("x", x).attr("y", timelineY + 20)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "11px")
+                    .text(t);
+            }
+
+            // Draw intervals
+            const displayIntervals = phase === 'sort' ? intervals : sorted;
+            displayIntervals.forEach((interval, i) => {
+                const [start, end] = interval;
+                const x1 = timelineStart + start * scale;
+                const x2 = timelineStart + end * scale;
+                const y = 80 + i * 30;
+                const state = intervalStates[i];
+
+                let fill = colors[i % colors.length];
+                let stroke = strokes[i % strokes.length];
+                
+                if (state === 'checking') {
+                    fill = "#ffeb3b"; stroke = "#f57c00";
+                } else if (state === 'ok') {
+                    fill = "#c8e6c9"; stroke = "#4caf50";
+                } else if (state === 'conflict') {
+                    fill = "#ffcdd2"; stroke = "#e53935";
+                }
+
+                svg.append("rect")
+                    .attr("x", x1).attr("y", y)
+                    .attr("width", x2 - x1).attr("height", 22)
+                    .attr("rx", 5)
+                    .attr("fill", fill).attr("stroke", stroke)
+                    .attr("stroke-width", 2);
+
+                svg.append("text")
+                    .attr("x", (x1 + x2) / 2).attr("y", y + 15)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "12px")
+                    .attr("font-weight", "bold")
+                    .text(`[${start},${end}]`);
+            });
+
+            // Phase indicator
+            svg.append("text")
+                .attr("x", 50).attr("y", 70)
+                .attr("font-weight", "bold")
+                .text(phase === 'sort' ? "Original:" : "Sorted by start:");
+
+            // Result
+            if (canAttend !== null) {
+                svg.append("rect")
+                    .attr("x", width / 2 - 100).attr("y", height - 80)
+                    .attr("width", 200).attr("height", 45)
+                    .attr("rx", 10)
+                    .attr("fill", canAttend ? "#c8e6c9" : "#ffcdd2")
+                    .attr("stroke", canAttend ? "#4caf50" : "#e53935");
+
+                svg.append("text")
+                    .attr("x", width / 2).attr("y", height - 50)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "16px")
+                    .attr("font-weight", "bold")
+                    .text(canAttend ? "✓ Can attend all!" : "✗ Has conflict!");
+            }
+
+            // Legend
+            svg.append("text")
+                .attr("x", 50).attr("y", height - 20)
+                .attr("font-size", "11px")
+                .text("Conflict: When meeting[i].start < meeting[i-1].end");
+        }
+
+        function step() {
+            if (phase === 'sort') {
+                sorted = [...intervals].sort((a, b) => a[0] - b[0]);
+                phase = 'check';
+                checkIdx = 1;
+                document.getElementById("status").textContent = 
+                    "Sorted intervals by start time. Now checking for overlaps...";
+                draw();
+                return true;
+            }
+
+            if (phase === 'check') {
+                if (checkIdx >= sorted.length) {
+                    canAttend = true;
+                    phase = 'done';
+                    document.getElementById("resultDisplay").textContent = "Yes ✓";
+                    document.getElementById("status").textContent = 
+                        "No overlaps found! Can attend all meetings.";
+                    draw();
+                    return false;
+                }
+
+                const prev = sorted[checkIdx - 1];
+                const curr = sorted[checkIdx];
+                
+                intervalStates[checkIdx - 1] = 'checking';
+                intervalStates[checkIdx] = 'checking';
+                
+                document.getElementById("compareDisplay").textContent = 
+                    `[${prev[0]},${prev[1]}] vs [${curr[0]},${curr[1]}]`;
+
+                if (curr[0] < prev[1]) {
+                    // Overlap!
+                    intervalStates[checkIdx - 1] = 'conflict';
+                    intervalStates[checkIdx] = 'conflict';
+                    canAttend = false;
+                    phase = 'done';
+                    document.getElementById("resultDisplay").textContent = "No ✗";
+                    document.getElementById("status").textContent = 
+                        `Conflict! Meeting [${curr[0]},${curr[1]}] starts at ${curr[0]} before [${prev[0]},${prev[1]}] ends at ${prev[1]}`;
+                    draw();
+                    return false;
+                } else {
+                    intervalStates[checkIdx - 1] = 'ok';
+                    document.getElementById("status").textContent = 
+                        `No overlap: ${curr[0]} >= ${prev[1]} ✓`;
+                    checkIdx++;
+                }
+
+                draw();
+                return checkIdx < sorted.length;
+            }
+
+            return false;
+        }
+
+        function reset() {
+            sorted = [];
+            checkIdx = 0;
+            phase = 'sort';
+            intervalStates = {};
+            canAttend = null;
+            autoRunning = false;
+            if (autoTimer) clearInterval(autoTimer);
+            
+            document.getElementById("compareDisplay").textContent = "-";
+            document.getElementById("resultDisplay").textContent = "-";
+            document.getElementById("status").textContent = 
+                'Click "Step" to check for meeting conflicts';
+            document.getElementById("autoBtn").textContent = "Auto Run";
+            
+            draw();
+        }
+
+        function autoRun() {
+            if (autoRunning) {
+                autoRunning = false;
+                clearInterval(autoTimer);
+                document.getElementById("autoBtn").textContent = "Auto Run";
+            } else {
+                autoRunning = true;
+                document.getElementById("autoBtn").textContent = "Pause";
+                const speed = 2100 - document.getElementById("speed").value;
+                autoTimer = setInterval(() => {
+                    if (!step()) {
+                        autoRunning = false;
+                        clearInterval(autoTimer);
+                        document.getElementById("autoBtn").textContent = "Auto Run";
+                    }
+                }, speed);
+            }
+        }
+
+        document.getElementById("stepBtn").addEventListener("click", step);
+        document.getElementById("autoBtn").addEventListener("click", autoRun);
+        document.getElementById("resetBtn").addEventListener("click", reset);
+
+        draw();
+    </script>
+</body>
+</html>

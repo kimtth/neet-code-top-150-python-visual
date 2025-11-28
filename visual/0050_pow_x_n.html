@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>050 - Pow(x, n)</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="problem-info">
+            <h1><span class="problem-number">#050</span> Pow(x, n)</h1>
+            <p>
+                Implement pow(x, n), which calculates x raised to the power n. Use binary 
+                exponentiation for O(log n) time complexity. If n is odd, multiply by x. 
+                If even, square the result.
+            </p>
+            <div class="problem-meta">
+                <span class="meta-tag">🔢 Math</span>
+                <span class="meta-tag">⏱️ O(n)</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <code>python/0050_pow(x,_n)/0050_pow(x,_n).py</code>
+            </div>
+
+        </div>
+
+        <div class="explanation-panel">
+            <h4>🧠 How It Works (Layman's Terms)</h4>
+            <p>This algorithm solves the problem <strong>step by step</strong>:</p>
+            <ul>
+                <li><strong>Understand:</strong> Parse the input data</li>
+                <li><strong>Process:</strong> Apply the core logic</li>
+                <li><strong>Optimize:</strong> Use efficient data structures</li>
+                <li><strong>Return:</strong> Output the computed result</li>
+            </ul>
+        </div>
+
+
+        <section class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+            <div class="controls">
+                <button id="autoRunBtn" class="btn">▶ Auto Run</button>
+                <button id="stepBtn" class="btn btn-success">Step</button>
+                <button id="resetBtn" class="btn btn-danger">Reset</button>
+            </div>
+            <div class="status" id="status">Calculate 2^10 using binary exponentiation</div>
+            <svg id="visualization"></svg>
+        </section>
+
+        <section class="code-section">
+            <h2>Python Solution</h2>
+            <pre><span class="keyword">def</span> <span class="function">myPow</span>(x, n):
+    <span class="keyword">if</span> n < <span class="number">0</span>:
+        x = <span class="number">1</span> / x
+        n = -n
+    
+    result = <span class="number">1</span>
+    <span class="keyword">while</span> n > <span class="number">0</span>:
+        <span class="keyword">if</span> n % <span class="number">2</span> == <span class="number">1</span>:  <span class="comment"># n is odd</span>
+            result *= x
+        x *= x          <span class="comment"># Square x</span>
+        n //= <span class="number">2</span>         <span class="comment"># Halve n</span>
+    
+    <span class="keyword">return</span> result</pre>
+        </section>
+    </div>
+
+    <script>
+        const width = 900;
+        const height = 520;
+
+        const svg = d3.select("#visualization")
+            .attr("width", width)
+            .attr("height", height);
+
+        const originalX = 2;
+        const originalN = 10;
+        
+        let x, n, result;
+        let history = [];
+        let phase = "init";
+        let animationTimer = null;
+
+        function reset() {
+            x = originalX;
+            n = originalN;
+            result = 1;
+            history = [];
+            phase = "init";
+            
+            if (animationTimer) clearInterval(animationTimer);
+            animationTimer = null;
+            document.getElementById("autoRunBtn").textContent = "▶ Auto Run";
+            document.getElementById("status").textContent = `Calculate ${originalX}^${originalN} using binary exponentiation`;
+            render();
+        }
+
+        function render() {
+            svg.selectAll("*").remove();
+
+            // Title
+            svg.append("text")
+                .attr("x", 30)
+                .attr("y", 35)
+                .attr("font-size", "14px")
+                .attr("font-weight", "bold")
+                .attr("fill", "#1e293b")
+                .text(`Binary Exponentiation: ${originalX}^${originalN}`);
+
+            // Current state
+            const stateY = 80;
+            svg.append("rect")
+                .attr("x", 30)
+                .attr("y", stateY)
+                .attr("width", 350)
+                .attr("height", 100)
+                .attr("rx", 10)
+                .attr("fill", "#eff6ff")
+                .attr("stroke", "#3b82f6");
+
+            svg.append("text")
+                .attr("x", 50)
+                .attr("y", stateY + 30)
+                .attr("font-size", "16px")
+                .attr("font-weight", "bold")
+                .attr("fill", "#1e293b")
+                .text(`x = ${x}`);
+
+            svg.append("text")
+                .attr("x", 50)
+                .attr("y", stateY + 55)
+                .attr("font-size", "16px")
+                .attr("font-weight", "bold")
+                .attr("fill", "#1e293b")
+                .text(`n = ${n}`);
+
+            svg.append("text")
+                .attr("x", 180)
+                .attr("y", stateY + 55)
+                .attr("font-size", "14px")
+                .attr("fill", "#64748b")
+                .text(`(binary: ${n.toString(2)})`);
+
+            svg.append("text")
+                .attr("x", 50)
+                .attr("y", stateY + 80)
+                .attr("font-size", "16px")
+                .attr("font-weight", "bold")
+                .attr("fill", "#10b981")
+                .text(`result = ${result}`);
+
+            // History
+            const historyY = 210;
+            svg.append("text")
+                .attr("x", 30)
+                .attr("y", historyY)
+                .attr("font-size", "13px")
+                .attr("font-weight", "bold")
+                .attr("fill", "#64748b")
+                .text("Step History:");
+
+            svg.append("rect")
+                .attr("x", 30)
+                .attr("y", historyY + 10)
+                .attr("width", 500)
+                .attr("height", 140)
+                .attr("rx", 8)
+                .attr("fill", "#f8fafc")
+                .attr("stroke", "#e2e8f0");
+
+            history.slice(-5).forEach((step, i) => {
+                svg.append("text")
+                    .attr("x", 45)
+                    .attr("y", historyY + 35 + i * 25)
+                    .attr("font-size", "12px")
+                    .attr("fill", "#1e293b")
+                    .text(step);
+            });
+
+            // Binary representation visualization
+            const binaryY = 80;
+            const binaryX = 450;
+            svg.append("text")
+                .attr("x", binaryX)
+                .attr("y", binaryY)
+                .attr("font-size", "13px")
+                .attr("font-weight", "bold")
+                .attr("fill", "#1e293b")
+                .text("Binary representation of n:");
+
+            const binary = originalN.toString(2);
+            binary.split('').forEach((bit, i) => {
+                const x = binaryX + i * 40;
+                svg.append("rect")
+                    .attr("x", x)
+                    .attr("y", binaryY + 10)
+                    .attr("width", 35)
+                    .attr("height", 35)
+                    .attr("rx", 6)
+                    .attr("fill", bit === '1' ? "#d1fae5" : "#f1f5f9")
+                    .attr("stroke", bit === '1' ? "#10b981" : "#94a3b8");
+
+                svg.append("text")
+                    .attr("x", x + 17.5)
+                    .attr("y", binaryY + 35)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "16px")
+                    .attr("font-weight", "bold")
+                    .attr("fill", "#1e293b")
+                    .text(bit);
+
+                svg.append("text")
+                    .attr("x", x + 17.5)
+                    .attr("y", binaryY + 60)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "11px")
+                    .attr("fill", "#64748b")
+                    .text(`2^${binary.length - 1 - i}`);
+            });
+
+            svg.append("text")
+                .attr("x", binaryX)
+                .attr("y", binaryY + 85)
+                .attr("font-size", "12px")
+                .attr("fill", "#64748b")
+                .text(`10 = 8 + 2 = 2³ + 2¹`);
+
+            // Algorithm explanation
+            const algoX = 550;
+            const algoY = 210;
+            svg.append("text")
+                .attr("x", algoX)
+                .attr("y", algoY)
+                .attr("font-size", "13px")
+                .attr("font-weight", "bold")
+                .attr("fill", "#1e293b")
+                .text("Algorithm (O(log n)):");
+
+            const steps = [
+                "1. If n is odd: result *= x",
+                "2. Square x: x *= x",
+                "3. Halve n: n //= 2",
+                "4. Repeat until n = 0",
+                "",
+                "Key insight:",
+                "x^10 = x^(1010₂)",
+                "    = x^8 · x^2",
+                "    = (x²)⁴ · x²"
+            ];
+
+            steps.forEach((step, i) => {
+                svg.append("text")
+                    .attr("x", algoX)
+                    .attr("y", algoY + 25 + i * 20)
+                    .attr("font-size", "12px")
+                    .attr("fill", "#64748b")
+                    .text(step);
+            });
+
+            // Result
+            if (phase === "done") {
+                svg.append("rect")
+                    .attr("x", 30)
+                    .attr("y", 420)
+                    .attr("width", 400)
+                    .attr("height", 55)
+                    .attr("rx", 10)
+                    .attr("fill", "#d1fae5")
+                    .attr("stroke", "#10b981")
+                    .attr("stroke-width", 2);
+
+                svg.append("text")
+                    .attr("x", 230)
+                    .attr("y", 455)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "18px")
+                    .attr("font-weight", "bold")
+                    .attr("fill", "#10b981")
+                    .text(`✓ ${originalX}^${originalN} = ${result}`);
+            }
+        }
+
+        function step() {
+            if (n <= 0) {
+                phase = "done";
+                document.getElementById("status").textContent = `✓ Complete! ${originalX}^${originalN} = ${result}`;
+                render();
+                return;
+            }
+
+            let stepDesc = `n=${n}: `;
+            
+            if (n % 2 === 1) {
+                const oldResult = result;
+                result *= x;
+                stepDesc += `odd → result = ${oldResult} × ${x} = ${result}; `;
+            } else {
+                stepDesc += `even → result unchanged; `;
+            }
+
+            const oldX = x;
+            x *= x;
+            stepDesc += `x = ${oldX}² = ${x}; `;
+
+            n = Math.floor(n / 2);
+            stepDesc += `n = ${n * 2}/2 = ${n}`;
+
+            history.push(stepDesc);
+            document.getElementById("status").textContent = stepDesc;
+            
+            render();
+        }
+
+        function autoRun() {
+            if (animationTimer) {
+                clearInterval(animationTimer);
+                animationTimer = null;
+                document.getElementById("autoRunBtn").textContent = "▶ Auto Run";
+                return;
+            }
+
+            document.getElementById("autoRunBtn").textContent = "⏸ Pause";
+            animationTimer = setInterval(() => {
+                if (n <= 0) {
+                    phase = "done";
+                    document.getElementById("status").textContent = `✓ Complete! ${originalX}^${originalN} = ${result}`;
+                    render();
+                    clearInterval(animationTimer);
+                    animationTimer = null;
+                    document.getElementById("autoRunBtn").textContent = "▶ Auto Run";
+                    return;
+                }
+                step();
+            }, 1200);
+        }
+
+        document.getElementById("autoRunBtn").addEventListener("click", autoRun);
+        document.getElementById("stepBtn").addEventListener("click", step);
+        document.getElementById("resetBtn").addEventListener("click", reset);
+
+        reset();
+    </script>
+</body>
+</html>

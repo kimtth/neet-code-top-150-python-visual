@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Permutation in String - LeetCode 567</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="problem-info">
+            <h1><span class="problem-number">#567</span> Permutation in String</h1>
+            <p>Check if s2 contains any permutation of s1 as a substring. Use a sliding window with character frequency matching!</p>
+            <div class="problem-meta">
+                <span class="meta-tag">🪟 Sliding Window</span>
+                <span class="meta-tag">🔤 String</span>
+                <span class="meta-tag">⏱️ O(n)</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <a href="../python/0567_permutation_in_string/0567_permutation_in_string.py">0567_permutation_in_string.py</a>
+            </div>
+            </div>
+
+        <div class="explanation-panel">
+            <h4>💡 How It Works (Layman's Terms)</h4>
+            <ul>
+                <li><strong>Permutation:</strong> Same characters in any order (e.g., "ab" and "ba" are permutations)</li>
+                <li><strong>Key insight:</strong> Two strings are permutations if they have the same character frequencies</li>
+                <li><strong>Window size:</strong> Always equals len(s1) - a permutation must have the same length</li>
+                <li><strong>Slide window:</strong> Move window one character at a time, updating frequencies</li>
+                <li><strong>Match found:</strong> When window's char frequencies equal s1's frequencies</li>
+            </ul>
+        </div>
+
+
+        <div class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+            
+            <div class="controls">
+                <button class="btn btn-primary" id="stepBtn" onclick="step()">Step</button>
+                <button class="btn btn-success" id="autoBtn" onclick="toggleAuto()">Auto Run</button>
+                <button class="btn btn-warning" onclick="reset()">Reset</button>
+            </div>
+
+            <div class="status-message" id="statusMessage">
+                Click "Step" or "Auto Run" to check if s2 contains a permutation of s1
+            </div>
+
+            <div class="array-section">
+                <div class="array-label">s1 (pattern to find permutation of):</div>
+                <div class="array-container" id="s1Container"></div>
+            </div>
+
+            <div class="array-section">
+                <div class="array-label">s2 (search in this string):</div>
+                <div class="array-container" id="s2Container"></div>
+            </div>
+
+            <div style="display: flex; gap: 30px; margin-top: 20px;">
+                <div class="array-section" style="flex: 1;">
+                    <div class="array-label">s1 Character Counts:</div>
+                    <div id="s1CountContainer" style="display: flex; gap: 10px; flex-wrap: wrap;"></div>
+                </div>
+                <div class="array-section" style="flex: 1;">
+                    <div class="array-label">Current Window Counts:</div>
+                    <div id="windowCountContainer" style="display: flex; gap: 10px; flex-wrap: wrap;"></div>
+                </div>
+            </div>
+
+            <div class="info-box" id="matchBox" style="display: none;"></div>
+        </div>
+        <div class="code-section">
+            <h3>💻 Python Solution</h3>
+            <div class="code-block">
+                <pre><span class="keyword">def</span> <span class="function">checkInclusion</span>(self, s1: <span class="class-name">str</span>, s2: <span class="class-name">str</span>) -> bool:
+    <span class="keyword">if</span> <span class="function">len</span>(s1) > <span class="function">len</span>(s2):
+        <span class="keyword">return</span> <span class="keyword">False</span>
+    
+    s1_count = <span class="function">Counter</span>(s1)
+    window = <span class="function">Counter</span>(s2[:<span class="function">len</span>(s1)])
+    
+    <span class="keyword">if</span> window == s1_count:
+        <span class="keyword">return</span> <span class="keyword">True</span>
+    
+    <span class="keyword">for</span> i <span class="keyword">in</span> <span class="function">range</span>(<span class="function">len</span>(s2) - <span class="function">len</span>(s1)):
+        <span class="comment"># Remove leftmost char, add next char</span>
+        window[s2[i]] -= <span class="number">1</span>
+        <span class="keyword">if</span> window[s2[i]] == <span class="number">0</span>:
+            del window[s2[i]]
+        window[s2[i + <span class="function">len</span>(s1)]] += <span class="number">1</span>
+        
+        <span class="keyword">if</span> window == s1_count:
+            <span class="keyword">return</span> <span class="keyword">True</span>
+    
+    <span class="keyword">return</span> <span class="keyword">False</span></pre>
+            </div>
+        </div>
+
+        </div>
+
+    <script>
+        const s1 = "ab";
+        const s2 = "eidbaooo";
+        const windowSize = s1.length;
+        
+        let s1Count = {};
+        let windowCount = {};
+        let windowStart = 0;
+        let phase = 'init';
+        let autoInterval = null;
+
+        function getCount(str) {
+            const count = {};
+            for (const c of str) {
+                count[c] = (count[c] || 0) + 1;
+            }
+            return count;
+        }
+
+        function countsMatch(c1, c2) {
+            const keys1 = Object.keys(c1).filter(k => c1[k] > 0);
+            const keys2 = Object.keys(c2).filter(k => c2[k] > 0);
+            if (keys1.length !== keys2.length) return false;
+            for (const k of keys1) {
+                if (c1[k] !== c2[k]) return false;
+            }
+            return true;
+        }
+
+        function init() {
+            s1Count = getCount(s1);
+            windowCount = {};
+            windowStart = 0;
+            renderS1();
+            renderS2();
+            renderCounts();
+            document.getElementById('matchBox').style.display = 'none';
+        }
+
+        function renderS1() {
+            const container = document.getElementById('s1Container');
+            container.innerHTML = '';
+            s1.split('').forEach((char, idx) => {
+                const box = document.createElement('div');
+                box.className = 'array-box';
+                box.style.width = '45px';
+                box.innerHTML = `${char}<span class="index-label">[${idx}]</span>`;
+                container.appendChild(box);
+            });
+        }
+
+        function renderS2() {
+            const container = document.getElementById('s2Container');
+            container.innerHTML = '';
+            s2.split('').forEach((char, idx) => {
+                const box = document.createElement('div');
+                box.className = 'array-box';
+                box.id = `s2-${idx}`;
+                box.style.width = '45px';
+                if (idx >= windowStart && idx < windowStart + windowSize) {
+                    box.classList.add('current');
+                }
+                box.innerHTML = `${char}<span class="index-label">[${idx}]</span>`;
+                container.appendChild(box);
+            });
+        }
+
+        function renderCounts() {
+            const s1Container = document.getElementById('s1CountContainer');
+            s1Container.innerHTML = '';
+            Object.entries(s1Count).sort().forEach(([char, count]) => {
+                const box = document.createElement('div');
+                box.className = 'variable-box';
+                box.innerHTML = `<div class="variable-name">'${char}'</div><div class="variable-value">${count}</div>`;
+                s1Container.appendChild(box);
+            });
+
+            const windowContainer = document.getElementById('windowCountContainer');
+            windowContainer.innerHTML = '';
+            const windowKeys = Object.keys(windowCount).filter(k => windowCount[k] > 0).sort();
+            if (windowKeys.length === 0) {
+                windowContainer.innerHTML = '<span style="color: #999;">Empty</span>';
+            } else {
+                windowKeys.forEach(char => {
+                    const box = document.createElement('div');
+                    box.className = 'variable-box';
+                    const matches = s1Count[char] === windowCount[char];
+                    if (matches) {
+                        box.style.borderColor = '#4caf50';
+                        box.style.background = '#e8f5e9';
+                    } else {
+                        box.style.borderColor = '#ff9800';
+                        box.style.background = '#fff3e0';
+                    }
+                    box.innerHTML = `<div class="variable-name">'${char}'</div><div class="variable-value">${windowCount[char]}
+
+        </div>`;
+                    windowContainer.appendChild(box);
+                });
+            }
+        }
+
+        function step() {
+            if (phase === 'init') {
+                phase = 'firstWindow';
+                windowCount = getCount(s2.substring(0, windowSize));
+                renderS2();
+                renderCounts();
+                
+                if (countsMatch(s1Count, windowCount)) {
+                    phase = 'found';
+                    document.getElementById('matchBox').style.display = 'block';
+                    document.getElementById('matchBox').className = 'info-box secondary';
+                    document.getElementById('matchBox').textContent = `✅ Found! "${s2.substring(0, windowSize)}" is a permutation of "${s1}"`;
+                    document.getElementById('statusMessage').textContent = 'Permutation found in first window!';
+                    document.getElementById('stepBtn').disabled = true;
+                    stopAuto();
+                } else {
+                    document.getElementById('statusMessage').textContent = 
+                        `Initial window "${s2.substring(0, windowSize)}": Counts don't match s1. Sliding...`;
+                }
+                return;
+            }
+
+            if (phase === 'firstWindow') {
+                phase = 'sliding';
+            }
+
+            if (phase === 'sliding') {
+                if (windowStart >= s2.length - windowSize) {
+                    phase = 'done';
+                    document.getElementById('matchBox').style.display = 'block';
+                    document.getElementById('matchBox').className = 'info-box highlight';
+                    document.getElementById('matchBox').textContent = '❌ No permutation of s1 found in s2';
+                    document.getElementById('statusMessage').textContent = 'Search complete. No match found.';
+                    document.getElementById('stepBtn').disabled = true;
+                    stopAuto();
+                    return;
+                }
+
+                // Slide window
+                const removeChar = s2[windowStart];
+                windowCount[removeChar]--;
+                if (windowCount[removeChar] === 0) delete windowCount[removeChar];
+                
+                windowStart++;
+                const addChar = s2[windowStart + windowSize - 1];
+                windowCount[addChar] = (windowCount[addChar] || 0) + 1;
+
+                renderS2();
+                renderCounts();
+
+                const windowStr = s2.substring(windowStart, windowStart + windowSize);
+                
+                if (countsMatch(s1Count, windowCount)) {
+                    phase = 'found';
+                    document.getElementById('matchBox').style.display = 'block';
+                    document.getElementById('matchBox').className = 'info-box secondary';
+                    document.getElementById('matchBox').textContent = `✅ Found! "${windowStr}" is a permutation of "${s1}"`;
+                    document.getElementById('statusMessage').textContent = `Permutation found at position ${windowStart}!`;
+                    document.getElementById('stepBtn').disabled = true;
+                    stopAuto();
+                } else {
+                    document.getElementById('statusMessage').textContent = 
+                        `Window "${windowStr}" at [${windowStart}]: Removed '${removeChar}', added '${addChar}'. Counts don't match.`;
+                }
+            }
+        }
+
+        function toggleAuto() {
+            if (autoInterval) {
+                stopAuto();
+            } else {
+                document.getElementById('autoBtn').textContent = 'Pause';
+                autoInterval = setInterval(() => {
+                    if (phase === 'done' || phase === 'found') {
+                        stopAuto();
+                    } else {
+                        step();
+                    }
+                }, 1200);
+            }
+        }
+
+        function stopAuto() {
+            if (autoInterval) {
+                clearInterval(autoInterval);
+                autoInterval = null;
+            }
+            document.getElementById('autoBtn').textContent = 'Auto Run';
+        }
+
+        function reset() {
+            stopAuto();
+            phase = 'init';
+            windowStart = 0;
+            document.getElementById('stepBtn').disabled = false;
+            document.getElementById('statusMessage').textContent = 
+                'Click "Step" or "Auto Run" to check if s2 contains a permutation of s1';
+            init();
+        }
+
+        init();
+    </script>
+</body>
+</html>

@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Min Cost Climbing Stairs - LeetCode 746</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="problem-info">
+            <h1><span class="problem-number">#0746</span> Min Cost Climbing Stairs</h1>
+            <p><strong>Problem:</strong> You can start from step 0 or 1. Each step has a cost. You can climb 1 or 2 steps at a time. Find the minimum cost to reach the top.</p>
+            <p><strong>Pattern:</strong> Dynamic Programming - dp[i] = cost[i] + min(dp[i-1], dp[i-2])</p>
+            <div class="problem-meta">
+                <span class="meta-tag">🧮 DP</span>
+                <span class="meta-tag">⏱️ O(n)</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <code>python/0746_min_cost_climbing_stairs/0746_min_cost_climbing_stairs.py</code>
+            </div>
+
+        </div>
+
+        <div class="explanation-panel">
+            <h4>🧠 How It Works (Layman's Terms)</h4>
+            <p>Dynamic Programming <strong>breaks big problems into smaller ones</strong>:</p>
+            <ul>
+                <li><strong>Subproblems:</strong> Solve smaller versions first</li>
+                <li><strong>Memoization:</strong> Cache results to avoid recalculation</li>
+                <li><strong>Build up:</strong> Combine small solutions for final answer</li>
+                <li><strong>State:</strong> Define what each position represents</li>
+            </ul>
+        </div>
+
+
+        <div class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+
+            <div class="visualization">
+            <svg id="mainSvg"></svg>
+        </div>
+
+        <div class="controls">
+            <button id="stepBtn">Step</button>
+            <button id="autoBtn">Auto Run</button>
+            <button id="resetBtn">Reset</button>
+            <div class="speed-control">
+                <label for="speed">Speed:</label>
+                <input type="range" id="speed" min="100" max="2000" value="800">
+            </div>
+        </div>
+
+        <div class="status" id="status">Click "Step" to calculate minimum cost</div>
+
+        <div class="variables">
+            <div class="var-item">
+                <span class="var-label">Current Step:</span>
+                <span id="stepDisplay">-</span>
+            </div>
+            <div class="var-item">
+                <span class="var-label">Min Cost to Reach:</span>
+                <span id="minCostDisplay">-</span>
+            </div>
+        </div>
+
+        </div>
+
+        <div class="code-section">
+            <h3>Python Solution</h3>
+            <pre><span class="keyword">def</span> <span class="function">minCostClimbingStairs</span>(cost):
+    <span class="string">"""
+    DP: min cost to reach step i = cost[i] + min of previous two.
+    Time: O(n), Space: O(1)
+    """</span>
+    n = <span class="function">len</span>(cost)
+    <span class="comment"># Can start from step 0 or 1</span>
+    dp = [<span class="number">0</span>] * (n + <span class="number">1</span>)
+    
+    <span class="keyword">for</span> i <span class="keyword">in</span> <span class="function">range</span>(<span class="number">2</span>, n + <span class="number">1</span>):
+        <span class="comment"># Min cost to reach step i</span>
+        oneStep = dp[i - <span class="number">1</span>] + cost[i - <span class="number">1</span>]
+        twoSteps = dp[i - <span class="number">2</span>] + cost[i - <span class="number">2</span>]
+        dp[i] = <span class="function">min</span>(oneStep, twoSteps)
+    
+    <span class="keyword">return</span> dp[n]  <span class="comment"># Top is after the last step</span></pre>
+        </div>
+    </div>
+
+    <script>
+        const cost = [10, 15, 20];
+        const n = cost.length;
+        const dp = new Array(n + 1).fill(0);
+        let currentStep = 1;
+        let autoRunning = false;
+        let autoTimer = null;
+
+        const width = 800;
+        const height = 350;
+        const svg = d3.select("#mainSvg")
+            .attr("width", width)
+            .attr("height", height);
+
+        const stairWidth = 100;
+        const stairHeight = 40;
+
+        function draw(highlight = -1) {
+            svg.selectAll("*").remove();
+
+            const startX = 100;
+            const baseY = height - 80;
+
+            // Draw stairs
+            for (let i = 0; i <= n; i++) {
+                const x = startX + i * (stairWidth + 10);
+                const y = baseY - i * stairHeight;
+                const isHighlight = i === highlight;
+                const isCalculated = i <= currentStep && i >= 2;
+
+                // Stair block
+                svg.append("rect")
+                    .attr("x", x)
+                    .attr("y", y)
+                    .attr("width", stairWidth)
+                    .attr("height", stairHeight)
+                    .attr("fill", isHighlight ? "#ffeb3b" : 
+                                 isCalculated ? "#c8e6c9" : "#e3f2fd")
+                    .attr("stroke", isHighlight ? "#f57c00" : 
+                                   isCalculated ? "#4caf50" : "#1976d2")
+                    .attr("stroke-width", isHighlight ? 3 : 2);
+
+                // Step number
+                svg.append("text")
+                    .attr("x", x + stairWidth / 2)
+                    .attr("y", y - 10)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "12px")
+                    .attr("fill", "#666")
+                    .text(i === n ? "TOP" : `Step ${i}`);
+
+                // Cost (for steps 0 to n-1)
+                if (i < n) {
+                    svg.append("text")
+                        .attr("x", x + stairWidth / 2)
+                        .attr("y", y + 18)
+                        .attr("text-anchor", "middle")
+                        .attr("font-size", "14px")
+                        .attr("fill", "#e53935")
+                        .text(`Cost: ${cost[i]}`);
+                }
+
+                // DP value
+                if (dp[i] !== undefined && (i < 2 || i <= currentStep)) {
+                    svg.append("text")
+                        .attr("x", x + stairWidth / 2)
+                        .attr("y", y + stairHeight + 20)
+                        .attr("text-anchor", "middle")
+                        .attr("font-size", "14px")
+                        .attr("font-weight", "bold")
+                        .attr("fill", "#4caf50")
+                        .text(`dp[${i}] = ${dp[i]}`);
+                }
+            }
+
+            // Draw arrows showing transitions
+            if (highlight >= 2) {
+                // Arrow from i-1
+                const fromX1 = startX + (highlight - 1) * (stairWidth + 10) + stairWidth;
+                const fromY1 = baseY - (highlight - 1) * stairHeight;
+                const toX = startX + highlight * (stairWidth + 10);
+                const toY = baseY - highlight * stairHeight + stairHeight / 2;
+
+                svg.append("path")
+                    .attr("d", `M${fromX1},${fromY1} Q${fromX1 + 30},${(fromY1 + toY) / 2} ${toX},${toY}`)
+                    .attr("fill", "none")
+                    .attr("stroke", "#2196f3")
+                    .attr("stroke-width", 2)
+                    .attr("marker-end", "url(#arrow)");
+
+                // Arrow from i-2
+                if (highlight >= 2) {
+                    const fromX2 = startX + (highlight - 2) * (stairWidth + 10) + stairWidth;
+                    const fromY2 = baseY - (highlight - 2) * stairHeight;
+
+                    svg.append("path")
+                        .attr("d", `M${fromX2},${fromY2} Q${fromX2 + 50},${(fromY2 + toY) / 2 - 20} ${toX},${toY}`)
+                        .attr("fill", "none")
+                        .attr("stroke", "#9c27b0")
+                        .attr("stroke-width", 2)
+                        .attr("marker-end", "url(#arrow2)");
+                }
+            }
+
+            // Arrow markers
+            svg.append("defs").html(`
+                <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto">
+                    <path d="M0,0 L10,5 L0,10 Z" fill="#2196f3"/>
+                </marker>
+                <marker id="arrow2" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto">
+                    <path d="M0,0 L10,5 L0,10 Z" fill="#9c27b0"/>
+                </marker>
+            `);
+
+            // Formula display
+            if (highlight >= 2) {
+                const oneStep = dp[highlight - 1] + cost[highlight - 1];
+                const twoSteps = dp[highlight - 2] + cost[highlight - 2];
+                
+                svg.append("text")
+                    .attr("x", width / 2)
+                    .attr("y", 40)
+                    .attr("text-anchor", "middle")
+                    .attr("font-family", "monospace")
+                    .attr("font-size", "14px")
+                    .html(`dp[${highlight}] = min(dp[${highlight-1}] + cost[${highlight-1}], dp[${highlight-2}] + cost[${highlight-2}])`);
+
+                svg.append("text")
+                    .attr("x", width / 2)
+                    .attr("y", 60)
+                    .attr("text-anchor", "middle")
+                    .attr("font-family", "monospace")
+                    .attr("font-size", "14px")
+                    .text(`= min(${dp[highlight-1]} + ${cost[highlight-1]}, ${dp[highlight-2]} + ${cost[highlight-2]}) = min(${oneStep}, ${twoSteps}) = ${dp[highlight]}`);
+            }
+        }
+
+        function step() {
+            if (currentStep > n) return false;
+
+            if (currentStep >= 2) {
+                const oneStep = dp[currentStep - 1] + cost[currentStep - 1];
+                const twoSteps = dp[currentStep - 2] + cost[currentStep - 2];
+                dp[currentStep] = Math.min(oneStep, twoSteps);
+
+                document.getElementById("stepDisplay").textContent = currentStep;
+                document.getElementById("minCostDisplay").textContent = dp[currentStep];
+                document.getElementById("status").textContent = 
+                    `dp[${currentStep}] = min(${oneStep}, ${twoSteps}) = ${dp[currentStep]}`;
+            }
+
+            draw(currentStep);
+            currentStep++;
+
+            if (currentStep > n) {
+                document.getElementById("status").textContent = 
+                    `Complete! Minimum cost to reach top: ${dp[n]}`;
+                return false;
+            }
+            return true;
+        }
+
+        function reset() {
+            dp.fill(0);
+            currentStep = 1;
+            autoRunning = false;
+            if (autoTimer) clearInterval(autoTimer);
+            
+            document.getElementById("stepDisplay").textContent = "-";
+            document.getElementById("minCostDisplay").textContent = "-";
+            document.getElementById("status").textContent = 
+                'Click "Step" to calculate minimum cost';
+            document.getElementById("autoBtn").textContent = "Auto Run";
+            
+            draw();
+        }
+
+        function autoRun() {
+            if (autoRunning) {
+                autoRunning = false;
+                clearInterval(autoTimer);
+                document.getElementById("autoBtn").textContent = "Auto Run";
+            } else {
+                autoRunning = true;
+                document.getElementById("autoBtn").textContent = "Pause";
+                const speed = 2100 - document.getElementById("speed").value;
+                autoTimer = setInterval(() => {
+                    if (!step()) {
+                        autoRunning = false;
+                        clearInterval(autoTimer);
+                        document.getElementById("autoBtn").textContent = "Auto Run";
+                    }
+                }, speed);
+            }
+        }
+
+        document.getElementById("stepBtn").addEventListener("click", step);
+        document.getElementById("autoBtn").addEventListener("click", autoRun);
+        document.getElementById("resetBtn").addEventListener("click", reset);
+
+        draw();
+    </script>
+</body>
+</html>

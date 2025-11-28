@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Palindromic Substrings - LeetCode 647</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="problem-info">
+            <h1><span class="problem-number">#0647</span> Palindromic Substrings</h1>
+            <p><strong>Problem:</strong> Count the number of palindromic substrings in a string.</p>
+            <p><strong>Pattern:</strong> Expand Around Center - Count palindromes expanding from each center</p>
+            <div class="problem-meta">
+                <span class="meta-tag">🌳 Tree</span>
+                <span class="meta-tag">🔤 String</span>
+                <span class="meta-tag">⏱️ O(n)</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <code>python/0647_palindromic_substrings/0647_palindromic_substrings.py</code>
+            </div>
+
+        </div>
+
+        <div class="explanation-panel">
+            <h4>🧠 How It Works (Layman's Terms)</h4>
+            <p>Tree traversal is like <strong>exploring a family tree</strong>:</p>
+            <ul>
+                <li><strong>Root:</strong> Start at the top node</li>
+                <li><strong>Recurse:</strong> Visit left and right children</li>
+                <li><strong>Base case:</strong> Stop at null/leaf nodes</li>
+                <li><strong>Combine:</strong> Build answer from subtree results</li>
+            </ul>
+        </div>
+
+
+        <div class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+
+            <div class="visualization">
+            <svg id="mainSvg"></svg>
+        </div>
+
+        <div class="controls">
+            <button id="stepBtn">Step</button>
+            <button id="autoBtn">Auto Run</button>
+            <button id="resetBtn">Reset</button>
+            <div class="speed-control">
+                <label for="speed">Speed:</label>
+                <input type="range" id="speed" min="100" max="2000" value="800">
+            </div>
+        </div>
+
+        <div class="status" id="status">Click "Step" to count palindromic substrings</div>
+
+        <div class="variables">
+            <div class="var-item">
+                <span class="var-label">Center:</span>
+                <span id="centerDisplay">-</span>
+            </div>
+            <div class="var-item">
+                <span class="var-label">Found Palindromes:</span>
+                <span id="foundDisplay">-</span>
+            </div>
+            <div class="var-item">
+                <span class="var-label">Total Count:</span>
+                <span id="countDisplay">0</span>
+            </div>
+        </div>
+
+        </div>
+
+        <div class="code-section">
+            <h3>Python Solution</h3>
+            <pre><span class="keyword">def</span> <span class="function">countSubstrings</span>(s):
+    <span class="string">"""
+    Expand around each center.
+    Time: O(n²), Space: O(1)
+    """</span>
+    <span class="keyword">def</span> <span class="function">countPalindromes</span>(l, r):
+        count = <span class="number">0</span>
+        <span class="keyword">while</span> l >= <span class="number">0</span> <span class="keyword">and</span> r < <span class="function">len</span>(s) <span class="keyword">and</span> s[l] == s[r]:
+            count += <span class="number">1</span>
+            l -= <span class="number">1</span>
+            r += <span class="number">1</span>
+        <span class="keyword">return</span> count
+    
+    total = <span class="number">0</span>
+    <span class="keyword">for</span> i <span class="keyword">in</span> <span class="function">range</span>(<span class="function">len</span>(s)):
+        <span class="comment"># Odd length palindromes</span>
+        total += <span class="function">countPalindromes</span>(i, i)
+        <span class="comment"># Even length palindromes</span>
+        total += <span class="function">countPalindromes</span>(i, i + <span class="number">1</span>)
+    
+    <span class="keyword">return</span> total</pre>
+        </div>
+    </div>
+
+    <script>
+        const s = "aaa";
+        
+        let centerIdx = 0;
+        let isEven = false;
+        let left = 0, right = 0;
+        let expandPhase = 'start';
+        let count = 0;
+        let foundPalindromes = [];
+        let currentPalindromes = [];
+        let autoRunning = false;
+        let autoTimer = null;
+
+        const width = 700;
+        const height = 380;
+        const svg = d3.select("#mainSvg")
+            .attr("width", width)
+            .attr("height", height);
+
+        const charWidth = 80;
+        const startX = (width - s.length * charWidth) / 2;
+
+        function draw() {
+            svg.selectAll("*").remove();
+
+            svg.append("text")
+                .attr("x", width / 2).attr("y", 30)
+                .attr("text-anchor", "middle")
+                .attr("font-weight", "bold")
+                .text(`Counting Palindromic Substrings in "${s}"`);
+
+            // Draw string
+            for (let i = 0; i < s.length; i++) {
+                const x = startX + i * charWidth + charWidth / 2;
+                const y = 100;
+
+                let fill = "#e3f2fd", stroke = "#1976d2";
+                if (i === left || i === right) {
+                    fill = "#ffeb3b"; stroke = "#f57c00";
+                }
+
+                svg.append("rect")
+                    .attr("x", x - 30).attr("y", y - 30)
+                    .attr("width", 60).attr("height", 55)
+                    .attr("rx", 8)
+                    .attr("fill", fill).attr("stroke", stroke)
+                    .attr("stroke-width", 2);
+
+                svg.append("text")
+                    .attr("x", x).attr("y", y + 5)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "32px")
+                    .attr("font-weight", "bold")
+                    .text(s[i]);
+
+                svg.append("text")
+                    .attr("x", x).attr("y", y + 40)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "12px")
+                    .attr("fill", "#666")
+                    .text(i);
+            }
+
+            // Center indicator
+            if (centerIdx < s.length) {
+                const centerX = startX + centerIdx * charWidth + charWidth / 2;
+                svg.append("text")
+                    .attr("x", centerX + (isEven ? charWidth / 2 : 0))
+                    .attr("y", 50)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "14px")
+                    .attr("fill", "#7b1fa2")
+                    .text(isEven ? "▼ even" : "▼ odd");
+            }
+
+            // Found palindromes list
+            svg.append("text")
+                .attr("x", 50).attr("y", 200)
+                .attr("font-weight", "bold")
+                .text("Found Palindromes:");
+
+            const allFound = [...foundPalindromes, ...currentPalindromes];
+            const cols = 6;
+            allFound.forEach((p, i) => {
+                const col = i % cols;
+                const row = Math.floor(i / cols);
+                const isNew = i >= foundPalindromes.length;
+                
+                svg.append("rect")
+                    .attr("x", 50 + col * 90).attr("y", 210 + row * 30)
+                    .attr("width", 80).attr("height", 25)
+                    .attr("rx", 4)
+                    .attr("fill", isNew ? "#fff3e0" : "#c8e6c9")
+                    .attr("stroke", isNew ? "#ff9800" : "#4caf50");
+
+                svg.append("text")
+                    .attr("x", 90 + col * 90).attr("y", 228 + row * 30)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "14px")
+                    .attr("font-weight", isNew ? "bold" : "normal")
+                    .text(`"${p}"`);
+            });
+
+            // Count display
+            svg.append("rect")
+                .attr("x", width - 120).attr("y", 60)
+                .attr("width", 100).attr("height", 50)
+                .attr("rx", 10)
+                .attr("fill", "#e8eaf6").attr("stroke", "#3f51b5");
+
+            svg.append("text")
+                .attr("x", width - 70).attr("y", 82)
+                .attr("text-anchor", "middle")
+                .attr("font-size", "12px")
+                .text("Count:");
+
+            svg.append("text")
+                .attr("x", width - 70).attr("y", 102)
+                .attr("text-anchor", "middle")
+                .attr("font-size", "24px")
+                .attr("font-weight", "bold")
+                .attr("fill", "#3f51b5")
+                .text(count + currentPalindromes.length);
+        }
+
+        function step() {
+            if (centerIdx >= s.length && isEven) {
+                document.getElementById("status").textContent = 
+                    `Done! Total palindromic substrings: ${count}`;
+                draw();
+                return false;
+            }
+
+            if (expandPhase === 'start' || expandPhase === 'done') {
+                // Start new expansion
+                if (expandPhase === 'done') {
+                    // Commit current palindromes
+                    foundPalindromes.push(...currentPalindromes);
+                    count += currentPalindromes.length;
+                    currentPalindromes = [];
+                }
+
+                if (isEven) {
+                    left = centerIdx;
+                    right = centerIdx + 1;
+                } else {
+                    left = centerIdx;
+                    right = centerIdx;
+                }
+                expandPhase = 'expanding';
+
+                document.getElementById("centerDisplay").textContent = 
+                    `${centerIdx}${isEven ? ' (even)' : ' (odd)'}`;
+                document.getElementById("status").textContent = 
+                    `Starting ${isEven ? 'even' : 'odd'} expansion from center ${centerIdx}`;
+            } else if (expandPhase === 'expanding') {
+                if (left >= 0 && right < s.length && s[left] === s[right]) {
+                    const palindrome = s.substring(left, right + 1);
+                    currentPalindromes.push(palindrome);
+                    document.getElementById("foundDisplay").textContent = 
+                        currentPalindromes.map(p => `"${p}"`).join(', ');
+                    document.getElementById("status").textContent = 
+                        `Found palindrome: "${palindrome}"`;
+                    left--;
+                    right++;
+                } else {
+                    expandPhase = 'done';
+                    
+                    if (isEven) {
+                        centerIdx++;
+                        isEven = false;
+                    } else {
+                        isEven = true;
+                    }
+                    
+                    document.getElementById("countDisplay").textContent = 
+                        count + currentPalindromes.length;
+                    document.getElementById("status").textContent = 
+                        `Expansion stopped. Found ${currentPalindromes.length} palindrome(s) from this center.`;
+                }
+            }
+
+            draw();
+            return centerIdx < s.length || !isEven;
+        }
+
+        function reset() {
+            centerIdx = 0;
+            isEven = false;
+            left = 0; right = 0;
+            expandPhase = 'start';
+            count = 0;
+            foundPalindromes = [];
+            currentPalindromes = [];
+            autoRunning = false;
+            if (autoTimer) clearInterval(autoTimer);
+            
+            document.getElementById("centerDisplay").textContent = "-";
+            document.getElementById("foundDisplay").textContent = "-";
+            document.getElementById("countDisplay").textContent = "0";
+            document.getElementById("status").textContent = 
+                'Click "Step" to count palindromic substrings';
+            document.getElementById("autoBtn").textContent = "Auto Run";
+            
+            draw();
+        }
+
+        function autoRun() {
+            if (autoRunning) {
+                autoRunning = false;
+                clearInterval(autoTimer);
+                document.getElementById("autoBtn").textContent = "Auto Run";
+            } else {
+                autoRunning = true;
+                document.getElementById("autoBtn").textContent = "Pause";
+                const speed = 2100 - document.getElementById("speed").value;
+                autoTimer = setInterval(() => {
+                    if (!step()) {
+                        autoRunning = false;
+                        clearInterval(autoTimer);
+                        document.getElementById("autoBtn").textContent = "Auto Run";
+                    }
+                }, speed);
+            }
+        }
+
+        document.getElementById("stepBtn").addEventListener("click", step);
+        document.getElementById("autoBtn").addEventListener("click", autoRun);
+        document.getElementById("resetBtn").addEventListener("click", reset);
+
+        draw();
+    </script>
+</body>
+</html>

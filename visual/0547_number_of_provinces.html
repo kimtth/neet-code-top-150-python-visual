@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LC 547: Number of Provinces - Algorithm Visualization</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="problem-info">
+            <h1><span class="problem-number">#547</span> Number of Provinces</h1>
+            <p>Given a matrix where isConnected[i][j] = 1 if city i and j are directly connected, find the total number of provinces (connected components).</p>
+            <div class="problem-meta">
+                <span class="meta-tag">📊 Graph</span>
+                <span class="meta-tag">🔗 Union Find</span>
+                <span class="meta-tag">⏱️ O(n²)</span>
+                <span class="meta-tag">💾 O(n)</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <code>python/0547_number_of_provinces/0547_number_of_provinces.py</code>
+            </div>
+            </div>
+
+        <div class="explanation-panel">
+            <h4>🧠 How It Works (Layman's Terms)</h4>
+            <p>Use <strong>DFS/BFS or Union-Find</strong> to count connected components:</p>
+            <ul>
+                <li><strong>DFS Approach:</strong> Start from unvisited city, mark all reachable as visited</li>
+                <li><strong>Count:</strong> Each DFS traversal = one province</li>
+                <li><strong>Union-Find:</strong> Union connected cities, count unique parents</li>
+            </ul>
+        </div>
+
+
+        <div class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+            
+            <div class="controls">
+                <button class="btn btn-primary" id="startBtn" onclick="start()">▶ Start DFS</button>
+                <button class="btn" onclick="stepForward()">Step →</button>
+                <button class="btn btn-warning" onclick="reset()">Reset</button>
+                <button class="btn" onclick="randomize()">🎲 Random</button>
+            </div>
+
+            <div class="status-message" id="statusMessage">
+                Click Start to find provinces
+            </div>
+
+            <div style="display: flex; gap: 30px; flex-wrap: wrap; margin-top: 20px;">
+                <div style="flex: 2; min-width: 350px;">
+                    <svg id="graphViz" width="100%" height="350"></svg>
+                </div>
+                <div style="flex: 1; min-width: 200px;">
+                    <h4>📊 Adjacency Matrix</h4>
+                    <div id="matrixDisplay" style="padding: 10px; background: #f5f5f5; border-radius: 12px; font-family: monospace; font-size: 0.9em; overflow-x: auto;"></div>
+                    
+                    <h4 style="margin-top: 20px;">🏘️ Provinces Found</h4>
+                    <div id="provincesDisplay" style="padding: 20px; background: #e8f5e9; border-radius: 12px; font-size: 2em; text-align: center; font-weight: bold; color: #4caf50;">
+                        0
+                    </div>
+                    
+                    <h4 style="margin-top: 20px;">✅ Visited Cities</h4>
+                    <div id="visitedDisplay" style="padding: 15px; background: #e3f2fd; border-radius: 12px; min-height: 40px;"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="code-section">
+            <h3>💻 Python Solution (DFS)</h3>
+            <div class="code-block">
+                <pre><span class="keyword">def</span> <span class="function">findCircleNum</span>(isConnected):
+    n = <span class="function">len</span>(isConnected)
+    visited = <span class="function">set</span>()
+    provinces = <span class="number">0</span>
+    
+    <span class="keyword">def</span> <span class="function">dfs</span>(city):
+        visited.<span class="function">add</span>(city)
+        <span class="keyword">for</span> neighbor <span class="keyword">in</span> <span class="function">range</span>(n):
+            <span class="keyword">if</span> isConnected[city][neighbor] == <span class="number">1</span> <span class="keyword">and</span> neighbor <span class="keyword">not in</span> visited:
+                <span class="function">dfs</span>(neighbor)
+    
+    <span class="keyword">for</span> city <span class="keyword">in</span> <span class="function">range</span>(n):
+        <span class="keyword">if</span> city <span class="keyword">not in</span> visited:
+            provinces += <span class="number">1</span>
+            <span class="function">dfs</span>(city)
+    
+    <span class="keyword">return</span> provinces</pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let matrix = [
+            [1, 1, 0, 0, 0],
+            [1, 1, 0, 0, 0],
+            [0, 0, 1, 1, 0],
+            [0, 0, 1, 1, 1],
+            [0, 0, 0, 1, 1]
+        ];
+        let n = 5;
+        let visited = new Set();
+        let provinces = 0;
+        let currentCity = null;
+        let cityColors = {};
+        let isRunning = false;
+        let stepIndex = 0;
+        let steps = [];
+
+        const provinceColors = ['#e91e63', '#2196f3', '#4caf50', '#ff9800', '#9c27b0', '#00bcd4'];
+
+        function precomputeSteps() {
+            steps = [];
+            const localVisited = new Set();
+            let localProvinces = 0;
+            const localColors = {};
+
+            for (let city = 0; city < n; city++) {
+                if (!localVisited.has(city)) {
+                    localProvinces++;
+                    const color = provinceColors[(localProvinces - 1) % provinceColors.length];
+                    
+                    steps.push({
+                        type: 'new_province',
+                        city,
+                        provinces: localProvinces,
+                        visited: new Set(localVisited),
+                        colors: {...localColors},
+                        message: `City ${city} not visited → Start new province #${localProvinces}`
+                    });
+
+                    // DFS
+                    const stack = [city];
+                    while (stack.length > 0) {
+                        const curr = stack.pop();
+                        if (localVisited.has(curr)) continue;
+                        
+                        localVisited.add(curr);
+                        localColors[curr] = color;
+                        
+                        steps.push({
+                            type: 'visit',
+                            city: curr,
+                            provinces: localProvinces,
+                            visited: new Set(localVisited),
+                            colors: {...localColors},
+                            message: `Visit city ${curr}, mark as province #${localProvinces}`
+                        });
+
+                        for (let neighbor = n - 1; neighbor >= 0; neighbor--) {
+                            if (matrix[curr][neighbor] === 1 && !localVisited.has(neighbor)) {
+                                stack.push(neighbor);
+                            }
+                        }
+                    }
+                }
+            }
+
+            steps.push({
+                type: 'done',
+                provinces: localProvinces,
+                visited: new Set(localVisited),
+                colors: {...localColors},
+                message: `Done! Found ${localProvinces} provinces`
+            });
+        }
+
+        function getPositions() {
+            const positions = [];
+            const centerX = 175;
+            const centerY = 175;
+            const radius = 120;
+            for (let i = 0; i < n; i++) {
+                const angle = (2 * Math.PI * i) / n - Math.PI / 2;
+                positions.push({
+                    id: i,
+                    x: centerX + radius * Math.cos(angle),
+                    y: centerY + radius * Math.sin(angle)
+                });
+            }
+            return positions;
+        }
+
+        function render() {
+            const svg = d3.select("#graphViz");
+            svg.selectAll("*").remove();
+
+            const container = svg.node().parentElement;
+            const width = container.clientWidth;
+            const height = 350;
+            svg.attr("viewBox", `0 0 ${width} ${height}`);
+
+            const positions = getPositions();
+            const g = svg.append("g").attr("transform", `translate(${(width - 350) / 2}, 0)`);
+
+            // Draw edges
+            for (let i = 0; i < n; i++) {
+                for (let j = i + 1; j < n; j++) {
+                    if (matrix[i][j] === 1) {
+                        const pi = positions[i];
+                        const pj = positions[j];
+                        g.append("line")
+                            .attr("x1", pi.x).attr("y1", pi.y)
+                            .attr("x2", pj.x).attr("y2", pj.y)
+                            .attr("stroke", cityColors[i] || "#ccc")
+                            .attr("stroke-width", visited.has(i) && visited.has(j) ? 3 : 2)
+                            .attr("opacity", 0.6);
+                    }
+                }
+            }
+
+            // Draw nodes
+            positions.forEach(pos => {
+                const isVisited = visited.has(pos.id);
+                const isCurrent = currentCity === pos.id;
+                const color = cityColors[pos.id] || '#667eea';
+                
+                g.append("circle")
+                    .attr("cx", pos.x).attr("cy", pos.y).attr("r", 28)
+                    .attr("fill", isVisited ? color : '#667eea')
+                    .attr("stroke", isCurrent ? '#000' : (isVisited ? color : '#5a6fd6'))
+                    .attr("stroke-width", isCurrent ? 4 : 2);
+
+                g.append("text")
+                    .attr("x", pos.x).attr("y", pos.y + 6)
+                    .attr("text-anchor", "middle")
+                    .attr("fill", "white").attr("font-weight", "bold").attr("font-size", "18px")
+                    .text(pos.id);
+            });
+
+            // Update matrix display
+            renderMatrix();
+            updateVisitedDisplay();
+        }
+
+        function renderMatrix() {
+            const container = document.getElementById('matrixDisplay');
+            let html = '<table style="border-collapse: collapse; width: 100%;">';
+            html += '<tr><th></th>';
+            for (let j = 0; j < n; j++) html += `<th style="padding: 5px;">${j}</th>`;
+            html += '</tr>';
+            
+            for (let i = 0; i < n; i++) {
+                html += `<tr><th style="padding: 5px;">${i}</th>`;
+                for (let j = 0; j < n; j++) {
+                    const val = matrix[i][j];
+                    const bg = val === 1 ? (visited.has(i) && visited.has(j) ? '#4caf50' : '#e3f2fd') : '';
+                    html += `<td style="padding: 5px; text-align: center; background: ${bg};">${val}</td>`;
+                }
+                html += '</tr>';
+            }
+            html += '</table>';
+            container.innerHTML = html;
+        }
+
+        function updateVisitedDisplay() {
+            const container = document.getElementById('visitedDisplay');
+            if (visited.size === 0) {
+                container.innerHTML = '<span style="color: #999;">(none)</span>';
+                return;
+            }
+            container.innerHTML = Array.from(visited).sort().map(v => 
+                `<span style="background: ${cityColors[v] || '#667eea'}; color: white; padding: 5px 12px; margin: 3px; border-radius: 15px; display: inline-block;">${v}</span>`
+            ).join(' ');
+        }
+
+        function stepForward() {
+            if (stepIndex >= steps.length) return;
+            
+            const step = steps[stepIndex];
+            visited = step.visited;
+            provinces = step.provinces;
+            cityColors = step.colors;
+            currentCity = step.city;
+            
+            document.getElementById('provincesDisplay').textContent = provinces;
+            document.getElementById('statusMessage').textContent = step.message;
+            
+            if (step.type === 'done') {
+                isRunning = false;
+                document.getElementById('startBtn').textContent = '▶ Start DFS';
+                currentCity = null;
+            }
+            
+            stepIndex++;
+            render();
+        }
+
+        async function start() {
+            if (isRunning) {
+                isRunning = false;
+                document.getElementById('startBtn').textContent = '▶ Start DFS';
+                return;
+            }
+            
+            isRunning = true;
+            document.getElementById('startBtn').textContent = '⏸ Pause';
+            
+            while (stepIndex < steps.length && isRunning) {
+                stepForward();
+                await new Promise(r => setTimeout(r, 500));
+            }
+        }
+
+        function reset() {
+            isRunning = false;
+            stepIndex = 0;
+            visited = new Set();
+            provinces = 0;
+            currentCity = null;
+            cityColors = {};
+            
+            document.getElementById('statusMessage').textContent = 'Click Start to find provinces';
+            document.getElementById('provincesDisplay').textContent = '0';
+            document.getElementById('startBtn').textContent = '▶ Start DFS';
+            
+            precomputeSteps();
+            render();
+        }
+
+        function randomize() {
+            n = Math.floor(Math.random() * 3) + 4; // 4-6 cities
+            matrix = Array.from({ length: n }, () => Array(n).fill(0));
+            
+            // Self connections
+            for (let i = 0; i < n; i++) matrix[i][i] = 1;
+            
+            // Random connections
+            for (let i = 0; i < n; i++) {
+                for (let j = i + 1; j < n; j++) {
+                    if (Math.random() < 0.3) {
+                        matrix[i][j] = 1;
+                        matrix[j][i] = 1;
+                    }
+                }
+            }
+            
+            reset();
+        }
+
+        reset();
+        window.addEventListener('resize', render);
+    </script>
+</body>
+</html>

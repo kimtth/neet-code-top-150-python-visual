@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hand of Straights - LeetCode 846</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="problem-info">
+            <h1><span class="problem-number">#0846</span> Hand of Straights</h1>
+            <p><strong>Problem:</strong> Determine if you can rearrange cards into groups of size W, where each group contains W consecutive cards.</p>
+            <p><strong>Pattern:</strong> Greedy + Hash Map - Start with smallest card, try to form consecutive groups</p>
+            <div class="problem-meta">
+                <span class="meta-tag">💰 Greedy</span>
+                <span class="meta-tag">⏱️ O(n)</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <code>python/0846_hand_of_straights/0846_hand_of_straights.py</code>
+            </div>
+
+        </div>
+
+        <div class="explanation-panel">
+            <h4>🧠 How It Works (Layman's Terms)</h4>
+            <p>This algorithm solves the problem <strong>step by step</strong>:</p>
+            <ul>
+                <li><strong>Understand:</strong> Parse the input data</li>
+                <li><strong>Process:</strong> Apply the core logic</li>
+                <li><strong>Optimize:</strong> Use efficient data structures</li>
+                <li><strong>Return:</strong> Output the computed result</li>
+            </ul>
+        </div>
+
+
+        <div class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+
+            <div class="visualization">
+            <svg id="mainSvg"></svg>
+        </div>
+
+        <div class="controls">
+            <button id="stepBtn">Step</button>
+            <button id="autoBtn">Auto Run</button>
+            <button id="resetBtn">Reset</button>
+            <div class="speed-control">
+                <label for="speed">Speed:</label>
+                <input type="range" id="speed" min="100" max="2000" value="800">
+            </div>
+        </div>
+
+        <div class="status" id="status">Click "Step" to form groups</div>
+
+        <div class="variables">
+            <div class="var-item">
+                <span class="var-label">Hand:</span>
+                <span id="handDisplay">[1,2,3,6,2,3,4,7,8]</span>
+            </div>
+            <div class="var-item">
+                <span class="var-label">Group Size:</span>
+                <span id="groupSizeDisplay">3</span>
+            </div>
+            <div class="var-item">
+                <span class="var-label">Groups Formed:</span>
+                <span id="groupsDisplay">0</span>
+            </div>
+        </div>
+
+        </div>
+
+        <div class="code-section">
+            <h3>Python Solution</h3>
+            <pre><span class="keyword">def</span> <span class="function">isNStraightHand</span>(hand, groupSize):
+    <span class="string">"""
+    Greedy: form groups starting from smallest.
+    Time: O(n log n), Space: O(n)
+    """</span>
+    <span class="keyword">if</span> <span class="function">len</span>(hand) % groupSize != <span class="number">0</span>:
+        <span class="keyword">return</span> <span class="keyword">False</span>
+    
+    count = <span class="function">Counter</span>(hand)
+    
+    <span class="keyword">for</span> card <span class="keyword">in</span> <span class="function">sorted</span>(count):
+        <span class="keyword">if</span> count[card] > <span class="number">0</span>:
+            <span class="comment"># Try to form groups starting with this card</span>
+            freq = count[card]
+            <span class="keyword">for</span> i <span class="keyword">in</span> <span class="function">range</span>(groupSize):
+                <span class="keyword">if</span> count[card + i] < freq:
+                    <span class="keyword">return</span> <span class="keyword">False</span>
+                count[card + i] -= freq
+    
+    <span class="keyword">return</span> <span class="keyword">True</span></pre>
+        </div>
+    </div>
+
+    <script>
+        const hand = [1, 2, 3, 6, 2, 3, 4, 7, 8];
+        const groupSize = 3;
+
+        let count = {};
+        let sorted = [];
+        let sortedIdx = 0;
+        let currentGroup = [];
+        let groups = [];
+        let phase = 'init'; // 'init' | 'forming' | 'done'
+        let cardStates = {}; // card -> count remaining
+        let canForm = null;
+        let autoRunning = false;
+        let autoTimer = null;
+
+        const width = 750;
+        const height = 420;
+        const svg = d3.select("#mainSvg")
+            .attr("width", width)
+            .attr("height", height);
+
+        function init() {
+            count = {};
+            hand.forEach(card => {
+                count[card] = (count[card] || 0) + 1;
+            });
+            sorted = [...new Set(hand)].sort((a, b) => a - b);
+            cardStates = {...count};
+        }
+
+        function draw() {
+            svg.selectAll("*").remove();
+
+            svg.append("text")
+                .attr("x", width / 2).attr("y", 25)
+                .attr("text-anchor", "middle")
+                .attr("font-weight", "bold")
+                .text(`Forming Groups of ${groupSize} Consecutive Cards`);
+
+            // Draw card counts
+            svg.append("text")
+                .attr("x", 50).attr("y", 60)
+                .attr("font-weight", "bold")
+                .text("Card Counts:");
+
+            const cardX = 50;
+            sorted.forEach((card, i) => {
+                const x = cardX + i * 80;
+                const remaining = cardStates[card] || 0;
+                const isActive = phase === 'forming' && 
+                    currentGroup.length < groupSize &&
+                    currentGroup.length > 0 &&
+                    card === currentGroup[0] + currentGroup.length;
+
+                // Card
+                svg.append("rect")
+                    .attr("x", x).attr("y", 75)
+                    .attr("width", 50).attr("height", 70)
+                    .attr("rx", 8)
+                    .attr("fill", remaining === 0 ? "#e0e0e0" : isActive ? "#ffeb3b" : "#fff")
+                    .attr("stroke", isActive ? "#f57c00" : "#1976d2")
+                    .attr("stroke-width", 2);
+
+                svg.append("text")
+                    .attr("x", x + 25).attr("y", 110)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "24px")
+                    .attr("font-weight", "bold")
+                    .text(card);
+
+                // Count badge
+                svg.append("circle")
+                    .attr("cx", x + 45).attr("cy", 80)
+                    .attr("r", 12)
+                    .attr("fill", remaining > 0 ? "#4caf50" : "#e0e0e0")
+                    .attr("stroke", "#fff");
+                svg.append("text")
+                    .attr("x", x + 45).attr("y", 85)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "12px")
+                    .attr("fill", "#fff")
+                    .attr("font-weight", "bold")
+                    .text(remaining);
+            });
+
+            // Current group being formed
+            if (currentGroup.length > 0) {
+                svg.append("text")
+                    .attr("x", 50).attr("y", 180)
+                    .attr("font-weight", "bold")
+                    .text("Forming Group:");
+
+                currentGroup.forEach((card, i) => {
+                    svg.append("rect")
+                        .attr("x", 170 + i * 55).attr("y", 165)
+                        .attr("width", 45).attr("height", 60)
+                        .attr("rx", 6)
+                        .attr("fill", "#fff3e0").attr("stroke", "#ff9800")
+                        .attr("stroke-width", 2);
+                    svg.append("text")
+                        .attr("x", 192 + i * 55).attr("y", 200)
+                        .attr("text-anchor", "middle")
+                        .attr("font-size", "20px")
+                        .attr("font-weight", "bold")
+                        .text(card);
+                });
+
+                // Remaining slots
+                for (let i = currentGroup.length; i < groupSize; i++) {
+                    svg.append("rect")
+                        .attr("x", 170 + i * 55).attr("y", 165)
+                        .attr("width", 45).attr("height", 60)
+                        .attr("rx", 6)
+                        .attr("fill", "none").attr("stroke", "#ddd")
+                        .attr("stroke-width", 2)
+                        .attr("stroke-dasharray", "5,5");
+                    svg.append("text")
+                        .attr("x", 192 + i * 55).attr("y", 200)
+                        .attr("text-anchor", "middle")
+                        .attr("font-size", "16px")
+                        .attr("fill", "#999")
+                        .text("?");
+                }
+            }
+
+            // Completed groups
+            svg.append("text")
+                .attr("x", 50).attr("y", 270)
+                .attr("font-weight", "bold")
+                .text("Completed Groups:");
+
+            groups.forEach((group, gIdx) => {
+                group.forEach((card, i) => {
+                    svg.append("rect")
+                        .attr("x", 50 + gIdx * (groupSize * 45 + 30) + i * 40).attr("y", 280)
+                        .attr("width", 35).attr("height", 50)
+                        .attr("rx", 5)
+                        .attr("fill", "#c8e6c9").attr("stroke", "#4caf50");
+                    svg.append("text")
+                        .attr("x", 67 + gIdx * (groupSize * 45 + 30) + i * 40).attr("y", 310)
+                        .attr("text-anchor", "middle")
+                        .attr("font-size", "16px")
+                        .attr("font-weight", "bold")
+                        .text(card);
+                });
+            });
+
+            // Result
+            if (canForm !== null) {
+                svg.append("rect")
+                    .attr("x", width - 180).attr("y", height - 70)
+                    .attr("width", 170).attr("height", 45)
+                    .attr("rx", 10)
+                    .attr("fill", canForm ? "#c8e6c9" : "#ffcdd2")
+                    .attr("stroke", canForm ? "#4caf50" : "#e53935");
+
+                svg.append("text")
+                    .attr("x", width - 95).attr("y", height - 40)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "16px")
+                    .attr("font-weight", "bold")
+                    .text(canForm ? "✓ Can Form!" : "✗ Cannot Form!");
+            }
+        }
+
+        function step() {
+            if (phase === 'init') {
+                init();
+                phase = 'forming';
+                document.getElementById("status").textContent = 
+                    "Initialized card counts. Starting to form groups...";
+                draw();
+                return true;
+            }
+
+            if (phase === 'forming') {
+                // Find smallest card with remaining count
+                let startCard = null;
+                for (const card of sorted) {
+                    if (cardStates[card] > 0) {
+                        startCard = card;
+                        break;
+                    }
+                }
+
+                if (startCard === null) {
+                    // All cards used
+                    canForm = true;
+                    phase = 'done';
+                    document.getElementById("status").textContent = 
+                        `Success! Formed ${groups.length} groups of ${groupSize}.`;
+                    draw();
+                    return false;
+                }
+
+                if (currentGroup.length === 0) {
+                    // Start new group
+                    currentGroup = [startCard];
+                    cardStates[startCard]--;
+                    document.getElementById("status").textContent = 
+                        `Starting new group with smallest card: ${startCard}`;
+                } else {
+                    // Try to add next consecutive card
+                    const nextCard = currentGroup[currentGroup.length - 1] + 1;
+                    
+                    if (cardStates[nextCard] > 0) {
+                        currentGroup.push(nextCard);
+                        cardStates[nextCard]--;
+                        document.getElementById("status").textContent = 
+                            `Added ${nextCard} to group. Group: [${currentGroup.join(', ')}]`;
+                    } else {
+                        // Cannot form group
+                        canForm = false;
+                        phase = 'done';
+                        document.getElementById("status").textContent = 
+                            `Cannot find card ${nextCard}! Cannot form valid groups.`;
+                        draw();
+                        return false;
+                    }
+                }
+
+                // Check if group is complete
+                if (currentGroup.length === groupSize) {
+                    groups.push([...currentGroup]);
+                    document.getElementById("groupsDisplay").textContent = groups.length;
+                    document.getElementById("status").textContent = 
+                        `Completed group: [${currentGroup.join(', ')}]`;
+                    currentGroup = [];
+                }
+
+                draw();
+                return true;
+            }
+
+            return false;
+        }
+
+        function reset() {
+            count = {};
+            sorted = [];
+            sortedIdx = 0;
+            currentGroup = [];
+            groups = [];
+            phase = 'init';
+            cardStates = {};
+            canForm = null;
+            autoRunning = false;
+            if (autoTimer) clearInterval(autoTimer);
+            
+            document.getElementById("groupsDisplay").textContent = "0";
+            document.getElementById("status").textContent = 
+                'Click "Step" to form groups';
+            document.getElementById("autoBtn").textContent = "Auto Run";
+            
+            init();
+            draw();
+        }
+
+        function autoRun() {
+            if (autoRunning) {
+                autoRunning = false;
+                clearInterval(autoTimer);
+                document.getElementById("autoBtn").textContent = "Auto Run";
+            } else {
+                autoRunning = true;
+                document.getElementById("autoBtn").textContent = "Pause";
+                const speed = 2100 - document.getElementById("speed").value;
+                autoTimer = setInterval(() => {
+                    if (!step()) {
+                        autoRunning = false;
+                        clearInterval(autoTimer);
+                        document.getElementById("autoBtn").textContent = "Auto Run";
+                    }
+                }, speed);
+            }
+        }
+
+        document.getElementById("stepBtn").addEventListener("click", step);
+        document.getElementById("autoBtn").addEventListener("click", autoRun);
+        document.getElementById("resetBtn").addEventListener("click", reset);
+
+        init();
+        draw();
+    </script>
+</body>
+</html>

@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LC 703: Kth Largest Element in a Stream - Algorithm Visualization</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="problem-info">
+            <h1><span class="problem-number">#703</span> Kth Largest Element in a Stream</h1>
+            <p>Design a class to find the kth largest element in a stream. Initialize with k and an array, then add elements and return kth largest.</p>
+            <div class="problem-meta">
+                <span class="meta-tag">📊 Heap</span>
+                <span class="meta-tag">🔄 Design</span>
+                <span class="meta-tag">⏱️ O(log k) per add</span>
+                <span class="meta-tag">💾 O(k)</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <code>python/0703_kth_largest_element_in_a_stream/0703_kth_largest_element_in_a_stream.py</code>
+            </div>
+            </div>
+
+        <div class="explanation-panel">
+            <h4>🧠 How It Works (Layman's Terms)</h4>
+            <p>Keep a <strong>min-heap of exactly k elements</strong>:</p>
+            <ul>
+                <li><strong>Heap stores:</strong> The k largest elements seen so far</li>
+                <li><strong>Root (min):</strong> The kth largest (smallest of the k largest)</li>
+                <li><strong>On add:</strong> If new element > root, replace root</li>
+                <li><strong>Return:</strong> Root is always the answer!</li>
+            </ul>
+        </div>
+
+
+        <div class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+            
+            <div class="controls">
+                <label>k = </label>
+                <select id="kValue" style="padding: 8px; border-radius: 5px;">
+                    <option value="2">2</option>
+                    <option value="3" selected>3</option>
+                    <option value="4">4</option>
+                </select>
+                <input type="number" id="newElement" placeholder="Enter number" style="padding: 8px; width: 120px; border-radius: 5px; border: 2px solid #ddd;">
+                <button class="btn btn-primary" onclick="addElement()">Add to Stream</button>
+                <button class="btn btn-warning" onclick="reset()">Reset</button>
+            </div>
+
+            <div class="status-message" id="statusMessage">
+                Enter a number and click "Add to Stream"
+            </div>
+
+            <div style="display: flex; gap: 30px; flex-wrap: wrap; margin-top: 20px;">
+                <div style="flex: 1; min-width: 300px;">
+                    <h4 style="margin-bottom: 10px;">📊 Min-Heap (size k)</h4>
+                    <svg id="heapViz" width="100%" height="200"></svg>
+                    <div id="heapArray" style="margin-top: 10px; padding: 10px; background: #e3f2fd; border-radius: 8px; text-align: center;">
+                        Heap: []
+                    </div>
+                </div>
+                <div style="flex: 1; min-width: 200px;">
+                    <h4 style="margin-bottom: 10px;">📜 Stream History</h4>
+                    <div id="streamHistory" style="padding: 15px; background: #f5f5f5; border-radius: 12px; max-height: 200px; overflow-y: auto;">
+                        <span style="color: #999;">Stream will appear here...</span>
+                    </div>
+                    
+                    <h4 style="margin-top: 20px; margin-bottom: 10px;">🎯 Kth Largest</h4>
+                    <div id="answerContainer" style="padding: 25px; background: #e8f5e9; border-radius: 12px; text-align: center; font-size: 2em; font-weight: bold; color: #4caf50;">
+                        -
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="code-section">
+            <h3>💻 Python Solution</h3>
+            <div class="code-block">
+                <pre><span class="keyword">import</span> heapq
+
+<span class="keyword">class</span> <span class="function">KthLargest</span>:
+    <span class="keyword">def</span> <span class="function">__init__</span>(self, k, nums):
+        self.k = k
+        self.heap = nums
+        heapq.<span class="function">heapify</span>(self.heap)
+        <span class="keyword">while</span> <span class="function">len</span>(self.heap) > k:
+            heapq.<span class="function">heappop</span>(self.heap)
+    
+    <span class="keyword">def</span> <span class="function">add</span>(self, val):
+        heapq.<span class="function">heappush</span>(self.heap, val)
+        <span class="keyword">if</span> <span class="function">len</span>(self.heap) > self.k:
+            heapq.<span class="function">heappop</span>(self.heap)
+        <span class="keyword">return</span> self.heap[<span class="number">0</span>]  <span class="comment"># Root is kth largest</span></pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let k = 3;
+        let heap = [];
+        let stream = [];
+        const initialNums = [4, 5, 8, 2];
+
+        function heapPush(val) {
+            heap.push(val);
+            let i = heap.length - 1;
+            while (i > 0) {
+                const parent = Math.floor((i - 1) / 2);
+                if (heap[parent] <= heap[i]) break;
+                [heap[parent], heap[i]] = [heap[i], heap[parent]];
+                i = parent;
+            }
+        }
+
+        function heapPop() {
+            if (heap.length === 0) return null;
+            const min = heap[0];
+            const last = heap.pop();
+            if (heap.length > 0) {
+                heap[0] = last;
+                let i = 0;
+                while (true) {
+                    const left = 2 * i + 1;
+                    const right = 2 * i + 2;
+                    let smallest = i;
+                    if (left < heap.length && heap[left] < heap[smallest]) smallest = left;
+                    if (right < heap.length && heap[right] < heap[smallest]) smallest = right;
+                    if (smallest === i) break;
+                    [heap[i], heap[smallest]] = [heap[smallest], heap[i]];
+                    i = smallest;
+                }
+            }
+            return min;
+        }
+
+        function renderHeap() {
+            const svg = d3.select("#heapViz");
+            svg.selectAll("*").remove();
+
+            const container = svg.node().parentElement;
+            const width = container.clientWidth;
+            const height = 200;
+            svg.attr("viewBox", `0 0 ${width} ${height}`);
+
+            if (heap.length === 0) {
+                svg.append("text")
+                    .attr("x", width / 2)
+                    .attr("y", height / 2)
+                    .attr("text-anchor", "middle")
+                    .attr("fill", "#999")
+                    .text("Empty heap");
+                return;
+            }
+
+            const nodeRadius = 25;
+            const g = svg.append("g");
+
+            const positions = [];
+            for (let i = 0; i < heap.length; i++) {
+                const level = Math.floor(Math.log2(i + 1));
+                const posInLevel = i - (Math.pow(2, level) - 1);
+                const totalInLevel = Math.pow(2, level);
+                const levelWidth = width * 0.8;
+                const x = width / 2 + (posInLevel - (totalInLevel - 1) / 2) * (levelWidth / totalInLevel);
+                const y = 40 + level * 60;
+                positions.push({ x, y });
+            }
+
+            // Draw edges
+            heap.forEach((_, i) => {
+                const left = 2 * i + 1;
+                const right = 2 * i + 2;
+                if (left < heap.length) {
+                    g.append("line")
+                        .attr("x1", positions[i].x).attr("y1", positions[i].y)
+                        .attr("x2", positions[left].x).attr("y2", positions[left].y)
+                        .attr("stroke", "#ccc").attr("stroke-width", 2);
+                }
+                if (right < heap.length) {
+                    g.append("line")
+                        .attr("x1", positions[i].x).attr("y1", positions[i].y)
+                        .attr("x2", positions[right].x).attr("y2", positions[right].y)
+                        .attr("stroke", "#ccc").attr("stroke-width", 2);
+                }
+            });
+
+            // Draw nodes
+            heap.forEach((val, i) => {
+                const pos = positions[i];
+                const isRoot = i === 0;
+
+                g.append("circle")
+                    .attr("cx", pos.x).attr("cy", pos.y).attr("r", nodeRadius)
+                    .attr("fill", isRoot ? "#4caf50" : "#667eea")
+                    .attr("stroke", isRoot ? "#388e3c" : "#5a6fd6")
+                    .attr("stroke-width", 2);
+
+                g.append("text")
+                    .attr("x", pos.x).attr("y", pos.y + 6)
+                    .attr("text-anchor", "middle")
+                    .attr("fill", "white").attr("font-weight", "bold").attr("font-size", "16px")
+                    .text(val);
+
+                if (isRoot) {
+                    g.append("text")
+                        .attr("x", pos.x).attr("y", pos.y - 35)
+                        .attr("text-anchor", "middle")
+                        .attr("fill", "#4caf50").attr("font-size", "11px")
+                        .text(`kth largest (k=${k})`);
+                }
+            });
+
+            document.getElementById('heapArray').textContent = 
+                `Heap: [${heap.join(', ')}] (size: ${heap.length}/${k})`;
+        }
+
+        function renderStream() {
+            const container = document.getElementById('streamHistory');
+            if (stream.length === 0) {
+                container.innerHTML = '<span style="color: #999;">Stream will appear here...</span>';
+                return;
+            }
+            container.innerHTML = stream.map((item, i) => 
+                `<div style="padding: 5px 10px; margin: 3px 0; background: ${item.kept ? '#e8f5e9' : '#ffebee'}; border-radius: 5px; font-size: 0.9em;">
+                    <strong>add(${item.val})</strong> → ${item.result} ${item.kept ? '✓' : '✗'}
+                </div>`
+            ).join('');
+        }
+
+        function addElement() {
+            const input = document.getElementById('newElement');
+            const val = parseInt(input.value);
+            if (isNaN(val)) {
+                document.getElementById('statusMessage').textContent = 'Please enter a valid number';
+                return;
+            }
+
+            heapPush(val);
+            let kept = true;
+            let removed = null;
+
+            if (heap.length > k) {
+                removed = heapPop();
+                kept = removed !== val;
+            }
+
+            const result = heap[0];
+            stream.push({ val, result, kept });
+
+            document.getElementById('statusMessage').textContent = 
+                kept ? `Added ${val} to heap. ${removed !== null ? `Removed ${removed}. ` : ''}Kth largest = ${result}` 
+                     : `${val} is too small, not in top ${k}. Kth largest = ${result}`;
+
+            document.getElementById('answerContainer').textContent = result;
+            input.value = '';
+
+            renderHeap();
+            renderStream();
+        }
+
+        function reset() {
+            k = parseInt(document.getElementById('kValue').value);
+            heap = [];
+            stream = [];
+
+            // Initialize with initial nums
+            initialNums.forEach(n => {
+                heapPush(n);
+                if (heap.length > k) heapPop();
+            });
+
+            document.getElementById('statusMessage').textContent = 
+                `Initialized with k=${k} and nums=[${initialNums.join(', ')}]. Enter a number to add.`;
+            document.getElementById('answerContainer').textContent = heap.length > 0 ? heap[0] : '-';
+
+            renderHeap();
+            renderStream();
+        }
+
+        document.getElementById('kValue').addEventListener('change', reset);
+        document.getElementById('newElement').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') addElement();
+        });
+        reset();
+        window.addEventListener('resize', renderHeap);
+    </script>
+</body>
+</html>

@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Balanced Binary Tree - LeetCode 110</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="problem-info">
+            <h1><span class="problem-number">#0110</span> Balanced Binary Tree</h1>
+            <p><strong>Problem:</strong> Determine if a binary tree is height-balanced. A height-balanced tree has subtrees that differ in height by at most 1.</p>
+            <p><strong>Pattern:</strong> DFS - Check height difference at each node, return -1 if unbalanced</p>
+            <div class="problem-meta">
+                <span class="meta-tag">🌳 Tree</span>
+                <span class="meta-tag">⏱️ O(n)</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <code>python/0110_balanced_binary_tree/0110_balanced_binary_tree.py</code>
+            </div>
+
+        </div>
+
+        <div class="explanation-panel">
+            <h4>🧠 How It Works (Layman's Terms)</h4>
+            <p>Tree traversal is like <strong>exploring a family tree</strong>:</p>
+            <ul>
+                <li><strong>Root:</strong> Start at the top node</li>
+                <li><strong>Recurse:</strong> Visit left and right children</li>
+                <li><strong>Base case:</strong> Stop at null/leaf nodes</li>
+                <li><strong>Combine:</strong> Build answer from subtree results</li>
+            </ul>
+        </div>
+
+
+        <div class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+
+            <div class="visualization">
+            <svg id="mainSvg"></svg>
+        </div>
+
+        <div class="controls">
+            <button id="stepBtn">Step</button>
+            <button id="autoBtn">Auto Run</button>
+            <button id="resetBtn">Reset</button>
+            <div class="speed-control">
+                <label for="speed">Speed:</label>
+                <input type="range" id="speed" min="100" max="2000" value="800">
+            </div>
+        </div>
+
+        <div class="status" id="status">Click "Step" to check if tree is balanced</div>
+
+        <div class="variables">
+            <div class="var-item">
+                <span class="var-label">Current Node:</span>
+                <span id="currentDisplay">-</span>
+            </div>
+            <div class="var-item">
+                <span class="var-label">Heights (L, R):</span>
+                <span id="heightDisplay">-</span>
+            </div>
+            <div class="var-item">
+                <span class="var-label">Balanced:</span>
+                <span id="balancedDisplay">-</span>
+            </div>
+        </div>
+
+        </div>
+
+        <div class="code-section">
+            <h3>Python Solution</h3>
+            <pre><span class="keyword">def</span> <span class="function">isBalanced</span>(root):
+    <span class="string">"""
+    DFS returning height or -1 if unbalanced.
+    Time: O(n), Space: O(h)
+    """</span>
+    <span class="keyword">def</span> <span class="function">dfs</span>(node):
+        <span class="keyword">if</span> <span class="keyword">not</span> node:
+            <span class="keyword">return</span> <span class="number">0</span>
+        
+        left = <span class="function">dfs</span>(node.left)
+        <span class="keyword">if</span> left == <span class="number">-1</span>:
+            <span class="keyword">return</span> <span class="number">-1</span>
+        
+        right = <span class="function">dfs</span>(node.right)
+        <span class="keyword">if</span> right == <span class="number">-1</span>:
+            <span class="keyword">return</span> <span class="number">-1</span>
+        
+        <span class="keyword">if</span> <span class="function">abs</span>(left - right) > <span class="number">1</span>:
+            <span class="keyword">return</span> <span class="number">-1</span>
+        
+        <span class="keyword">return</span> <span class="number">1</span> + <span class="function">max</span>(left, right)
+    
+    <span class="keyword">return</span> <span class="function">dfs</span>(root) != <span class="number">-1</span></pre>
+        </div>
+    </div>
+
+    <script>
+        // Balanced tree: [3, 9, 20, null, null, 15, 7]
+        const tree = {
+            val: 3,
+            left: {val: 9, left: null, right: null},
+            right: {
+                val: 20,
+                left: {val: 15, left: null, right: null},
+                right: {val: 7, left: null, right: null}
+            }
+        };
+
+        let nodeHeights = {}; // path -> height
+        let nodeStates = {}; // path -> 'processing' | 'done' | 'unbalanced'
+        let callStack = [{node: tree, path: 'root', phase: 'visit'}];
+        let isBalanced = null;
+        let autoRunning = false;
+        let autoTimer = null;
+
+        const width = 700;
+        const height = 400;
+        const svg = d3.select("#mainSvg")
+            .attr("width", width)
+            .attr("height", height);
+
+        function drawTree(node, x, y, level, path) {
+            if (!node) return;
+
+            const nodeRadius = 28;
+            const dx = 100 / (level + 1);
+            const dy = 70;
+
+            // Edges
+            if (node.left) {
+                svg.append("line")
+                    .attr("x1", x).attr("y1", y + nodeRadius)
+                    .attr("x2", x - dx).attr("y2", y + dy - nodeRadius)
+                    .attr("stroke", "#ddd").attr("stroke-width", 2);
+                drawTree(node.left, x - dx, y + dy, level + 1, path + 'L');
+            }
+            if (node.right) {
+                svg.append("line")
+                    .attr("x1", x).attr("y1", y + nodeRadius)
+                    .attr("x2", x + dx).attr("y2", y + dy - nodeRadius)
+                    .attr("stroke", "#ddd").attr("stroke-width", 2);
+                drawTree(node.right, x + dx, y + dy, level + 1, path + 'R');
+            }
+
+            // Node
+            const state = nodeStates[path];
+            const nodeHeight = nodeHeights[path];
+
+            let fill = "#e3f2fd", stroke = "#1976d2";
+            if (state === 'processing') {
+                fill = "#ffeb3b"; stroke = "#f57c00";
+            } else if (state === 'done') {
+                fill = "#c8e6c9"; stroke = "#4caf50";
+            } else if (state === 'unbalanced') {
+                fill = "#ffcdd2"; stroke = "#e53935";
+            }
+
+            svg.append("circle")
+                .attr("cx", x).attr("cy", y).attr("r", nodeRadius)
+                .attr("fill", fill).attr("stroke", stroke).attr("stroke-width", 2);
+
+            svg.append("text")
+                .attr("x", x).attr("y", y + 5)
+                .attr("text-anchor", "middle")
+                .attr("font-size", "18px")
+                .attr("font-weight", "bold")
+                .text(node.val);
+
+            // Height label
+            if (nodeHeight !== undefined) {
+                svg.append("rect")
+                    .attr("x", x + nodeRadius + 2).attr("y", y - 10)
+                    .attr("width", 25).attr("height", 20)
+                    .attr("rx", 4)
+                    .attr("fill", "#fff3e0").attr("stroke", "#ff9800");
+
+                svg.append("text")
+                    .attr("x", x + nodeRadius + 14).attr("y", y + 5)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "12px")
+                    .attr("fill", "#e65100")
+                    .text(`h${nodeHeight}`);
+            }
+        }
+
+        function draw() {
+            svg.selectAll("*").remove();
+
+            svg.append("text")
+                .attr("x", width / 2).attr("y", 25)
+                .attr("text-anchor", "middle")
+                .attr("font-weight", "bold")
+                .text("Check if Binary Tree is Height-Balanced");
+
+            drawTree(tree, width / 2, 70, 0, 'root');
+
+            // Result
+            if (isBalanced !== null) {
+                svg.append("rect")
+                    .attr("x", width / 2 - 80).attr("y", height - 60)
+                    .attr("width", 160).attr("height", 45)
+                    .attr("rx", 10)
+                    .attr("fill", isBalanced ? "#c8e6c9" : "#ffcdd2")
+                    .attr("stroke", isBalanced ? "#4caf50" : "#e53935");
+
+                svg.append("text")
+                    .attr("x", width / 2).attr("y", height - 30)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "18px")
+                    .attr("font-weight", "bold")
+                    .text(isBalanced ? "✓ Balanced" : "✗ Not Balanced");
+            }
+        }
+
+        function step() {
+            if (callStack.length === 0 || isBalanced === false) {
+                if (isBalanced === null) isBalanced = true;
+                document.getElementById("balancedDisplay").textContent = 
+                    isBalanced ? "Yes ✓" : "No ✗";
+                document.getElementById("status").textContent = 
+                    isBalanced ? "Tree is balanced!" : "Tree is NOT balanced!";
+                draw();
+                return false;
+            }
+
+            const {node, path, phase, leftH, rightH} = callStack.pop();
+
+            if (!node) {
+                // Null node has height 0
+                nodeHeights[path] = 0;
+                return callStack.length > 0;
+            }
+
+            if (phase === 'visit') {
+                nodeStates[path] = 'processing';
+                document.getElementById("currentDisplay").textContent = `Node ${node.val}`;
+                
+                // Need to process children first
+                callStack.push({node, path, phase: 'checkRight'});
+                if (node.left) {
+                    callStack.push({node: node.left, path: path + 'L', phase: 'visit'});
+                } else {
+                    nodeHeights[path + 'L'] = 0;
+                }
+                
+                document.getElementById("status").textContent = 
+                    `Visiting node ${node.val}, checking left subtree...`;
+            } else if (phase === 'checkRight') {
+                callStack.push({node, path, phase: 'calculate', leftH: nodeHeights[path + 'L']});
+                if (node.right) {
+                    callStack.push({node: node.right, path: path + 'R', phase: 'visit'});
+                } else {
+                    nodeHeights[path + 'R'] = 0;
+                }
+                
+                document.getElementById("status").textContent = 
+                    `Node ${node.val}: left height = ${nodeHeights[path + 'L']}, checking right...`;
+            } else if (phase === 'calculate') {
+                const lh = nodeHeights[path + 'L'] || 0;
+                const rh = nodeHeights[path + 'R'] || 0;
+                const diff = Math.abs(lh - rh);
+                
+                document.getElementById("heightDisplay").textContent = `(${lh}, ${rh}), diff=${diff}`;
+                
+                if (diff > 1) {
+                    nodeStates[path] = 'unbalanced';
+                    isBalanced = false;
+                    document.getElementById("status").textContent = 
+                        `Node ${node.val}: heights ${lh} and ${rh} differ by ${diff} > 1 - UNBALANCED!`;
+                } else {
+                    nodeHeights[path] = 1 + Math.max(lh, rh);
+                    nodeStates[path] = 'done';
+                    document.getElementById("status").textContent = 
+                        `Node ${node.val}: balanced! Height = 1 + max(${lh}, ${rh}) = ${nodeHeights[path]}`;
+                }
+            }
+
+            draw();
+            return callStack.length > 0 && isBalanced !== false;
+        }
+
+        function reset() {
+            nodeHeights = {};
+            nodeStates = {};
+            callStack = [{node: tree, path: 'root', phase: 'visit'}];
+            isBalanced = null;
+            autoRunning = false;
+            if (autoTimer) clearInterval(autoTimer);
+            
+            document.getElementById("currentDisplay").textContent = "-";
+            document.getElementById("heightDisplay").textContent = "-";
+            document.getElementById("balancedDisplay").textContent = "-";
+            document.getElementById("status").textContent = 
+                'Click "Step" to check if tree is balanced';
+            document.getElementById("autoBtn").textContent = "Auto Run";
+            
+            draw();
+        }
+
+        function autoRun() {
+            if (autoRunning) {
+                autoRunning = false;
+                clearInterval(autoTimer);
+                document.getElementById("autoBtn").textContent = "Auto Run";
+            } else {
+                autoRunning = true;
+                document.getElementById("autoBtn").textContent = "Pause";
+                const speed = 2100 - document.getElementById("speed").value;
+                autoTimer = setInterval(() => {
+                    if (!step()) {
+                        autoRunning = false;
+                        clearInterval(autoTimer);
+                        document.getElementById("autoBtn").textContent = "Auto Run";
+                    }
+                }, speed);
+            }
+        }
+
+        document.getElementById("stepBtn").addEventListener("click", step);
+        document.getElementById("autoBtn").addEventListener("click", autoRun);
+        document.getElementById("resetBtn").addEventListener("click", reset);
+
+        draw();
+    </script>
+</body>
+</html>

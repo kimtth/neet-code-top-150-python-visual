@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LC 155: Min Stack - Algorithm Visualization</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="problem-info">
+            <h1><span class="problem-number">#155</span> Min Stack</h1>
+            <p>Design a stack that supports push, pop, top, and retrieving the minimum element in O(1) time.</p>
+            <div class="problem-meta">
+                <span class="meta-tag">📚 Stack</span>
+                <span class="meta-tag">🎨 Design</span>
+                <span class="meta-tag">⏱️ O(1) all ops</span>
+                <span class="meta-tag">💾 O(n)</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <code>python/0155_min_stack/0155_min_stack.py</code>
+            </div>
+            </div>
+
+        <div class="explanation-panel">
+            <h4>🧠 How It Works (Layman's Terms)</h4>
+            <p>The trick: <strong>store the minimum value with each node</strong>!</p>
+            <ul>
+                <li><strong>Each node stores:</strong> its value AND the minimum of all values below it</li>
+                <li><strong>On push:</strong> new min = min(new value, previous min)</li>
+                <li><strong>On pop:</strong> min automatically updates (stored in next node)</li>
+                <li><strong>getMin:</strong> Just read the min from the top node - O(1)!</li>
+            </ul>
+        </div>
+
+
+        <div class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+            
+            <div class="controls">
+                <input type="number" id="pushValue" placeholder="Value" style="width: 80px; padding: 8px; border-radius: 5px; border: 2px solid #ddd;">
+                <button class="btn btn-primary" onclick="pushVal()">Push</button>
+                <button class="btn btn-warning" onclick="popVal()">Pop</button>
+                <button class="btn btn-success" onclick="getTop()">Top</button>
+                <button class="btn" style="background: #9c27b0; color: white;" onclick="getMinVal()">getMin</button>
+                <button class="btn" style="background: #607d8b; color: white;" onclick="reset()">Reset</button>
+            </div>
+
+            <div class="status-message" id="statusMessage">
+                Try push, pop, top, or getMin operations!
+            </div>
+
+            <div style="display: flex; gap: 30px; flex-wrap: wrap; margin-top: 20px;">
+                <div style="flex: 1; min-width: 300px;">
+                    <h4 style="margin-bottom: 10px;">📚 Stack (with min tracking)</h4>
+                    <div id="stackContainer" style="display: flex; flex-direction: column-reverse; gap: 5px; padding: 20px; background: #f5f5f5; border-radius: 12px; min-height: 300px;">
+                        <div style="color: #999; text-align: center;">Empty Stack</div>
+                    </div>
+                </div>
+                <div style="flex: 1; min-width: 250px;">
+                    <h4 style="margin-bottom: 10px;">📊 Operations Log</h4>
+                    <div id="logContainer" style="padding: 15px; background: #f5f5f5; border-radius: 12px; min-height: 300px; max-height: 300px; overflow-y: auto;">
+                        <div style="color: #999;">No operations yet...</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="info-box" style="margin-top: 20px;">
+                <h4>🔑 Key Insight</h4>
+                <p>By storing the minimum at each level, we always know the minimum of all elements below (including) that node. When we pop, the new top already has the correct minimum stored!</p>
+            </div>
+        </div>
+        <div class="code-section">
+            <h3>💻 Python Solution</h3>
+            <div class="code-block">
+                <pre><span class="keyword">class</span> MinStack:
+    <span class="keyword">class</span> Node:
+        <span class="keyword">def</span> <span class="function">__init__</span>(self, val, min_val, next_node=<span class="keyword">None</span>):
+            self.val = val
+            self.min = min_val  <span class="comment"># Track min at this level!</span>
+            self.next = next_node
+
+    <span class="keyword">def</span> <span class="function">push</span>(self, val):
+        <span class="keyword">if</span> <span class="keyword">not</span> self.head:
+            self.head = <span class="function">Node</span>(val, val)
+        <span class="keyword">else</span>:
+            self.head = <span class="function">Node</span>(val, <span class="function">min</span>(val, self.head.min), self.head)
+
+    <span class="keyword">def</span> <span class="function">get_min</span>(self):
+        <span class="keyword">return</span> self.head.min  <span class="comment"># O(1)!</span></pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let stack = []; // Each element: {val, min}
+        let logs = [];
+
+        function renderStack() {
+            const container = document.getElementById('stackContainer');
+            
+            if (stack.length === 0) {
+                container.innerHTML = '<div style="color: #999; text-align: center;">Empty Stack</div>';
+                return;
+            }
+
+            container.innerHTML = stack.map((item, i) => {
+                const isTop = i === stack.length - 1;
+                return `
+                    <div style="display: flex; align-items: center; padding: 12px 15px; 
+                                background: ${isTop ? '#667eea' : '#fff'}; 
+                                border: 2px solid ${isTop ? '#5a6fd6' : '#ddd'}; 
+                                border-radius: 8px; color: ${isTop ? 'white' : '#333'};">
+                        <div style="flex: 1;">
+                            <strong>val: ${item.val}</strong>
+                        </div>
+                        <div style="background: ${isTop ? 'rgba(255,255,255,0.2)' : '#e8f5e9'}; 
+                                    padding: 4px 10px; border-radius: 4px; font-size: 0.9em;
+                                    color: ${isTop ? 'white' : '#4caf50'};">
+                            min: ${item.min}
+                        </div>
+                        ${isTop ? '<span style="margin-left: 10px;">← TOP</span>' : ''}
+                    </div>
+                `;
+            }).reverse().join('');
+        }
+
+        function renderLogs() {
+            const container = document.getElementById('logContainer');
+            
+            if (logs.length === 0) {
+                container.innerHTML = '<div style="color: #999;">No operations yet...</div>';
+                return;
+            }
+
+            container.innerHTML = logs.map((log, i) => `
+                <div style="padding: 8px; margin-bottom: 5px; background: ${log.color}; 
+                            border-radius: 5px; font-size: 0.9em;">
+                    <strong>${log.op}:</strong> ${log.msg}
+
+        </div>
+            `).join('');
+
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function addLog(op, msg, color = '#e3f2fd') {
+            logs.push({ op, msg, color });
+            if (logs.length > 20) logs.shift();
+            renderLogs();
+        }
+
+        function pushVal() {
+            const input = document.getElementById('pushValue');
+            const val = parseInt(input.value);
+            
+            if (isNaN(val)) {
+                document.getElementById('statusMessage').textContent = '⚠️ Please enter a valid number';
+                return;
+            }
+
+            const newMin = stack.length === 0 ? val : Math.min(val, stack[stack.length - 1].min);
+            stack.push({ val, min: newMin });
+            
+            document.getElementById('statusMessage').textContent = 
+                `Pushed ${val}. New min at this level: ${newMin}`;
+            
+            addLog('push', `val=${val}, min=${newMin}`, '#e3f2fd');
+            input.value = '';
+            renderStack();
+        }
+
+        function popVal() {
+            if (stack.length === 0) {
+                document.getElementById('statusMessage').textContent = '⚠️ Stack is empty!';
+                return;
+            }
+
+            const popped = stack.pop();
+            const newMin = stack.length > 0 ? stack[stack.length - 1].min : 'N/A';
+            
+            document.getElementById('statusMessage').textContent = 
+                `Popped ${popped.val}. ${stack.length > 0 ? 'New min: ' + newMin : 'Stack is now empty.'}`;
+            
+            addLog('pop', `removed ${popped.val}`, '#fff3e0');
+            renderStack();
+        }
+
+        function getTop() {
+            if (stack.length === 0) {
+                document.getElementById('statusMessage').textContent = '⚠️ Stack is empty!';
+                return;
+            }
+
+            const top = stack[stack.length - 1].val;
+            document.getElementById('statusMessage').textContent = `Top element: ${top}`;
+            addLog('top', `returned ${top}`, '#e8f5e9');
+        }
+
+        function getMinVal() {
+            if (stack.length === 0) {
+                document.getElementById('statusMessage').textContent = '⚠️ Stack is empty!';
+                return;
+            }
+
+            const min = stack[stack.length - 1].min;
+            document.getElementById('statusMessage').textContent = `Minimum element: ${min} (O(1) lookup!)`;
+            addLog('getMin', `returned ${min}`, '#f3e5f5');
+        }
+
+        function reset() {
+            stack = [];
+            logs = [];
+            document.getElementById('statusMessage').textContent = 'Stack reset. Try push, pop, top, or getMin!';
+            renderStack();
+            renderLogs();
+        }
+
+        // Demo sequence
+        function runDemo() {
+            const ops = [
+                () => { document.getElementById('pushValue').value = -2; pushVal(); },
+                () => { document.getElementById('pushValue').value = 0; pushVal(); },
+                () => { document.getElementById('pushValue').value = -3; pushVal(); },
+                () => getMinVal(),
+                () => popVal(),
+                () => getTop(),
+                () => getMinVal()
+            ];
+
+            let i = 0;
+            const interval = setInterval(() => {
+                if (i >= ops.length) {
+                    clearInterval(interval);
+                    return;
+                }
+                ops[i]();
+                i++;
+            }, 1000);
+        }
+
+        renderStack();
+        renderLogs();
+    </script>
+</body>
+</html>

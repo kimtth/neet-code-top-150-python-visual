@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LC 150: Evaluate Reverse Polish Notation - Algorithm Visualization</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="problem-info">
+            <h1><span class="problem-number">#150</span> Evaluate Reverse Polish Notation</h1>
+            <p>Evaluate the value of an arithmetic expression in Reverse Polish Notation (postfix notation). Valid operators are +, -, *, and /.</p>
+            <div class="problem-meta">
+                <span class="meta-tag">📚 Stack</span>
+                <span class="meta-tag">🔢 Math</span>
+                <span class="meta-tag">⏱️ O(n)</span>
+                <span class="meta-tag">💾 O(n)</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <code>python/0150_evaluate_reverse_polish_notation/0150_evaluate_reverse_polish_notation.py</code>
+            </div>
+            </div>
+
+        <div class="explanation-panel">
+            <h4>🧠 How It Works (Layman's Terms)</h4>
+            <p>RPN (Reverse Polish Notation) puts operators AFTER operands. Here's how to evaluate it:</p>
+            <ul>
+                <li><strong>See a number?</strong> Push it onto the stack</li>
+                <li><strong>See an operator?</strong> Pop two numbers, apply the operator, push the result</li>
+                <li><strong>Important:</strong> The SECOND popped value is the LEFT operand (a op b, not b op a)</li>
+                <li><strong>At the end:</strong> Stack has exactly one element - the answer!</li>
+            </ul>
+            <p><strong>Example:</strong> "2 1 +" means 2 + 1 = 3. "3 4 *" means 3 * 4 = 12.</p>
+        </div>
+
+
+        <div class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+            
+            <div class="controls">
+                <select id="exampleSelect" style="padding: 8px; border-radius: 5px; border: 2px solid #ddd;">
+                    <option value="0">["2","1","+","3","*"] = 9</option>
+                    <option value="1">["4","13","5","/","+"] = 6</option>
+                    <option value="2">["4","3","-"] = 1</option>
+                </select>
+                <button class="btn btn-primary" onclick="loadExample()">Load</button>
+                <button class="btn btn-primary" onclick="step()">Step</button>
+                <button class="btn btn-success" onclick="autoRun()">Auto Run</button>
+                <button class="btn" style="background: #607d8b; color: white;" onclick="reset()">Reset</button>
+            </div>
+
+            <div class="status-message" id="statusMessage">
+                Click Step to evaluate the expression token by token
+            </div>
+
+            <div style="margin-top: 20px;">
+                <h4 style="margin-bottom: 10px;">📝 Tokens</h4>
+                <div id="tokensContainer" style="display: flex; gap: 8px; flex-wrap: wrap; padding: 15px; background: #f5f5f5; border-radius: 12px;">
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 30px; flex-wrap: wrap; margin-top: 20px;">
+                <div style="flex: 1; min-width: 200px;">
+                    <h4 style="margin-bottom: 10px;">📚 Stack</h4>
+                    <div id="stackContainer" style="display: flex; flex-direction: column-reverse; gap: 5px; padding: 20px; background: #e3f2fd; border-radius: 12px; min-height: 200px;">
+                        <span style="color: #999; text-align: center;">Empty</span>
+                    </div>
+                </div>
+                <div style="flex: 1; min-width: 250px;">
+                    <h4 style="margin-bottom: 10px;">🧮 Current Operation</h4>
+                    <div id="operationContainer" style="padding: 20px; background: #fff3e0; border-radius: 12px; min-height: 150px; text-align: center;">
+                        <span style="color: #999;">-</span>
+                    </div>
+                    
+                    <h4 style="margin-top: 20px; margin-bottom: 10px;">✅ Final Result</h4>
+                    <div id="resultContainer" style="padding: 20px; background: #e8f5e9; border-radius: 12px; text-align: center; font-size: 2em; font-weight: bold; color: #4caf50;">
+                        -
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="code-section">
+            <h3>💻 Python Solution</h3>
+            <div class="code-block">
+                <pre><span class="keyword">def</span> <span class="function">eval_rpn</span>(tokens):
+    stack = []
+    
+    <span class="keyword">for</span> token <span class="keyword">in</span> tokens:
+        <span class="keyword">if</span> token <span class="keyword">in</span> [<span class="string">'+'</span>, <span class="string">'-'</span>, <span class="string">'*'</span>, <span class="string">'/'</span>]:
+            b = stack.<span class="function">pop</span>()  <span class="comment"># Second operand</span>
+            a = stack.<span class="function">pop</span>()  <span class="comment"># First operand</span>
+            
+            <span class="keyword">if</span> token == <span class="string">'+'</span>: <span class="class-name">result</span> = a + b
+            <span class="keyword">elif</span> token == <span class="string">'-'</span>: <span class="class-name">result</span> = a - b
+            <span class="keyword">elif</span> token == <span class="string">'*'</span>: <span class="class-name">result</span> = a * b
+            <span class="keyword">else</span>: <span class="class-name">result</span> = <span class="function">int</span>(a / b)  <span class="comment"># Truncate toward zero</span>
+            
+            stack.<span class="function">append</span>(result)
+        <span class="keyword">else</span>:
+            stack.<span class="function">append</span>(<span class="function">int</span>(token))
+    
+    <span class="keyword">return</span> stack[<span class="number">0</span>]</pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const examples = [
+            ["2", "1", "+", "3", "*"],
+            ["4", "13", "5", "/", "+"],
+            ["4", "3", "-"]
+        ];
+
+        let tokens = [...examples[0]];
+        let stack = [];
+        let currentIdx = 0;
+        let done = false;
+        let isRunning = false;
+
+        function loadExample() {
+            const idx = parseInt(document.getElementById('exampleSelect').value);
+            tokens = [...examples[idx]];
+            reset();
+        }
+
+        function isOperator(token) {
+            return ['+', '-', '*', '/'].includes(token);
+        }
+
+        function renderTokens() {
+            const container = document.getElementById('tokensContainer');
+            container.innerHTML = tokens.map((t, i) => {
+                let bgColor = '#fff';
+                let borderColor = '#ddd';
+                let textColor = '#333';
+
+                if (i < currentIdx) {
+                    bgColor = '#e0e0e0';
+                    textColor = '#999';
+                } else if (i === currentIdx) {
+                    bgColor = isOperator(t) ? '#ff9800' : '#667eea';
+                    borderColor = isOperator(t) ? '#f57c00' : '#5a6fd6';
+                    textColor = 'white';
+                }
+
+                return `
+                    <div style="padding: 12px 18px; background: ${bgColor}; border: 2px solid ${borderColor}; 
+                                border-radius: 8px; font-weight: bold; font-size: 1.2em; color: ${textColor};
+                                min-width: 40px; text-align: center;">
+                        ${t}
+                        ${i === currentIdx ? '<div style="font-size: 0.6em; margin-top: 2px;">▲</div>' : ''}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderStack() {
+            const container = document.getElementById('stackContainer');
+            if (stack.length === 0) {
+                container.innerHTML = '<span style="color: #999; text-align: center;">Empty</span>';
+                return;
+            }
+            container.innerHTML = stack.map((val, i) => {
+                const isTop = i === stack.length - 1;
+                return `
+                    <div style="padding: 12px 20px; background: ${isTop ? '#667eea' : '#fff'}; 
+                                border: 2px solid ${isTop ? '#5a6fd6' : '#90caf9'}; border-radius: 8px;
+                                font-weight: bold; font-size: 1.2em; color: ${isTop ? 'white' : '#333'};
+                                text-align: center;">
+                        ${val}
+                        ${isTop ? '<span style="margin-left: 10px; font-size: 0.8em;">← TOP</span>' : ''}
+                    </div>
+                `;
+            }).reverse().join('');
+        }
+
+        function renderOperation(op, a, b, result) {
+            const container = document.getElementById('operationContainer');
+            if (!op) {
+                container.innerHTML = '<span style="color: #999;">-</span>';
+                return;
+            }
+
+            const opSymbol = op === '*' ? '×' : op === '/' ? '÷' : op;
+            container.innerHTML = `
+                <div style="font-size: 1.5em; color: #666;">
+                    <span style="color: #667eea; font-weight: bold;">${a}</span>
+                    <span style="color: #ff9800; margin: 0 10px;">${opSymbol}</span>
+                    <span style="color: #667eea; font-weight: bold;">${b}</span>
+                </div>
+                <div style="font-size: 2em; margin: 10px 0;">=</div>
+                <div style="font-size: 2em; color: #4caf50; font-weight: bold;">${result}
+
+        </div>
+            `;
+        }
+
+        function step() {
+            if (done) {
+                document.getElementById('statusMessage').textContent = 
+                    `Done! Final answer: ${stack[0]}`;
+                return;
+            }
+
+            if (currentIdx >= tokens.length) {
+                done = true;
+                document.getElementById('resultContainer').textContent = stack[0];
+                document.getElementById('statusMessage').textContent = 
+                    `Complete! The expression evaluates to ${stack[0]}`;
+                return;
+            }
+
+            const token = tokens[currentIdx];
+
+            if (isOperator(token)) {
+                const b = stack.pop();
+                const a = stack.pop();
+                let result;
+
+                switch (token) {
+                    case '+': result = a + b; break;
+                    case '-': result = a - b; break;
+                    case '*': result = a * b; break;
+                    case '/': result = Math.trunc(a / b); break;
+                }
+
+                stack.push(result);
+                renderOperation(token, a, b, result);
+                document.getElementById('statusMessage').textContent = 
+                    `Operator "${token}": Pop ${b} and ${a}, compute ${a} ${token} ${b} = ${result}, push ${result}`;
+            } else {
+                const num = parseInt(token);
+                stack.push(num);
+                renderOperation(null);
+                document.getElementById('statusMessage').textContent = 
+                    `Number "${token}": Push ${num} onto stack`;
+            }
+
+            currentIdx++;
+            renderTokens();
+            renderStack();
+
+            if (currentIdx >= tokens.length) {
+                document.getElementById('resultContainer').textContent = stack[0];
+            }
+        }
+
+        function autoRun() {
+            if (isRunning) return;
+            isRunning = true;
+
+            const interval = setInterval(() => {
+                if (done || currentIdx >= tokens.length) {
+                    clearInterval(interval);
+                    isRunning = false;
+                    if (stack.length > 0) {
+                        document.getElementById('resultContainer').textContent = stack[0];
+                        document.getElementById('statusMessage').textContent = 
+                            `Complete! The expression evaluates to ${stack[0]}`;
+                    }
+                    done = true;
+                    return;
+                }
+                step();
+            }, 1000);
+        }
+
+        function reset() {
+            stack = [];
+            currentIdx = 0;
+            done = false;
+            isRunning = false;
+
+            document.getElementById('statusMessage').textContent = 
+                'Click Step to evaluate the expression token by token';
+            document.getElementById('resultContainer').textContent = '-';
+            
+            renderTokens();
+            renderStack();
+            renderOperation(null);
+        }
+
+        reset();
+    </script>
+</body>
+</html>

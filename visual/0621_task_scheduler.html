@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>621 - Task Scheduler</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="problem-info">
+            <h1><span class="problem-number">#621</span> Task Scheduler</h1>
+            <p>
+                Given an array of tasks and a cooldown period n, find the minimum time needed to complete all tasks.
+                The same task must have at least n time units between executions.
+            </p>
+            <div class="problem-meta">
+                <span class="meta-tag">📝 Algorithm</span>
+                <span class="meta-tag">⏱️ O(n)</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <code>python/0621_task_scheduler/0621_task_scheduler.py</code>
+            </div>
+
+            <h3>Example:</h3>
+            <pre>
+tasks = ["A","A","A","B","B","B"], n = 2
+Output: 8
+Schedule: A → B → idle → A → B → idle → A → B
+            </pre>
+        </div>
+
+        <div class="explanation-panel">
+            <h4>🧠 How It Works (Layman's Terms)</h4>
+            <p>This algorithm solves the problem <strong>step by step</strong>:</p>
+            <ul>
+                <li><strong>Understand:</strong> Parse the input data</li>
+                <li><strong>Process:</strong> Apply the core logic</li>
+                <li><strong>Optimize:</strong> Use efficient data structures</li>
+                <li><strong>Return:</strong> Output the computed result</li>
+            </ul>
+        </div>
+
+
+        <section class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+            <div class="controls">
+                <label>Cooldown n = <input type="number" id="nInput" value="2" min="0" max="5" style="width: 50px; padding: 5px;"></label>
+                <button id="stepBtn" class="btn">Step</button>
+                <button id="autoBtn" class="btn btn-success">Auto Run</button>
+                <button id="resetBtn" class="btn btn-danger">Reset</button>
+            </div>
+            <div class="status" id="status">Schedule tasks with cooldown constraint</div>
+            <svg id="visualization"></svg>
+        </section>
+
+        <section class="code-section">
+            <h2>Python Solution</h2>
+            <pre><span class="keyword">from</span> collections <span class="keyword">import</span> Counter
+<span class="keyword">import</span> heapq
+
+<span class="keyword">def</span> <span class="function">leastInterval</span>(tasks, n):
+    counts = <span class="function">Counter</span>(tasks)
+    max_heap = [-c <span class="keyword">for</span> c <span class="keyword">in</span> counts.<span class="function">values</span>()]
+    heapq.<span class="function">heapify</span>(max_heap)
+    
+    time = <span class="number">0</span>
+    <span class="keyword">while</span> max_heap:
+        temp = []
+        <span class="keyword">for</span> _ <span class="keyword">in</span> <span class="function">range</span>(n + <span class="number">1</span>):
+            <span class="keyword">if</span> max_heap:
+                freq = heapq.<span class="function">heappop</span>(max_heap)
+                freq += <span class="number">1</span>  <span class="comment"># Decrement (negative numbers)</span>
+                <span class="keyword">if</span> freq < <span class="number">0</span>:
+                    temp.<span class="function">append</span>(freq)
+        
+        <span class="keyword">for</span> freq <span class="keyword">in</span> temp:
+            heapq.<span class="function">heappush</span>(max_heap, freq)
+        
+        time += n + <span class="number">1</span> <span class="keyword">if</span> max_heap <span class="keyword">else</span> <span class="function">len</span>(temp)
+    
+    <span class="keyword">return</span> time</pre>
+        </section>
+    </div>
+
+    <script>
+        const width = 900;
+        const height = 550;
+
+        const svg = d3.select("#visualization")
+            .attr("width", width)
+            .attr("height", height);
+
+        const tasks = ["A", "A", "A", "B", "B", "B"];
+        const taskColors = {
+            "A": "#3b82f6",
+            "B": "#10b981",
+            "C": "#f59e0b",
+            "idle": "#94a3b8"
+        };
+
+        let n = 2;
+        let maxHeap = []; // [{task, count}]
+        let schedule = [];
+        let currentTime = 0;
+        let isRunning = false;
+        let cycleStep = 0;
+        let cycleTemp = [];
+        let done = false;
+
+        function countTasks() {
+            const counts = {};
+            for (const t of tasks) {
+                counts[t] = (counts[t] || 0) + 1;
+            }
+            return counts;
+        }
+
+        function heapPush(heap, item) {
+            heap.push(item);
+            let i = heap.length - 1;
+            while (i > 0) {
+                const parent = Math.floor((i - 1) / 2);
+                if (heap[i].count > heap[parent].count) {
+                    [heap[i], heap[parent]] = [heap[parent], heap[i]];
+                    i = parent;
+                } else break;
+            }
+        }
+
+        function heapPop(heap) {
+            if (heap.length === 0) return null;
+            const top = heap[0];
+            heap[0] = heap[heap.length - 1];
+            heap.pop();
+            let i = 0;
+            while (true) {
+                const left = 2 * i + 1;
+                const right = 2 * i + 2;
+                let largest = i;
+                if (left < heap.length && heap[left].count > heap[largest].count) {
+                    largest = left;
+                }
+                if (right < heap.length && heap[right].count > heap[largest].count) {
+                    largest = right;
+                }
+                if (largest !== i) {
+                    [heap[i], heap[largest]] = [heap[largest], heap[i]];
+                    i = largest;
+                } else break;
+            }
+            return top;
+        }
+
+        function render() {
+            svg.selectAll("*").remove();
+
+            // Title
+            svg.append("text")
+                .attr("x", width / 2)
+                .attr("y", 30)
+                .attr("text-anchor", "middle")
+                .attr("font-size", "18px")
+                .attr("font-weight", "bold")
+                .attr("fill", "#1e293b")
+                .text(`Task Scheduler (cooldown n = ${n})`);
+
+            // Task counts / Max Heap
+            const heapG = svg.append("g").attr("transform", "translate(100, 80)");
+            
+            heapG.append("text")
+                .attr("x", 0)
+                .attr("y", 0)
+                .attr("font-size", "14px")
+                .attr("font-weight", "bold")
+                .attr("fill", "#1e293b")
+                .text("Max Heap (by count):");
+
+            if (maxHeap.length === 0 && !done) {
+                heapG.append("text")
+                    .attr("x", 0)
+                    .attr("y", 30)
+                    .attr("font-size", "14px")
+                    .attr("fill", "#64748b")
+                    .text("Empty");
+            } else {
+                const sortedHeap = [...maxHeap].sort((a, b) => b.count - a.count);
+                sortedHeap.forEach((item, i) => {
+                    heapG.append("rect")
+                        .attr("x", i * 70)
+                        .attr("y", 15)
+                        .attr("width", 60)
+                        .attr("height", 50)
+                        .attr("rx", 8)
+                        .attr("fill", taskColors[item.task] || "#64748b")
+                        .attr("opacity", 0.8);
+
+                    heapG.append("text")
+                        .attr("x", i * 70 + 30)
+                        .attr("y", 35)
+                        .attr("text-anchor", "middle")
+                        .attr("font-size", "20px")
+                        .attr("font-weight", "bold")
+                        .attr("fill", "white")
+                        .text(item.task);
+
+                    heapG.append("text")
+                        .attr("x", i * 70 + 30)
+                        .attr("y", 55)
+                        .attr("text-anchor", "middle")
+                        .attr("font-size", "12px")
+                        .attr("fill", "white")
+                        .text(`×${item.count}`);
+                });
+            }
+
+            // Current cycle info
+            const cycleG = svg.append("g").attr("transform", "translate(500, 80)");
+            
+            cycleG.append("text")
+                .attr("x", 0)
+                .attr("y", 0)
+                .attr("font-size", "14px")
+                .attr("font-weight", "bold")
+                .attr("fill", "#1e293b")
+                .text(`Current Cycle (${n + 1} slots):`);
+
+            for (let i = 0; i < n + 1; i++) {
+                const slotTask = cycleTemp[i];
+                cycleG.append("rect")
+                    .attr("x", i * 55)
+                    .attr("y", 15)
+                    .attr("width", 50)
+                    .attr("height", 50)
+                    .attr("rx", 8)
+                    .attr("fill", slotTask ? (taskColors[slotTask.task] || "#64748b") : "#e2e8f0")
+                    .attr("stroke", i === cycleStep && !done ? "#f59e0b" : "#94a3b8")
+                    .attr("stroke-width", i === cycleStep && !done ? 3 : 1);
+
+                if (slotTask) {
+                    cycleG.append("text")
+                        .attr("x", i * 55 + 25)
+                        .attr("y", 45)
+                        .attr("text-anchor", "middle")
+                        .attr("font-size", "18px")
+                        .attr("font-weight", "bold")
+                        .attr("fill", "white")
+                        .text(slotTask.task);
+                } else {
+                    cycleG.append("text")
+                        .attr("x", i * 55 + 25)
+                        .attr("y", 45)
+                        .attr("text-anchor", "middle")
+                        .attr("font-size", "12px")
+                        .attr("fill", "#94a3b8")
+                        .text(i < cycleStep ? "idle" : "?");
+                }
+            }
+
+            // Schedule timeline
+            const timelineG = svg.append("g").attr("transform", "translate(50, 200)");
+            
+            timelineG.append("text")
+                .attr("x", 0)
+                .attr("y", 0)
+                .attr("font-size", "14px")
+                .attr("font-weight", "bold")
+                .attr("fill", "#1e293b")
+                .text("Schedule Timeline:");
+
+            const slotWidth = 50;
+            const slotsPerRow = 15;
+
+            schedule.forEach((task, i) => {
+                const row = Math.floor(i / slotsPerRow);
+                const col = i % slotsPerRow;
+                const x = col * (slotWidth + 5);
+                const y = 20 + row * 70;
+
+                timelineG.append("rect")
+                    .attr("x", x)
+                    .attr("y", y)
+                    .attr("width", slotWidth)
+                    .attr("height", 50)
+                    .attr("rx", 6)
+                    .attr("fill", taskColors[task] || "#94a3b8");
+
+                timelineG.append("text")
+                    .attr("x", x + slotWidth / 2)
+                    .attr("y", y + 25)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "16px")
+                    .attr("font-weight", "bold")
+                    .attr("fill", "white")
+                    .text(task);
+
+                timelineG.append("text")
+                    .attr("x", x + slotWidth / 2)
+                    .attr("y", y + 42)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "10px")
+                    .attr("fill", "rgba(255,255,255,0.8)")
+                    .text(`t=${i}`);
+            });
+
+            // Time counter
+            svg.append("text")
+                .attr("x", width - 50)
+                .attr("y", 30)
+                .attr("text-anchor", "end")
+                .attr("font-size", "16px")
+                .attr("font-weight", "bold")
+                .attr("fill", "#1e293b")
+                .text(`Total Time: ${schedule.length}`);
+
+            // Legend
+            const legend = svg.append("g").attr("transform", `translate(20, ${height - 50})`);
+            
+            Object.entries(taskColors).forEach(([task, color], i) => {
+                legend.append("rect")
+                    .attr("x", i * 100)
+                    .attr("y", 0)
+                    .attr("width", 20)
+                    .attr("height", 20)
+                    .attr("rx", 4)
+                    .attr("fill", color);
+
+                legend.append("text")
+                    .attr("x", i * 100 + 28)
+                    .attr("y", 15)
+                    .attr("font-size", "12px")
+                    .text(task === "idle" ? "Idle" : `Task ${task}`);
+            });
+        }
+
+        function reset() {
+            n = parseInt(document.getElementById("nInput").value) || 2;
+            const counts = countTasks();
+            maxHeap = [];
+            for (const [task, count] of Object.entries(counts)) {
+                heapPush(maxHeap, { task, count });
+            }
+            schedule = [];
+            currentTime = 0;
+            cycleStep = 0;
+            cycleTemp = [];
+            isRunning = false;
+            done = false;
+            document.getElementById("autoBtn").textContent = "Auto Run";
+            document.getElementById("status").textContent = `Schedule tasks with cooldown n = ${n}`;
+            render();
+        }
+
+        function step() {
+            if (done) {
+                document.getElementById("status").textContent = `Complete! Total time: ${schedule.length}`;
+                return;
+            }
+
+            if (maxHeap.length === 0 && cycleTemp.length === 0) {
+                done = true;
+                document.getElementById("status").textContent = `Complete! Total time: ${schedule.length}`;
+                render();
+                return;
+            }
+
+            // Within a cycle
+            if (cycleStep < n + 1) {
+                if (maxHeap.length > 0) {
+                    const item = heapPop(maxHeap);
+                    schedule.push(item.task);
+                    item.count--;
+                    if (item.count > 0) {
+                        cycleTemp.push(item);
+                    } else {
+                        cycleTemp.push(null);
+                    }
+                    document.getElementById("status").textContent = 
+                        `Cycle slot ${cycleStep}: Execute task ${item.task}`;
+                } else if (cycleTemp.some(t => t)) {
+                    // Need idle
+                    schedule.push("idle");
+                    cycleTemp.push(null);
+                    document.getElementById("status").textContent = 
+                        `Cycle slot ${cycleStep}: Idle (no available tasks)`;
+                }
+                cycleStep++;
+            }
+
+            // End of cycle - restore tasks to heap
+            if (cycleStep >= n + 1) {
+                for (const item of cycleTemp) {
+                    if (item && item.count > 0) {
+                        heapPush(maxHeap, item);
+                    }
+                }
+                cycleTemp = [];
+                cycleStep = 0;
+
+                if (maxHeap.length === 0) {
+                    done = true;
+                    document.getElementById("status").textContent = `Complete! Total time: ${schedule.length}`;
+                }
+            }
+
+            render();
+        }
+
+        async function autoRun() {
+            if (isRunning) {
+                isRunning = false;
+                document.getElementById("autoBtn").textContent = "Auto Run";
+                return;
+            }
+
+            isRunning = true;
+            document.getElementById("autoBtn").textContent = "Pause";
+
+            while (!done && isRunning) {
+                step();
+                await new Promise(r => setTimeout(r, 600));
+            }
+
+            isRunning = false;
+            document.getElementById("autoBtn").textContent = "Auto Run";
+        }
+
+        document.getElementById("stepBtn").addEventListener("click", step);
+        document.getElementById("autoBtn").addEventListener("click", autoRun);
+        document.getElementById("resetBtn").addEventListener("click", reset);
+        document.getElementById("nInput").addEventListener("change", reset);
+
+        reset();
+    </script>
+</body>
+</html>

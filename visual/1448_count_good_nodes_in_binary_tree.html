@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LC 1448: Count Good Nodes in Binary Tree - Algorithm Visualization</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="problem-info">
+            <h1><span class="problem-number">#1448</span> Count Good Nodes in Binary Tree</h1>
+            <p>A node X is "good" if there are no nodes with value greater than X on the path from root to X. Count all good nodes.</p>
+            <div class="problem-meta">
+                <span class="meta-tag">🌳 Tree</span>
+                <span class="meta-tag">🔄 DFS</span>
+                <span class="meta-tag">⏱️ O(n)</span>
+                <span class="meta-tag">💾 O(h)</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <code>python/1448_count_good_nodes_in_binary_tree/1448_count_good_nodes_in_binary_tree.py</code>
+            </div>
+            </div>
+
+        <div class="explanation-panel">
+            <h4>🧠 How It Works (Layman's Terms)</h4>
+            <p>Track <strong>maximum value seen</strong> on path from root:</p>
+            <ul>
+                <li><strong>Good Node:</strong> Current value ≥ max value on path</li>
+                <li><strong>DFS:</strong> Pass max value to children</li>
+                <li><strong>Update:</strong> New max = max(current max, current value)</li>
+                <li><strong>Root:</strong> Always good (no ancestors)</li>
+            </ul>
+        </div>
+
+
+        <div class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+            
+            <div class="controls">
+                <button class="btn btn-primary" id="startBtn" onclick="start()">▶ Start DFS</button>
+                <button class="btn" onclick="stepForward()">Step →</button>
+                <button class="btn btn-warning" onclick="reset()">Reset</button>
+            </div>
+
+            <div class="status-message" id="statusMessage">
+                Click Start to find all good nodes
+            </div>
+
+            <div style="display: flex; gap: 30px; flex-wrap: wrap; margin-top: 20px;">
+                <div style="flex: 2; min-width: 350px;">
+                    <svg id="treeViz" width="100%" height="320"></svg>
+                </div>
+                <div style="flex: 1; min-width: 200px;">
+                    <h4>📊 Current Path</h4>
+                    <div id="pathDisplay" style="padding: 15px; background: #fff3e0; border-radius: 12px; margin-bottom: 15px; min-height: 40px;"></div>
+                    
+                    <h4>📈 Max on Path</h4>
+                    <div id="maxDisplay" style="padding: 20px; background: #e3f2fd; border-radius: 12px; margin-bottom: 15px; font-size: 2em; text-align: center; font-weight: bold; color: #2196f3;">
+                        -
+                    </div>
+                    
+                    <h4>✅ Good Nodes Count</h4>
+                    <div id="countDisplay" style="padding: 20px; background: #e8f5e9; border-radius: 12px; font-size: 2em; text-align: center; font-weight: bold; color: #4caf50;">
+                        0
+                    </div>
+                    
+                    <h4 style="margin-top: 15px;">🌟 Good Nodes</h4>
+                    <div id="goodNodesDisplay" style="padding: 15px; background: #f3e5f5; border-radius: 12px; min-height: 40px;"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="code-section">
+            <h3>💻 Python Solution</h3>
+            <div class="code-block">
+                <pre><span class="keyword">def</span> <span class="function">goodNodes</span>(root):
+    <span class="keyword">def</span> <span class="function">dfs</span>(node, max_val):
+        <span class="keyword">if not</span> node:
+            <span class="keyword">return</span> <span class="number">0</span>
+        
+        <span class="comment"># Node is good if val >= max on path</span>
+        good = <span class="number">1</span> <span class="keyword">if</span> node.val >= max_val <span class="keyword">else</span> <span class="number">0</span>
+        
+        <span class="comment"># Update max for children</span>
+        new_max = <span class="function">max</span>(max_val, node.val)
+        
+        <span class="keyword">return</span> good + <span class="function">dfs</span>(node.left, new_max) + <span class="function">dfs</span>(node.right, new_max)
+    
+    <span class="keyword">return</span> <span class="function">dfs</span>(root, root.val)</pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const tree = {
+            val: 3, id: 1, x: 250, y: 40,
+            left: {
+                val: 1, id: 2, x: 130, y: 110,
+                left: { val: 3, id: 4, x: 70, y: 180, left: null, right: null },
+                right: null
+            },
+            right: {
+                val: 4, id: 3, x: 370, y: 110,
+                left: { val: 1, id: 5, x: 310, y: 180, left: null, right: null },
+                right: { val: 5, id: 6, x: 430, y: 180, left: null, right: null }
+            }
+        };
+
+        let visited = new Set();
+        let goodNodes = new Set();
+        let currentNode = null;
+        let currentPath = [];
+        let maxOnPath = -Infinity;
+        let goodCount = 0;
+        let isRunning = false;
+        let stepIndex = 0;
+        let steps = [];
+
+        function flattenTree(node, arr = []) {
+            if (!node) return arr;
+            arr.push(node);
+            flattenTree(node.left, arr);
+            flattenTree(node.right, arr);
+            return arr;
+        }
+
+        function precomputeSteps() {
+            steps = [];
+            
+            function dfs(node, path, maxVal) {
+                if (!node) return;
+                
+                const newPath = [...path, node.val];
+                const isGood = node.val >= maxVal;
+                const newMax = Math.max(maxVal, node.val);
+                
+                steps.push({
+                    type: 'visit',
+                    nodeId: node.id,
+                    nodeVal: node.val,
+                    path: newPath,
+                    maxOnPath: maxVal,
+                    isGood,
+                    message: `Visit ${node.val}: ${node.val} ${isGood ? '≥' : '<'} ${maxVal} → ${isGood ? 'GOOD ✓' : 'Not good'}`
+                });
+
+                dfs(node.left, newPath, newMax);
+                dfs(node.right, newPath, newMax);
+
+                steps.push({
+                    type: 'backtrack',
+                    path: path,
+                    maxOnPath: maxVal,
+                    message: `Backtrack from ${node.val}`
+                });
+            }
+
+            dfs(tree, [], -Infinity);
+            
+            // Count total good nodes
+            let total = 0;
+            steps.forEach(s => {
+                if (s.type === 'visit' && s.isGood) total++;
+            });
+
+            steps.push({
+                type: 'done',
+                message: `Done! Total good nodes: ${total}`
+            });
+        }
+
+        function render() {
+            const svg = d3.select("#treeViz");
+            svg.selectAll("*").remove();
+
+            const container = svg.node().parentElement;
+            const width = container.clientWidth;
+            const height = 320;
+            svg.attr("viewBox", `0 0 ${width} ${height}`);
+
+            const nodes = flattenTree(tree);
+            const g = svg.append("g").attr("transform", `translate(${(width - 500) / 2}, 0)`);
+
+            // Draw edges
+            function drawEdges(node) {
+                if (!node) return;
+                if (node.left) {
+                    g.append("line")
+                        .attr("x1", node.x).attr("y1", node.y)
+                        .attr("x2", node.left.x).attr("y2", node.left.y)
+                        .attr("stroke", "#ccc").attr("stroke-width", 2);
+                    drawEdges(node.left);
+                }
+                if (node.right) {
+                    g.append("line")
+                        .attr("x1", node.x).attr("y1", node.y)
+                        .attr("x2", node.right.x).attr("y2", node.right.y)
+                        .attr("stroke", "#ccc").attr("stroke-width", 2);
+                    drawEdges(node.right);
+                }
+            }
+            drawEdges(tree);
+
+            // Draw nodes
+            nodes.forEach(node => {
+                const isVisited = visited.has(node.id);
+                const isGood = goodNodes.has(node.id);
+                const isCurrent = currentNode === node.id;
+                
+                let fill = '#667eea';
+                if (isVisited) fill = '#90caf9';
+                if (isGood) fill = '#4caf50';
+                if (isCurrent) fill = '#ff9800';
+
+                g.append("circle")
+                    .attr("cx", node.x).attr("cy", node.y).attr("r", 25)
+                    .attr("fill", fill)
+                    .attr("stroke", isCurrent ? '#e65100' : '#5a6fd6')
+                    .attr("stroke-width", isCurrent ? 4 : 2);
+
+                g.append("text")
+                    .attr("x", node.x).attr("y", node.y + 6)
+                    .attr("text-anchor", "middle")
+                    .attr("fill", "white").attr("font-weight", "bold").attr("font-size", "16px")
+                    .text(node.val);
+
+                if (isGood && !isCurrent) {
+                    g.append("text")
+                        .attr("x", node.x + 25).attr("y", node.y - 15)
+                        .attr("font-size", "18px")
+                        .text("✓");
+                }
+            });
+
+            updateDisplays();
+        }
+
+        function updateDisplays() {
+            const pathContainer = document.getElementById('pathDisplay');
+            pathContainer.innerHTML = currentPath.length > 0 
+                ? currentPath.map((v, i) => `<span style="background: ${i === currentPath.length - 1 ? '#ff9800' : '#ffcc80'}; padding: 5px 12px; margin: 2px; border-radius: 15px; display: inline-block;">${v}</span>`).join(' → ')
+                : '<span style="color: #999;">(empty)</span>';
+            
+            document.getElementById('maxDisplay').textContent = maxOnPath === -Infinity ? '-∞' : maxOnPath;
+            document.getElementById('countDisplay').textContent = goodCount;
+            
+            const goodContainer = document.getElementById('goodNodesDisplay');
+            goodContainer.innerHTML = goodNodes.size > 0 
+                ? Array.from(goodNodes).map(id => {
+                    const node = flattenTree(tree).find(n => n.id === id);
+                    return `<span style="background: #4caf50; color: white; padding: 5px 12px; margin: 2px; border-radius: 15px; display: inline-block;">${node.val}</span>`;
+                }).join(' ')
+                : '<span style="color: #999;">(none yet)</span>';
+        }
+
+        function stepForward() {
+            if (stepIndex >= steps.length) return;
+            
+            const step = steps[stepIndex];
+            
+            if (step.type === 'visit') {
+                visited.add(step.nodeId);
+                currentNode = step.nodeId;
+                currentPath = step.path;
+                maxOnPath = step.maxOnPath;
+                if (step.isGood) {
+                    goodNodes.add(step.nodeId);
+                    goodCount++;
+                }
+            } else if (step.type === 'backtrack') {
+                currentPath = step.path;
+                maxOnPath = step.maxOnPath;
+                currentNode = null;
+            } else if (step.type === 'done') {
+                currentNode = null;
+                isRunning = false;
+                document.getElementById('startBtn').textContent = '▶ Start DFS';
+            }
+            
+            document.getElementById('statusMessage').textContent = step.message;
+            stepIndex++;
+            render();
+        }
+
+        async function start() {
+            if (isRunning) {
+                isRunning = false;
+                document.getElementById('startBtn').textContent = '▶ Start DFS';
+                return;
+            }
+            
+            isRunning = true;
+            document.getElementById('startBtn').textContent = '⏸ Pause';
+            
+            while (stepIndex < steps.length && isRunning) {
+                stepForward();
+                await new Promise(r => setTimeout(r, 600));
+            }
+        }
+
+        function reset() {
+            isRunning = false;
+            stepIndex = 0;
+            visited = new Set();
+            goodNodes = new Set();
+            currentNode = null;
+            currentPath = [];
+            maxOnPath = -Infinity;
+            goodCount = 0;
+            
+            document.getElementById('statusMessage').textContent = 'Click Start to find all good nodes';
+            document.getElementById('startBtn').textContent = '▶ Start DFS';
+            
+            precomputeSteps();
+            render();
+        }
+
+        reset();
+        window.addEventListener('resize', render);
+    </script>
+</body>
+</html>

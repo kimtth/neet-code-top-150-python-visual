@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LC 141: Linked List Cycle - Algorithm Visualization</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="problem-info">
+            <h1><span class="problem-number">#141</span> Linked List Cycle</h1>
+            <p>Given the head of a linked list, determine if there is a cycle in it. A cycle exists if some node can be reached again by following the next pointers.</p>
+            <div class="problem-meta">
+                <span class="meta-tag">🔗 Linked List</span>
+                <span class="meta-tag">🐢🐇 Floyd's Algorithm</span>
+                <span class="meta-tag">⏱️ O(n)</span>
+                <span class="meta-tag">💾 O(1)</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <code>python/0141_linked_list_cycle/0141_linked_list_cycle.py</code>
+            </div>
+            </div>
+
+        <div class="explanation-panel">
+            <h4>🧠 How It Works (Layman's Terms)</h4>
+            <p>Imagine two runners on a circular track - one slow (🐢 tortoise) and one fast (🐇 hare):</p>
+            <ul>
+                <li><strong>Slow pointer:</strong> Moves 1 step at a time</li>
+                <li><strong>Fast pointer:</strong> Moves 2 steps at a time</li>
+                <li><strong>If there's a cycle:</strong> Fast will eventually catch up and meet slow</li>
+                <li><strong>If no cycle:</strong> Fast will reach the end (null)</li>
+                <li><strong>Why it works:</strong> In a cycle, fast gains 1 step per iteration, so they must meet!</li>
+            </ul>
+        </div>
+
+
+        <div class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+            
+            <div class="controls">
+                <button class="btn btn-primary" id="stepBtn" onclick="step()">Step</button>
+                <button class="btn btn-success" id="autoBtn" onclick="toggleAuto()">Auto Run</button>
+                <button class="btn btn-warning" onclick="reset()">Reset</button>
+            </div>
+
+            <div class="info-box secondary" style="margin-bottom: 20px;">
+                🔗 List: <strong>[3 → 2 → 0 → -4] → (back to node 2)</strong> — Has a cycle!
+            </div>
+
+            <div class="status-message" id="statusMessage">
+                Click "Step" or "Auto Run" to start visualization
+            </div>
+
+            <div id="linkedListContainer" style="width: 100%; height: 350px; margin-top: 20px;"></div>
+
+            <div class="variable-section" style="margin: 20px 0; display: flex; gap: 30px; justify-content: center;">
+                <div class="variable" style="background: #e3f2fd;">
+                    <span class="var-name">🐢 slow</span>
+                    <span class="var-value" id="slowValue">3</span>
+                    <span class="var-desc">moves 1 step</span>
+                </div>
+                <div class="variable" style="background: #fce4ec;">
+                    <span class="var-name">🐇 fast</span>
+                    <span class="var-value" id="fastValue">2</span>
+                    <span class="var-desc">moves 2 steps</span>
+                </div>
+                <div class="variable">
+                    <span class="var-name">Iteration</span>
+                    <span class="var-value" id="iterValue">0</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="code-section">
+            <h3>💻 Python Solution (Floyd's Tortoise and Hare)</h3>
+            <div class="code-block">
+                <pre><span class="keyword">def</span> <span class="function">has_cycle</span>(self, head: <span class="class-name">Optional</span>[<span class="class-name">ListNode</span>]) -> <span class="class-name">bool</span>:
+    <span class="keyword">if</span> <span class="keyword">not</span> head:
+        <span class="keyword">return</span> <span class="keyword">False</span>
+    
+    slow = head
+    fast = head.next
+    
+    <span class="keyword">while</span> slow <span class="keyword">and</span> fast:
+        <span class="keyword">if</span> <span class="keyword">not</span> fast <span class="keyword">or</span> <span class="keyword">not</span> fast.next:
+            <span class="keyword">return</span> <span class="keyword">False</span>
+        <span class="keyword">if</span> fast == slow:
+            <span class="keyword">return</span> <span class="keyword">True</span>
+        slow = slow.next
+        fast = fast.next.next
+    
+    <span class="keyword">return</span> <span class="keyword">False</span></pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Linked list: 3 -> 2 -> 0 -> -4 -> (back to 2)
+        const nodes = [
+            { val: 3, id: 0 },
+            { val: 2, id: 1 },
+            { val: 0, id: 2 },
+            { val: -4, id: 3 }
+        ];
+        const cycleStart = 1; // Node index where cycle starts (node with value 2)
+        
+        let slowIdx = 0;
+        let fastIdx = 1;
+        let iteration = 0;
+        let autoInterval = null;
+        let finished = false;
+
+        function getNextIdx(idx) {
+            if (idx === nodes.length - 1) {
+                return cycleStart; // Cycle back
+            }
+            return idx + 1;
+        }
+
+        function init() {
+            renderLinkedList();
+            updateVariables();
+        }
+
+        function renderLinkedList() {
+            const container = document.getElementById('linkedListContainer');
+            const width = container.offsetWidth;
+            const height = container.offsetHeight;
+            
+            d3.select('#linkedListContainer').selectAll('*').remove();
+            
+            const svg = d3.select('#linkedListContainer')
+                .append('svg')
+                .attr('width', width)
+                .attr('height', height);
+
+            // Position nodes in a shape that shows the cycle
+            const centerX = width / 2;
+            const centerY = height / 2;
+            const nodeRadius = 35;
+            
+            // Create positions: 3 → 2 → 0 → -4 with -4 looping back to 2
+            const positions = [
+                { x: centerX - 180, y: centerY - 50 },  // Node 0 (val: 3)
+                { x: centerX - 60, y: centerY - 50 },   // Node 1 (val: 2) - cycle start
+                { x: centerX + 60, y: centerY + 30 },   // Node 2 (val: 0)
+                { x: centerX - 60, y: centerY + 110 }   // Node 3 (val: -4)
+            ];
+
+            // Draw arrows
+            const arrowHead = svg.append('defs').append('marker')
+                .attr('id', 'arrowhead')
+                .attr('viewBox', '0 0 10 10')
+                .attr('refX', 8)
+                .attr('refY', 5)
+                .attr('markerWidth', 6)
+                .attr('markerHeight', 6)
+                .attr('orient', 'auto')
+                .append('path')
+                .attr('d', 'M 0 0 L 10 5 L 0 10 Z')
+                .attr('fill', '#666');
+
+            // Regular arrows
+            for (let i = 0; i < nodes.length - 1; i++) {
+                const start = positions[i];
+                const end = positions[i + 1];
+                const angle = Math.atan2(end.y - start.y, end.x - start.x);
+                
+                svg.append('line')
+                    .attr('x1', start.x + nodeRadius * Math.cos(angle))
+                    .attr('y1', start.y + nodeRadius * Math.sin(angle))
+                    .attr('x2', end.x - nodeRadius * Math.cos(angle))
+                    .attr('y2', end.y - nodeRadius * Math.sin(angle))
+                    .attr('stroke', '#666')
+                    .attr('stroke-width', 2)
+                    .attr('marker-end', 'url(#arrowhead)');
+            }
+
+            // Cycle arrow (from -4 back to 2)
+            const lastPos = positions[3];
+            const cyclePos = positions[1];
+            
+            // Draw curved arrow for cycle
+            svg.append('path')
+                .attr('d', `M ${lastPos.x - 20} ${lastPos.y - 20} 
+                           Q ${lastPos.x - 100} ${lastPos.y - 80} 
+                           ${cyclePos.x - 20} ${cyclePos.y + 20}`)
+                .attr('fill', 'none')
+                .attr('stroke', '#e91e63')
+                .attr('stroke-width', 2)
+                .attr('stroke-dasharray', '5,5')
+                .attr('marker-end', 'url(#arrowhead)');
+            
+            // Cycle label
+            svg.append('text')
+                .attr('x', lastPos.x - 100)
+                .attr('y', lastPos.y - 60)
+                .attr('fill', '#e91e63')
+                .attr('font-size', '12px')
+                .text('cycle!');
+
+            // Draw nodes
+            nodes.forEach((node, i) => {
+                const pos = positions[i];
+                const g = svg.append('g')
+                    .attr('transform', `translate(${pos.x}, ${pos.y})`);
+
+                // Node circle
+                let fillColor = '#fff';
+                let strokeColor = '#667eea';
+                let strokeWidth = 3;
+                
+                if (slowIdx === i && fastIdx === i) {
+                    fillColor = '#ab47bc'; // Purple when both are here
+                    strokeWidth = 5;
+                } else if (slowIdx === i) {
+                    fillColor = '#2196f3'; // Blue for slow
+                    strokeWidth = 5;
+                } else if (fastIdx === i) {
+                    fillColor = '#e91e63'; // Pink for fast
+                    strokeWidth = 5;
+                }
+                
+                if (i === cycleStart) {
+                    strokeColor = '#e91e63';
+                }
+
+                g.append('circle')
+                    .attr('r', nodeRadius)
+                    .attr('fill', fillColor)
+                    .attr('stroke', strokeColor)
+                    .attr('stroke-width', strokeWidth);
+
+                // Node value
+                g.append('text')
+                    .attr('text-anchor', 'middle')
+                    .attr('dy', 5)
+                    .attr('font-size', '18px')
+                    .attr('font-weight', 'bold')
+                    .attr('fill', (slowIdx === i || fastIdx === i) ? '#fff' : '#333')
+                    .text(node.val);
+
+                // Node index
+                g.append('text')
+                    .attr('text-anchor', 'middle')
+                    .attr('dy', -45)
+                    .attr('font-size', '12px')
+                    .attr('fill', '#666')
+                    .text(`index: ${i}`);
+
+                // Pointer labels
+                if (slowIdx === i && fastIdx === i) {
+                    g.append('text')
+                        .attr('text-anchor', 'middle')
+                        .attr('dy', 55)
+                        .attr('font-size', '14px')
+                        .attr('fill', '#ab47bc')
+                        .text('🐢🐇 MEET!');
+                } else {
+                    if (slowIdx === i) {
+                        g.append('text')
+                            .attr('text-anchor', 'middle')
+                            .attr('dy', 55)
+                            .attr('font-size', '14px')
+                            .attr('fill', '#2196f3')
+                            .text('🐢 slow');
+                    }
+                    if (fastIdx === i) {
+                        g.append('text')
+                            .attr('text-anchor', 'middle')
+                            .attr('dy', fastIdx === slowIdx ? 75 : 55)
+                            .attr('font-size', '14px')
+                            .attr('fill', '#e91e63')
+                            .text('🐇 fast');
+                    }
+                }
+            });
+
+            // Legend
+            svg.append('circle').attr('cx', 30).attr('cy', 20).attr('r', 8).attr('fill', '#2196f3');
+            svg.append('text').attr('x', 45).attr('y', 24).text('slow (🐢)').attr('font-size', '12px');
+            svg.append('circle').attr('cx', 30).attr('cy', 45).attr('r', 8).attr('fill', '#e91e63');
+            svg.append('text').attr('x', 45).attr('y', 49).text('fast (🐇)').attr('font-size', '12px');
+        }
+
+        function updateVariables() {
+            document.getElementById('slowValue').textContent = nodes[slowIdx].val;
+            document.getElementById('fastValue').textContent = nodes[fastIdx].val;
+            document.getElementById('iterValue').textContent = iteration;
+        }
+
+        function step() {
+            if (finished) return;
+
+            iteration++;
+
+            // Check if they meet
+            if (slowIdx === fastIdx) {
+                finished = true;
+                document.getElementById('statusMessage').className = 'status-message success';
+                document.getElementById('statusMessage').textContent = 
+                    `✅ CYCLE DETECTED! Slow and fast pointers meet at node ${nodes[slowIdx].val}`;
+                document.getElementById('stepBtn').disabled = true;
+                stopAuto();
+                renderLinkedList();
+                updateVariables();
+                return;
+            }
+
+            // Move slow by 1
+            const oldSlow = slowIdx;
+            slowIdx = getNextIdx(slowIdx);
+
+            // Move fast by 2
+            const oldFast = fastIdx;
+            fastIdx = getNextIdx(fastIdx);
+            fastIdx = getNextIdx(fastIdx);
+
+            document.getElementById('statusMessage').textContent = 
+                `Iteration ${iteration}: slow ${nodes[oldSlow].val} → ${nodes[slowIdx].val}, fast ${nodes[oldFast].val} → ${nodes[fastIdx].val}`;
+
+            renderLinkedList();
+            updateVariables();
+
+            // Check again after move
+            if (slowIdx === fastIdx) {
+                finished = true;
+                document.getElementById('statusMessage').className = 'status-message success';
+                document.getElementById('statusMessage').textContent = 
+                    `✅ CYCLE DETECTED! Slow and fast pointers meet at node ${nodes[slowIdx].val}`;
+                document.getElementById('stepBtn').disabled = true;
+                stopAuto();
+            }
+        }
+
+        function toggleAuto() {
+            if (autoInterval) {
+                stopAuto();
+            } else {
+                document.getElementById('autoBtn').textContent = 'Pause';
+                autoInterval = setInterval(() => {
+                    if (finished) {
+                        stopAuto();
+                    } else {
+                        step();
+                    }
+                }, 1000);
+            }
+        }
+
+        function stopAuto() {
+            if (autoInterval) {
+                clearInterval(autoInterval);
+                autoInterval = null;
+            }
+            document.getElementById('autoBtn').textContent = 'Auto Run';
+        }
+
+        function reset() {
+            stopAuto();
+            slowIdx = 0;
+            fastIdx = 1;
+            iteration = 0;
+            finished = false;
+            document.getElementById('stepBtn').disabled = false;
+            document.getElementById('statusMessage').className = 'status-message';
+            document.getElementById('statusMessage').textContent = 'Click "Step" or "Auto Run" to start visualization';
+            init();
+        }
+
+        init();
+    </script>
+</body>
+</html>

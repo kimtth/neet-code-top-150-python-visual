@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>973 - K Closest Points to Origin</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="problem-info">
+            <h1><span class="problem-number">#973</span> K Closest Points to Origin</h1>
+            <p>
+                Given an array of points and an integer k, return the k closest points to the origin (0, 0).
+                Use a max-heap of size k to efficiently find the k smallest distances.
+            </p>
+            <div class="problem-meta">
+                <span class="meta-tag">⛰️ Heap</span>
+                <span class="meta-tag">⏱️ O(n)</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <code>python/0973_k_closest_points_to_origin/0973_k_closest_points_to_origin.py</code>
+            </div>
+
+        </div>
+
+        <div class="explanation-panel">
+            <h4>🧠 How It Works (Layman's Terms)</h4>
+            <p>This algorithm solves the problem <strong>step by step</strong>:</p>
+            <ul>
+                <li><strong>Understand:</strong> Parse the input data</li>
+                <li><strong>Process:</strong> Apply the core logic</li>
+                <li><strong>Optimize:</strong> Use efficient data structures</li>
+                <li><strong>Return:</strong> Output the computed result</li>
+            </ul>
+        </div>
+
+
+        <section class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+            <div class="controls">
+                <label>K = <input type="number" id="kInput" value="3" min="1" max="5" style="width: 50px; padding: 5px;"></label>
+                <button id="stepBtn" class="btn">Step</button>
+                <button id="autoBtn" class="btn btn-success">Auto Run</button>
+                <button id="resetBtn" class="btn btn-danger">Reset</button>
+            </div>
+            <div class="status" id="status">Find the K closest points to origin</div>
+            <svg id="visualization"></svg>
+        </section>
+
+        <section class="code-section">
+            <h2>Python Solution</h2>
+            <pre><span class="keyword">import</span> heapq
+
+<span class="keyword">def</span> <span class="function">kClosest</span>(points, k):
+    max_heap = []
+    <span class="keyword">for</span> point <span class="keyword">in</span> points:
+        dist = point[<span class="number">0</span>]**<span class="number">2</span> + point[<span class="number">1</span>]**<span class="number">2</span>
+        heapq.<span class="function">heappush</span>(max_heap, (-dist, point))
+        <span class="keyword">if</span> <span class="function">len</span>(max_heap) > k:
+            heapq.<span class="function">heappop</span>(max_heap)  <span class="comment"># Remove farthest</span>
+    <span class="keyword">return</span> [point <span class="keyword">for</span> _, point <span class="keyword">in</span> max_heap]</pre>
+        </section>
+    </div>
+
+    <script>
+        const width = 900;
+        const height = 550;
+
+        const svg = d3.select("#visualization")
+            .attr("width", width)
+            .attr("height", height);
+
+        const points = [
+            [3, 3], [5, -1], [-2, 4], [1, 1], [-3, -2], [4, 2], [-1, 3]
+        ];
+
+        let k = 3;
+        let currentIndex = 0;
+        let maxHeap = []; // Stores {negDist, point, dist}
+        let isRunning = false;
+        let result = [];
+
+        const scale = 40;
+        const originX = 300;
+        const originY = 280;
+
+        function dist(point) {
+            return point[0] ** 2 + point[1] ** 2;
+        }
+
+        function heapPush(heap, item) {
+            heap.push(item);
+            let i = heap.length - 1;
+            while (i > 0) {
+                const parent = Math.floor((i - 1) / 2);
+                if (heap[i].negDist > heap[parent].negDist) {
+                    [heap[i], heap[parent]] = [heap[parent], heap[i]];
+                    i = parent;
+                } else break;
+            }
+        }
+
+        function heapPop(heap) {
+            if (heap.length === 0) return null;
+            const top = heap[0];
+            heap[0] = heap[heap.length - 1];
+            heap.pop();
+            let i = 0;
+            while (true) {
+                const left = 2 * i + 1;
+                const right = 2 * i + 2;
+                let largest = i;
+                if (left < heap.length && heap[left].negDist > heap[largest].negDist) {
+                    largest = left;
+                }
+                if (right < heap.length && heap[right].negDist > heap[largest].negDist) {
+                    largest = right;
+                }
+                if (largest !== i) {
+                    [heap[i], heap[largest]] = [heap[largest], heap[i]];
+                    i = largest;
+                } else break;
+            }
+            return top;
+        }
+
+        function render() {
+            svg.selectAll("*").remove();
+
+            // Coordinate system
+            const gridG = svg.append("g").attr("class", "grid");
+
+            // Grid lines
+            for (let i = -6; i <= 6; i++) {
+                gridG.append("line")
+                    .attr("x1", originX + i * scale)
+                    .attr("y1", originY - 6 * scale)
+                    .attr("x2", originX + i * scale)
+                    .attr("y2", originY + 6 * scale)
+                    .attr("stroke", "#e2e8f0")
+                    .attr("stroke-width", 1);
+
+                gridG.append("line")
+                    .attr("x1", originX - 6 * scale)
+                    .attr("y1", originY + i * scale)
+                    .attr("x2", originX + 6 * scale)
+                    .attr("y2", originY + i * scale)
+                    .attr("stroke", "#e2e8f0")
+                    .attr("stroke-width", 1);
+            }
+
+            // Axes
+            svg.append("line")
+                .attr("x1", originX - 6 * scale)
+                .attr("y1", originY)
+                .attr("x2", originX + 6 * scale)
+                .attr("y2", originY)
+                .attr("stroke", "#1e293b")
+                .attr("stroke-width", 2);
+
+            svg.append("line")
+                .attr("x1", originX)
+                .attr("y1", originY - 6 * scale)
+                .attr("x2", originX)
+                .attr("y2", originY + 6 * scale)
+                .attr("stroke", "#1e293b")
+                .attr("stroke-width", 2);
+
+            // Origin marker
+            svg.append("circle")
+                .attr("cx", originX)
+                .attr("cy", originY)
+                .attr("r", 8)
+                .attr("fill", "#ef4444");
+
+            svg.append("text")
+                .attr("x", originX + 15)
+                .attr("y", originY + 20)
+                .attr("font-size", "12px")
+                .attr("fill", "#ef4444")
+                .text("Origin (0,0)");
+
+            // Draw distance circles for points in heap
+            maxHeap.forEach((item, i) => {
+                const d = Math.sqrt(item.dist);
+                svg.append("circle")
+                    .attr("cx", originX)
+                    .attr("cy", originY)
+                    .attr("r", d * scale)
+                    .attr("fill", "none")
+                    .attr("stroke", "#3b82f6")
+                    .attr("stroke-width", 1)
+                    .attr("stroke-dasharray", "4,4")
+                    .attr("opacity", 0.5);
+            });
+
+            // Draw all points
+            points.forEach((point, i) => {
+                const px = originX + point[0] * scale;
+                const py = originY - point[1] * scale;
+                const d = dist(point);
+
+                const inHeap = maxHeap.some(h => h.point[0] === point[0] && h.point[1] === point[1]);
+                const isCurrent = i === currentIndex;
+                const isProcessed = i < currentIndex;
+
+                // Distance line
+                if (inHeap || isCurrent) {
+                    svg.append("line")
+                        .attr("x1", originX)
+                        .attr("y1", originY)
+                        .attr("x2", px)
+                        .attr("y2", py)
+                        .attr("stroke", inHeap ? "#10b981" : "#f59e0b")
+                        .attr("stroke-width", 2)
+                        .attr("stroke-dasharray", isCurrent ? "5,5" : "none");
+                }
+
+                svg.append("circle")
+                    .attr("cx", px)
+                    .attr("cy", py)
+                    .attr("r", 12)
+                    .attr("fill", () => {
+                        if (isCurrent) return "#fef3c7";
+                        if (inHeap) return "#d1fae5";
+                        if (isProcessed) return "#fee2e2";
+                        return "#f8fafc";
+                    })
+                    .attr("stroke", () => {
+                        if (isCurrent) return "#f59e0b";
+                        if (inHeap) return "#10b981";
+                        if (isProcessed) return "#ef4444";
+                        return "#64748b";
+                    })
+                    .attr("stroke-width", isCurrent || inHeap ? 3 : 2);
+
+                svg.append("text")
+                    .attr("x", px)
+                    .attr("y", py - 18)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "11px")
+                    .attr("fill", "#1e293b")
+                    .text(`(${point[0]},${point[1]})`);
+
+                svg.append("text")
+                    .attr("x", px)
+                    .attr("y", py + 4)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "10px")
+                    .attr("fill", "#64748b")
+                    .text(`d²=${d}`);
+            });
+
+            // Max Heap visualization
+            const heapG = svg.append("g")
+                .attr("transform", `translate(700, 80)`);
+
+            heapG.append("text")
+                .attr("x", 0)
+                .attr("y", 0)
+                .attr("text-anchor", "middle")
+                .attr("font-size", "16px")
+                .attr("font-weight", "bold")
+                .attr("fill", "#1e293b")
+                .text(`Max Heap (size ≤ ${k})`);
+
+            if (maxHeap.length === 0) {
+                heapG.append("text")
+                    .attr("x", 0)
+                    .attr("y", 60)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "14px")
+                    .attr("fill", "#64748b")
+                    .text("Empty");
+            } else {
+                maxHeap.forEach((item, i) => {
+                    const level = Math.floor(Math.log2(i + 1));
+                    const posInLevel = i - (Math.pow(2, level) - 1);
+                    const nodesInLevel = Math.pow(2, level);
+                    const spacing = 150 / (nodesInLevel + 1);
+                    
+                    const nx = -75 + spacing * (posInLevel + 1);
+                    const ny = 40 + level * 70;
+
+                    // Connection to parent
+                    if (i > 0) {
+                        const parentIdx = Math.floor((i - 1) / 2);
+                        const parentLevel = Math.floor(Math.log2(parentIdx + 1));
+                        const parentPos = parentIdx - (Math.pow(2, parentLevel) - 1);
+                        const parentNodesInLevel = Math.pow(2, parentLevel);
+                        const parentSpacing = 150 / (parentNodesInLevel + 1);
+                        const px = -75 + parentSpacing * (parentPos + 1);
+                        const py = 40 + parentLevel * 70;
+
+                        heapG.append("line")
+                            .attr("x1", px)
+                            .attr("y1", py + 25)
+                            .attr("x2", nx)
+                            .attr("y2", ny - 25)
+                            .attr("stroke", "#94a3b8")
+                            .attr("stroke-width", 2);
+                    }
+
+                    const isRoot = i === 0;
+                    heapG.append("circle")
+                        .attr("cx", nx)
+                        .attr("cy", ny)
+                        .attr("r", 25)
+                        .attr("fill", isRoot ? "#fef3c7" : "#d1fae5")
+                        .attr("stroke", isRoot ? "#f59e0b" : "#10b981")
+                        .attr("stroke-width", 2);
+
+                    heapG.append("text")
+                        .attr("x", nx)
+                        .attr("y", ny - 5)
+                        .attr("text-anchor", "middle")
+                        .attr("font-size", "10px")
+                        .attr("fill", "#64748b")
+                        .text(`(${item.point[0]},${item.point[1]})`);
+
+                    heapG.append("text")
+                        .attr("x", nx)
+                        .attr("y", ny + 10)
+                        .attr("text-anchor", "middle")
+                        .attr("font-size", "12px")
+                        .attr("font-weight", "bold")
+                        .attr("fill", "#1e293b")
+                        .text(`d²=${item.dist}`);
+                });
+            }
+
+            // Legend
+            const legend = svg.append("g").attr("transform", `translate(20, ${height - 60})`);
+            
+            legend.append("circle").attr("cx", 10).attr("cy", 0).attr("r", 8).attr("fill", "#d1fae5").attr("stroke", "#10b981");
+            legend.append("text").attr("x", 25).attr("y", 5).attr("font-size", "12px").text("In Heap (closest)");
+
+            legend.append("circle").attr("cx", 150).attr("cy", 0).attr("r", 8).attr("fill", "#fef3c7").attr("stroke", "#f59e0b");
+            legend.append("text").attr("x", 165).attr("y", 5).attr("font-size", "12px").text("Current");
+
+            legend.append("circle").attr("cx", 260).attr("cy", 0).attr("r", 8).attr("fill", "#fee2e2").attr("stroke", "#ef4444");
+            legend.append("text").attr("x", 275).attr("y", 5).attr("font-size", "12px").text("Removed");
+        }
+
+        function reset() {
+            k = parseInt(document.getElementById("kInput").value) || 3;
+            currentIndex = 0;
+            maxHeap = [];
+            result = [];
+            isRunning = false;
+            document.getElementById("autoBtn").textContent = "Auto Run";
+            document.getElementById("status").textContent = `Find the ${k} closest points to origin`;
+            render();
+        }
+
+        function step() {
+            if (currentIndex >= points.length) {
+                result = maxHeap.map(h => h.point);
+                document.getElementById("status").textContent = 
+                    `Done! K=${k} closest: [${result.map(p => `(${p[0]},${p[1]})`).join(", ")}]`;
+                return;
+            }
+
+            const point = points[currentIndex];
+            const d = dist(point);
+            
+            heapPush(maxHeap, { negDist: -d, point: point, dist: d });
+            
+            if (maxHeap.length > k) {
+                const removed = heapPop(maxHeap);
+                document.getElementById("status").textContent = 
+                    `Added (${point[0]},${point[1]}) d²=${d}, removed (${removed.point[0]},${removed.point[1]}) d²=${removed.dist} (too far)`;
+            } else {
+                document.getElementById("status").textContent = 
+                    `Added (${point[0]},${point[1]}) d²=${d} to heap (size=${maxHeap.length})`;
+            }
+
+            currentIndex++;
+            render();
+        }
+
+        async function autoRun() {
+            if (isRunning) {
+                isRunning = false;
+                document.getElementById("autoBtn").textContent = "Auto Run";
+                return;
+            }
+
+            isRunning = true;
+            document.getElementById("autoBtn").textContent = "Pause";
+
+            while (currentIndex < points.length && isRunning) {
+                step();
+                await new Promise(r => setTimeout(r, 1000));
+            }
+
+            if (isRunning && currentIndex >= points.length) {
+                step();
+            }
+
+            isRunning = false;
+            document.getElementById("autoBtn").textContent = "Auto Run";
+        }
+
+        document.getElementById("stepBtn").addEventListener("click", step);
+        document.getElementById("autoBtn").addEventListener("click", autoRun);
+        document.getElementById("resetBtn").addEventListener("click", reset);
+        document.getElementById("kInput").addEventListener("change", reset);
+
+        reset();
+    </script>
+</body>
+</html>

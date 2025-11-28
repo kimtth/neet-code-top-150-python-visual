@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kth Smallest Element in BST - LeetCode 230</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="problem-info">
+            <h1><span class="problem-number">#0230</span> Kth Smallest Element in BST</h1>
+            <p><strong>Problem:</strong> Find the kth smallest element in a binary search tree.</p>
+            <p><strong>Pattern:</strong> Inorder Traversal - BST inorder gives elements in sorted order</p>
+            <div class="problem-meta">
+                <span class="meta-tag">🌳 Tree</span>
+                <span class="meta-tag">⛰️ Heap</span>
+                <span class="meta-tag">⏱️ O(n)</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <code>python/0230_kth_smallest_element_in_a_bst/0230_kth_smallest_element_in_a_bst.py</code>
+            </div>
+
+        </div>
+
+        <div class="explanation-panel">
+            <h4>🧠 How It Works (Layman's Terms)</h4>
+            <p>Tree traversal is like <strong>exploring a family tree</strong>:</p>
+            <ul>
+                <li><strong>Root:</strong> Start at the top node</li>
+                <li><strong>Recurse:</strong> Visit left and right children</li>
+                <li><strong>Base case:</strong> Stop at null/leaf nodes</li>
+                <li><strong>Combine:</strong> Build answer from subtree results</li>
+            </ul>
+        </div>
+
+
+        <div class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+
+            <div class="visualization">
+            <svg id="mainSvg"></svg>
+        </div>
+
+        <div class="controls">
+            <button id="stepBtn">Step</button>
+            <button id="autoBtn">Auto Run</button>
+            <button id="resetBtn">Reset</button>
+            <label for="kInput">k = </label>
+            <input type="number" id="kInput" value="3" min="1" max="7" style="width:50px">
+            <div class="speed-control">
+                <label for="speed">Speed:</label>
+                <input type="range" id="speed" min="100" max="2000" value="800">
+            </div>
+        </div>
+
+        <div class="status" id="status">Click "Step" to find kth smallest element</div>
+
+        <div class="variables">
+            <div class="var-item">
+                <span class="var-label">Current Node:</span>
+                <span id="currentDisplay">-</span>
+            </div>
+            <div class="var-item">
+                <span class="var-label">Inorder List:</span>
+                <span id="inorderDisplay">[]</span>
+            </div>
+            <div class="var-item">
+                <span class="var-label">Kth Smallest:</span>
+                <span id="resultDisplay">-</span>
+            </div>
+        </div>
+
+        </div>
+
+        <div class="code-section">
+            <h3>Python Solution</h3>
+            <pre><span class="keyword">def</span> <span class="function">kthSmallest</span>(root, k):
+    <span class="string">"""
+    Inorder traversal gives sorted order.
+    Time: O(H + k), Space: O(H)
+    """</span>
+    stack = []
+    current = root
+    count = <span class="number">0</span>
+    
+    <span class="keyword">while</span> stack <span class="keyword">or</span> current:
+        <span class="comment"># Go to leftmost</span>
+        <span class="keyword">while</span> current:
+            stack.<span class="function">append</span>(current)
+            current = current.left
+        
+        <span class="comment"># Process node</span>
+        current = stack.<span class="function">pop</span>()
+        count += <span class="number">1</span>
+        
+        <span class="keyword">if</span> count == k:
+            <span class="keyword">return</span> current.val
+        
+        <span class="comment"># Move to right subtree</span>
+        current = current.right
+    
+    <span class="keyword">return</span> <span class="number">-1</span></pre>
+        </div>
+    </div>
+
+    <script>
+        // BST: [5, 3, 7, 2, 4, 6, 8]
+        const tree = {
+            val: 5,
+            left: {
+                val: 3,
+                left: {val: 2, left: null, right: null},
+                right: {val: 4, left: null, right: null}
+            },
+            right: {
+                val: 7,
+                left: {val: 6, left: null, right: null},
+                right: {val: 8, left: null, right: null}
+            }
+        };
+
+        let k = 3;
+        let nodeStates = {}; // path -> 'instack' | 'visiting' | 'done' | 'found'
+        let stack = [];
+        let current = tree;
+        let currentPath = 'root';
+        let inorderList = [];
+        let count = 0;
+        let result = null;
+        let phase = 'goleft'; // 'goleft' | 'process' | 'goright'
+        let autoRunning = false;
+        let autoTimer = null;
+
+        const width = 700;
+        const height = 400;
+        const svg = d3.select("#mainSvg")
+            .attr("width", width)
+            .attr("height", height);
+
+        function drawTree(node, x, y, level, path) {
+            if (!node) return;
+
+            const nodeRadius = 25;
+            const dx = 90 / (level + 1);
+            const dy = 65;
+
+            // Edges
+            if (node.left) {
+                svg.append("line")
+                    .attr("x1", x).attr("y1", y + nodeRadius)
+                    .attr("x2", x - dx).attr("y2", y + dy - nodeRadius)
+                    .attr("stroke", "#ddd").attr("stroke-width", 2);
+                drawTree(node.left, x - dx, y + dy, level + 1, path + 'L');
+            }
+            if (node.right) {
+                svg.append("line")
+                    .attr("x1", x).attr("y1", y + nodeRadius)
+                    .attr("x2", x + dx).attr("y2", y + dy - nodeRadius)
+                    .attr("stroke", "#ddd").attr("stroke-width", 2);
+                drawTree(node.right, x + dx, y + dy, level + 1, path + 'R');
+            }
+
+            // Node
+            const state = nodeStates[path];
+
+            let fill = "#e3f2fd", stroke = "#1976d2";
+            if (state === 'instack') {
+                fill = "#fff3e0"; stroke = "#ff9800";
+            } else if (state === 'visiting') {
+                fill = "#ffeb3b"; stroke = "#f57c00";
+            } else if (state === 'done') {
+                fill = "#e0e0e0"; stroke = "#757575";
+            } else if (state === 'found') {
+                fill = "#c8e6c9"; stroke = "#4caf50";
+            }
+
+            svg.append("circle")
+                .attr("cx", x).attr("cy", y).attr("r", nodeRadius)
+                .attr("fill", fill).attr("stroke", stroke).attr("stroke-width", 2);
+
+            svg.append("text")
+                .attr("x", x).attr("y", y + 6)
+                .attr("text-anchor", "middle")
+                .attr("font-size", "18px")
+                .attr("font-weight", "bold")
+                .text(node.val);
+        }
+
+        function draw() {
+            svg.selectAll("*").remove();
+
+            svg.append("text")
+                .attr("x", width / 2).attr("y", 25)
+                .attr("text-anchor", "middle")
+                .attr("font-weight", "bold")
+                .text(`Finding ${k}${k === 1 ? 'st' : k === 2 ? 'nd' : k === 3 ? 'rd' : 'th'} Smallest Element (Inorder Traversal)`);
+
+            drawTree(tree, width / 2, 80, 0, 'root');
+
+            // Stack visualization
+            svg.append("text")
+                .attr("x", 50).attr("y", 90)
+                .attr("font-weight", "bold")
+                .text("Stack:");
+
+            stack.forEach((item, i) => {
+                svg.append("rect")
+                    .attr("x", 50).attr("y", 100 + i * 30)
+                    .attr("width", 40).attr("height", 25)
+                    .attr("fill", "#fff3e0").attr("stroke", "#ff9800");
+                svg.append("text")
+                    .attr("x", 70).attr("y", 117 + i * 30)
+                    .attr("text-anchor", "middle")
+                    .attr("font-weight", "bold")
+                    .text(item.node.val);
+            });
+
+            // Inorder list
+            svg.append("text")
+                .attr("x", width - 180).attr("y", 90)
+                .attr("font-weight", "bold")
+                .text("Inorder:");
+
+            inorderList.forEach((val, i) => {
+                const isKth = i === k - 1;
+                svg.append("rect")
+                    .attr("x", width - 180 + i * 35).attr("y", 100)
+                    .attr("width", 30).attr("height", 30)
+                    .attr("fill", isKth ? "#c8e6c9" : "#e3f2fd")
+                    .attr("stroke", isKth ? "#4caf50" : "#1976d2");
+                svg.append("text")
+                    .attr("x", width - 165 + i * 35).attr("y", 120)
+                    .attr("text-anchor", "middle")
+                    .attr("font-weight", "bold")
+                    .text(val);
+            });
+
+            // Legend
+            const legend = [
+                {color: "#e3f2fd", label: "Not visited"},
+                {color: "#fff3e0", label: "In stack"},
+                {color: "#ffeb3b", label: "Processing"},
+                {color: "#c8e6c9", label: "Kth found"},
+                {color: "#e0e0e0", label: "Done"}
+            ];
+
+            legend.forEach((item, i) => {
+                svg.append("rect")
+                    .attr("x", 10 + i * 100).attr("y", height - 30)
+                    .attr("width", 15).attr("height", 15)
+                    .attr("fill", item.color)
+                    .attr("stroke", "#999");
+                svg.append("text")
+                    .attr("x", 28 + i * 100).attr("y", height - 18)
+                    .attr("font-size", "10px")
+                    .text(item.label);
+            });
+
+            // Result
+            if (result !== null) {
+                svg.append("rect")
+                    .attr("x", width / 2 - 80).attr("y", height - 70)
+                    .attr("width", 160).attr("height", 35)
+                    .attr("rx", 8)
+                    .attr("fill", "#c8e6c9").attr("stroke", "#4caf50");
+
+                svg.append("text")
+                    .attr("x", width / 2).attr("y", height - 46)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "16px")
+                    .attr("font-weight", "bold")
+                    .text(`${k}${k === 1 ? 'st' : k === 2 ? 'nd' : k === 3 ? 'rd' : 'th'} smallest = ${result}`);
+            }
+        }
+
+        function getNode(path) {
+            let node = tree;
+            for (let c of path.slice(4)) {
+                if (!node) return null;
+                node = c === 'L' ? node.left : node.right;
+            }
+            return node;
+        }
+
+        function step() {
+            if (result !== null) {
+                document.getElementById("status").textContent = 
+                    `Found! The ${k}${k === 1 ? 'st' : k === 2 ? 'nd' : k === 3 ? 'rd' : 'th'} smallest is ${result}`;
+                draw();
+                return false;
+            }
+
+            if (!current && stack.length === 0) {
+                document.getElementById("status").textContent = "Done traversing!";
+                draw();
+                return false;
+            }
+
+            if (phase === 'goleft') {
+                if (current) {
+                    nodeStates[currentPath] = 'instack';
+                    stack.push({node: current, path: currentPath});
+                    document.getElementById("currentDisplay").textContent = `Node ${current.val}`;
+                    document.getElementById("status").textContent = 
+                        `Push ${current.val} to stack, go left`;
+                    
+                    currentPath = currentPath + 'L';
+                    current = current.left;
+                } else {
+                    phase = 'process';
+                }
+            } else if (phase === 'process') {
+                if (stack.length === 0) {
+                    draw();
+                    return false;
+                }
+                
+                const popped = stack.pop();
+                current = popped.node;
+                currentPath = popped.path;
+                
+                nodeStates[currentPath] = 'visiting';
+                count++;
+                inorderList.push(current.val);
+                
+                document.getElementById("currentDisplay").textContent = `Node ${current.val}`;
+                document.getElementById("inorderDisplay").textContent = 
+                    `[${inorderList.join(', ')}]`;
+                document.getElementById("status").textContent = 
+                    `Pop ${current.val}, count = ${count}`;
+                
+                if (count === k) {
+                    result = current.val;
+                    nodeStates[currentPath] = 'found';
+                    document.getElementById("resultDisplay").textContent = result;
+                    document.getElementById("status").textContent = 
+                        `Found ${k}${k === 1 ? 'st' : k === 2 ? 'nd' : k === 3 ? 'rd' : 'th'} smallest: ${result}!`;
+                    draw();
+                    return false;
+                }
+                
+                phase = 'goright';
+            } else if (phase === 'goright') {
+                nodeStates[currentPath] = 'done';
+                
+                if (current.right) {
+                    currentPath = currentPath + 'R';
+                    current = current.right;
+                    document.getElementById("status").textContent = 
+                        `Move to right child`;
+                } else {
+                    current = null;
+                    document.getElementById("status").textContent = 
+                        `No right child, continue with stack`;
+                }
+                
+                phase = 'goleft';
+            }
+
+            draw();
+            return true;
+        }
+
+        function reset() {
+            k = parseInt(document.getElementById("kInput").value) || 3;
+            nodeStates = {};
+            stack = [];
+            current = tree;
+            currentPath = 'root';
+            inorderList = [];
+            count = 0;
+            result = null;
+            phase = 'goleft';
+            autoRunning = false;
+            if (autoTimer) clearInterval(autoTimer);
+            
+            document.getElementById("currentDisplay").textContent = "-";
+            document.getElementById("inorderDisplay").textContent = "[]";
+            document.getElementById("resultDisplay").textContent = "-";
+            document.getElementById("status").textContent = 
+                'Click "Step" to find kth smallest element';
+            document.getElementById("autoBtn").textContent = "Auto Run";
+            
+            draw();
+        }
+
+        function autoRun() {
+            if (autoRunning) {
+                autoRunning = false;
+                clearInterval(autoTimer);
+                document.getElementById("autoBtn").textContent = "Auto Run";
+            } else {
+                autoRunning = true;
+                document.getElementById("autoBtn").textContent = "Pause";
+                const speed = 2100 - document.getElementById("speed").value;
+                autoTimer = setInterval(() => {
+                    if (!step()) {
+                        autoRunning = false;
+                        clearInterval(autoTimer);
+                        document.getElementById("autoBtn").textContent = "Auto Run";
+                    }
+                }, speed);
+            }
+        }
+
+        document.getElementById("stepBtn").addEventListener("click", step);
+        document.getElementById("autoBtn").addEventListener("click", autoRun);
+        document.getElementById("resetBtn").addEventListener("click", reset);
+        document.getElementById("kInput").addEventListener("change", reset);
+
+        draw();
+    </script>
+</body>
+</html>

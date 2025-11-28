@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Two Sum II - LeetCode 167</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="problem-info">
+            <h1><span class="problem-number">#167</span> Two Sum II - Input Array Is Sorted</h1>
+            <p>Given a sorted array and a target, find two numbers that add up to the target. Return their 1-indexed positions. The two-pointer technique makes this elegant!</p>
+            <div class="problem-meta">
+                <span class="meta-tag">👉👉 Two Pointers</span>
+                <span class="meta-tag">📊 Sorted Array</span>
+                <span class="meta-tag">⏱️ O(n)</span>
+                <span class="meta-tag">💾 O(1)</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <a href="../python/0167_two_sum_2/0167_two_sum_2.py">0167_two_sum_2.py</a>
+            </div>
+            </div>
+
+        <div class="explanation-panel">
+            <h4>💡 How It Works (Layman's Terms)</h4>
+            <ul>
+                <li><strong>Key Insight:</strong> The array is SORTED! This changes everything.</li>
+                <li><strong>Two Pointers:</strong> Start with one pointer at the beginning (smallest) and one at the end (largest)</li>
+                <li><strong>Sum too big?</strong> Move the right pointer left to get a smaller number</li>
+                <li><strong>Sum too small?</strong> Move the left pointer right to get a bigger number</li>
+                <li><strong>Why it works:</strong> Because it's sorted, moving left makes sum smaller, moving right makes it bigger</li>
+                <li><strong>Result:</strong> 1-indexed positions (add 1 to 0-indexed positions)</li>
+            </ul>
+        </div>
+
+
+        <div class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+            
+            <div class="controls">
+                <button class="btn btn-primary" id="stepBtn" onclick="step()">Step</button>
+                <button class="btn btn-success" id="autoBtn" onclick="toggleAuto()">Auto Run</button>
+                <button class="btn btn-warning" onclick="reset()">Reset</button>
+            </div>
+
+            <div class="info-box" id="targetBox">
+                Target Sum = 9
+            </div>
+
+            <div class="status-message" id="statusMessage">
+                Click "Step" or "Auto Run" to find two numbers that sum to target
+            </div>
+
+            <div class="variable-display">
+                <div class="variable-box">
+                    <div class="variable-name">Left Pointer</div>
+                    <div class="variable-value" id="leftVal">0</div>
+                </div>
+                <div class="variable-box">
+                    <div class="variable-name">Right Pointer</div>
+                    <div class="variable-value" id="rightVal">3</div>
+                </div>
+                <div class="variable-box">
+                    <div class="variable-name">Current Sum</div>
+                    <div class="variable-value" id="sumVal">-</div>
+                </div>
+            </div>
+
+            <div class="array-section">
+                <div class="array-label">Sorted Array (numbers):</div>
+                <div class="array-container" id="arrayContainer"></div>
+            </div>
+
+            <div id="pointerContainer" style="margin-top: 10px;">
+                <!-- Pointer indicators will be drawn here -->
+            </div>
+        </div>
+        <div class="code-section">
+            <h3>💻 Python Solution</h3>
+            <div class="code-block">
+                <pre><span class="keyword">def</span> <span class="function">twoSum</span>(self, numbers: <span class="class-name">List</span>[int], target: <span class="class-name">int</span>) -> List[int]:
+    left = <span class="number">0</span>
+    right = <span class="function">len</span>(numbers) - <span class="number">1</span>
+    
+    <span class="keyword">while</span> left < right:
+        current_sum = numbers[left] + numbers[right]
+        
+        <span class="keyword">if</span> current_sum > target:
+            right -= <span class="number">1</span>  <span class="comment"># Sum too big, need smaller</span>
+        <span class="keyword">elif</span> current_sum < target:
+            left += <span class="number">1</span>   <span class="comment"># Sum too small, need bigger</span>
+        <span class="keyword">else</span>:
+            <span class="keyword">return</span> [left + <span class="number">1</span>, right + <span class="number">1</span>]  <span class="comment"># 1-indexed</span>
+    
+    <span class="keyword">return</span> <span class="keyword">None</span></pre>
+            </div>
+        </div>
+
+        </div>
+
+    <script>
+        const numbers = [2, 7, 11, 15];
+        const target = 9;
+        let left = 0;
+        let right = numbers.length - 1;
+        let phase = 'init';
+        let autoInterval = null;
+
+        function init() {
+            renderArray();
+            document.getElementById('leftVal').textContent = '0';
+            document.getElementById('rightVal').textContent = (numbers.length - 1).toString();
+            document.getElementById('sumVal').textContent = '-';
+        }
+
+        function renderArray() {
+            const container = document.getElementById('arrayContainer');
+            container.innerHTML = '';
+            numbers.forEach((num, idx) => {
+                const box = document.createElement('div');
+                box.className = 'array-box';
+                box.id = `num-${idx}`;
+                box.innerHTML = `${num}<span class="index-label">[${idx}]</span>`;
+                container.appendChild(box);
+            });
+            updatePointers();
+        }
+
+        function updatePointers() {
+            document.querySelectorAll('.array-box').forEach(b => {
+                b.classList.remove('pointer-left', 'pointer-right', 'complete');
+            });
+            
+            if (left < numbers.length) {
+                document.getElementById(`num-${left}`).classList.add('pointer-left');
+            }
+            if (right >= 0) {
+                document.getElementById(`num-${right}`).classList.add('pointer-right');
+            }
+
+            // Draw pointer indicators
+            const pointerContainer = document.getElementById('pointerContainer');
+            const arrayContainer = document.getElementById('arrayContainer');
+            const boxes = arrayContainer.getElementsByClassName('array-box');
+            
+            let html = '<div style="display: flex; gap: 8px; padding-left: 0;">';
+            for (let i = 0; i < numbers.length; i++) {
+                html += '<div style="width: 60px; text-align: center;">';
+                if (i === left) {
+                    html += '<span style="color: #ff5722; font-weight: bold;">↑ L</span>';
+                } else if (i === right) {
+                    html += '<span style="color: #3f51b5; font-weight: bold;">↑ R</span>';
+                }
+                html += '</div>';
+            }
+            html += '
+
+        </div>';
+            pointerContainer.innerHTML = html;
+        }
+
+        function step() {
+            if (phase === 'init') {
+                phase = 'searching';
+                document.getElementById('statusMessage').textContent = 
+                    'Starting two-pointer search: left at smallest, right at largest';
+            }
+            
+            if (phase === 'searching') {
+                if (left >= right) {
+                    phase = 'done';
+                    document.getElementById('statusMessage').textContent = 'No solution found (pointers crossed)';
+                    document.getElementById('stepBtn').disabled = true;
+                    stopAuto();
+                    return;
+                }
+
+                const sum = numbers[left] + numbers[right];
+                document.getElementById('sumVal').textContent = sum.toString();
+                document.getElementById('leftVal').textContent = left.toString();
+                document.getElementById('rightVal').textContent = right.toString();
+
+                if (sum === target) {
+                    phase = 'done';
+                    document.getElementById(`num-${left}`).classList.add('complete');
+                    document.getElementById(`num-${right}`).classList.add('complete');
+                    document.getElementById('statusMessage').textContent = 
+                        `✅ Found! numbers[${left}] + numbers[${right}] = ${numbers[left]} + ${numbers[right]} = ${target}. Answer: [${left + 1}, ${right + 1}] (1-indexed)`;
+                    document.getElementById('stepBtn').disabled = true;
+                    stopAuto();
+                } else if (sum > target) {
+                    document.getElementById('statusMessage').textContent = 
+                        `Sum ${sum} > target ${target} → Move RIGHT pointer left to get smaller number`;
+                    right--;
+                    updatePointers();
+                } else {
+                    document.getElementById('statusMessage').textContent = 
+                        `Sum ${sum} < target ${target} → Move LEFT pointer right to get bigger number`;
+                    left++;
+                    updatePointers();
+                }
+            }
+        }
+
+        function toggleAuto() {
+            if (autoInterval) {
+                stopAuto();
+            } else {
+                document.getElementById('autoBtn').textContent = 'Pause';
+                autoInterval = setInterval(() => {
+                    if (phase === 'done') {
+                        stopAuto();
+                    } else {
+                        step();
+                    }
+                }, 1200);
+            }
+        }
+
+        function stopAuto() {
+            if (autoInterval) {
+                clearInterval(autoInterval);
+                autoInterval = null;
+            }
+            document.getElementById('autoBtn').textContent = 'Auto Run';
+        }
+
+        function reset() {
+            stopAuto();
+            phase = 'init';
+            left = 0;
+            right = numbers.length - 1;
+            document.getElementById('stepBtn').disabled = false;
+            document.getElementById('statusMessage').textContent = 
+                'Click "Step" or "Auto Run" to find two numbers that sum to target';
+            init();
+        }
+
+        init();
+    </script>
+</body>
+</html>

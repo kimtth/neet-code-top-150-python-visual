@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Subtree of Another Tree - LeetCode 572</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="problem-info">
+            <h1><span class="problem-number">#0572</span> Subtree of Another Tree</h1>
+            <p><strong>Problem:</strong> Check if a tree is a subtree of another tree. A subtree includes the node and all its descendants.</p>
+            <p><strong>Pattern:</strong> DFS + Tree Comparison - For each node, check if it matches the subtree</p>
+            <div class="problem-meta">
+                <span class="meta-tag">🌳 Tree</span>
+                <span class="meta-tag">⏱️ O(n)</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <code>python/0572_subtree_of_another_tree/0572_subtree_of_another_tree.py</code>
+            </div>
+
+        </div>
+
+        <div class="explanation-panel">
+            <h4>🧠 How It Works (Layman's Terms)</h4>
+            <p>Tree traversal is like <strong>exploring a family tree</strong>:</p>
+            <ul>
+                <li><strong>Root:</strong> Start at the top node</li>
+                <li><strong>Recurse:</strong> Visit left and right children</li>
+                <li><strong>Base case:</strong> Stop at null/leaf nodes</li>
+                <li><strong>Combine:</strong> Build answer from subtree results</li>
+            </ul>
+        </div>
+
+
+        <div class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+
+            <div class="visualization">
+            <svg id="mainSvg"></svg>
+        </div>
+
+        <div class="controls">
+            <button id="stepBtn">Step</button>
+            <button id="autoBtn">Auto Run</button>
+            <button id="resetBtn">Reset</button>
+            <div class="speed-control">
+                <label for="speed">Speed:</label>
+                <input type="range" id="speed" min="100" max="2000" value="800">
+            </div>
+        </div>
+
+        <div class="status" id="status">Click "Step" to check if subRoot is a subtree</div>
+
+        <div class="variables">
+            <div class="var-item">
+                <span class="var-label">Main Tree Node:</span>
+                <span id="mainNodeDisplay">-</span>
+            </div>
+            <div class="var-item">
+                <span class="var-label">Comparing:</span>
+                <span id="compareDisplay">-</span>
+            </div>
+            <div class="var-item">
+                <span class="var-label">Result:</span>
+                <span id="resultDisplay">-</span>
+            </div>
+        </div>
+
+        </div>
+
+        <div class="code-section">
+            <h3>Python Solution</h3>
+            <pre><span class="keyword">def</span> <span class="function">isSubtree</span>(root, subRoot):
+    <span class="string">"""
+    DFS checking each node as potential subtree root.
+    Time: O(m*n), Space: O(h)
+    """</span>
+    <span class="keyword">def</span> <span class="function">isSameTree</span>(p, q):
+        <span class="keyword">if</span> <span class="keyword">not</span> p <span class="keyword">and</span> <span class="keyword">not</span> q:
+            <span class="keyword">return</span> <span class="keyword">True</span>
+        <span class="keyword">if</span> <span class="keyword">not</span> p <span class="keyword">or</span> <span class="keyword">not</span> q:
+            <span class="keyword">return</span> <span class="keyword">False</span>
+        <span class="keyword">return</span> (p.val == q.val <span class="keyword">and</span> 
+                <span class="function">isSameTree</span>(p.left, q.left) <span class="keyword">and</span>
+                <span class="function">isSameTree</span>(p.right, q.right))
+    
+    <span class="keyword">if</span> <span class="keyword">not</span> root:
+        <span class="keyword">return</span> <span class="keyword">False</span>
+    <span class="keyword">if</span> <span class="function">isSameTree</span>(root, subRoot):
+        <span class="keyword">return</span> <span class="keyword">True</span>
+    <span class="keyword">return</span> (<span class="function">isSubtree</span>(root.left, subRoot) <span class="keyword">or</span> 
+            <span class="function">isSubtree</span>(root.right, subRoot))</pre>
+        </div>
+    </div>
+
+    <script>
+        // Main tree
+        const mainTree = {
+            val: 3,
+            left: {
+                val: 4,
+                left: {val: 1, left: null, right: null},
+                right: {val: 2, left: null, right: null}
+            },
+            right: {val: 5, left: null, right: null}
+        };
+
+        // Subtree to find
+        const subTree = {
+            val: 4,
+            left: {val: 1, left: null, right: null},
+            right: {val: 2, left: null, right: null}
+        };
+
+        let nodeStates = {}; // path -> 'checking' | 'match' | 'nomatch' | 'found'
+        let compareStates = {}; // 'sub_path' -> 'comparing' | 'match' | 'nomatch'
+        let callStack = [{type: 'main', node: mainTree, path: 'root'}];
+        let foundSubtree = false;
+        let currentCompare = null;
+        let autoRunning = false;
+        let autoTimer = null;
+
+        const width = 800;
+        const height = 400;
+        const svg = d3.select("#mainSvg")
+            .attr("width", width)
+            .attr("height", height);
+
+        function drawTree(node, x, y, level, path, isSubtree, statesMap) {
+            if (!node) return;
+
+            const nodeRadius = 22;
+            const dx = isSubtree ? 45 / (level + 1) : 80 / (level + 1);
+            const dy = isSubtree ? 50 : 60;
+
+            // Edges
+            if (node.left) {
+                svg.append("line")
+                    .attr("x1", x).attr("y1", y + nodeRadius)
+                    .attr("x2", x - dx).attr("y2", y + dy - nodeRadius)
+                    .attr("stroke", "#ddd").attr("stroke-width", 2);
+                drawTree(node.left, x - dx, y + dy, level + 1, path + 'L', isSubtree, statesMap);
+            }
+            if (node.right) {
+                svg.append("line")
+                    .attr("x1", x).attr("y1", y + nodeRadius)
+                    .attr("x2", x + dx).attr("y2", y + dy - nodeRadius)
+                    .attr("stroke", "#ddd").attr("stroke-width", 2);
+                drawTree(node.right, x + dx, y + dy, level + 1, path + 'R', isSubtree, statesMap);
+            }
+
+            // Node
+            const state = statesMap[path];
+
+            let fill = "#e3f2fd", stroke = "#1976d2";
+            if (state === 'checking' || state === 'comparing') {
+                fill = "#ffeb3b"; stroke = "#f57c00";
+            } else if (state === 'match') {
+                fill = "#c8e6c9"; stroke = "#4caf50";
+            } else if (state === 'nomatch') {
+                fill = "#ffcdd2"; stroke = "#e53935";
+            } else if (state === 'found') {
+                fill = "#b39ddb"; stroke = "#673ab7";
+            }
+
+            svg.append("circle")
+                .attr("cx", x).attr("cy", y).attr("r", nodeRadius)
+                .attr("fill", fill).attr("stroke", stroke).attr("stroke-width", 2);
+
+            svg.append("text")
+                .attr("x", x).attr("y", y + 5)
+                .attr("text-anchor", "middle")
+                .attr("font-size", isSubtree ? "14px" : "16px")
+                .attr("font-weight", "bold")
+                .text(node.val);
+        }
+
+        function draw() {
+            svg.selectAll("*").remove();
+
+            // Main tree label
+            svg.append("text")
+                .attr("x", 200).attr("y", 25)
+                .attr("text-anchor", "middle")
+                .attr("font-weight", "bold")
+                .text("Main Tree (root)");
+
+            // Subtree label
+            svg.append("text")
+                .attr("x", 620).attr("y", 25)
+                .attr("text-anchor", "middle")
+                .attr("font-weight", "bold")
+                .text("SubRoot");
+
+            // Draw main tree
+            drawTree(mainTree, 200, 80, 0, 'root', false, nodeStates);
+
+            // Draw subtree
+            drawTree(subTree, 620, 80, 0, 'sub', true, compareStates);
+
+            // Divider
+            svg.append("line")
+                .attr("x1", 430).attr("y1", 40)
+                .attr("x2", 430).attr("y2", height - 40)
+                .attr("stroke", "#ddd").attr("stroke-width", 2)
+                .attr("stroke-dasharray", "5,5");
+
+            // Legend
+            const legend = [
+                {color: "#e3f2fd", label: "Not checked"},
+                {color: "#ffeb3b", label: "Checking"},
+                {color: "#c8e6c9", label: "Match"},
+                {color: "#ffcdd2", label: "No match"},
+                {color: "#b39ddb", label: "Subtree found"}
+            ];
+
+            legend.forEach((item, i) => {
+                svg.append("rect")
+                    .attr("x", 10 + i * 110).attr("y", height - 30)
+                    .attr("width", 15).attr("height", 15)
+                    .attr("fill", item.color)
+                    .attr("stroke", "#999");
+                svg.append("text")
+                    .attr("x", 30 + i * 110).attr("y", height - 18)
+                    .attr("font-size", "10px")
+                    .text(item.label);
+            });
+
+            // Result
+            if (foundSubtree) {
+                svg.append("rect")
+                    .attr("x", width / 2 - 80).attr("y", height - 70)
+                    .attr("width", 160).attr("height", 35)
+                    .attr("rx", 8)
+                    .attr("fill", "#c8e6c9").attr("stroke", "#4caf50");
+
+                svg.append("text")
+                    .attr("x", width / 2).attr("y", height - 46)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "16px")
+                    .attr("font-weight", "bold")
+                    .text("✓ Subtree Found!");
+            }
+        }
+
+        function getNode(tree, path) {
+            let node = tree;
+            for (let c of path.slice(4)) { // skip 'root' or 'sub_'
+                if (!node) return null;
+                node = c === 'L' ? node.left : node.right;
+            }
+            return node;
+        }
+
+        function step() {
+            if (foundSubtree || callStack.length === 0) {
+                if (!foundSubtree && callStack.length === 0) {
+                    document.getElementById("status").textContent = "Subtree NOT found!";
+                    document.getElementById("resultDisplay").textContent = "Not Found";
+                }
+                draw();
+                return false;
+            }
+
+            const task = callStack.pop();
+
+            if (task.type === 'main') {
+                // Check this main tree node as potential subtree root
+                const {node, path} = task;
+                if (!node) return callStack.length > 0;
+
+                nodeStates[path] = 'checking';
+                document.getElementById("mainNodeDisplay").textContent = `Node ${node.val}`;
+                
+                // Start comparison with subtree
+                callStack.push({type: 'main_done', path});
+                callStack.push({type: 'compare', mainPath: path, subPath: 'sub', mainNode: node, subNode: subTree});
+                
+                document.getElementById("status").textContent = 
+                    `Checking if subtree rooted at ${node.val} matches subRoot...`;
+            } else if (task.type === 'compare') {
+                const {mainPath, subPath, mainNode, subNode} = task;
+                
+                // Both null = match
+                if (!mainNode && !subNode) {
+                    compareStates[subPath] = 'match';
+                    return callStack.length > 0;
+                }
+                
+                // One null = no match
+                if (!mainNode || !subNode) {
+                    compareStates[subPath] = 'nomatch';
+                    return callStack.length > 0;
+                }
+
+                compareStates[subPath] = 'comparing';
+                document.getElementById("compareDisplay").textContent = 
+                    `Main(${mainNode.val}) vs Sub(${subNode.val})`;
+
+                if (mainNode.val !== subNode.val) {
+                    compareStates[subPath] = 'nomatch';
+                    document.getElementById("status").textContent = 
+                        `${mainNode.val} ≠ ${subNode.val} - no match`;
+                } else {
+                    // Values match, check children
+                    callStack.push({type: 'compare_done', subPath});
+                    callStack.push({
+                        type: 'compare',
+                        mainPath: mainPath + 'R',
+                        subPath: subPath + 'R',
+                        mainNode: mainNode.right,
+                        subNode: subNode.right
+                    });
+                    callStack.push({
+                        type: 'compare',
+                        mainPath: mainPath + 'L',
+                        subPath: subPath + 'L',
+                        mainNode: mainNode.left,
+                        subNode: subNode.left
+                    });
+                    document.getElementById("status").textContent = 
+                        `${mainNode.val} = ${subNode.val} ✓ - checking children...`;
+                }
+            } else if (task.type === 'compare_done') {
+                const {subPath} = task;
+                const leftMatch = compareStates[subPath + 'L'] === 'match' || 
+                                  !getNode(subTree, subPath.slice(3) + 'L');
+                const rightMatch = compareStates[subPath + 'R'] === 'match' ||
+                                   !getNode(subTree, subPath.slice(3) + 'R');
+                
+                if (leftMatch && rightMatch) {
+                    compareStates[subPath] = 'match';
+                } else {
+                    compareStates[subPath] = 'nomatch';
+                }
+            } else if (task.type === 'main_done') {
+                const {path} = task;
+                const matched = compareStates['sub'] === 'match';
+                
+                if (matched) {
+                    nodeStates[path] = 'found';
+                    foundSubtree = true;
+                    document.getElementById("status").textContent = 
+                        `Found subtree at node ${getNode(mainTree, path).val}!`;
+                    document.getElementById("resultDisplay").textContent = "Found!";
+                } else {
+                    nodeStates[path] = 'nomatch';
+                    // Reset compare states and try children
+                    compareStates = {};
+                    const node = getNode(mainTree, path);
+                    if (node) {
+                        if (node.right) {
+                            callStack.push({type: 'main', node: node.right, path: path + 'R'});
+                        }
+                        if (node.left) {
+                            callStack.push({type: 'main', node: node.left, path: path + 'L'});
+                        }
+                    }
+                    document.getElementById("status").textContent = 
+                        `No match at ${node?.val}, trying other nodes...`;
+                }
+            }
+
+            draw();
+            return callStack.length > 0 && !foundSubtree;
+        }
+
+        function reset() {
+            nodeStates = {};
+            compareStates = {};
+            callStack = [{type: 'main', node: mainTree, path: 'root'}];
+            foundSubtree = false;
+            autoRunning = false;
+            if (autoTimer) clearInterval(autoTimer);
+            
+            document.getElementById("mainNodeDisplay").textContent = "-";
+            document.getElementById("compareDisplay").textContent = "-";
+            document.getElementById("resultDisplay").textContent = "-";
+            document.getElementById("status").textContent = 
+                'Click "Step" to check if subRoot is a subtree';
+            document.getElementById("autoBtn").textContent = "Auto Run";
+            
+            draw();
+        }
+
+        function autoRun() {
+            if (autoRunning) {
+                autoRunning = false;
+                clearInterval(autoTimer);
+                document.getElementById("autoBtn").textContent = "Auto Run";
+            } else {
+                autoRunning = true;
+                document.getElementById("autoBtn").textContent = "Pause";
+                const speed = 2100 - document.getElementById("speed").value;
+                autoTimer = setInterval(() => {
+                    if (!step()) {
+                        autoRunning = false;
+                        clearInterval(autoTimer);
+                        document.getElementById("autoBtn").textContent = "Auto Run";
+                    }
+                }, speed);
+            }
+        }
+
+        document.getElementById("stepBtn").addEventListener("click", step);
+        document.getElementById("autoBtn").addEventListener("click", autoRun);
+        document.getElementById("resetBtn").addEventListener("click", reset);
+
+        draw();
+    </script>
+</body>
+</html>

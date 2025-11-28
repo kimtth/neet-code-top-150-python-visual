@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LC 346: Moving Average from Data Stream - Algorithm Visualization</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="problem-info">
+            <h1><span class="problem-number">#346</span> Moving Average from Data Stream</h1>
+            <p>Design a class to calculate the moving average of all integers in a sliding window of size k.</p>
+            <div class="problem-meta">
+                <span class="meta-tag">🔧 Design</span>
+                <span class="meta-tag">📊 Queue</span>
+                <span class="meta-tag">⏱️ O(1)</span>
+                <span class="meta-tag">💾 O(k)</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <code>python/0346_moving_average_from_data_stream/0346_moving_average_from_data_stream.py</code>
+            </div>
+            </div>
+
+        <div class="explanation-panel">
+            <h4>🧠 How It Works (Layman's Terms)</h4>
+            <p>Use a <strong>sliding window with running sum</strong>:</p>
+            <ul>
+                <li><strong>Queue:</strong> Store last k elements</li>
+                <li><strong>Running Sum:</strong> Track sum of window elements</li>
+                <li><strong>Add:</strong> Add to sum, if queue full → subtract oldest</li>
+                <li><strong>Average:</strong> sum / queue size = O(1)!</li>
+            </ul>
+        </div>
+
+
+        <div class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+            
+            <div class="controls">
+                <label>Window size k = </label>
+                <select id="windowSize" onchange="reset()" style="padding: 8px; border-radius: 5px;">
+                    <option value="2">2</option>
+                    <option value="3" selected>3</option>
+                    <option value="4">4</option>
+                    <option value="5">5</option>
+                </select>
+                <input type="number" id="valueInput" placeholder="Enter number" style="padding: 8px; width: 120px; border-radius: 5px; border: 2px solid #ddd;">
+                <button class="btn btn-primary" onclick="addValue()">Add to Stream</button>
+                <button class="btn btn-warning" onclick="reset()">Reset</button>
+            </div>
+
+            <div class="status-message" id="statusMessage">
+                Enter a number and click "Add to Stream"
+            </div>
+
+            <div style="margin-top: 20px;">
+                <h4>📊 Sliding Window (Queue)</h4>
+                <div id="windowDisplay" style="display: flex; gap: 10px; padding: 20px; background: #e3f2fd; border-radius: 12px; min-height: 80px; align-items: center; flex-wrap: wrap;"></div>
+            </div>
+
+            <div style="display: flex; gap: 20px; margin-top: 20px; flex-wrap: wrap;">
+                <div style="flex: 1; padding: 20px; background: #fff3e0; border-radius: 12px; text-align: center;">
+                    <div style="font-size: 0.9em; color: #666;">Running Sum</div>
+                    <div style="font-size: 2em; font-weight: bold; color: #ff9800;" id="sumDisplay">0</div>
+                </div>
+                <div style="flex: 1; padding: 20px; background: #e8f5e9; border-radius: 12px; text-align: center;">
+                    <div style="font-size: 0.9em; color: #666;">Window Size</div>
+                    <div style="font-size: 2em; font-weight: bold; color: #4caf50;" id="sizeDisplay">0 / 3</div>
+                </div>
+                <div style="flex: 1; padding: 20px; background: linear-gradient(135deg, #667eea, #764ba2); border-radius: 12px; text-align: center;">
+                    <div style="font-size: 0.9em; color: rgba(255,255,255,0.8);">Moving Average</div>
+                    <div style="font-size: 2em; font-weight: bold; color: white;" id="avgDisplay">-</div>
+                </div>
+            </div>
+
+            <div style="margin-top: 25px;">
+                <h4>📜 Stream History</h4>
+                <div id="historyDisplay" style="padding: 15px; background: #f5f5f5; border-radius: 12px; max-height: 200px; overflow-y: auto;"></div>
+            </div>
+        </div>
+
+        <div class="code-section">
+            <h3>💻 Python Solution</h3>
+            <div class="code-block">
+                <pre><span class="keyword">from</span> collections <span class="keyword">import</span> deque
+
+<span class="keyword">class</span> <span class="function">MovingAverage</span>:
+    <span class="keyword">def</span> <span class="function">__init__</span>(self, size):
+        self.size = size
+        self.queue = deque()
+        self.sum = <span class="number">0</span>
+    
+    <span class="keyword">def</span> <span class="function">next</span>(self, val):
+        <span class="comment"># Add new value</span>
+        self.queue.<span class="function">append</span>(val)
+        self.sum += val
+        
+        <span class="comment"># Remove oldest if window is full</span>
+        <span class="keyword">if</span> <span class="function">len</span>(self.queue) > self.size:
+            oldest = self.queue.<span class="function">popleft</span>()
+            self.sum -= oldest
+        
+        <span class="comment"># Calculate average</span>
+        <span class="keyword">return</span> self.sum / <span class="function">len</span>(self.queue)</pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let k = 3;
+        let queue = [];
+        let sum = 0;
+        let history = [];
+
+        function render() {
+            const windowContainer = document.getElementById('windowDisplay');
+            if (queue.length === 0) {
+                windowContainer.innerHTML = '<span style="color: #999;">Window is empty. Add numbers to see the sliding window.</span>';
+            } else {
+                windowContainer.innerHTML = queue.map((val, i) => {
+                    const isNewest = i === queue.length - 1;
+                    return `<div style="
+                        padding: 20px 25px;
+                        background: ${isNewest ? '#4caf50' : '#667eea'};
+                        color: white;
+                        border-radius: 10px;
+                        font-weight: bold;
+                        font-size: 1.3em;
+                        transition: all 0.3s;
+                        ${isNewest ? 'transform: scale(1.1); box-shadow: 0 4px 15px rgba(76, 175, 80, 0.4);' : ''}
+                    ">${val}</div>`;
+                }).join('<span style="font-size: 1.5em; color: #999;">→</span>');
+            }
+
+            document.getElementById('sumDisplay').textContent = sum;
+            document.getElementById('sizeDisplay').textContent = `${queue.length} / ${k}`;
+            
+            const avg = queue.length > 0 ? (sum / queue.length).toFixed(4) : '-';
+            document.getElementById('avgDisplay').textContent = avg;
+
+            const historyContainer = document.getElementById('historyDisplay');
+            if (history.length === 0) {
+                historyContainer.innerHTML = '<span style="color: #999;">History will appear here...</span>';
+            } else {
+                historyContainer.innerHTML = history.map((h, i) => 
+                    `<div style="padding: 8px 12px; margin: 4px 0; background: ${i === history.length - 1 ? '#e8f5e9' : 'white'}; border-radius: 8px; border-left: 4px solid ${i === history.length - 1 ? '#4caf50' : '#ddd'};">
+                        <strong>next(${h.val})</strong>: window = [${h.window.join(', ')}], sum = ${h.sum}, avg = <strong>${h.avg}</strong>
+                    </div>`
+                ).join('');
+            }
+        }
+
+        function addValue() {
+            const input = document.getElementById('valueInput');
+            const val = parseFloat(input.value);
+            if (isNaN(val)) {
+                document.getElementById('statusMessage').textContent = 'Please enter a valid number';
+                return;
+            }
+
+            // Add to queue and sum
+            queue.push(val);
+            sum += val;
+            
+            let removed = null;
+            if (queue.length > k) {
+                removed = queue.shift();
+                sum -= removed;
+            }
+
+            const avg = (sum / queue.length).toFixed(4);
+            
+            history.push({
+                val,
+                window: [...queue],
+                sum,
+                avg
+            });
+
+            if (removed !== null) {
+                document.getElementById('statusMessage').textContent = 
+                    `Added ${val}, removed ${removed} (window full). New average: ${avg}`;
+            } else {
+                document.getElementById('statusMessage').textContent = 
+                    `Added ${val}. Current average: ${avg}`;
+            }
+
+            input.value = '';
+            render();
+        }
+
+        function reset() {
+            k = parseInt(document.getElementById('windowSize').value);
+            queue = [];
+            sum = 0;
+            history = [];
+            document.getElementById('statusMessage').textContent = 'Enter a number and click "Add to Stream"';
+            document.getElementById('valueInput').value = '';
+            render();
+        }
+
+        document.getElementById('valueInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') addValue();
+        });
+
+        reset();
+    </script>
+</body>
+</html>

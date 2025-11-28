@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minimum Remove to Make Valid Parentheses - LeetCode 1249</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="problem-info">
+            <h1><span class="problem-number">#1249</span> Minimum Remove to Make Valid Parentheses</h1>
+            <p>Remove the minimum number of parentheses to make the string valid. Use a stack to track unmatched parentheses!</p>
+            <div class="problem-meta">
+                <span class="meta-tag">📚 Stack</span>
+                <span class="meta-tag">🔤 String</span>
+                <span class="meta-tag">⏱️ O(n)</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <a href="../python/1249_minimum_remove_to_make_valid_parentheses/1249_minimum_remove_to_make_valid_parentheses.py">1249_minimum_remove_to_make_valid_parentheses.py</a>
+            </div>
+            </div>
+
+        <div class="explanation-panel">
+            <h4>💡 How It Works (Layman's Terms)</h4>
+            <ul>
+                <li><strong>Valid parentheses:</strong> Every '(' has a matching ')' that comes after it</li>
+                <li><strong>Phase 1 - Scan:</strong> Go through string, use stack to track unmatched '('</li>
+                <li><strong>When we see '(':</strong> Push its index to stack (might need to be removed)</li>
+                <li><strong>When we see ')':</strong> If stack has a '(', pop it (they match!). Otherwise, mark ')' for removal.</li>
+                <li><strong>After scan:</strong> Any remaining indices in stack are unmatched '(' - mark for removal</li>
+                <li><strong>Phase 2 - Build:</strong> Skip characters at removal indices, keep everything else</li>
+            </ul>
+        </div>
+
+
+        <div class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+            
+            <div class="controls">
+                <button class="btn btn-primary" id="stepBtn" onclick="step()">Step</button>
+                <button class="btn btn-success" id="autoBtn" onclick="toggleAuto()">Auto Run</button>
+                <button class="btn btn-warning" onclick="reset()">Reset</button>
+            </div>
+
+            <div class="phase-indicator">
+                <div class="phase-box" id="scanPhase">
+                    <div class="phase-title">Phase 1: Scan</div>
+                    <div class="phase-description">Find unmatched parentheses</div>
+                </div>
+                <div class="phase-box" id="buildPhase">
+                    <div class="phase-title">Phase 2: Build</div>
+                    <div class="phase-description">Construct result string</div>
+                </div>
+            </div>
+
+            <div class="status-message" id="statusMessage">
+                Click "Step" or "Auto Run" to remove invalid parentheses
+            </div>
+
+            <div class="array-section">
+                <div class="array-label">Input String:</div>
+                <div class="array-container" id="stringContainer"></div>
+            </div>
+
+            <div class="array-section">
+                <div class="array-label">Stack (indices of unmatched '('):</div>
+                <div class="stack-container" id="stackContainer" style="flex-direction: row; min-height: 60px;"></div>
+            </div>
+
+            <div class="array-section">
+                <div class="array-label">Remove Indices:</div>
+                <div id="removeContainer" style="font-family: monospace; font-size: 1.1em; padding: 10px; background: #ffebee; border-radius: 8px; min-height: 30px;"></div>
+            </div>
+
+            <div class="array-section">
+                <div class="array-label">Result:</div>
+                <div id="resultContainer" style="font-family: monospace; font-size: 1.4em; padding: 15px; background: #e8f5e9; border-radius: 8px; min-height: 40px;"></div>
+            </div>
+        </div>
+
+        <div class="code-section">
+            <h3>💻 Python Solution</h3>
+            <div class="code-block">
+                <pre><span class="keyword">def</span> <span class="function">minRemoveToMakeValid</span>(self, s: <span class="class-name">str</span>) -> <span class="class-name">str</span>:
+    remove_indices = <span class="function">set</span>()
+    stack = []  <span class="comment"># stores indices of unmatched '('</span>
+    
+    <span class="keyword">for</span> i <span class="keyword">in</span> <span class="function">range</span>(<span class="function">len</span>(s)):
+        <span class="keyword">if</span> s[i] == <span class="string">'('</span>:
+            stack.<span class="function">append</span>(i)
+        <span class="keyword">elif</span> s[i] == <span class="string">')'</span>:
+            <span class="keyword">if</span> <span class="keyword">not</span> stack:
+                remove_indices.<span class="function">add</span>(i)  <span class="comment"># unmatched ')'</span>
+            <span class="keyword">else</span>:
+                stack.<span class="function">pop</span>()  <span class="comment"># matched pair</span>
+    
+    <span class="comment"># Remaining in stack are unmatched '('</span>
+    <span class="keyword">while</span> stack:
+        remove_indices.<span class="function">add</span>(stack.<span class="function">pop</span>())
+    
+    result = []
+    <span class="keyword">for</span> i <span class="keyword">in</span> <span class="function">range</span>(<span class="function">len</span>(s)):
+        <span class="keyword">if</span> i <span class="keyword">not in</span> remove_indices:
+            result.<span class="function">append</span>(s[i])
+    
+    <span class="keyword">return</span> <span class="string">''</span>.<span class="function">join</span>(result)</pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const input = "lee(t(c)o)de)";
+        let stack = [];
+        let removeIndices = new Set();
+        let currentIndex = 0;
+        let phase = 'init';
+        let autoInterval = null;
+
+        function init() {
+            stack = [];
+            removeIndices = new Set();
+            currentIndex = 0;
+            renderString();
+            renderStack();
+            renderRemove();
+            document.getElementById('resultContainer').innerHTML = '<span style="color: #999;">Will appear after Phase 2</span>';
+            document.getElementById('scanPhase').classList.remove('active');
+            document.getElementById('buildPhase').classList.remove('active');
+        }
+
+        function renderString() {
+            const container = document.getElementById('stringContainer');
+            container.innerHTML = '';
+            input.split('').forEach((char, idx) => {
+                const box = document.createElement('div');
+                box.className = 'array-box';
+                box.id = `char-${idx}`;
+                box.style.width = '40px';
+                
+                if (removeIndices.has(idx)) {
+                    box.classList.add('swapping');
+                    box.style.textDecoration = 'line-through';
+                    box.style.opacity = '0.5';
+                }
+                if (idx === currentIndex && (phase === 'scanning' || phase === 'building')) {
+                    box.classList.add('highlight');
+                }
+                
+                box.innerHTML = `${char}<span class="index-label">[${idx}]</span>`;
+                container.appendChild(box);
+            });
+        }
+
+        function renderStack() {
+            const container = document.getElementById('stackContainer');
+            if (stack.length === 0) {
+                container.innerHTML = '<span style="color: #999; padding: 10px;">Empty</span>';
+                return;
+            }
+            container.innerHTML = '';
+            stack.forEach(idx => {
+                const item = document.createElement('div');
+                item.className = 'stack-item';
+                item.textContent = `( [${idx}]`;
+                container.appendChild(item);
+            });
+        }
+
+        function renderRemove() {
+            const container = document.getElementById('removeContainer');
+            if (removeIndices.size === 0) {
+                container.innerHTML = '<span style="color: #999;">None yet</span>';
+            } else {
+                container.textContent = `{ ${[...removeIndices].sort((a,b) => a-b).join(', ')} }`;
+            }
+        }
+
+        function step() {
+            if (phase === 'init') {
+                phase = 'scanning';
+                currentIndex = 0;
+                document.getElementById('scanPhase').classList.add('active');
+                document.getElementById('statusMessage').textContent = 
+                    'Phase 1: Scanning for unmatched parentheses...';
+            } else if (phase === 'scanning') {
+                if (currentIndex >= input.length) {
+                    // Add remaining stack to removeIndices
+                    while (stack.length > 0) {
+                        const idx = stack.pop();
+                        removeIndices.add(idx);
+                    }
+                    renderStack();
+                    renderRemove();
+                    renderString();
+                    
+                    phase = 'building';
+                    currentIndex = 0;
+                    document.getElementById('scanPhase').classList.remove('active');
+                    document.getElementById('buildPhase').classList.add('active');
+                    document.getElementById('statusMessage').textContent = 
+                        `Phase 1 complete! Found ${removeIndices.size} invalid parentheses to remove. Starting Phase 2...`;
+                    return;
+                }
+
+                const char = input[currentIndex];
+                
+                if (char === '(') {
+                    stack.push(currentIndex);
+                    document.getElementById('statusMessage').textContent = 
+                        `Index ${currentIndex}: Found '(' → Push index ${currentIndex} to stack`;
+                } else if (char === ')') {
+                    if (stack.length === 0) {
+                        removeIndices.add(currentIndex);
+                        document.getElementById('statusMessage').textContent = 
+                            `Index ${currentIndex}: Found ')' but stack empty → Mark for removal`;
+                    } else {
+                        const matched = stack.pop();
+                        document.getElementById('statusMessage').textContent = 
+                            `Index ${currentIndex}: Found ')' → Matches '(' at index ${matched}, pop from stack`;
+                    }
+                } else {
+                    document.getElementById('statusMessage').textContent = 
+                        `Index ${currentIndex}: Character '${char}' → Not a parenthesis, skip`;
+                }
+
+                renderString();
+                renderStack();
+                renderRemove();
+                currentIndex++;
+            } else if (phase === 'building') {
+                let result = '';
+                for (let i = 0; i < input.length; i++) {
+                    if (!removeIndices.has(i)) {
+                        result += input[i];
+                    }
+                }
+                document.getElementById('resultContainer').textContent = `"${result}"`;
+                document.getElementById('buildPhase').classList.remove('active');
+                phase = 'done';
+                document.getElementById('statusMessage').textContent = 
+                    `✅ Done! Removed ${removeIndices.size} characters. Result: "${result}"`;
+                document.getElementById('stepBtn').disabled = true;
+                stopAuto();
+            }
+        }
+
+        function toggleAuto() {
+            if (autoInterval) {
+                stopAuto();
+            } else {
+                document.getElementById('autoBtn').textContent = 'Pause';
+                autoInterval = setInterval(() => {
+                    if (phase === 'done') {
+                        stopAuto();
+                    } else {
+                        step();
+                    }
+                }, 1000);
+            }
+        }
+
+        function stopAuto() {
+            if (autoInterval) {
+                clearInterval(autoInterval);
+                autoInterval = null;
+            }
+            document.getElementById('autoBtn').textContent = 'Auto Run';
+        }
+
+        function reset() {
+            stopAuto();
+            phase = 'init';
+            document.getElementById('stepBtn').disabled = false;
+            document.getElementById('statusMessage').textContent = 
+                'Click "Step" or "Auto Run" to remove invalid parentheses';
+            init();
+        }
+
+        init();
+    </script>
+</body>
+</html>

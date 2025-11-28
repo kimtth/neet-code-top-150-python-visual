@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Binary Tree Level Order Traversal - Algorithm Visualization</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    </div>
+
+    <div class="container">
+        <div class="problem-info">
+            <h1><span class="problem-number">#0102</span> Binary Tree Level Order Traversal</h1>
+            <p>
+                Given the root of a binary tree, return the <strong>level order traversal</strong> of its nodes' values
+                (i.e., from left to right, level by level).
+            </p>
+            <p><strong>Example:</strong> [3,9,20,null,null,15,7] → [[3],[9,20],[15,7]]</p>
+            <p><strong>Approach:</strong> BFS using a queue, process level by level</p>
+            <p><strong>Time Complexity:</strong> O(n) | <strong>Space Complexity:</strong> O(n)</p>
+            <div class="problem-meta">
+                <span class="meta-tag">🌳 Tree</span>
+                <span class="meta-tag">📥 Queue</span>
+                <span class="meta-tag">⏱️ O(n)</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <code>python/0102_binary_tree_level_order_traversal/0102_binary_tree_level_order_traversal.py</code>
+            </div>
+
+        </div>
+
+        <div class="explanation-panel">
+            <h4>🧠 How It Works (Layman's Terms)</h4>
+            <p>Tree traversal is like <strong>exploring a family tree</strong>:</p>
+            <ul>
+                <li><strong>Root:</strong> Start at the top node</li>
+                <li><strong>Recurse:</strong> Visit left and right children</li>
+                <li><strong>Base case:</strong> Stop at null/leaf nodes</li>
+                <li><strong>Combine:</strong> Build answer from subtree results</li>
+            </ul>
+        </div>
+
+
+        <div class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+            <div class="controls">
+                <button id="stepBtn" class="btn">Step</button>
+                <button id="autoBtn" class="btn">Auto Run</button>
+                <button id="resetBtn" class="btn btn-secondary">Reset</button>
+                <div class="speed-control">
+                    <label for="speedSlider">Speed:</label>
+                    <input type="range" id="speedSlider" min="1" max="10" value="5">
+                </div>
+            </div>
+            <svg id="visualization" width="900" height="500"></svg>
+            <div class="variables-display">
+                <div id="varDisplay"></div>
+            </div>
+            <div class="status-message" id="statusMessage">Press "Step" or "Auto Run" to begin</div>
+        </div>
+
+        <div class="code-section">
+            <h3>Python Solution</h3>
+            <pre><span class="keyword">def</span> <span class="function">levelOrder</span>(self, root: <span class="class-name">TreeNode</span>) -> List[List[int]]:
+    <span class="keyword">if</span> <span class="keyword">not</span> root:
+        <span class="keyword">return</span> []
+    
+    result = []
+    queue = <span class="function">deque</span>([root])
+    
+    <span class="keyword">while</span> queue:
+        level_size = <span class="function">len</span>(queue)
+        level_values = []
+        
+        <span class="keyword">for</span> _ <span class="keyword">in</span> <span class="function">range</span>(level_size):
+            node = queue.<span class="function">popleft</span>()
+            level_values.<span class="function">append</span>(node.val)
+            
+            <span class="keyword">if</span> node.left:
+                queue.<span class="function">append</span>(node.left)
+            <span class="keyword">if</span> node.right:
+                queue.<span class="function">append</span>(node.right)
+        
+        result.<span class="function">append</span>(level_values)
+    
+    <span class="keyword">return</span> result</pre>
+        </div>
+    </div>
+
+    <script>
+        // Node positions for tree [3,9,20,null,null,15,7]
+        const positions = {
+            3: { x: 250, y: 80 },
+            9: { x: 150, y: 160 },
+            20: { x: 350, y: 160 },
+            15: { x: 300, y: 240 },
+            7: { x: 400, y: 240 }
+        };
+        
+        // State
+        let step = 0;
+        let autoRunning = false;
+        let autoInterval = null;
+        
+        // Generate steps
+        const steps = [];
+        
+        function generateSteps() {
+            steps.length = 0;
+            
+            steps.push({
+                type: 'init',
+                queue: [3],
+                processed: [],
+                currentLevel: [],
+                result: [],
+                level: 0,
+                message: 'Initialize: queue = [root], result = []'
+            });
+            
+            // Level 0
+            steps.push({
+                type: 'level_start',
+                queue: [3],
+                processed: [],
+                currentLevel: [],
+                result: [],
+                level: 0,
+                levelSize: 1,
+                message: 'Level 0: queue size = 1'
+            });
+            
+            steps.push({
+                type: 'process',
+                queue: [],
+                processed: [3],
+                currentLevel: [3],
+                result: [],
+                level: 0,
+                currentNode: 3,
+                message: 'Dequeue node 3. Add to current level. Add children (9, 20) to queue.'
+            });
+            
+            steps.push({
+                type: 'level_end',
+                queue: [9, 20],
+                processed: [3],
+                currentLevel: [3],
+                result: [[3]],
+                level: 0,
+                message: 'Level 0 complete: [3]. Add to result.'
+            });
+            
+            // Level 1
+            steps.push({
+                type: 'level_start',
+                queue: [9, 20],
+                processed: [3],
+                currentLevel: [],
+                result: [[3]],
+                level: 1,
+                levelSize: 2,
+                message: 'Level 1: queue size = 2'
+            });
+            
+            steps.push({
+                type: 'process',
+                queue: [20],
+                processed: [3, 9],
+                currentLevel: [9],
+                result: [[3]],
+                level: 1,
+                currentNode: 9,
+                message: 'Dequeue node 9. No children to add.'
+            });
+            
+            steps.push({
+                type: 'process',
+                queue: [15, 7],
+                processed: [3, 9, 20],
+                currentLevel: [9, 20],
+                result: [[3]],
+                level: 1,
+                currentNode: 20,
+                message: 'Dequeue node 20. Add children (15, 7) to queue.'
+            });
+            
+            steps.push({
+                type: 'level_end',
+                queue: [15, 7],
+                processed: [3, 9, 20],
+                currentLevel: [9, 20],
+                result: [[3], [9, 20]],
+                level: 1,
+                message: 'Level 1 complete: [9, 20]. Add to result.'
+            });
+            
+            // Level 2
+            steps.push({
+                type: 'level_start',
+                queue: [15, 7],
+                processed: [3, 9, 20],
+                currentLevel: [],
+                result: [[3], [9, 20]],
+                level: 2,
+                levelSize: 2,
+                message: 'Level 2: queue size = 2'
+            });
+            
+            steps.push({
+                type: 'process',
+                queue: [7],
+                processed: [3, 9, 20, 15],
+                currentLevel: [15],
+                result: [[3], [9, 20]],
+                level: 2,
+                currentNode: 15,
+                message: 'Dequeue node 15. No children to add.'
+            });
+            
+            steps.push({
+                type: 'process',
+                queue: [],
+                processed: [3, 9, 20, 15, 7],
+                currentLevel: [15, 7],
+                result: [[3], [9, 20]],
+                level: 2,
+                currentNode: 7,
+                message: 'Dequeue node 7. No children to add.'
+            });
+            
+            steps.push({
+                type: 'level_end',
+                queue: [],
+                processed: [3, 9, 20, 15, 7],
+                currentLevel: [15, 7],
+                result: [[3], [9, 20], [15, 7]],
+                level: 2,
+                message: 'Level 2 complete: [15, 7]. Add to result.'
+            });
+            
+            steps.push({
+                type: 'done',
+                queue: [],
+                processed: [3, 9, 20, 15, 7],
+                currentLevel: [],
+                result: [[3], [9, 20], [15, 7]],
+                message: 'Done! Result: [[3], [9, 20], [15, 7]]'
+            });
+        }
+        
+        // SVG setup
+        const svg = d3.select("#visualization");
+        const width = 900;
+        const height = 500;
+        
+        function draw(currentStep) {
+            svg.selectAll("*").remove();
+            
+            const data = currentStep || steps[0];
+            
+            // Draw tree
+            svg.append("text")
+                .attr("x", 250)
+                .attr("y", 30)
+                .attr("text-anchor", "middle")
+                .attr("class", "label")
+                .text("Binary Tree");
+            
+            // Draw edges
+            const edges = [[3, 9], [3, 20], [20, 15], [20, 7]];
+            edges.forEach(([from, to]) => {
+                svg.append("line")
+                    .attr("x1", positions[from].x)
+                    .attr("y1", positions[from].y + 20)
+                    .attr("x2", positions[to].x)
+                    .attr("y2", positions[to].y - 20)
+                    .attr("stroke", "#d1d5db")
+                    .attr("stroke-width", 2);
+            });
+            
+            // Draw level indicators
+            for (let i = 0; i < 3; i++) {
+                const y = 80 + i * 80;
+                svg.append("text")
+                    .attr("x", 50)
+                    .attr("y", y + 5)
+                    .attr("fill", data.level === i ? "#f59e0b" : "#9ca3af")
+                    .attr("font-weight", data.level === i ? "bold" : "normal")
+                    .text(`Level ${i}`);
+                
+                if (data.level === i && data.type !== 'done') {
+                    svg.append("line")
+                        .attr("x1", 90)
+                        .attr("y1", y - 25)
+                        .attr("x2", 450)
+                        .attr("y2", y - 25)
+                        .attr("stroke", "#f59e0b")
+                        .attr("stroke-width", 2)
+                        .attr("stroke-dasharray", "5,5");
+                }
+            }
+            
+            // Draw nodes
+            [3, 9, 20, 15, 7].forEach(val => {
+                const pos = positions[val];
+                
+                let fill = "#667eea";
+                let stroke = "none";
+                let strokeWidth = 0;
+                
+                if (data.currentNode === val) {
+                    fill = "#f59e0b";
+                    stroke = "#d97706";
+                    strokeWidth = 3;
+                } else if (data.processed && data.processed.includes(val)) {
+                    fill = "#4ade80";
+                } else if (data.queue && data.queue.includes(val)) {
+                    fill = "#06b6d4";
+                }
+                
+                svg.append("circle")
+                    .attr("cx", pos.x)
+                    .attr("cy", pos.y)
+                    .attr("r", 22)
+                    .attr("fill", fill)
+                    .attr("stroke", stroke)
+                    .attr("stroke-width", strokeWidth);
+                
+                svg.append("text")
+                    .attr("x", pos.x)
+                    .attr("y", pos.y + 6)
+                    .attr("text-anchor", "middle")
+                    .attr("fill", "white")
+                    .attr("font-weight", "bold")
+                    .attr("font-size", "16px")
+                    .text(val);
+            });
+            
+            // Draw queue
+            svg.append("text")
+                .attr("x", 550)
+                .attr("y", 60)
+                .attr("class", "label")
+                .text("Queue:");
+            
+            if (data.queue && data.queue.length > 0) {
+                data.queue.forEach((val, i) => {
+                    svg.append("rect")
+                        .attr("x", 550 + i * 50)
+                        .attr("y", 70)
+                        .attr("width", 40)
+                        .attr("height", 35)
+                        .attr("rx", 6)
+                        .attr("fill", "#06b6d4");
+                    
+                    svg.append("text")
+                        .attr("x", 570 + i * 50)
+                        .attr("y", 93)
+                        .attr("text-anchor", "middle")
+                        .attr("fill", "white")
+                        .attr("font-weight", "bold")
+                        .text(val);
+                });
+                
+                svg.append("text")
+                    .attr("x", 550)
+                    .attr("y", 125)
+                    .attr("fill", "#9ca3af")
+                    .attr("font-size", "12px")
+                    .text("← front");
+            } else {
+                svg.append("text")
+                    .attr("x", 550)
+                    .attr("y", 93)
+                    .attr("fill", "#9ca3af")
+                    .text("(empty)");
+            }
+            
+            // Draw current level values
+            svg.append("text")
+                .attr("x", 550)
+                .attr("y", 170)
+                .attr("class", "label")
+                .text("Current Level:");
+            
+            if (data.currentLevel && data.currentLevel.length > 0) {
+                data.currentLevel.forEach((val, i) => {
+                    svg.append("rect")
+                        .attr("x", 550 + i * 50)
+                        .attr("y", 180)
+                        .attr("width", 40)
+                        .attr("height", 35)
+                        .attr("rx", 6)
+                        .attr("fill", "#f59e0b");
+                    
+                    svg.append("text")
+                        .attr("x", 570 + i * 50)
+                        .attr("y", 203)
+                        .attr("text-anchor", "middle")
+                        .attr("fill", "white")
+                        .attr("font-weight", "bold")
+                        .text(val);
+                });
+            } else {
+                svg.append("text")
+                    .attr("x", 550)
+                    .attr("y", 203)
+                    .attr("fill", "#9ca3af")
+                    .text("[]");
+            }
+            
+            // Draw result
+            svg.append("text")
+                .attr("x", 550)
+                .attr("y", 260)
+                .attr("class", "label")
+                .text("Result:");
+            
+            if (data.result && data.result.length > 0) {
+                data.result.forEach((level, li) => {
+                    const y = 275 + li * 45;
+                    
+                    svg.append("text")
+                        .attr("x", 550)
+                        .attr("y", y + 5)
+                        .attr("fill", "#6b7280")
+                        .text(`[${li}]:`);
+                    
+                    level.forEach((val, vi) => {
+                        svg.append("rect")
+                            .attr("x", 590 + vi * 45)
+                            .attr("y", y - 15)
+                            .attr("width", 35)
+                            .attr("height", 30)
+                            .attr("rx", 5)
+                            .attr("fill", "#4ade80");
+                        
+                        svg.append("text")
+                            .attr("x", 607 + vi * 45)
+                            .attr("y", y + 5)
+                            .attr("text-anchor", "middle")
+                            .attr("fill", "white")
+                            .attr("font-weight", "bold")
+                            .text(val);
+                    });
+                });
+            } else {
+                svg.append("text")
+                    .attr("x", 550)
+                    .attr("y", 285)
+                    .attr("fill", "#9ca3af")
+                    .text("[]");
+            }
+            
+            // Legend
+            const legendY = 430;
+            svg.append("circle").attr("cx", 100).attr("cy", legendY).attr("r", 10).attr("fill", "#06b6d4");
+            svg.append("text").attr("x", 115).attr("y", legendY + 4).attr("fill", "#4b5563").text("In Queue");
+            
+            svg.append("circle").attr("cx", 220).attr("cy", legendY).attr("r", 10).attr("fill", "#f59e0b");
+            svg.append("text").attr("x", 235).attr("y", legendY + 4).attr("fill", "#4b5563").text("Current");
+            
+            svg.append("circle").attr("cx", 340).attr("cy", legendY).attr("r", 10).attr("fill", "#4ade80");
+            svg.append("text").attr("x", 355).attr("y", legendY + 4).attr("fill", "#4b5563").text("Processed");
+            
+            // Update status
+            document.getElementById("statusMessage").textContent = data.message;
+            
+            // Update variables
+            document.getElementById("varDisplay").innerHTML = `
+                <span class="var-item">Level: ${data.level !== undefined ? data.level : 'N/A'}</span>
+                <span class="var-item">Queue: [${data.queue ? data.queue.join(', ') : ''}]</span>
+                <span class="var-item">Current Level: [${data.currentLevel ? data.currentLevel.join(', ') : ''}]</span>
+            `;
+        }
+        
+        function doStep() {
+            if (step >= steps.length) {
+                stopAuto();
+                return;
+            }
+            draw(steps[step]);
+            step++;
+        }
+        
+        function stopAuto() {
+            autoRunning = false;
+            if (autoInterval) {
+                clearInterval(autoInterval);
+                autoInterval = null;
+            }
+            document.getElementById("autoBtn").textContent = "Auto Run";
+        }
+        
+        function toggleAuto() {
+            if (autoRunning) {
+                stopAuto();
+            } else {
+                autoRunning = true;
+                document.getElementById("autoBtn").textContent = "Pause";
+                const speed = 11 - document.getElementById("speedSlider").value;
+                autoInterval = setInterval(() => {
+                    if (step >= steps.length) {
+                        stopAuto();
+                        return;
+                    }
+                    doStep();
+                }, speed * 200);
+            }
+        }
+        
+        function reset() {
+            stopAuto();
+            step = 0;
+            draw(steps[0]);
+        }
+        
+        // Initialize
+        generateSteps();
+        draw(steps[0]);
+        
+        // Event listeners
+        document.getElementById("stepBtn").addEventListener("click", doStep);
+        document.getElementById("autoBtn").addEventListener("click", toggleAuto);
+        document.getElementById("resetBtn").addEventListener("click", reset);
+    </script>
+</body>
+</html>

@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Valid Parenthesis String - LeetCode 678</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="problem-info">
+            <h1><span class="problem-number">#0678</span> Valid Parenthesis String</h1>
+            <p><strong>Problem:</strong> Check if string with '(', ')', '*' can be valid. '*' can be '(', ')' or empty.</p>
+            <p><strong>Pattern:</strong> Greedy with Range - Track min/max possible open count</p>
+            <div class="problem-meta">
+                <span class="meta-tag">🔤 String</span>
+                <span class="meta-tag">📚 Stack</span>
+                <span class="meta-tag">⏱️ O(n)</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <code>python/0678_valid_parenthesis_string/0678_valid_parenthesis_string.py</code>
+            </div>
+
+        </div>
+
+        <div class="explanation-panel">
+            <h4>🧠 How It Works (Layman's Terms)</h4>
+            <p>A stack works like a <strong>pile of plates</strong> - last in, first out (LIFO):</p>
+            <ul>
+                <li><strong>Push:</strong> Add item to the top</li>
+                <li><strong>Pop:</strong> Remove and return the top item</li>
+                <li><strong>Peek:</strong> Look at top without removing</li>
+                <li><strong>Match pairs:</strong> Great for matching brackets, parentheses</li>
+            </ul>
+        </div>
+
+
+        <div class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+
+            <div class="visualization">
+            <svg id="mainSvg"></svg>
+        </div>
+
+        <div class="controls">
+            <button id="stepBtn">Step</button>
+            <button id="autoBtn">Auto Run</button>
+            <button id="resetBtn">Reset</button>
+            <div class="speed-control">
+                <label for="speed">Speed:</label>
+                <input type="range" id="speed" min="100" max="2000" value="800">
+            </div>
+        </div>
+
+        <div class="status" id="status">Click "Step" to validate string</div>
+
+        <div class="variables">
+            <div class="var-item">
+                <span class="var-label">Input:</span>
+                <span id="inputDisplay">"(*)"</span>
+            </div>
+            <div class="var-item">
+                <span class="var-label">Open Range (min, max):</span>
+                <span id="rangeDisplay">(0, 0)</span>
+            </div>
+            <div class="var-item">
+                <span class="var-label">Valid:</span>
+                <span id="resultDisplay">-</span>
+            </div>
+        </div>
+
+        </div>
+
+        <div class="code-section">
+            <h3>Python Solution</h3>
+            <pre><span class="keyword">def</span> <span class="function">checkValidString</span>(s):
+    <span class="string">"""
+    Track range of possible open parens.
+    Time: O(n), Space: O(1)
+    """</span>
+    min_open = <span class="number">0</span>  <span class="comment"># Minimum possible open '('</span>
+    max_open = <span class="number">0</span>  <span class="comment"># Maximum possible open '('</span>
+    
+    <span class="keyword">for</span> c <span class="keyword">in</span> s:
+        <span class="keyword">if</span> c == <span class="string">'('</span>:
+            min_open += <span class="number">1</span>
+            max_open += <span class="number">1</span>
+        <span class="keyword">elif</span> c == <span class="string">')'</span>:
+            min_open -= <span class="number">1</span>
+            max_open -= <span class="number">1</span>
+        <span class="keyword">else</span>:  <span class="comment"># c == '*'</span>
+            min_open -= <span class="number">1</span>  <span class="comment"># * as ')'</span>
+            max_open += <span class="number">1</span>  <span class="comment"># * as '('</span>
+        
+        <span class="keyword">if</span> max_open < <span class="number">0</span>:
+            <span class="keyword">return</span> <span class="keyword">False</span>  <span class="comment"># Too many ')'</span>
+        min_open = <span class="function">max</span>(min_open, <span class="number">0</span>)  <span class="comment"># Can't be negative</span>
+    
+    <span class="keyword">return</span> min_open == <span class="number">0</span></pre>
+        </div>
+    </div>
+
+    <script>
+        const s = "(*)";
+        
+        let idx = 0;
+        let minOpen = 0, maxOpen = 0;
+        let isValid = null;
+        let autoRunning = false;
+        let autoTimer = null;
+
+        const width = 700;
+        const height = 400;
+        const svg = d3.select("#mainSvg")
+            .attr("width", width)
+            .attr("height", height);
+
+        const charWidth = 70;
+        const startX = (width - s.length * charWidth) / 2;
+
+        function draw() {
+            svg.selectAll("*").remove();
+
+            svg.append("text")
+                .attr("x", width / 2).attr("y", 25)
+                .attr("text-anchor", "middle")
+                .attr("font-weight", "bold")
+                .text(`Validating: "${s}"`);
+
+            // Draw string
+            for (let i = 0; i < s.length; i++) {
+                const x = startX + i * charWidth + charWidth / 2;
+                const y = 100;
+
+                let fill = "#e3f2fd", stroke = "#1976d2";
+                if (i < idx) {
+                    fill = "#e0e0e0"; stroke = "#757575";
+                } else if (i === idx) {
+                    fill = "#ffeb3b"; stroke = "#f57c00";
+                }
+
+                svg.append("rect")
+                    .attr("x", x - 25).attr("y", y - 30)
+                    .attr("width", 50).attr("height", 55)
+                    .attr("rx", 8)
+                    .attr("fill", fill).attr("stroke", stroke)
+                    .attr("stroke-width", 2);
+
+                svg.append("text")
+                    .attr("x", x).attr("y", y + 5)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "32px")
+                    .attr("font-weight", "bold")
+                    .text(s[i]);
+
+                svg.append("text")
+                    .attr("x", x).attr("y", y + 40)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "12px")
+                    .attr("fill", "#666")
+                    .text(i);
+            }
+
+            // Current pointer
+            if (idx < s.length) {
+                svg.append("text")
+                    .attr("x", startX + idx * charWidth + charWidth / 2)
+                    .attr("y", 55)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "16px")
+                    .attr("fill", "#f57c00")
+                    .text("▼");
+            }
+
+            // Range visualization
+            const rangeY = 220;
+            const rangeWidth = 300;
+            const rangeX = (width - rangeWidth) / 2;
+            const scale = rangeWidth / 8; // -2 to 6
+
+            svg.append("text")
+                .attr("x", width / 2).attr("y", 190)
+                .attr("text-anchor", "middle")
+                .attr("font-weight", "bold")
+                .text("Possible Open Paren Count Range");
+
+            // Axis
+            svg.append("line")
+                .attr("x1", rangeX).attr("y1", rangeY)
+                .attr("x2", rangeX + rangeWidth).attr("y2", rangeY)
+                .attr("stroke", "#333").attr("stroke-width", 2);
+
+            for (let i = -2; i <= 6; i++) {
+                const x = rangeX + (i + 2) * scale;
+                svg.append("line")
+                    .attr("x1", x).attr("y1", rangeY - 5)
+                    .attr("x2", x).attr("y2", rangeY + 5)
+                    .attr("stroke", "#333");
+                svg.append("text")
+                    .attr("x", x).attr("y", rangeY + 20)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "12px")
+                    .text(i);
+            }
+
+            // Range bar
+            const minX = rangeX + (Math.max(minOpen, -2) + 2) * scale;
+            const maxX = rangeX + (Math.min(maxOpen, 6) + 2) * scale;
+
+            if (maxOpen >= 0 && minOpen <= 6) {
+                svg.append("rect")
+                    .attr("x", minX).attr("y", rangeY - 15)
+                    .attr("width", Math.max(0, maxX - minX + 10))
+                    .attr("height", 30)
+                    .attr("rx", 5)
+                    .attr("fill", "#c8e6c9").attr("stroke", "#4caf50")
+                    .attr("opacity", 0.7);
+
+                // Min marker
+                svg.append("circle")
+                    .attr("cx", minX).attr("cy", rangeY)
+                    .attr("r", 8)
+                    .attr("fill", "#4caf50");
+                svg.append("text")
+                    .attr("x", minX).attr("y", rangeY - 25)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "12px")
+                    .attr("font-weight", "bold")
+                    .text(`min=${minOpen}`);
+
+                // Max marker
+                svg.append("circle")
+                    .attr("cx", maxX).attr("cy", rangeY)
+                    .attr("r", 8)
+                    .attr("fill", "#1976d2");
+                svg.append("text")
+                    .attr("x", maxX).attr("y", rangeY + 40)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "12px")
+                    .attr("font-weight", "bold")
+                    .text(`max=${maxOpen}`);
+            }
+
+            // Zero line
+            const zeroX = rangeX + 2 * scale;
+            svg.append("line")
+                .attr("x1", zeroX).attr("y1", rangeY - 25)
+                .attr("x2", zeroX).attr("y2", rangeY + 25)
+                .attr("stroke", "#e53935")
+                .attr("stroke-width", 2)
+                .attr("stroke-dasharray", "5,5");
+
+            // Explanation
+            svg.append("text")
+                .attr("x", 50).attr("y", 300)
+                .attr("font-size", "12px")
+                .text("'(' → min++, max++");
+            svg.append("text")
+                .attr("x", 50).attr("y", 320)
+                .attr("font-size", "12px")
+                .text("')' → min--, max--");
+            svg.append("text")
+                .attr("x", 50).attr("y", 340)
+                .attr("font-size", "12px")
+                .text("'*' → min-- (as ')'), max++ (as '(')");
+
+            // Result
+            if (isValid !== null) {
+                svg.append("rect")
+                    .attr("x", width - 160).attr("y", height - 80)
+                    .attr("width", 150).attr("height", 50)
+                    .attr("rx", 10)
+                    .attr("fill", isValid ? "#c8e6c9" : "#ffcdd2")
+                    .attr("stroke", isValid ? "#4caf50" : "#e53935");
+
+                svg.append("text")
+                    .attr("x", width - 85).attr("y", height - 48)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "18px")
+                    .attr("font-weight", "bold")
+                    .text(isValid ? "✓ Valid!" : "✗ Invalid!");
+            }
+        }
+
+        function step() {
+            if (isValid !== null) {
+                draw();
+                return false;
+            }
+
+            if (idx >= s.length) {
+                isValid = minOpen === 0;
+                document.getElementById("resultDisplay").textContent = 
+                    isValid ? "Yes ✓" : "No ✗";
+                document.getElementById("status").textContent = 
+                    isValid ? `Valid! min_open = 0 at end.` : 
+                             `Invalid! min_open = ${minOpen} ≠ 0`;
+                draw();
+                return false;
+            }
+
+            const c = s[idx];
+            let explanation = "";
+
+            if (c === '(') {
+                minOpen++;
+                maxOpen++;
+                explanation = `'(' → min=${minOpen}, max=${maxOpen}`;
+            } else if (c === ')') {
+                minOpen--;
+                maxOpen--;
+                explanation = `')' → min=${minOpen}, max=${maxOpen}`;
+            } else { // '*'
+                minOpen--;
+                maxOpen++;
+                explanation = `'*' → min=${minOpen} (as ')'), max=${maxOpen} (as '(')`;
+            }
+
+            if (maxOpen < 0) {
+                isValid = false;
+                document.getElementById("resultDisplay").textContent = "No ✗";
+                document.getElementById("status").textContent = 
+                    `Invalid! max_open < 0 means too many ')'`;
+                draw();
+                return false;
+            }
+
+            minOpen = Math.max(minOpen, 0);
+            
+            document.getElementById("rangeDisplay").textContent = 
+                `(${minOpen}, ${maxOpen})`;
+            document.getElementById("status").textContent = explanation;
+
+            idx++;
+            draw();
+            return idx < s.length;
+        }
+
+        function reset() {
+            idx = 0;
+            minOpen = 0;
+            maxOpen = 0;
+            isValid = null;
+            autoRunning = false;
+            if (autoTimer) clearInterval(autoTimer);
+            
+            document.getElementById("rangeDisplay").textContent = "(0, 0)";
+            document.getElementById("resultDisplay").textContent = "-";
+            document.getElementById("status").textContent = 
+                'Click "Step" to validate string';
+            document.getElementById("autoBtn").textContent = "Auto Run";
+            
+            draw();
+        }
+
+        function autoRun() {
+            if (autoRunning) {
+                autoRunning = false;
+                clearInterval(autoTimer);
+                document.getElementById("autoBtn").textContent = "Auto Run";
+            } else {
+                autoRunning = true;
+                document.getElementById("autoBtn").textContent = "Pause";
+                const speed = 2100 - document.getElementById("speed").value;
+                autoTimer = setInterval(() => {
+                    if (!step()) {
+                        autoRunning = false;
+                        clearInterval(autoTimer);
+                        document.getElementById("autoBtn").textContent = "Auto Run";
+                    }
+                }, speed);
+            }
+        }
+
+        document.getElementById("stepBtn").addEventListener("click", step);
+        document.getElementById("autoBtn").addEventListener("click", autoRun);
+        document.getElementById("resetBtn").addEventListener("click", reset);
+
+        draw();
+    </script>
+</body>
+</html>

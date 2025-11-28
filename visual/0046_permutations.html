@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LC 46: Permutations - Algorithm Visualization</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="problem-info">
+            <h1><span class="problem-number">#46</span> Permutations</h1>
+            <p>Given an array of distinct integers, return all possible permutations. You can return them in any order.</p>
+            <div class="problem-meta">
+                <span class="meta-tag">↩️ Backtracking</span>
+                <span class="meta-tag">🔄 Recursion</span>
+                <span class="meta-tag">⏱️ O(n! × n)</span>
+                <span class="meta-tag">💾 O(n!)</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <code>python/0046_permutations/0046_permutations.py</code>
+            </div>
+            </div>
+
+        <div class="explanation-panel">
+            <h4>🧠 How It Works (Layman's Terms)</h4>
+            <p>Think of arranging people in a line - pick one for position 1, then one for position 2, and so on:</p>
+            <ul>
+                <li><strong>Choose:</strong> Pick an element for the current position</li>
+                <li><strong>Explore:</strong> Recursively arrange the remaining elements</li>
+                <li><strong>Unchoose:</strong> Backtrack and try the next element</li>
+                <li><strong>Base case:</strong> When no elements left, we have a complete permutation!</li>
+            </ul>
+        </div>
+
+
+        <div class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+            
+            <div class="controls">
+                <button class="btn btn-primary" id="stepBtn" onclick="step()">Step</button>
+                <button class="btn btn-success" id="autoBtn" onclick="toggleAuto()">Auto Run</button>
+                <button class="btn btn-warning" onclick="reset()">Reset</button>
+            </div>
+
+            <div class="info-box secondary" style="margin-bottom: 20px;">
+                📊 Input: <strong>[1, 2, 3]</strong>
+            </div>
+
+            <div class="status-message" id="statusMessage">
+                Click "Step" or "Auto Run" to start visualization
+            </div>
+
+            <div style="display: flex; gap: 30px; flex-wrap: wrap; margin-top: 20px;">
+                <div style="flex: 1; min-width: 300px;">
+                    <div class="array-section">
+                        <div class="array-label">🔢 Available Numbers:</div>
+                        <div class="array-container" id="availableContainer"></div>
+                    </div>
+
+                    <div class="array-section" style="margin-top: 15px;">
+                        <div class="array-label">📝 Current Path:</div>
+                        <div class="array-container" id="pathContainer"></div>
+                    </div>
+
+                    <div class="explanation-panel" style="margin-top: 15px;">
+                        <h4>📚 Recursion Stack</h4>
+                        <div id="stackContainer" style="display: flex; flex-direction: column-reverse; gap: 5px; padding: 10px;">
+                            <span style="color: #666;">Empty</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="flex: 1; min-width: 300px;">
+                    <div class="array-section">
+                        <div class="array-label">✅ Found Permutations:</div>
+                        <div id="resultContainer" style="display: flex; flex-direction: column; gap: 8px; padding: 10px; background: #f5f5f5; border-radius: 8px; min-height: 200px;">
+                            <span style="color: #666;">None yet...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="treeContainer" style="width: 100%; height: 300px; margin-top: 20px; overflow-x: auto;"></div>
+        </div>
+        <div class="code-section">
+            <h3>💻 Python Solution</h3>
+            <div class="code-block">
+                <pre><span class="keyword">def</span> <span class="function">permute</span>(self, nums):
+    result = []
+    
+    <span class="keyword">def</span> <span class="function">backtrack</span>(nums, path):
+        <span class="keyword">if</span> <span class="keyword">not</span> nums:
+            result.<span class="function">append</span>(path)
+            <span class="keyword">return</span>
+        
+        <span class="keyword">for</span> i <span class="keyword">in</span> <span class="function">range</span>(<span class="function">len</span>(nums)):
+            <span class="comment"># Choose nums[i], recurse with remaining</span>
+            <span class="function">backtrack</span>(nums[:<span class="class-name">i</span>] + nums[i+<span class="number">1</span>:], 
+                      path + [nums[i]])
+    
+    <span class="function">backtrack</span>(nums, [])
+    <span class="keyword">return</span> result</pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const originalNums = [1, 2, 3];
+        let steps = [];
+        let currentStepIdx = -1;
+        let results = [];
+        let autoInterval = null;
+
+        // Pre-generate all steps
+        function generateSteps() {
+            steps = [];
+            results = [];
+            
+            function backtrack(nums, path, depth) {
+                steps.push({
+                    type: 'enter',
+                    nums: [...nums],
+                    path: [...path],
+                    depth,
+                    message: nums.length === 0 ? 
+                        `✅ Complete permutation found: [${path.join(', ')}]` :
+                        `Entering with available: [${nums.join(', ')}], path: [${path.join(', ')}]`
+                });
+                
+                if (nums.length === 0) {
+                    results.push([...path]);
+                    steps.push({
+                        type: 'found',
+                        nums: [],
+                        path: [...path],
+                        depth,
+                        results: results.length,
+                        message: `Added permutation #${results.length}: [${path.join(', ')}]`
+                    });
+                    return;
+                }
+                
+                for (let i = 0; i < nums.length; i++) {
+                    steps.push({
+                        type: 'choose',
+                        nums: [...nums],
+                        path: [...path],
+                        chosen: nums[i],
+                        chosenIdx: i,
+                        depth,
+                        message: `Choosing ${nums[i]} (option ${i + 1} of ${nums.length})`
+                    });
+                    
+                    const newNums = [...nums.slice(0, i), ...nums.slice(i + 1)];
+                    const newPath = [...path, nums[i]];
+                    
+                    backtrack(newNums, newPath, depth + 1);
+                    
+                    steps.push({
+                        type: 'backtrack',
+                        nums: [...nums],
+                        path: [...path],
+                        unchosen: nums[i],
+                        depth,
+                        message: `Backtracking: undo choosing ${nums[i]}`
+                    });
+                }
+            }
+            
+            backtrack(originalNums, [], 0);
+        }
+
+        function init() {
+            generateSteps();
+            renderState(originalNums, []);
+            renderTree();
+        }
+
+        function renderState(available, path) {
+            // Available numbers
+            const availContainer = document.getElementById('availableContainer');
+            availContainer.innerHTML = '';
+            if (available.length === 0) {
+                availContainer.innerHTML = '<span style="color: #4caf50; padding: 10px;">Empty (complete!)</span>';
+            } else {
+                available.forEach((num, i) => {
+                    const box = document.createElement('div');
+                    box.className = 'array-box';
+                    box.textContent = num;
+                    box.style.background = '#fff3e0';
+                    box.style.borderColor = '#ff9800';
+                    availContainer.appendChild(box);
+                });
+            }
+
+            // Current path
+            const pathContainer = document.getElementById('pathContainer');
+            pathContainer.innerHTML = '';
+            if (path.length === 0) {
+                pathContainer.innerHTML = '<span style="color: #666; padding: 10px;">Empty</span>';
+            } else {
+                path.forEach((num) => {
+                    const box = document.createElement('div');
+                    box.className = 'array-box';
+                    box.textContent = num;
+                    box.style.background = '#c8e6c9';
+                    box.style.borderColor = '#4caf50';
+                    pathContainer.appendChild(box);
+                });
+            }
+        }
+
+        function renderStack() {
+            const container = document.getElementById('stackContainer');
+            
+            // Build current stack from steps
+            const stack = [];
+            for (let i = 0; i <= currentStepIdx; i++) {
+                const s = steps[i];
+                if (s.type === 'enter') {
+                    stack.push({path: s.path, nums: s.nums});
+                } else if (s.type === 'backtrack') {
+                    stack.pop();
+                }
+            }
+            
+            if (stack.length === 0) {
+                container.innerHTML = '<span style="color: #666;">Empty</span>';
+                return;
+            }
+            
+            container.innerHTML = stack.map((frame, i) => 
+                `<div style="padding: 8px 12px; background: ${i === stack.length - 1 ? '#667eea' : '#e0e0e0'}; 
+                color: ${i === stack.length - 1 ? 'white' : '#333'}; border-radius: 5px; font-size: 0.9em;">
+                    path: [${frame.path.join(', ')}], available: [${frame.nums.join(', ')}]
+                </div>`
+            ).join('');
+        }
+
+        function renderResults() {
+            const container = document.getElementById('resultContainer');
+            
+            // Count results found so far
+            let foundCount = 0;
+            const foundPerms = [];
+            for (let i = 0; i <= currentStepIdx; i++) {
+                if (steps[i].type === 'found') {
+                    foundPerms.push(steps[i].path);
+                }
+            }
+            
+            if (foundPerms.length === 0) {
+                container.innerHTML = '<span style="color: #666;">None yet...</span>';
+                return;
+            }
+            
+            container.innerHTML = foundPerms.map((perm, i) => 
+                `<div style="padding: 8px 12px; background: #c8e6c9; border-radius: 5px; font-weight: bold;">
+                    ${i + 1}. [${perm.join(', ')}]
+
+        </div>`
+            ).join('');
+        }
+
+        function renderTree() {
+            const container = document.getElementById('treeContainer');
+            d3.select('#treeContainer').selectAll('*').remove();
+            
+            const width = Math.max(container.offsetWidth, 700);
+            const height = 280;
+            
+            const svg = d3.select('#treeContainer')
+                .append('svg')
+                .attr('width', width)
+                .attr('height', height);
+
+            // Build tree structure
+            const treeData = {
+                name: '[1,2,3]',
+                path: [],
+                children: [
+                    {
+                        name: '1',
+                        path: [1],
+                        children: [
+                            {name: '2', path: [1,2], children: [{name: '3', path: [1,2,3], children: []}]},
+                            {name: '3', path: [1,3], children: [{name: '2', path: [1,3,2], children: []}]}
+                        ]
+                    },
+                    {
+                        name: '2',
+                        path: [2],
+                        children: [
+                            {name: '1', path: [2,1], children: [{name: '3', path: [2,1,3], children: []}]},
+                            {name: '3', path: [2,3], children: [{name: '1', path: [2,3,1], children: []}]}
+                        ]
+                    },
+                    {
+                        name: '3',
+                        path: [3],
+                        children: [
+                            {name: '1', path: [3,1], children: [{name: '2', path: [3,1,2], children: []}]},
+                            {name: '2', path: [3,2], children: [{name: '1', path: [3,2,1], children: []}]}
+                        ]
+                    }
+                ]
+            };
+
+            const hierarchy = d3.hierarchy(treeData);
+            const treeLayout = d3.tree().size([width - 60, height - 80]);
+            treeLayout(hierarchy);
+
+            // Get current path from steps
+            let currentPath = [];
+            if (currentStepIdx >= 0) {
+                currentPath = steps[currentStepIdx].path || [];
+            }
+
+            // Links
+            svg.selectAll('.link')
+                .data(hierarchy.links())
+                .enter()
+                .append('line')
+                .attr('class', 'link')
+                .attr('x1', d => d.source.x + 30)
+                .attr('y1', d => d.source.y + 25)
+                .attr('x2', d => d.target.x + 30)
+                .attr('y2', d => d.target.y + 25)
+                .attr('stroke', '#ccc')
+                .attr('stroke-width', 2);
+
+            // Nodes
+            const nodes = svg.selectAll('.node')
+                .data(hierarchy.descendants())
+                .enter()
+                .append('g')
+                .attr('class', 'node')
+                .attr('transform', d => `translate(${d.x + 30}, ${d.y + 25})`);
+
+            nodes.append('circle')
+                .attr('r', 18)
+                .attr('fill', d => {
+                    const nodePath = d.data.path;
+                    const pathStr = nodePath.join(',');
+                    const currStr = currentPath.join(',');
+                    
+                    if (pathStr === currStr && currentPath.length > 0) return '#667eea';
+                    if (currStr.startsWith(pathStr) && pathStr.length > 0) return '#bbdefb';
+                    if (nodePath.length === 3) {
+                        // Check if this permutation has been found
+                        for (let i = 0; i <= currentStepIdx; i++) {
+                            if (steps[i].type === 'found' && steps[i].path.join(',') === pathStr) {
+                                return '#4caf50';
+                            }
+                        }
+                    }
+                    return '#fff';
+                })
+                .attr('stroke', '#667eea')
+                .attr('stroke-width', 2);
+
+            nodes.append('text')
+                .attr('text-anchor', 'middle')
+                .attr('dy', 5)
+                .attr('font-size', '12px')
+                .attr('font-weight', 'bold')
+                .attr('fill', d => {
+                    const nodePath = d.data.path;
+                    const currStr = currentPath.join(',');
+                    if (nodePath.join(',') === currStr && currentPath.length > 0) return '#fff';
+                    return '#333';
+                })
+                .text(d => d.data.name);
+        }
+
+        function step() {
+            currentStepIdx++;
+            
+            if (currentStepIdx >= steps.length) {
+                document.getElementById('statusMessage').className = 'status-message success';
+                document.getElementById('statusMessage').textContent = 
+                    `✅ Complete! Found all ${results.length} permutations.`;
+                document.getElementById('stepBtn').disabled = true;
+                stopAuto();
+                return;
+            }
+
+            const s = steps[currentStepIdx];
+            document.getElementById('statusMessage').textContent = s.message;
+            
+            renderState(s.nums, s.path);
+            renderStack();
+            renderResults();
+            renderTree();
+        }
+
+        function toggleAuto() {
+            if (autoInterval) {
+                stopAuto();
+            } else {
+                document.getElementById('autoBtn').textContent = 'Pause';
+                autoInterval = setInterval(() => {
+                    if (currentStepIdx >= steps.length - 1) {
+                        step();
+                        stopAuto();
+                    } else {
+                        step();
+                    }
+                }, 600);
+            }
+        }
+
+        function stopAuto() {
+            if (autoInterval) {
+                clearInterval(autoInterval);
+                autoInterval = null;
+            }
+            document.getElementById('autoBtn').textContent = 'Auto Run';
+        }
+
+        function reset() {
+            stopAuto();
+            currentStepIdx = -1;
+            document.getElementById('stepBtn').disabled = false;
+            document.getElementById('statusMessage').className = 'status-message';
+            document.getElementById('statusMessage').textContent = 'Click "Step" or "Auto Run" to start visualization';
+            init();
+        }
+
+        init();
+    </script>
+</body>
+</html>

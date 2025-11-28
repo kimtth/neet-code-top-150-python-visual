@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>025 - Reverse Nodes in k-Group</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="problem-info">
+            <h1><span class="problem-number">#025</span> Reverse Nodes in k-Group</h1>
+            <p>
+                Reverse nodes in k-group in a linked list. If remaining nodes < k, keep them as-is.
+                Uses iterative reversal of each group and reconnects them.
+            </p>
+            <div class="problem-meta">
+                <span class="meta-tag">🔗 Linked List</span>
+                <span class="meta-tag">🗂️ Hash Map</span>
+                <span class="meta-tag">⏱️ O(n)</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <code>python/0025_reverse_nodes_in_k_group/0025_reverse_nodes_in_k_group.py</code>
+            </div>
+
+        </div>
+
+        <div class="explanation-panel">
+            <h4>🧠 How It Works (Layman's Terms)</h4>
+            <p>A linked list is like a <strong>chain of train cars</strong>:</p>
+            <ul>
+                <li><strong>Each node:</strong> Contains data and points to next node</li>
+                <li><strong>Traversal:</strong> Follow the chain one node at a time</li>
+                <li><strong>Modification:</strong> Redirect links to rearrange</li>
+                <li><strong>Two pointers:</strong> Often use slow/fast pointers</li>
+            </ul>
+        </div>
+
+
+        <section class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+            <div class="controls">
+                <button id="autoRunBtn" class="btn">▶ Auto Run</button>
+                <button id="stepBtn" class="btn btn-success">Step</button>
+                <button id="resetBtn" class="btn btn-danger">Reset</button>
+            </div>
+            <div class="status" id="status">Click Auto Run to reverse nodes in groups of k=2</div>
+            <svg id="visualization"></svg>
+        </section>
+
+        <section class="code-section">
+            <h2>Python Solution</h2>
+            <pre><span class="keyword">def</span> <span class="function">reverseKGroup</span>(head, k):
+    dummy = <span class="function">ListNode</span>(<span class="number">0</span>, head)
+    group_prev = dummy
+    
+    <span class="keyword">while</span> <span class="keyword">True</span>:
+        kth = <span class="function">get_kth</span>(group_prev, k)
+        <span class="keyword">if</span> <span class="keyword">not</span> kth:
+            <span class="keyword">break</span>
+        
+        group_next = kth.next
+        
+        <span class="comment"># Reverse the group</span>
+        prev, curr = group_next, group_prev.next
+        <span class="keyword">for</span> _ <span class="keyword">in</span> <span class="function">range</span>(k):
+            next_temp = curr.next
+            curr.next = prev
+            prev = curr
+            curr = next_temp
+        
+        <span class="comment"># Reconnect</span>
+        temp = group_prev.next
+        group_prev.next = kth
+        group_prev = temp
+    
+    <span class="keyword">return</span> dummy.next</pre>
+        </section>
+    </div>
+
+    <script>
+        const width = 900;
+        const height = 550;
+
+        const svg = d3.select("#visualization")
+            .attr("width", width)
+            .attr("height", height);
+
+        const originalList = [1, 2, 3, 4, 5];
+        const k = 2;
+        
+        let nodes = [];
+        let groupStart = 0;
+        let phase = 0;  // 0: init, 1: finding kth, 2: reversing, 3: reconnecting, 4: done
+        let reverseIdx = 0;
+        let animationTimer = null;
+        let currentGroup = [];
+        let reversedGroups = [];
+
+        function reset() {
+            nodes = originalList.map((val, idx) => ({
+                val,
+                originalIdx: idx,
+                currentIdx: idx,
+                inGroup: false,
+                reversed: false
+            }));
+            groupStart = 0;
+            phase = 0;
+            reverseIdx = 0;
+            currentGroup = [];
+            reversedGroups = [];
+            
+            if (animationTimer) clearInterval(animationTimer);
+            document.getElementById("status").textContent = `Reversing in groups of k=${k}`;
+            render();
+        }
+
+        function render() {
+            svg.selectAll("*").remove();
+
+            const nodeWidth = 50;
+            const spacing = 80;
+            const startX = 80;
+            const startY = 100;
+
+            // Title
+            svg.append("text")
+                .attr("x", 30)
+                .attr("y", 40)
+                .attr("font-size", "14px")
+                .attr("font-weight", "bold")
+                .attr("fill", "#1e293b")
+                .text(`List: [${originalList.join(' → ')}], k = ${k}`);
+
+            // Draw current state
+            svg.append("text")
+                .attr("x", 30)
+                .attr("y", startY - 25)
+                .attr("font-size", "13px")
+                .attr("fill", "#64748b")
+                .text("Current State:");
+
+            // Draw nodes in their current order
+            const sortedNodes = [...nodes].sort((a, b) => a.currentIdx - b.currentIdx);
+            
+            sortedNodes.forEach((node, displayIdx) => {
+                const x = startX + displayIdx * spacing;
+                const y = startY;
+                
+                const isInCurrentGroup = currentGroup.includes(node.originalIdx);
+                const isReversed = node.reversed;
+
+                svg.append("rect")
+                    .attr("x", x)
+                    .attr("y", y)
+                    .attr("width", nodeWidth)
+                    .attr("height", 40)
+                    .attr("rx", 8)
+                    .attr("fill", () => {
+                        if (isInCurrentGroup) return "#fef3c7";
+                        if (isReversed) return "#d1fae5";
+                        return "#dbeafe";
+                    })
+                    .attr("stroke", () => {
+                        if (isInCurrentGroup) return "#f59e0b";
+                        if (isReversed) return "#10b981";
+                        return "#3b82f6";
+                    })
+                    .attr("stroke-width", isInCurrentGroup ? 3 : 2);
+
+                svg.append("text")
+                    .attr("x", x + nodeWidth / 2)
+                    .attr("y", y + 27)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "18px")
+                    .attr("font-weight", "bold")
+                    .attr("fill", "#1e293b")
+                    .text(node.val);
+
+                // Draw arrows between nodes
+                if (displayIdx < sortedNodes.length - 1) {
+                    svg.append("line")
+                        .attr("x1", x + nodeWidth)
+                        .attr("y1", y + 20)
+                        .attr("x2", x + spacing - 5)
+                        .attr("y2", y + 20)
+                        .attr("stroke", "#94a3b8")
+                        .attr("stroke-width", 2)
+                        .attr("marker-end", "url(#arrow)");
+                }
+            });
+
+            // Arrow marker
+            svg.append("defs")
+                .append("marker")
+                .attr("id", "arrow")
+                .attr("viewBox", "0 0 10 10")
+                .attr("refX", 9)
+                .attr("refY", 5)
+                .attr("markerWidth", 6)
+                .attr("markerHeight", 6)
+                .attr("orient", "auto")
+                .append("path")
+                .attr("d", "M 0 0 L 10 5 L 0 10 z")
+                .attr("fill", "#94a3b8");
+
+            // Draw group visualization
+            drawGroups();
+
+            // Draw algorithm steps
+            drawAlgorithmSteps();
+        }
+
+        function drawGroups() {
+            const startX = 80;
+            const startY = 200;
+
+            svg.append("text")
+                .attr("x", 30)
+                .attr("y", startY)
+                .attr("font-size", "13px")
+                .attr("fill", "#64748b")
+                .text("Groups:");
+
+            // Show groups
+            const numFullGroups = Math.floor(originalList.length / k);
+            const remaining = originalList.length % k;
+
+            for (let g = 0; g < numFullGroups; g++) {
+                const x = startX + g * 200;
+                const groupVals = [];
+                
+                // Determine if this group has been processed
+                const isProcessed = g < reversedGroups.length;
+                const isCurrent = g * k === groupStart && phase > 0 && phase < 4;
+                
+                for (let i = 0; i < k; i++) {
+                    const originalIdx = g * k + i;
+                    if (isProcessed) {
+                        // Show reversed order
+                        groupVals.push(originalList[g * k + k - 1 - i]);
+                    } else {
+                        groupVals.push(originalList[originalIdx]);
+                    }
+                }
+
+                svg.append("rect")
+                    .attr("x", x)
+                    .attr("y", startY + 15)
+                    .attr("width", 150)
+                    .attr("height", 40)
+                    .attr("rx", 8)
+                    .attr("fill", () => {
+                        if (isCurrent) return "#fef3c7";
+                        if (isProcessed) return "#d1fae5";
+                        return "#f8fafc";
+                    })
+                    .attr("stroke", () => {
+                        if (isCurrent) return "#f59e0b";
+                        if (isProcessed) return "#10b981";
+                        return "#94a3b8";
+                    })
+                    .attr("stroke-width", isCurrent ? 3 : 2);
+
+                svg.append("text")
+                    .attr("x", x + 75)
+                    .attr("y", startY + 42)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "14px")
+                    .attr("font-weight", "bold")
+                    .attr("fill", "#1e293b")
+                    .text(`[${groupVals.join(' → ')}]`);
+
+                svg.append("text")
+                    .attr("x", x + 75)
+                    .attr("y", startY + 72)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "11px")
+                    .attr("fill", "#64748b")
+                    .text(`Group ${g + 1}${isProcessed ? ' ✓' : ''}`);
+            }
+
+            // Show remaining nodes
+            if (remaining > 0) {
+                const x = startX + numFullGroups * 200;
+                const remainingVals = originalList.slice(numFullGroups * k);
+
+                svg.append("rect")
+                    .attr("x", x)
+                    .attr("y", startY + 15)
+                    .attr("width", 100)
+                    .attr("height", 40)
+                    .attr("rx", 8)
+                    .attr("fill", "#fee2e2")
+                    .attr("stroke", "#ef4444")
+                    .attr("stroke-dasharray", "5,5");
+
+                svg.append("text")
+                    .attr("x", x + 50)
+                    .attr("y", startY + 42)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "14px")
+                    .attr("fill", "#1e293b")
+                    .text(`[${remainingVals.join(', ')}]`);
+
+                svg.append("text")
+                    .attr("x", x + 50)
+                    .attr("y", startY + 72)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "11px")
+                    .attr("fill", "#ef4444")
+                    .text("< k, unchanged");
+            }
+        }
+
+        function drawAlgorithmSteps() {
+            const startX = 30;
+            const startY = 330;
+
+            svg.append("text")
+                .attr("x", startX)
+                .attr("y", startY)
+                .attr("font-size", "14px")
+                .attr("font-weight", "bold")
+                .attr("fill", "#1e293b")
+                .text("Algorithm:");
+
+            const steps = [
+                "1. Find kth node from current position",
+                "2. If k nodes exist, reverse the group",
+                "3. Reconnect: prev_group → reversed → next_group",
+                "4. Move to next group, repeat"
+            ];
+
+            steps.forEach((step, idx) => {
+                svg.append("text")
+                    .attr("x", startX)
+                    .attr("y", startY + 25 + idx * 22)
+                    .attr("font-size", "12px")
+                    .attr("fill", "#64748b")
+                    .text(step);
+            });
+
+            // Reversal diagram
+            svg.append("text")
+                .attr("x", 400)
+                .attr("y", startY)
+                .attr("font-size", "13px")
+                .attr("font-weight", "bold")
+                .attr("fill", "#1e293b")
+                .text("Reversal Process:");
+
+            svg.append("text")
+                .attr("x", 400)
+                .attr("y", startY + 25)
+                .attr("font-size", "12px")
+                .attr("fill", "#64748b")
+                .text("1 → 2  becomes  2 → 1");
+
+            svg.append("text")
+                .attr("x", 400)
+                .attr("y", startY + 50)
+                .attr("font-size", "12px")
+                .attr("fill", "#64748b")
+                .text("By reversing 'next' pointers one by one");
+
+            // Final result preview
+            svg.append("text")
+                .attr("x", startX)
+                .attr("y", 480)
+                .attr("font-size", "13px")
+                .attr("font-weight", "bold")
+                .attr("fill", "#1e293b")
+                .text("Expected Result:");
+
+            const expectedResult = [];
+            for (let g = 0; g < Math.floor(originalList.length / k); g++) {
+                for (let i = k - 1; i >= 0; i--) {
+                    expectedResult.push(originalList[g * k + i]);
+                }
+            }
+            for (let i = Math.floor(originalList.length / k) * k; i < originalList.length; i++) {
+                expectedResult.push(originalList[i]);
+            }
+
+            svg.append("text")
+                .attr("x", startX + 130)
+                .attr("y", 480)
+                .attr("font-size", "13px")
+                .attr("fill", "#10b981")
+                .text(`[${expectedResult.join(' → ')}]`);
+        }
+
+        function step() {
+            const numFullGroups = Math.floor(originalList.length / k);
+
+            if (phase === 4 || reversedGroups.length >= numFullGroups) {
+                phase = 4;
+                document.getElementById("status").textContent = "✓ All groups reversed!";
+                return;
+            }
+
+            if (phase === 0) {
+                phase = 1;
+                currentGroup = [];
+                for (let i = 0; i < k; i++) {
+                    currentGroup.push(groupStart + i);
+                }
+                document.getElementById("status").textContent = 
+                    `Found group at indices ${groupStart} to ${groupStart + k - 1}`;
+            } else if (phase === 1) {
+                phase = 2;
+                reverseIdx = 0;
+                document.getElementById("status").textContent = 
+                    `Reversing group [${currentGroup.map(i => originalList[i]).join(', ')}]`;
+            } else if (phase === 2) {
+                // Actually reverse the nodes in this group
+                const groupEndIdx = groupStart + k - 1;
+                
+                // Swap positions
+                for (let i = 0; i < k; i++) {
+                    const node = nodes.find(n => n.originalIdx === groupStart + i);
+                    node.currentIdx = groupStart + (k - 1 - i);
+                    node.reversed = true;
+                }
+                
+                reversedGroups.push(groupStart);
+                phase = 3;
+                document.getElementById("status").textContent = 
+                    `Group reversed and reconnected`;
+            } else if (phase === 3) {
+                groupStart += k;
+                currentGroup = [];
+                
+                if (groupStart + k <= originalList.length) {
+                    phase = 1;
+                    for (let i = 0; i < k; i++) {
+                        currentGroup.push(groupStart + i);
+                    }
+                    document.getElementById("status").textContent = 
+                        `Moving to next group at index ${groupStart}`;
+                } else {
+                    phase = 4;
+                    document.getElementById("status").textContent = 
+                        `✓ Complete! Remaining nodes (${originalList.length - groupStart}) < k, unchanged`;
+                }
+            }
+
+            render();
+        }
+
+        function autoRun() {
+            if (animationTimer) {
+                clearInterval(animationTimer);
+                animationTimer = null;
+                document.getElementById("autoRunBtn").textContent = "▶ Auto Run";
+                return;
+            }
+
+            document.getElementById("autoRunBtn").textContent = "⏸ Pause";
+            animationTimer = setInterval(() => {
+                if (phase === 4) {
+                    clearInterval(animationTimer);
+                    animationTimer = null;
+                    document.getElementById("autoRunBtn").textContent = "▶ Auto Run";
+                    return;
+                }
+                step();
+            }, 900);
+        }
+
+        document.getElementById("autoRunBtn").addEventListener("click", autoRun);
+        document.getElementById("stepBtn").addEventListener("click", step);
+        document.getElementById("resetBtn").addEventListener("click", reset);
+
+        reset();
+    </script>
+</body>
+</html>

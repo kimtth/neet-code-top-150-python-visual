@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Longest Repeating Character Replacement - LeetCode 424</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="problem-info">
+            <h1><span class="problem-number">#424</span> Longest Repeating Character Replacement</h1>
+            <p>Given a string and k replacements allowed, find the longest substring with all same characters. The trick: keep track of the most frequent character in the window!</p>
+            <div class="problem-meta">
+                <span class="meta-tag">🪟 Sliding Window</span>
+                <span class="meta-tag">🔤 String</span>
+                <span class="meta-tag">⏱️ O(n)</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <a href="../python/0424_longest_repeating_character_replacement/0424_longest_repeating_character_replacement.py">0424_longest_repeating_character_replacement.py</a>
+            </div>
+            </div>
+
+        <div class="explanation-panel">
+            <h4>💡 How It Works (Layman's Terms)</h4>
+            <ul>
+                <li><strong>Goal:</strong> Find the longest substring where all characters are the same, using at most k replacements</li>
+                <li><strong>Key insight:</strong> In any valid window, we keep the most frequent character and replace the others</li>
+                <li><strong>Formula:</strong> replacements_needed = window_size - max_frequency</li>
+                <li><strong>Valid window:</strong> When replacements_needed ≤ k</li>
+                <li><strong>Expand:</strong> Move right pointer, add character to window</li>
+                <li><strong>Shrink:</strong> When we need more than k replacements, move left pointer</li>
+                <li><strong>Track max:</strong> Keep track of the maximum valid window size we've seen</li>
+            </ul>
+        </div>
+
+
+        <div class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+            
+            <div class="controls">
+                <button class="btn btn-primary" id="stepBtn" onclick="step()">Step</button>
+                <button class="btn btn-success" id="autoBtn" onclick="toggleAuto()">Auto Run</button>
+                <button class="btn btn-warning" onclick="reset()">Reset</button>
+            </div>
+
+            <div class="info-box">
+                k = 2 (can replace up to 2 characters)
+            </div>
+
+            <div class="status-message" id="statusMessage">
+                Click "Step" or "Auto Run" to find the longest substring with replacements
+            </div>
+
+            <div class="variable-display">
+                <div class="variable-box">
+                    <div class="variable-name">Window Size</div>
+                    <div class="variable-value" id="windowVal">0</div>
+                </div>
+                <div class="variable-box">
+                    <div class="variable-name">Max Frequency</div>
+                    <div class="variable-value" id="freqVal">0</div>
+                </div>
+                <div class="variable-box">
+                    <div class="variable-name">Replacements Needed</div>
+                    <div class="variable-value" id="replaceVal">0</div>
+                </div>
+                <div class="variable-box">
+                    <div class="variable-name">Max Length</div>
+                    <div class="variable-value" id="maxVal">0</div>
+                </div>
+            </div>
+
+            <div class="array-section">
+                <div class="array-label">String:</div>
+                <div class="array-container" id="stringContainer"></div>
+            </div>
+
+            <div class="array-section">
+                <div class="array-label">Character Counts in Window:</div>
+                <div id="countsContainer" style="display: flex; gap: 10px; flex-wrap: wrap;"></div>
+            </div>
+        </div>
+        <div class="code-section">
+            <h3>💻 Python Solution</h3>
+            <div class="code-block">
+                <pre><span class="keyword">def</span> <span class="function">characterReplacement</span>(self, s: <span class="class-name">str</span>, k: <span class="class-name">int</span>) -> int:
+    char_counts = {}
+    left = <span class="number">0</span>
+    max_freq = <span class="number">0</span>  <span class="comment"># Most frequent char count in window</span>
+    max_length = <span class="number">0</span>
+    
+    <span class="keyword">for</span> right <span class="keyword">in</span> <span class="function">range</span>(<span class="function">len</span>(s)):
+        char_counts[s[right]] = char_counts.<span class="function">get</span>(s[right], <span class="number">0</span>) + <span class="number">1</span>
+        max_freq = <span class="function">max</span>(max_freq, char_counts[s[right]])
+        
+        <span class="comment"># If we need more than k replacements, shrink window</span>
+        <span class="keyword">if</span> (right - left + <span class="number">1</span>) - max_freq > k:
+            char_counts[s[left]] -= <span class="number">1</span>
+            left += <span class="number">1</span>
+        
+        max_length = <span class="function">max</span>(max_length, right - left + <span class="number">1</span>)
+    
+    <span class="keyword">return</span> max_length</pre>
+            </div>
+        </div>
+
+        </div>
+
+    <script>
+        const s = "AABABBA";
+        const k = 2;
+        let charCounts = {};
+        let left = 0;
+        let right = -1;
+        let maxFreq = 0;
+        let maxLength = 0;
+        let phase = 'init';
+        let autoInterval = null;
+
+        function init() {
+            renderString();
+            renderCounts();
+            document.getElementById('windowVal').textContent = '0';
+            document.getElementById('freqVal').textContent = '0';
+            document.getElementById('replaceVal').textContent = '0';
+            document.getElementById('maxVal').textContent = '0';
+        }
+
+        function renderString() {
+            const container = document.getElementById('stringContainer');
+            container.innerHTML = '';
+            s.split('').forEach((char, idx) => {
+                const box = document.createElement('div');
+                box.className = 'array-box';
+                box.id = `char-${idx}`;
+                box.style.width = '50px';
+                box.innerHTML = `${char}<span class="index-label">[${idx}]</span>`;
+                
+                if (idx >= left && idx <= right) {
+                    box.classList.add('current');
+                }
+                if (idx === right) {
+                    box.classList.add('highlight');
+                }
+                container.appendChild(box);
+            });
+
+            // Draw window indicators
+            if (right >= 0) {
+                let windowIndicator = document.getElementById('windowIndicator');
+                if (!windowIndicator) {
+                    windowIndicator = document.createElement('div');
+                    windowIndicator.id = 'windowIndicator';
+                    windowIndicator.style.cssText = 'margin-top: 10px; display: flex; gap: 8px;';
+                    container.parentNode.appendChild(windowIndicator);
+                }
+                let html = '';
+                for (let i = 0; i < s.length; i++) {
+                    html += '<div style="width: 50px; text-align: center; font-size: 0.9em;">';
+                    if (i === left) html += '<span style="color: #ff5722; font-weight: bold;">L↑</span>';
+                    else if (i === right) html += '<span style="color: #3f51b5; font-weight: bold;">R↑</span>';
+                    html += '</div>';
+                }
+                windowIndicator.innerHTML = html;
+            }
+        }
+
+        function renderCounts() {
+            const container = document.getElementById('countsContainer');
+            container.innerHTML = '';
+            if (Object.keys(charCounts).length === 0) {
+                container.innerHTML = '<span style="color: #999;">No characters in window yet</span>';
+                return;
+            }
+            Object.entries(charCounts).sort().forEach(([char, count]) => {
+                if (count > 0) {
+                    const box = document.createElement('div');
+                    box.className = 'variable-box';
+                    box.innerHTML = `<div class="variable-name">${char}</div><div class="variable-value">${count}
+
+        </div>`;
+                    if (count === maxFreq) {
+                        box.style.borderColor = '#4caf50';
+                        box.style.background = '#e8f5e9';
+                    }
+                    container.appendChild(box);
+                }
+            });
+        }
+
+        function step() {
+            if (phase === 'init') {
+                phase = 'expanding';
+                right = -1;
+                document.getElementById('statusMessage').textContent = 
+                    'Starting sliding window. Expand right pointer to find valid windows.';
+            }
+
+            if (phase === 'expanding') {
+                right++;
+                
+                if (right >= s.length) {
+                    phase = 'done';
+                    document.getElementById('statusMessage').textContent = 
+                        `✅ Done! Maximum length with ${k} replacements: ${maxLength}`;
+                    document.getElementById('stepBtn').disabled = true;
+                    stopAuto();
+                    return;
+                }
+
+                // Add character
+                charCounts[s[right]] = (charCounts[s[right]] || 0) + 1;
+                maxFreq = Math.max(maxFreq, charCounts[s[right]]);
+
+                const windowSize = right - left + 1;
+                const replacementsNeeded = windowSize - maxFreq;
+
+                document.getElementById('windowVal').textContent = windowSize;
+                document.getElementById('freqVal').textContent = maxFreq;
+                document.getElementById('replaceVal').textContent = replacementsNeeded;
+
+                if (replacementsNeeded > k) {
+                    // Need to shrink
+                    document.getElementById('statusMessage').textContent = 
+                        `Window [${left},${right}]: "${s.substring(left, right + 1)}" needs ${replacementsNeeded} replacements > k=${k}. Shrinking!`;
+                    
+                    charCounts[s[left]]--;
+                    left++;
+                } else {
+                    maxLength = Math.max(maxLength, windowSize);
+                    document.getElementById('maxVal').textContent = maxLength;
+                    document.getElementById('statusMessage').textContent = 
+                        `Window [${left},${right}]: "${s.substring(left, right + 1)}" size=${windowSize}, most freq=${maxFreq}, replacements=${replacementsNeeded} ≤ k=${k}. Valid! Max=${maxLength}`;
+                }
+
+                renderString();
+                renderCounts();
+            }
+        }
+
+        function toggleAuto() {
+            if (autoInterval) {
+                stopAuto();
+            } else {
+                document.getElementById('autoBtn').textContent = 'Pause';
+                autoInterval = setInterval(() => {
+                    if (phase === 'done') {
+                        stopAuto();
+                    } else {
+                        step();
+                    }
+                }, 1300);
+            }
+        }
+
+        function stopAuto() {
+            if (autoInterval) {
+                clearInterval(autoInterval);
+                autoInterval = null;
+            }
+            document.getElementById('autoBtn').textContent = 'Auto Run';
+        }
+
+        function reset() {
+            stopAuto();
+            phase = 'init';
+            left = 0;
+            right = -1;
+            charCounts = {};
+            maxFreq = 0;
+            maxLength = 0;
+            document.getElementById('stepBtn').disabled = false;
+            document.getElementById('statusMessage').textContent = 
+                'Click "Step" or "Auto Run" to find the longest substring with replacements';
+            const windowIndicator = document.getElementById('windowIndicator');
+            if (windowIndicator) windowIndicator.remove();
+            init();
+        }
+
+        init();
+    </script>
+</body>
+</html>

@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LC 217: Contains Duplicate - Algorithm Visualization</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="problem-info">
+            <h1><span class="problem-number">#217</span> Contains Duplicate</h1>
+            <p>Given an integer array nums, return true if any value appears at least twice in the array, and return false if every element is distinct.</p>
+            <div class="problem-meta">
+                <span class="meta-tag">📁 Array</span>
+                <span class="meta-tag">🔤 Hash Set</span>
+                <span class="meta-tag">⏱️ O(n)</span>
+                <span class="meta-tag">💾 O(n)</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <code>python/0217_contains_duplicate/0217_contains_duplicate.py</code>
+            </div>
+            </div>
+
+        <div class="explanation-panel">
+            <h4>🧠 How It Works (Layman's Terms)</h4>
+            <p>Think of it like checking names at a party entrance:</p>
+            <ul>
+                <li>You have a guest list (empty set at first)</li>
+                <li>As each person arrives, you check: "Have I seen this person before?"</li>
+                <li>If <strong>YES</strong> → Duplicate found! Return true</li>
+                <li>If <strong>NO</strong> → Add their name to the list and continue</li>
+                <li>If everyone enters without a repeat → No duplicates, return false</li>
+            </ul>
+            <p>The <strong>set</strong> provides O(1) lookup, making this very efficient!</p>
+        </div>
+
+
+        <div class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+            
+            <div class="controls">
+                <button class="btn btn-primary" id="stepBtn" onclick="step()">Step</button>
+                <button class="btn btn-success" id="autoBtn" onclick="toggleAuto()">Auto Run</button>
+                <button class="btn btn-warning" onclick="reset()">Reset</button>
+            </div>
+
+            <div class="status-message" id="statusMessage">
+                Click "Step" or "Auto Run" to start visualization
+            </div>
+
+            <div class="array-section">
+                <div class="array-label">📥 Input Array:</div>
+                <div class="array-container" id="inputContainer"></div>
+            </div>
+
+            <div class="array-section">
+                <div class="array-label">👁️ Seen Set (Hash Set):</div>
+                <div class="array-container" id="seenContainer">
+                    <div style="color: #999; padding: 10px;">{ empty }</div>
+                </div>
+            </div>
+
+            <div class="info-box" id="resultBox" style="display: none;">
+                Result will appear here
+            </div>
+        </div>
+        <div class="code-section">
+            <h3>💻 Python Solution</h3>
+            <div class="code-block">
+                <pre><span class="keyword">def</span> <span class="function">contains_duplicate</span>(self, nums: <span class="class-name">List</span>[int]) -> bool:
+    seen = <span class="function">set</span>()
+    <span class="keyword">for</span> num <span class="keyword">in</span> nums:
+        <span class="keyword">if</span> num <span class="keyword">in</span> seen:
+            <span class="keyword">return</span> <span class="keyword">True</span>
+        seen.<span class="function">add</span>(num)
+    <span class="keyword">return</span> <span class="keyword">False</span></pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const nums = [1, 2, 3, 1];
+        let seen = new Set();
+        let currentIndex = 0;
+        let foundDuplicate = false;
+        let autoInterval = null;
+
+        function init() {
+            renderInput();
+            renderSeen();
+        }
+
+        function renderInput() {
+            const container = document.getElementById('inputContainer');
+            container.innerHTML = '';
+            nums.forEach((num, idx) => {
+                const box = document.createElement('div');
+                box.className = 'array-box';
+                box.id = `input-${idx}`;
+                box.innerHTML = `${num}<span class="index-label">[${idx}]</span>`;
+                container.appendChild(box);
+            });
+        }
+
+        function renderSeen() {
+            const container = document.getElementById('seenContainer');
+            container.innerHTML = '';
+            
+            if (seen.size === 0) {
+                container.innerHTML = '<div style="color: #999; padding: 10px;">{ empty }
+
+        </div>';
+                return;
+            }
+
+            const setValues = Array.from(seen);
+            setValues.forEach(val => {
+                const box = document.createElement('div');
+                box.className = 'array-box';
+                box.id = `seen-${val}`;
+                box.style.background = '#e8f5e9';
+                box.style.borderColor = '#4caf50';
+                box.textContent = val;
+                container.appendChild(box);
+            });
+        }
+
+        function step() {
+            if (foundDuplicate || currentIndex >= nums.length) {
+                document.getElementById('stepBtn').disabled = true;
+                stopAuto();
+                return;
+            }
+
+            // Clear previous highlights
+            document.querySelectorAll('.array-box').forEach(box => {
+                box.classList.remove('highlight', 'current');
+            });
+
+            const currentNum = nums[currentIndex];
+            document.getElementById(`input-${currentIndex}`).classList.add('highlight');
+
+            if (seen.has(currentNum)) {
+                // Found duplicate!
+                foundDuplicate = true;
+                document.getElementById('statusMessage').className = 'status-message warning';
+                document.getElementById('statusMessage').textContent = 
+                    `🚨 Checking ${currentNum}: Already in set! DUPLICATE FOUND!`;
+                
+                // Highlight the duplicate in the seen set
+                if (document.getElementById(`seen-${currentNum}`)) {
+                    document.getElementById(`seen-${currentNum}`).classList.add('highlight');
+                    document.getElementById(`seen-${currentNum}`).style.background = '#ffcdd2';
+                    document.getElementById(`seen-${currentNum}`).style.borderColor = '#f44336';
+                }
+                document.getElementById(`input-${currentIndex}`).style.background = '#ffcdd2';
+                document.getElementById(`input-${currentIndex}`).style.borderColor = '#f44336';
+
+                const resultBox = document.getElementById('resultBox');
+                resultBox.style.display = 'block';
+                resultBox.className = 'info-box highlight';
+                resultBox.textContent = '✅ Return TRUE - Duplicate exists!';
+
+                document.getElementById('stepBtn').disabled = true;
+                stopAuto();
+            } else {
+                // Add to set
+                seen.add(currentNum);
+                document.getElementById('statusMessage').textContent = 
+                    `Checking ${currentNum}: Not in set → Adding to seen set`;
+                renderSeen();
+                
+                currentIndex++;
+                
+                if (currentIndex >= nums.length && !foundDuplicate) {
+                    document.getElementById('statusMessage').className = 'status-message success';
+                    document.getElementById('statusMessage').textContent = 
+                        '✅ Checked all elements. No duplicates found!';
+                    
+                    const resultBox = document.getElementById('resultBox');
+                    resultBox.style.display = 'block';
+                    resultBox.className = 'info-box secondary';
+                    resultBox.textContent = '❌ Return FALSE - All elements are unique!';
+                    
+                    document.getElementById('stepBtn').disabled = true;
+                    stopAuto();
+                }
+            }
+        }
+
+        function toggleAuto() {
+            if (autoInterval) {
+                stopAuto();
+            } else {
+                document.getElementById('autoBtn').textContent = 'Pause';
+                autoInterval = setInterval(() => {
+                    if (foundDuplicate || currentIndex >= nums.length) {
+                        stopAuto();
+                    } else {
+                        step();
+                    }
+                }, 1000);
+            }
+        }
+
+        function stopAuto() {
+            if (autoInterval) {
+                clearInterval(autoInterval);
+                autoInterval = null;
+            }
+            document.getElementById('autoBtn').textContent = 'Auto Run';
+        }
+
+        function reset() {
+            stopAuto();
+            currentIndex = 0;
+            seen = new Set();
+            foundDuplicate = false;
+            document.getElementById('stepBtn').disabled = false;
+            document.getElementById('statusMessage').className = 'status-message';
+            document.getElementById('statusMessage').textContent = 'Click "Step" or "Auto Run" to start visualization';
+            document.getElementById('resultBox').style.display = 'none';
+            init();
+        }
+
+        init();
+    </script>
+</body>
+</html>

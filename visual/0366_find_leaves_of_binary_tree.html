@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LC 366: Find Leaves of Binary Tree - Algorithm Visualization</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="problem-info">
+            <h1><span class="problem-number">#366</span> Find Leaves of Binary Tree</h1>
+            <p>Collect and remove leaves repeatedly until tree is empty. Return leaves at each step grouped together.</p>
+            <div class="problem-meta">
+                <span class="meta-tag">🌳 Tree</span>
+                <span class="meta-tag">🔄 DFS</span>
+                <span class="meta-tag">⏱️ O(n)</span>
+                <span class="meta-tag">💾 O(n)</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <code>python/0366_find_leaves_of_binary_tree/0366_find_leaves_of_binary_tree.py</code>
+            </div>
+            </div>
+
+        <div class="explanation-panel">
+            <h4>🧠 How It Works (Layman's Terms)</h4>
+            <p>Calculate <strong>height from bottom</strong> for each node:</p>
+            <ul>
+                <li><strong>Leaf nodes:</strong> Height = 0 (collected first)</li>
+                <li><strong>Internal nodes:</strong> Height = 1 + max(left, right)</li>
+                <li><strong>Group by height:</strong> Same height = same collection round</li>
+                <li><strong>Result:</strong> Nodes grouped by their "distance from leaves"</li>
+            </ul>
+        </div>
+
+
+        <div class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+            
+            <div class="controls">
+                <button class="btn btn-primary" id="startBtn" onclick="start()">▶ Start</button>
+                <button class="btn" onclick="stepForward()">Step →</button>
+                <button class="btn btn-warning" onclick="reset()">Reset</button>
+            </div>
+
+            <div class="status-message" id="statusMessage">
+                Click Start to collect leaves layer by layer
+            </div>
+
+            <div style="display: flex; gap: 30px; flex-wrap: wrap; margin-top: 20px;">
+                <div style="flex: 2; min-width: 350px;">
+                    <svg id="treeViz" width="100%" height="320"></svg>
+                </div>
+                <div style="flex: 1; min-width: 200px;">
+                    <h4>🍂 Collected Leaves</h4>
+                    <div id="collectedDisplay" style="padding: 15px; background: #fff3e0; border-radius: 12px; min-height: 150px;"></div>
+                    
+                    <h4 style="margin-top: 15px;">🔢 Current Round</h4>
+                    <div id="roundDisplay" style="padding: 20px; background: #e3f2fd; border-radius: 12px; text-align: center; font-size: 2em; font-weight: bold; color: #2196f3;">
+                        0
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="code-section">
+            <h3>💻 Python Solution</h3>
+            <div class="code-block">
+                <pre><span class="keyword">def</span> <span class="function">findLeaves</span>(root):
+    result = []
+    
+    <span class="keyword">def</span> <span class="function">getHeight</span>(node):
+        <span class="keyword">if not</span> node:
+            <span class="keyword">return</span> <span class="number">-1</span>
+        
+        <span class="comment"># Height = max height of children + 1</span>
+        h = <span class="number">1</span> + <span class="function">max</span>(<span class="function">getHeight</span>(node.left), <span class="function">getHeight</span>(node.right))
+        
+        <span class="comment"># Group nodes by height</span>
+        <span class="keyword">if</span> h >= <span class="function">len</span>(result):
+            result.<span class="function">append</span>([])
+        result[h].<span class="function">append</span>(node.val)
+        
+        <span class="keyword">return</span> h
+    
+    <span class="function">getHeight</span>(root)
+    <span class="keyword">return</span> result</pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const tree = {
+            val: 1, id: 1, x: 250, y: 40, height: null,
+            left: {
+                val: 2, id: 2, x: 150, y: 120, height: null,
+                left: { val: 4, id: 4, x: 100, y: 200, height: null, left: null, right: null },
+                right: { val: 5, id: 5, x: 200, y: 200, height: null, left: null, right: null }
+            },
+            right: {
+                val: 3, id: 3, x: 350, y: 120, height: null,
+                left: null,
+                right: { val: 6, id: 6, x: 400, y: 200, height: null, left: null, right: null }
+            }
+        };
+
+        let collected = [];
+        let removedNodes = new Set();
+        let currentRound = -1;
+        let highlightedNodes = new Set();
+        let nodeHeights = {};
+        let isRunning = false;
+        let stepIndex = 0;
+        let steps = [];
+
+        function flattenTree(node, arr = []) {
+            if (!node) return arr;
+            arr.push(node);
+            flattenTree(node.left, arr);
+            flattenTree(node.right, arr);
+            return arr;
+        }
+
+        function computeHeights(node) {
+            if (!node) return -1;
+            const h = 1 + Math.max(computeHeights(node.left), computeHeights(node.right));
+            node.height = h;
+            nodeHeights[node.id] = h;
+            return h;
+        }
+
+        function precomputeSteps() {
+            steps = [];
+            computeHeights(tree);
+            
+            const nodes = flattenTree(tree);
+            const maxHeight = Math.max(...Object.values(nodeHeights));
+            
+            steps.push({
+                type: 'init',
+                collected: [],
+                removed: new Set(),
+                highlighted: new Set(),
+                round: -1,
+                message: 'Calculate height for each node (height = distance from leaves)'
+            });
+
+            for (let h = 0; h <= maxHeight; h++) {
+                const nodesAtHeight = nodes.filter(n => n.height === h);
+                const newCollected = [...(steps[steps.length - 1]?.collected || [])];
+                newCollected.push(nodesAtHeight.map(n => n.val));
+                
+                const newRemoved = new Set(steps[steps.length - 1]?.removed || []);
+                nodesAtHeight.forEach(n => newRemoved.add(n.id));
+
+                steps.push({
+                    type: 'collect',
+                    collected: newCollected,
+                    removed: newRemoved,
+                    highlighted: new Set(nodesAtHeight.map(n => n.id)),
+                    round: h,
+                    message: `Round ${h}: Collect nodes with height ${h}: [${nodesAtHeight.map(n => n.val).join(', ')}]`
+                });
+            }
+
+            steps.push({
+                type: 'done',
+                collected: steps[steps.length - 1].collected,
+                removed: steps[steps.length - 1].removed,
+                highlighted: new Set(),
+                round: maxHeight,
+                message: `Done! Collected ${steps[steps.length - 1].collected.length} rounds of leaves.`
+            });
+        }
+
+        function render() {
+            const svg = d3.select("#treeViz");
+            svg.selectAll("*").remove();
+
+            const container = svg.node().parentElement;
+            const width = container.clientWidth;
+            const height = 320;
+            svg.attr("viewBox", `0 0 ${width} ${height}`);
+
+            const nodes = flattenTree(tree);
+            const g = svg.append("g").attr("transform", `translate(${(width - 500) / 2}, 0)`);
+
+            // Draw edges
+            function drawEdges(node) {
+                if (!node) return;
+                const removed = removedNodes.has(node.id);
+                if (removed) return;
+                
+                if (node.left && !removedNodes.has(node.left.id)) {
+                    g.append("line")
+                        .attr("x1", node.x).attr("y1", node.y)
+                        .attr("x2", node.left.x).attr("y2", node.left.y)
+                        .attr("stroke", "#ccc").attr("stroke-width", 2);
+                }
+                if (node.right && !removedNodes.has(node.right.id)) {
+                    g.append("line")
+                        .attr("x1", node.x).attr("y1", node.y)
+                        .attr("x2", node.right.x).attr("y2", node.right.y)
+                        .attr("stroke", "#ccc").attr("stroke-width", 2);
+                }
+                drawEdges(node.left);
+                drawEdges(node.right);
+            }
+            drawEdges(tree);
+
+            // Draw nodes
+            nodes.forEach(node => {
+                const removed = removedNodes.has(node.id);
+                const highlighted = highlightedNodes.has(node.id);
+                
+                if (removed && !highlighted) return;
+
+                let fill = '#667eea';
+                if (highlighted) fill = '#ff9800';
+                if (removed && highlighted) fill = '#f44336';
+
+                g.append("circle")
+                    .attr("cx", node.x).attr("cy", node.y).attr("r", 25)
+                    .attr("fill", fill)
+                    .attr("stroke", highlighted ? '#e65100' : '#5a6fd6')
+                    .attr("stroke-width", highlighted ? 4 : 2)
+                    .attr("opacity", removed ? 0.5 : 1);
+
+                g.append("text")
+                    .attr("x", node.x).attr("y", node.y + 6)
+                    .attr("text-anchor", "middle")
+                    .attr("fill", "white").attr("font-weight", "bold").attr("font-size", "16px")
+                    .text(node.val);
+
+                // Height label
+                if (nodeHeights[node.id] !== undefined) {
+                    g.append("text")
+                        .attr("x", node.x + 30).attr("y", node.y - 15)
+                        .attr("font-size", "11px")
+                        .attr("fill", "#666")
+                        .text(`h=${nodeHeights[node.id]}`);
+                }
+            });
+
+            // Update collected display
+            const collectedContainer = document.getElementById('collectedDisplay');
+            if (collected.length === 0) {
+                collectedContainer.innerHTML = '<span style="color: #999;">Leaves will be collected here...</span>';
+            } else {
+                collectedContainer.innerHTML = collected.map((round, i) => 
+                    `<div style="margin: 8px 0; padding: 10px; background: ${i === currentRound ? '#ffeb3b' : '#fff'}; border-radius: 8px; border-left: 4px solid hsl(${i * 40}, 70%, 50%);">
+                        <strong>Round ${i}:</strong> [${round.join(', ')}]
+                    </div>`
+                ).join('');
+            }
+
+            document.getElementById('roundDisplay').textContent = currentRound >= 0 ? currentRound : '-';
+        }
+
+        function stepForward() {
+            if (stepIndex >= steps.length) return;
+            
+            const step = steps[stepIndex];
+            collected = step.collected;
+            removedNodes = step.removed;
+            highlightedNodes = step.highlighted;
+            currentRound = step.round;
+            
+            document.getElementById('statusMessage').textContent = step.message;
+            
+            if (step.type === 'done') {
+                isRunning = false;
+                document.getElementById('startBtn').textContent = '▶ Start';
+            }
+            
+            stepIndex++;
+            render();
+        }
+
+        async function start() {
+            if (isRunning) {
+                isRunning = false;
+                document.getElementById('startBtn').textContent = '▶ Start';
+                return;
+            }
+            
+            isRunning = true;
+            document.getElementById('startBtn').textContent = '⏸ Pause';
+            
+            while (stepIndex < steps.length && isRunning) {
+                stepForward();
+                await new Promise(r => setTimeout(r, 1000));
+            }
+        }
+
+        function reset() {
+            isRunning = false;
+            stepIndex = 0;
+            collected = [];
+            removedNodes = new Set();
+            highlightedNodes = new Set();
+            currentRound = -1;
+            nodeHeights = {};
+            
+            document.getElementById('statusMessage').textContent = 'Click Start to collect leaves layer by layer';
+            document.getElementById('startBtn').textContent = '▶ Start';
+            
+            precomputeSteps();
+            render();
+        }
+
+        reset();
+        window.addEventListener('resize', render);
+    </script>
+</body>
+</html>

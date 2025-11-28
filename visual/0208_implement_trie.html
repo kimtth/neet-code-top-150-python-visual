@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>208 - Implement Trie (Prefix Tree)</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="problem-info">
+            <h1><span class="problem-number">#208</span> Implement Trie (Prefix Tree)</h1>
+            <p>
+                Implement a Trie (prefix tree) with insert, search, and startsWith methods.
+                A Trie efficiently stores and retrieves strings for autocomplete and spell-checking.
+            </p>
+            <div class="problem-meta">
+                <span class="meta-tag">🌳 Tree</span>
+                <span class="meta-tag">🌲 Trie</span>
+                <span class="meta-tag">🏗️ Design</span>
+                <span class="meta-tag">⏱️ O(n)</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <code>python/0208_implement_trie_(prefix_tree)/0208_implement_trie_(prefix_tree).py</code>
+            </div>
+
+        </div>
+
+        <div class="explanation-panel">
+            <h4>🧠 How It Works (Layman's Terms)</h4>
+            <p>Tree traversal is like <strong>exploring a family tree</strong>:</p>
+            <ul>
+                <li><strong>Root:</strong> Start at the top node</li>
+                <li><strong>Recurse:</strong> Visit left and right children</li>
+                <li><strong>Base case:</strong> Stop at null/leaf nodes</li>
+                <li><strong>Combine:</strong> Build answer from subtree results</li>
+            </ul>
+        </div>
+
+
+        <section class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+            <div class="controls">
+                <button id="autoRunBtn" class="btn">▶ Auto Run</button>
+                <button id="stepBtn" class="btn btn-success">Step</button>
+                <button id="resetBtn" class="btn btn-danger">Reset</button>
+            </div>
+            <div class="status" id="status">Click Auto Run to simulate Trie operations</div>
+            <svg id="visualization"></svg>
+        </section>
+
+        <section class="code-section">
+            <h2>Python Solution</h2>
+            <pre><span class="keyword">class</span> TrieNode:
+    <span class="keyword">def</span> <span class="function">__init__</span>(self):
+        self.links = [<span class="keyword">None</span>] * <span class="number">26</span>  <span class="comment"># a-z children</span>
+        self.is_end = <span class="keyword">False</span>
+
+<span class="keyword">class</span> Trie:
+    <span class="keyword">def</span> <span class="function">__init__</span>(self):
+        self.root = <span class="function">TrieNode</span>()
+    
+    <span class="keyword">def</span> <span class="function">insert</span>(self, word):
+        node = self.root
+        <span class="keyword">for</span> ch <span class="keyword">in</span> word:
+            idx = <span class="function">ord</span>(ch) - <span class="function">ord</span>(<span class="string">'a'</span>)
+            <span class="keyword">if</span> node.links[idx] <span class="keyword">is</span> <span class="keyword">None</span>:
+                node.links[idx] = <span class="function">TrieNode</span>()
+            node = node.links[idx]
+        node.is_end = <span class="keyword">True</span>
+    
+    <span class="keyword">def</span> <span class="function">search</span>(self, word):
+        node = self.<span class="function">_search_prefix</span>(word)
+        <span class="keyword">return</span> node <span class="keyword">is</span> <span class="keyword">not</span> <span class="keyword">None</span> <span class="keyword">and</span> node.is_end
+    
+    <span class="keyword">def</span> <span class="function">startsWith</span>(self, prefix):
+        <span class="keyword">return</span> self.<span class="function">_search_prefix</span>(prefix) <span class="keyword">is</span> <span class="keyword">not</span> <span class="keyword">None</span>
+    
+    <span class="keyword">def</span> <span class="function">_search_prefix</span>(self, word):
+        node = self.root
+        <span class="keyword">for</span> ch <span class="keyword">in</span> word:
+            idx = <span class="function">ord</span>(ch) - <span class="function">ord</span>(<span class="string">'a'</span>)
+            <span class="keyword">if</span> node.links[idx] <span class="keyword">is</span> <span class="keyword">None</span>:
+                <span class="keyword">return</span> <span class="keyword">None</span>
+            node = node.links[idx]
+        <span class="keyword">return</span> node</pre>
+        </section>
+    </div>
+
+    <script>
+        const width = 900;
+        const height = 550;
+
+        const svg = d3.select("#visualization")
+            .attr("width", width)
+            .attr("height", height);
+
+        // Operations sequence
+        const operations = [
+            { op: "insert", arg: "apple" },
+            { op: "search", arg: "apple", expected: true },
+            { op: "search", arg: "app", expected: false },
+            { op: "startsWith", arg: "app", expected: true },
+            { op: "insert", arg: "app" },
+            { op: "search", arg: "app", expected: true },
+            { op: "insert", arg: "apricot" },
+            { op: "startsWith", arg: "apr", expected: true }
+        ];
+
+        let trie = { children: {}, isEnd: false };
+        let operationIdx = 0;
+        let highlightPath = [];
+        let lastResult = null;
+        let animationTimer = null;
+
+        function reset() {
+            trie = { children: {}, isEnd: false };
+            operationIdx = 0;
+            highlightPath = [];
+            lastResult = null;
+            if (animationTimer) clearInterval(animationTimer);
+            document.getElementById("status").textContent = "Click Auto Run to simulate Trie operations";
+            render();
+        }
+
+        function render() {
+            svg.selectAll("*").remove();
+
+            // Draw trie structure
+            drawTrie();
+
+            // Draw operations panel
+            drawOperations();
+        }
+
+        function drawTrie() {
+            const startX = 200;
+            const startY = 80;
+
+            svg.append("text")
+                .attr("x", 30)
+                .attr("y", 40)
+                .attr("font-size", "16px")
+                .attr("font-weight", "bold")
+                .attr("fill", "#1e293b")
+                .text("Trie Structure:");
+
+            // Draw root node
+            svg.append("circle")
+                .attr("cx", startX)
+                .attr("cy", startY)
+                .attr("r", 22)
+                .attr("fill", "#f8fafc")
+                .attr("stroke", "#94a3b8")
+                .attr("stroke-width", 2);
+
+            svg.append("text")
+                .attr("x", startX)
+                .attr("y", startY + 5)
+                .attr("text-anchor", "middle")
+                .attr("font-size", "11px")
+                .attr("fill", "#64748b")
+                .text("root");
+
+            // Recursively draw nodes
+            const nodePositions = {};
+            drawNode(trie, startX, startY, 0, '', nodePositions);
+        }
+
+        function drawNode(node, x, y, level, pathKey, positions) {
+            const children = Object.entries(node.children);
+            if (children.length === 0) return;
+
+            const spacing = Math.max(50, 200 / Math.pow(1.5, level));
+            const childY = y + 70;
+            
+            children.forEach(([char, childNode], idx) => {
+                const offset = (idx - (children.length - 1) / 2) * spacing;
+                const childX = x + offset;
+                const childPath = pathKey + char;
+                
+                const isHighlighted = highlightPath.length > 0 && 
+                    childPath === highlightPath.slice(0, childPath.length).join('');
+
+                // Draw edge
+                svg.append("line")
+                    .attr("x1", x)
+                    .attr("y1", y + 22)
+                    .attr("x2", childX)
+                    .attr("y2", childY - 18)
+                    .attr("stroke", isHighlighted ? "#10b981" : "#cbd5e1")
+                    .attr("stroke-width", isHighlighted ? 3 : 2);
+
+                // Draw edge label
+                const midX = (x + childX) / 2;
+                const midY = (y + 22 + childY - 18) / 2;
+                
+                svg.append("circle")
+                    .attr("cx", midX)
+                    .attr("cy", midY)
+                    .attr("r", 10)
+                    .attr("fill", isHighlighted ? "#d1fae5" : "#f1f5f9");
+
+                svg.append("text")
+                    .attr("x", midX)
+                    .attr("y", midY + 4)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "12px")
+                    .attr("font-weight", "bold")
+                    .attr("fill", isHighlighted ? "#059669" : "#1e293b")
+                    .text(char);
+
+                // Draw child node
+                svg.append("circle")
+                    .attr("cx", childX)
+                    .attr("cy", childY)
+                    .attr("r", 18)
+                    .attr("fill", () => {
+                        if (childNode.isEnd && isHighlighted) return "#bbf7d0";
+                        if (isHighlighted) return "#fef3c7";
+                        if (childNode.isEnd) return "#dbeafe";
+                        return "#f8fafc";
+                    })
+                    .attr("stroke", () => {
+                        if (isHighlighted) return "#10b981";
+                        if (childNode.isEnd) return "#3b82f6";
+                        return "#94a3b8";
+                    })
+                    .attr("stroke-width", isHighlighted ? 3 : 2);
+
+                // Word end marker
+                if (childNode.isEnd) {
+                    svg.append("circle")
+                        .attr("cx", childX + 12)
+                        .attr("cy", childY - 12)
+                        .attr("r", 6)
+                        .attr("fill", "#10b981")
+                        .attr("stroke", "white")
+                        .attr("stroke-width", 1);
+                }
+
+                // Recurse
+                drawNode(childNode, childX, childY, level + 1, childPath, positions);
+            });
+        }
+
+        function drawOperations() {
+            const x = 520;
+            const y = 60;
+
+            svg.append("text")
+                .attr("x", x)
+                .attr("y", y - 10)
+                .attr("font-size", "14px")
+                .attr("font-weight", "bold")
+                .attr("fill", "#1e293b")
+                .text("Operations:");
+
+            operations.forEach((op, idx) => {
+                const isComplete = idx < operationIdx;
+                const isCurrent = idx === operationIdx;
+                const opY = y + idx * 32;
+
+                let text;
+                if (op.op === "insert") {
+                    text = `insert("${op.arg}")`;
+                } else if (op.op === "search") {
+                    const result = isComplete && idx === operationIdx - 1 ? lastResult : (isComplete ? op.expected : "?");
+                    text = `search("${op.arg}") → ${result}`;
+                } else {
+                    const result = isComplete && idx === operationIdx - 1 ? lastResult : (isComplete ? op.expected : "?");
+                    text = `startsWith("${op.arg}") → ${result}`;
+                }
+
+                svg.append("rect")
+                    .attr("x", x)
+                    .attr("y", opY)
+                    .attr("width", 220)
+                    .attr("height", 26)
+                    .attr("rx", 4)
+                    .attr("fill", () => {
+                        if (isCurrent) return "#fef3c7";
+                        if (isComplete) return "#d1fae5";
+                        return "#f8fafc";
+                    })
+                    .attr("stroke", () => {
+                        if (isCurrent) return "#f59e0b";
+                        if (isComplete) return "#10b981";
+                        return "#e2e8f0";
+                    });
+
+                svg.append("text")
+                    .attr("x", x + 10)
+                    .attr("y", opY + 18)
+                    .attr("font-size", "12px")
+                    .attr("fill", "#1e293b")
+                    .text(text);
+            });
+
+            // Legend
+            const legendY = 340;
+            svg.append("text")
+                .attr("x", x)
+                .attr("y", legendY)
+                .attr("font-size", "12px")
+                .attr("font-weight", "bold")
+                .attr("fill", "#1e293b")
+                .text("Legend:");
+
+            // End of word marker
+            svg.append("circle")
+                .attr("cx", x + 10)
+                .attr("cy", legendY + 20)
+                .attr("r", 6)
+                .attr("fill", "#10b981");
+            
+            svg.append("text")
+                .attr("x", x + 25)
+                .attr("y", legendY + 25)
+                .attr("font-size", "11px")
+                .attr("fill", "#64748b")
+                .text("End of word marker");
+
+            // Time complexity
+            svg.append("text")
+                .attr("x", 30)
+                .attr("y", 430)
+                .attr("font-size", "12px")
+                .attr("fill", "#64748b")
+                .text("Time Complexity: O(m) for all operations, where m is word/prefix length");
+
+            svg.append("text")
+                .attr("x", 30)
+                .attr("y", 450)
+                .attr("font-size", "12px")
+                .attr("fill", "#64748b")
+                .text("Space Complexity: O(m * n) where n is number of words");
+        }
+
+        function insert(word) {
+            let node = trie;
+            highlightPath = [];
+            for (const ch of word) {
+                if (!node.children[ch]) {
+                    node.children[ch] = { children: {}, isEnd: false };
+                }
+                node = node.children[ch];
+                highlightPath.push(ch);
+            }
+            node.isEnd = true;
+        }
+
+        function search(word) {
+            let node = trie;
+            highlightPath = [];
+            for (const ch of word) {
+                if (!node.children[ch]) {
+                    return false;
+                }
+                node = node.children[ch];
+                highlightPath.push(ch);
+            }
+            return node.isEnd;
+        }
+
+        function startsWith(prefix) {
+            let node = trie;
+            highlightPath = [];
+            for (const ch of prefix) {
+                if (!node.children[ch]) {
+                    return false;
+                }
+                node = node.children[ch];
+                highlightPath.push(ch);
+            }
+            return true;
+        }
+
+        function step() {
+            if (operationIdx >= operations.length) {
+                document.getElementById("status").textContent = "✓ All operations complete!";
+                return;
+            }
+
+            const op = operations[operationIdx];
+            highlightPath = [];
+
+            if (op.op === "insert") {
+                insert(op.arg);
+                lastResult = null;
+                document.getElementById("status").textContent = 
+                    `insert("${op.arg}") - Word added to Trie`;
+            } else if (op.op === "search") {
+                lastResult = search(op.arg);
+                document.getElementById("status").textContent = 
+                    `search("${op.arg}") = ${lastResult} - ${lastResult ? "Word found!" : "Word not found"}`;
+            } else {
+                lastResult = startsWith(op.arg);
+                document.getElementById("status").textContent = 
+                    `startsWith("${op.arg}") = ${lastResult} - ${lastResult ? "Prefix exists!" : "Prefix not found"}`;
+            }
+
+            operationIdx++;
+            render();
+        }
+
+        function autoRun() {
+            if (animationTimer) {
+                clearInterval(animationTimer);
+                animationTimer = null;
+                document.getElementById("autoRunBtn").textContent = "▶ Auto Run";
+                return;
+            }
+
+            document.getElementById("autoRunBtn").textContent = "⏸ Pause";
+            animationTimer = setInterval(() => {
+                if (operationIdx >= operations.length) {
+                    clearInterval(animationTimer);
+                    animationTimer = null;
+                    document.getElementById("autoRunBtn").textContent = "▶ Auto Run";
+                    return;
+                }
+                step();
+            }, 1200);
+        }
+
+        document.getElementById("autoRunBtn").addEventListener("click", autoRun);
+        document.getElementById("stepBtn").addEventListener("click", step);
+        document.getElementById("resetBtn").addEventListener("click", reset);
+
+        reset();
+    </script>
+</body>
+</html>

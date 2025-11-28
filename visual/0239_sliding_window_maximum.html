@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sliding Window Maximum - LeetCode 239</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="problem-info">
+            <h1><span class="problem-number">#239</span> Sliding Window Maximum</h1>
+            <p>Given an array and a window size k, slide a window across the array and return the maximum value in each window position. Uses a monotonic deque for O(n) efficiency!</p>
+            <div class="problem-meta">
+                <span class="meta-tag">🪟 Sliding Window</span>
+                <span class="meta-tag">📚 Monotonic Deque</span>
+                <span class="meta-tag">⏱️ O(n)</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <a href="../python/0239_sliding_window_maximum/0239_sliding_window_maximum.py">0239_sliding_window_maximum.py</a>
+            </div>
+            </div>
+
+        <div class="explanation-panel">
+            <h4>💡 How It Works (Layman's Terms)</h4>
+            <ul>
+                <li><strong>Problem:</strong> Find the maximum in every window of size k as it slides across</li>
+                <li><strong>Naive approach:</strong> Check all k elements for each window → O(n×k)</li>
+                <li><strong>Smart approach:</strong> Use a "monotonic deque" → O(n)</li>
+                <li><strong>Monotonic Deque:</strong> Keeps elements in decreasing order. Front is always the max!</li>
+                <li><strong>Key insight:</strong> If a new element is bigger than previous ones, those smaller ones can never be the max (they'll leave the window before the new element)</li>
+                <li><strong>Remove from back:</strong> Pop smaller elements from deque back</li>
+                <li><strong>Remove from front:</strong> Pop elements outside the current window</li>
+            </ul>
+        </div>
+
+
+        <div class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+            
+            <div class="controls">
+                <button class="btn btn-primary" id="stepBtn" onclick="step()">Step</button>
+                <button class="btn btn-success" id="autoBtn" onclick="toggleAuto()">Auto Run</button>
+                <button class="btn btn-warning" onclick="reset()">Reset</button>
+            </div>
+
+            <div class="info-box">
+                Window Size (k) = 3
+            </div>
+
+            <div class="status-message" id="statusMessage">
+                Click "Step" or "Auto Run" to see how the monotonic deque finds maximums
+            </div>
+
+            <div class="array-section">
+                <div class="array-label">Array (nums):</div>
+                <div class="array-container" id="arrayContainer"></div>
+            </div>
+
+            <div class="array-section">
+                <div class="array-label">Deque (stores indices, front = max):</div>
+                <div class="queue-container" id="dequeContainer" style="min-height: 60px;"></div>
+            </div>
+
+            <div class="array-section">
+                <div class="array-label">Result (maximums):</div>
+                <div class="array-container" id="resultContainer"></div>
+            </div>
+        </div>
+
+        <div class="code-section">
+            <h3>💻 Python Solution</h3>
+            <div class="code-block">
+                <pre><span class="keyword">def</span> <span class="function">maxSlidingWindow</span>(self, nums: List[<span class="class-name">int</span>], k: <span class="class-name">int</span>) -> List[<span class="class-name">int</span>]:
+    result = []
+    dq = deque()  <span class="comment"># stores indices, front is always max</span>
+    
+    <span class="keyword">for</span> i <span class="keyword">in</span> <span class="function">range</span>(<span class="function">len</span>(nums)):
+        <span class="comment"># Remove indices outside window</span>
+        <span class="keyword">while</span> dq <span class="keyword">and</span> dq[<span class="number">0</span>] < i - k + <span class="number">1</span>:
+            dq.popleft()
+        
+        <span class="comment"># Remove smaller elements (they're useless)</span>
+        <span class="keyword">while</span> dq <span class="keyword">and</span> nums[dq[-<span class="number">1</span>]] < nums[i]:
+            dq.pop()
+        
+        dq.append(i)
+        
+        <span class="comment"># Window is full, record max</span>
+        <span class="keyword">if</span> i >= k - <span class="number">1</span>:
+            result.append(nums[dq[<span class="number">0</span>]])
+    
+    <span class="keyword">return</span> result</pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const nums = [1, 3, -1, -3, 5, 3, 6, 7];
+        const k = 3;
+        let deque = []; // stores indices
+        let result = [];
+        let currentIndex = 0;
+        let phase = 'init';
+        let autoInterval = null;
+
+        function init() {
+            renderArray();
+            renderDeque();
+            renderResult();
+        }
+
+        function renderArray() {
+            const container = document.getElementById('arrayContainer');
+            container.innerHTML = '';
+            nums.forEach((num, idx) => {
+                const box = document.createElement('div');
+                box.className = 'array-box';
+                box.id = `num-${idx}`;
+                box.innerHTML = `${num}<span class="index-label">[${idx}]</span>`;
+                // Highlight current window
+                if (phase !== 'init' && idx >= Math.max(0, currentIndex - k + 1) && idx <= currentIndex) {
+                    box.classList.add('current');
+                }
+                if (idx === currentIndex && phase !== 'init' && phase !== 'done') {
+                    box.classList.add('highlight');
+                }
+                container.appendChild(box);
+            });
+        }
+
+        function renderDeque() {
+            const container = document.getElementById('dequeContainer');
+            container.innerHTML = '';
+            if (deque.length === 0) {
+                container.innerHTML = '<span style="color: #999; padding: 10px;">Empty</span>';
+                return;
+            }
+            deque.forEach((idx, pos) => {
+                const item = document.createElement('div');
+                item.className = 'queue-item';
+                if (pos === 0) {
+                    item.style.background = 'linear-gradient(135deg, #4caf50 0%, #8bc34a 100%)';
+                }
+                item.innerHTML = `${nums[idx]}<br><small>[${idx}]</small>`;
+                container.appendChild(item);
+            });
+        }
+
+        function renderResult() {
+            const container = document.getElementById('resultContainer');
+            container.innerHTML = '';
+            result.forEach((val, idx) => {
+                const box = document.createElement('div');
+                box.className = 'array-box complete';
+                box.innerHTML = `${val}<span class="index-label">[${idx}]</span>`;
+                container.appendChild(box);
+            });
+            if (result.length === 0) {
+                container.innerHTML = '<span style="color: #999;">Results will appear here...</span>';
+            }
+        }
+
+        function step() {
+            if (phase === 'init') {
+                phase = 'processing';
+                currentIndex = 0;
+                document.getElementById('statusMessage').textContent = 'Starting to process array with monotonic deque...';
+            }
+
+            if (phase === 'processing') {
+                if (currentIndex >= nums.length) {
+                    phase = 'done';
+                    document.getElementById('statusMessage').textContent = 
+                        `✅ Done! Maximum in each window: [${result.join(', ')}]`;
+                    document.getElementById('stepBtn').disabled = true;
+                    stopAuto();
+                    renderArray();
+                    return;
+                }
+
+                let action = '';
+
+                // Remove elements outside window
+                while (deque.length > 0 && deque[0] < currentIndex - k + 1) {
+                    const removed = deque.shift();
+                    action += `Remove ${nums[removed]} (index ${removed}) - outside window. `;
+                }
+
+                // Remove smaller elements from back
+                while (deque.length > 0 && nums[deque[deque.length - 1]] < nums[currentIndex]) {
+                    const removed = deque.pop();
+                    action += `Pop ${nums[removed]} (smaller than ${nums[currentIndex]}). `;
+                }
+
+                // Add current
+                deque.push(currentIndex);
+                action += `Add ${nums[currentIndex]} at index ${currentIndex}. `;
+
+                // If window is full, record max
+                if (currentIndex >= k - 1) {
+                    result.push(nums[deque[0]]);
+                    action += `Window full! Max = ${nums[deque[0]]}`;
+                } else {
+                    action += `Window not yet full (need ${k} elements)`;
+                }
+
+                document.getElementById('statusMessage').textContent = action;
+
+                renderArray();
+                renderDeque();
+                renderResult();
+
+                currentIndex++;
+            }
+        }
+
+        function toggleAuto() {
+            if (autoInterval) {
+                stopAuto();
+            } else {
+                document.getElementById('autoBtn').textContent = 'Pause';
+                autoInterval = setInterval(() => {
+                    if (phase === 'done') {
+                        stopAuto();
+                    } else {
+                        step();
+                    }
+                }, 1500);
+            }
+        }
+
+        function stopAuto() {
+            if (autoInterval) {
+                clearInterval(autoInterval);
+                autoInterval = null;
+            }
+            document.getElementById('autoBtn').textContent = 'Auto Run';
+        }
+
+        function reset() {
+            stopAuto();
+            phase = 'init';
+            currentIndex = 0;
+            deque = [];
+            result = [];
+            document.getElementById('stepBtn').disabled = false;
+            document.getElementById('statusMessage').textContent = 
+                'Click "Step" or "Auto Run" to see how the monotonic deque finds maximums';
+            init();
+        }
+
+        init();
+    </script>
+</body>
+</html>

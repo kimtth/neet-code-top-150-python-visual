@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>329 - Longest Increasing Path in a Matrix</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="problem-info">
+            <h1><span class="problem-number">#329</span> Longest Increasing Path in a Matrix</h1>
+            <p>
+                Given an m x n matrix of integers, return the length of the longest increasing path.
+                From each cell, you can move in 4 directions (up, down, left, right). 
+                Uses DFS with memoization to cache path lengths.
+            </p>
+            <div class="problem-meta">
+                <span class="meta-tag">🔲 Matrix</span>
+                <span class="meta-tag">🧮 DP</span>
+                <span class="meta-tag">⏱️ O(m×n)</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <code>python/0329_longest_increasing_path_in_a_matrix/0329_longest_increasing_path_in_a_matrix.py</code>
+            </div>
+
+        </div>
+
+        <div class="explanation-panel">
+            <h4>🧠 How It Works (Layman's Terms)</h4>
+            <p>Tree traversal is like <strong>exploring a family tree</strong>:</p>
+            <ul>
+                <li><strong>Root:</strong> Start at the top node</li>
+                <li><strong>Recurse:</strong> Visit left and right children</li>
+                <li><strong>Base case:</strong> Stop at null/leaf nodes</li>
+                <li><strong>Combine:</strong> Build answer from subtree results</li>
+            </ul>
+        </div>
+
+
+        <section class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+            <div class="controls">
+                <button id="autoRunBtn" class="btn">▶ Auto Run</button>
+                <button id="stepBtn" class="btn btn-success">Step</button>
+                <button id="resetBtn" class="btn btn-danger">Reset</button>
+            </div>
+            <div class="status" id="status">Click Auto Run to find the longest increasing path</div>
+            <svg id="visualization"></svg>
+        </section>
+
+        <section class="code-section">
+            <h2>Python Solution</h2>
+            <pre><span class="keyword">def</span> <span class="function">longestIncreasingPath</span>(matrix):
+    <span class="keyword">if</span> <span class="keyword">not</span> matrix <span class="keyword">or</span> <span class="keyword">not</span> matrix[<span class="number">0</span>]:
+        <span class="keyword">return</span> <span class="number">0</span>
+    
+    rows, cols = <span class="function">len</span>(matrix), <span class="function">len</span>(matrix[<span class="number">0</span>])
+    cache = {}  <span class="comment"># Memoization</span>
+    
+    <span class="keyword">def</span> <span class="function">dfs</span>(r, c):
+        <span class="keyword">if</span> (r, c) <span class="keyword">in</span> cache:
+            <span class="keyword">return</span> cache[(r, c)]
+        
+        result = <span class="number">1</span>  <span class="comment"># At least the cell itself</span>
+        directions = [(<span class="number">0</span>, <span class="number">1</span>), (<span class="number">1</span>, <span class="number">0</span>), (<span class="number">0</span>, <span class="number">-1</span>), (<span class="number">-1</span>, <span class="number">0</span>)]
+        
+        <span class="keyword">for</span> dr, dc <span class="keyword">in</span> directions:
+            nr, nc = r + dr, c + dc
+            <span class="keyword">if</span> (<span class="number">0</span> <= nr < rows <span class="keyword">and</span> <span class="number">0</span> <= nc < cols 
+                <span class="keyword">and</span> matrix[nr][nc] > matrix[r][c]):
+                result = <span class="function">max</span>(result, <span class="number">1</span> + <span class="function">dfs</span>(nr, nc))
+        
+        cache[(r, c)] = result
+        <span class="keyword">return</span> result
+    
+    <span class="keyword">return</span> <span class="function">max</span>(<span class="function">dfs</span>(r, c) 
+               <span class="keyword">for</span> r <span class="keyword">in</span> <span class="function">range</span>(rows) 
+               <span class="keyword">for</span> c <span class="keyword">in</span> <span class="function">range</span>(cols))</pre>
+        </section>
+    </div>
+
+    <script>
+        const width = 900;
+        const height = 600;
+
+        const svg = d3.select("#visualization")
+            .attr("width", width)
+            .attr("height", height);
+
+        // Sample matrix
+        const matrix = [
+            [9, 9, 4],
+            [6, 6, 8],
+            [2, 1, 1]
+        ];
+
+        const rows = matrix.length;
+        const cols = matrix[0].length;
+        const cellSize = 70;
+        const offsetX = 80;
+        const offsetY = 80;
+        const directions = [[0, 1], [1, 0], [0, -1], [-1, 0]];
+        const dirNames = ["→", "↓", "←", "↑"];
+
+        let cache = {};
+        let currentCell = null;
+        let exploringNeighbor = null;
+        let longestPath = [];
+        let currentPath = [];
+        let dfsStack = [];
+        let animationTimer = null;
+        let maxLength = 0;
+
+        function reset() {
+            cache = {};
+            currentCell = null;
+            exploringNeighbor = null;
+            longestPath = [];
+            currentPath = [];
+            dfsStack = [];
+            maxLength = 0;
+            if (animationTimer) clearInterval(animationTimer);
+            document.getElementById("status").textContent = "Click Auto Run to find the longest increasing path";
+            render();
+        }
+
+        function render() {
+            svg.selectAll("*").remove();
+
+            // Title
+            svg.append("text")
+                .attr("x", offsetX + (cols * cellSize) / 2)
+                .attr("y", 30)
+                .attr("text-anchor", "middle")
+                .attr("font-size", "16px")
+                .attr("font-weight", "bold")
+                .attr("fill", "#1e293b")
+                .text("Matrix");
+
+            // Draw grid
+            for (let r = 0; r < rows; r++) {
+                for (let c = 0; c < cols; c++) {
+                    const x = offsetX + c * cellSize;
+                    const y = offsetY + r * cellSize;
+                    const key = `${r},${c}`;
+                    const isCurrent = currentCell && currentCell[0] === r && currentCell[1] === c;
+                    const isNeighbor = exploringNeighbor && exploringNeighbor[0] === r && exploringNeighbor[1] === c;
+                    const isInPath = currentPath.some(p => p[0] === r && p[1] === c);
+                    const isInLongest = longestPath.some(p => p[0] === r && p[1] === c);
+                    const isCached = cache[key] !== undefined;
+
+                    svg.append("rect")
+                        .attr("x", x)
+                        .attr("y", y)
+                        .attr("width", cellSize)
+                        .attr("height", cellSize)
+                        .attr("fill", () => {
+                            if (isCurrent) return "#fef3c7";
+                            if (isNeighbor) return "#e0e7ff";
+                            if (isInLongest) return "#d1fae5";
+                            if (isInPath) return "#dbeafe";
+                            return "#f8fafc";
+                        })
+                        .attr("stroke", () => {
+                            if (isCurrent) return "#f59e0b";
+                            if (isInLongest) return "#10b981";
+                            return "#94a3b8";
+                        })
+                        .attr("stroke-width", (isCurrent || isInLongest) ? 3 : 1);
+
+                    // Value
+                    svg.append("text")
+                        .attr("x", x + cellSize / 2)
+                        .attr("y", y + cellSize / 2)
+                        .attr("text-anchor", "middle")
+                        .attr("dominant-baseline", "middle")
+                        .attr("font-size", "20px")
+                        .attr("font-weight", "bold")
+                        .attr("fill", "#1e293b")
+                        .text(matrix[r][c]);
+
+                    // Cache value
+                    if (isCached) {
+                        svg.append("text")
+                            .attr("x", x + cellSize - 8)
+                            .attr("y", y + 15)
+                            .attr("text-anchor", "end")
+                            .attr("font-size", "11px")
+                            .attr("font-weight", "bold")
+                            .attr("fill", "#10b981")
+                            .text(cache[key]);
+                    }
+                }
+            }
+
+            // Draw cache table
+            drawCache();
+
+            // Draw legend
+            drawLegend();
+
+            // Draw current path
+            if (currentPath.length > 1) {
+                drawPath(currentPath, "#3b82f6", "Current Path");
+            }
+
+            // Draw longest path
+            if (longestPath.length > 0) {
+                svg.append("text")
+                    .attr("x", offsetX)
+                    .attr("y", offsetY + rows * cellSize + 40)
+                    .attr("font-size", "14px")
+                    .attr("font-weight", "bold")
+                    .attr("fill", "#10b981")
+                    .text(`Longest Path: ${longestPath.map(p => matrix[p[0]][p[1]]).join(" → ")} (length ${longestPath.length})`);
+            }
+        }
+
+        function drawPath(path, color, label) {
+            if (path.length < 2) return;
+
+            for (let i = 0; i < path.length - 1; i++) {
+                const x1 = offsetX + path[i][1] * cellSize + cellSize / 2;
+                const y1 = offsetY + path[i][0] * cellSize + cellSize / 2;
+                const x2 = offsetX + path[i + 1][1] * cellSize + cellSize / 2;
+                const y2 = offsetY + path[i + 1][0] * cellSize + cellSize / 2;
+
+                svg.append("line")
+                    .attr("x1", x1)
+                    .attr("y1", y1)
+                    .attr("x2", x2)
+                    .attr("y2", y2)
+                    .attr("stroke", color)
+                    .attr("stroke-width", 3)
+                    .attr("stroke-dasharray", "5,3")
+                    .attr("marker-end", "url(#arrow)");
+            }
+
+            // Arrow marker
+            svg.append("defs").append("marker")
+                .attr("id", "arrow")
+                .attr("viewBox", "0 0 10 10")
+                .attr("refX", 5)
+                .attr("refY", 5)
+                .attr("markerWidth", 4)
+                .attr("markerHeight", 4)
+                .attr("orient", "auto")
+                .append("path")
+                .attr("d", "M 0 0 L 10 5 L 0 10 z")
+                .attr("fill", color);
+        }
+
+        function drawCache() {
+            const cacheX = 400;
+            const cacheY = 80;
+            
+            svg.append("text")
+                .attr("x", cacheX)
+                .attr("y", cacheY - 20)
+                .attr("font-size", "16px")
+                .attr("font-weight", "bold")
+                .attr("fill", "#1e293b")
+                .text("Memoization Cache");
+
+            const entries = Object.entries(cache);
+            entries.forEach((entry, idx) => {
+                const row = Math.floor(idx / 3);
+                const col = idx % 3;
+                const x = cacheX + col * 140;
+                const y = cacheY + row * 35;
+
+                svg.append("rect")
+                    .attr("x", x)
+                    .attr("y", y)
+                    .attr("width", 130)
+                    .attr("height", 28)
+                    .attr("rx", 4)
+                    .attr("fill", "#ecfdf5")
+                    .attr("stroke", "#10b981");
+
+                svg.append("text")
+                    .attr("x", x + 65)
+                    .attr("y", y + 18)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "12px")
+                    .attr("font-weight", "bold")
+                    .attr("fill", "#1e293b")
+                    .text(`(${entry[0]}) → ${entry[1]}`);
+            });
+        }
+
+        function drawLegend() {
+            const legendX = 600;
+            const legendY = 350;
+
+            const items = [
+                { color: "#fef3c7", label: "Current Cell", stroke: "#f59e0b" },
+                { color: "#dbeafe", label: "In Current Path", stroke: "#3b82f6" },
+                { color: "#d1fae5", label: "Longest Path", stroke: "#10b981" },
+                { color: "#e0e7ff", label: "Exploring Neighbor", stroke: "#6366f1" }
+            ];
+
+            svg.append("text")
+                .attr("x", legendX)
+                .attr("y", legendY - 20)
+                .attr("font-size", "14px")
+                .attr("font-weight", "bold")
+                .attr("fill", "#1e293b")
+                .text("Legend");
+
+            items.forEach((item, i) => {
+                svg.append("rect")
+                    .attr("x", legendX)
+                    .attr("y", legendY + i * 30)
+                    .attr("width", 20)
+                    .attr("height", 20)
+                    .attr("fill", item.color)
+                    .attr("stroke", item.stroke)
+                    .attr("stroke-width", 2);
+
+                svg.append("text")
+                    .attr("x", legendX + 30)
+                    .attr("y", legendY + i * 30 + 15)
+                    .attr("font-size", "12px")
+                    .attr("fill", "#1e293b")
+                    .text(item.label);
+            });
+        }
+
+        function dfs(r, c, path = []) {
+            const key = `${r},${c}`;
+            
+            if (cache[key] !== undefined) {
+                return cache[key];
+            }
+
+            let maxLen = 1;
+            const newPath = [...path, [r, c]];
+
+            for (const [dr, dc] of directions) {
+                const nr = r + dr;
+                const nc = c + dc;
+
+                if (nr >= 0 && nr < rows && nc >= 0 && nc < cols 
+                    && matrix[nr][nc] > matrix[r][c]) {
+                    const len = 1 + dfs(nr, nc, newPath);
+                    maxLen = Math.max(maxLen, len);
+                }
+            }
+
+            cache[key] = maxLen;
+            return maxLen;
+        }
+
+        function findLongestPath() {
+            cache = {};
+            maxLength = 0;
+            longestPath = [];
+
+            // Find max length first
+            for (let r = 0; r < rows; r++) {
+                for (let c = 0; c < cols; c++) {
+                    const len = dfs(r, c);
+                    if (len > maxLength) {
+                        maxLength = len;
+                    }
+                }
+            }
+
+            // Reconstruct longest path
+            for (let r = 0; r < rows; r++) {
+                for (let c = 0; c < cols; c++) {
+                    if (cache[`${r},${c}`] === maxLength) {
+                        reconstructPath(r, c);
+                        break;
+                    }
+                }
+                if (longestPath.length > 0) break;
+            }
+
+            document.getElementById("status").textContent = 
+                `Longest increasing path length: ${maxLength}`;
+            render();
+        }
+
+        function reconstructPath(r, c) {
+            longestPath.push([r, c]);
+            const key = `${r},${c}`;
+            const pathLen = cache[key];
+
+            if (pathLen === 1) return;
+
+            for (const [dr, dc] of directions) {
+                const nr = r + dr;
+                const nc = c + dc;
+                const nkey = `${nr},${nc}`;
+
+                if (nr >= 0 && nr < rows && nc >= 0 && nc < cols 
+                    && matrix[nr][nc] > matrix[r][c]
+                    && cache[nkey] === pathLen - 1) {
+                    reconstructPath(nr, nc);
+                    return;
+                }
+            }
+        }
+
+        let stepQueue = [];
+        let stepIdx = 0;
+
+        function initSteps() {
+            stepQueue = [];
+            stepIdx = 0;
+            cache = {};
+            currentCell = null;
+            currentPath = [];
+            longestPath = [];
+
+            // Generate step sequence
+            for (let r = 0; r < rows; r++) {
+                for (let c = 0; c < cols; c++) {
+                    generateSteps(r, c, []);
+                }
+            }
+
+            stepQueue.push({ type: "complete" });
+        }
+
+        function generateSteps(r, c, path) {
+            const key = `${r},${c}`;
+            
+            stepQueue.push({ type: "visit", r, c, path: [...path] });
+
+            if (cache[key] !== undefined) {
+                stepQueue.push({ type: "cached", r, c, val: cache[key] });
+                return cache[key];
+            }
+
+            let maxLen = 1;
+            const newPath = [...path, [r, c]];
+
+            for (let i = 0; i < directions.length; i++) {
+                const [dr, dc] = directions[i];
+                const nr = r + dr;
+                const nc = c + dc;
+
+                if (nr >= 0 && nr < rows && nc >= 0 && nc < cols 
+                    && matrix[nr][nc] > matrix[r][c]) {
+                    stepQueue.push({ type: "explore", nr, nc, from: [r, c], dir: dirNames[i] });
+                    const len = 1 + generateSteps(nr, nc, newPath);
+                    maxLen = Math.max(maxLen, len);
+                }
+            }
+
+            cache[key] = maxLen;
+            stepQueue.push({ type: "cache", r, c, val: maxLen });
+            return maxLen;
+        }
+
+        function step() {
+            if (stepQueue.length === 0) {
+                initSteps();
+                cache = {};
+            }
+
+            if (stepIdx >= stepQueue.length) {
+                findLongestPath();
+                return;
+            }
+
+            const s = stepQueue[stepIdx++];
+            
+            switch (s.type) {
+                case "visit":
+                    currentCell = [s.r, s.c];
+                    currentPath = [...s.path, [s.r, s.c]];
+                    exploringNeighbor = null;
+                    document.getElementById("status").textContent = 
+                        `Visiting (${s.r},${s.c}) value=${matrix[s.r][s.c]}`;
+                    break;
+                case "explore":
+                    exploringNeighbor = [s.nr, s.nc];
+                    document.getElementById("status").textContent = 
+                        `${s.dir} Exploring neighbor (${s.nr},${s.nc}) with value ${matrix[s.nr][s.nc]}`;
+                    break;
+                case "cache":
+                    cache[`${s.r},${s.c}`] = s.val;
+                    document.getElementById("status").textContent = 
+                        `Caching: From (${s.r},${s.c}) longest path = ${s.val}`;
+                    break;
+                case "cached":
+                    document.getElementById("status").textContent = 
+                        `Using cached value for (${s.r},${s.c}): ${s.val}`;
+                    break;
+                case "complete":
+                    findLongestPath();
+                    return;
+            }
+
+            render();
+        }
+
+        function autoRun() {
+            if (animationTimer) {
+                clearInterval(animationTimer);
+                animationTimer = null;
+                document.getElementById("autoRunBtn").textContent = "▶ Auto Run";
+                return;
+            }
+
+            if (stepQueue.length === 0 || stepIdx >= stepQueue.length) {
+                reset();
+                initSteps();
+                cache = {};
+            }
+
+            document.getElementById("autoRunBtn").textContent = "⏸ Pause";
+            animationTimer = setInterval(() => {
+                if (stepIdx >= stepQueue.length) {
+                    clearInterval(animationTimer);
+                    animationTimer = null;
+                    document.getElementById("autoRunBtn").textContent = "▶ Auto Run";
+                    findLongestPath();
+                    return;
+                }
+                step();
+            }, 300);
+        }
+
+        document.getElementById("autoRunBtn").addEventListener("click", autoRun);
+        document.getElementById("stepBtn").addEventListener("click", () => {
+            if (stepQueue.length === 0) {
+                initSteps();
+                cache = {};
+            }
+            step();
+        });
+        document.getElementById("resetBtn").addEventListener("click", reset);
+
+        reset();
+    </script>
+</body>
+</html>

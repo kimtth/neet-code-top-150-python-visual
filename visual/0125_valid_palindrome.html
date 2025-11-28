@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LC 125: Valid Palindrome - Algorithm Visualization</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="problem-info">
+            <h1><span class="problem-number">#125</span> Valid Palindrome</h1>
+            <p>A phrase is a palindrome if, after converting all uppercase letters into lowercase and removing all non-alphanumeric characters, it reads the same forward and backward.</p>
+            <div class="problem-meta">
+                <span class="meta-tag">🔤 String</span>
+                <span class="meta-tag">👉👈 Two Pointers</span>
+                <span class="meta-tag">⏱️ O(n)</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <code>python/0125_valid_palindrome/0125_valid_palindrome.py</code>
+            </div>
+            </div>
+
+        <div class="explanation-panel">
+            <h4>🧠 How It Works (Layman's Terms)</h4>
+            <p>A palindrome reads the same forwards and backwards (like "racecar" or "A man, a plan, a canal: Panama").</p>
+            <ul>
+                <li><strong>Two pointers:</strong> Start at both ends of the string</li>
+                <li><strong>Skip junk:</strong> Ignore spaces, punctuation, etc. (only compare letters and numbers)</li>
+                <li><strong>Compare:</strong> Check if characters match (ignoring case)</li>
+                <li><strong>If mismatch:</strong> Not a palindrome → return False</li>
+                <li><strong>If pointers meet:</strong> It's a palindrome → return True</li>
+            </ul>
+        </div>
+
+
+        <div class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+            
+            <div class="controls">
+                <button class="btn btn-primary" id="stepBtn" onclick="step()">Step</button>
+                <button class="btn btn-success" id="autoBtn" onclick="toggleAuto()">Auto Run</button>
+                <button class="btn btn-warning" onclick="reset()">Reset</button>
+            </div>
+
+            <div class="status-message" id="statusMessage">
+                Click "Step" or "Auto Run" to start visualization
+            </div>
+
+            <div class="array-section">
+                <div class="array-label">📥 Original String:</div>
+                <div style="font-size: 1.2em; padding: 15px; background: #f5f5f5; border-radius: 10px; margin-bottom: 15px; font-family: monospace;">
+                    "A man, a plan, a canal: Panama"
+                </div>
+            </div>
+
+            <div class="array-section">
+                <div class="array-label">🔍 Character Array (with pointers):</div>
+                <div class="array-container" id="charContainer" style="font-family: monospace;"></div>
+            </div>
+
+            <div class="variable-display" style="margin-top: 20px;">
+                <div class="variable-box">
+                    <div class="variable-name">Left Char</div>
+                    <div class="variable-value" id="leftChar" style="color: #ff5722;">-</div>
+                </div>
+                <div class="variable-box">
+                    <div class="variable-name">Right Char</div>
+                    <div class="variable-value" id="rightChar" style="color: #3f51b5;">-</div>
+                </div>
+                <div class="variable-box">
+                    <div class="variable-name">Match?</div>
+                    <div class="variable-value" id="matchResult">-</div>
+                </div>
+            </div>
+
+            <div class="info-box" id="resultBox" style="display: none; margin-top: 20px;">
+                Result will appear here
+            </div>
+        </div>
+
+        <div class="code-section">
+            <h3>💻 Python Solution</h3>
+            <div class="code-block">
+                <pre><span class="keyword">def</span> <span class="function">is_palindrome</span>(self, s: <span class="class-name">str</span>) -> <span class="class-name">bool</span>:
+    left, right = <span class="number">0</span>, <span class="function">len</span>(s) - <span class="number">1</span>
+    
+    <span class="keyword">while</span> left < right:
+        <span class="comment"># Skip non-alphanumeric from left</span>
+        <span class="keyword">while</span> left < right <span class="keyword">and not</span> s[left].<span class="function">isalnum</span>():
+            left += <span class="number">1</span>
+        <span class="comment"># Skip non-alphanumeric from right</span>
+        <span class="keyword">while</span> left < right <span class="keyword">and not</span> s[right].<span class="function">isalnum</span>():
+            right -= <span class="number">1</span>
+        <span class="comment"># Compare characters (case-insensitive)</span>
+        <span class="keyword">if</span> s[left].<span class="function">lower</span>() != s[right].<span class="function">lower</span>():
+            <span class="keyword">return</span> <span class="keyword">False</span>
+        left += <span class="number">1</span>
+        right -= <span class="number">1</span>
+        
+    <span class="keyword">return</span> <span class="keyword">True</span></pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const str = "A man, a plan, a canal: Panama";
+        const chars = str.split('');
+        let left = 0;
+        let right = chars.length - 1;
+        let autoInterval = null;
+        let phase = 'compare'; // 'compare', 'done'
+
+        function init() {
+            renderChars();
+        }
+
+        function renderChars() {
+            const container = document.getElementById('charContainer');
+            container.innerHTML = '';
+            chars.forEach((char, idx) => {
+                const box = document.createElement('div');
+                box.className = 'array-box small';
+                box.id = `char-${idx}`;
+                box.style.width = '35px';
+                box.style.height = '45px';
+                box.style.fontSize = '1em';
+                
+                if (char === ' ') {
+                    box.textContent = '␣';
+                    box.style.color = '#999';
+                } else {
+                    box.textContent = char;
+                }
+                
+                // Check if alphanumeric
+                if (!char.match(/[a-zA-Z0-9]/)) {
+                    box.style.background = '#f5f5f5';
+                    box.style.color = '#999';
+                }
+                
+                if (idx === left) {
+                    box.style.background = '#ffccbc';
+                    box.style.borderColor = '#ff5722';
+                    box.style.borderWidth = '3px';
+                }
+                if (idx === right) {
+                    box.style.background = '#c5cae9';
+                    box.style.borderColor = '#3f51b5';
+                    box.style.borderWidth = '3px';
+                }
+                if (idx === left && idx === right) {
+                    box.style.background = '#c8e6c9';
+                    box.style.borderColor = '#4caf50';
+                }
+                
+                container.appendChild(box);
+            });
+        }
+
+        function isAlphaNum(char) {
+            return /[a-zA-Z0-9]/.test(char);
+        }
+
+        function step() {
+            if (phase === 'done') return;
+
+            // Skip non-alphanumeric from left
+            while (left < right && !isAlphaNum(chars[left])) {
+                document.getElementById('statusMessage').textContent = 
+                    `Skipping non-alphanumeric '${chars[left]}' from left`;
+                left++;
+                renderChars();
+            }
+
+            // Skip non-alphanumeric from right
+            while (left < right && !isAlphaNum(chars[right])) {
+                document.getElementById('statusMessage').textContent = 
+                    `Skipping non-alphanumeric '${chars[right]}' from right`;
+                right--;
+                renderChars();
+            }
+
+            if (left >= right) {
+                phase = 'done';
+                document.getElementById('statusMessage').className = 'status-message success';
+                document.getElementById('statusMessage').textContent = 'Pointers met! All characters matched.';
+                document.getElementById('resultBox').style.display = 'block';
+                document.getElementById('resultBox').className = 'info-box secondary';
+                document.getElementById('resultBox').textContent = '✅ TRUE - It is a palindrome!';
+                document.getElementById('stepBtn').disabled = true;
+                stopAuto();
+                return;
+            }
+
+            const leftChar = chars[left].toLowerCase();
+            const rightChar = chars[right].toLowerCase();
+
+            document.getElementById('leftChar').textContent = `'${chars[left]}' → '${leftChar}'`;
+            document.getElementById('rightChar').textContent = `'${chars[right]}' → '${rightChar}'`;
+
+            if (leftChar !== rightChar) {
+                // Not a palindrome
+                phase = 'done';
+                document.getElementById('matchResult').textContent = '❌ NO';
+                document.getElementById('matchResult').style.color = '#f44336';
+                document.getElementById('statusMessage').className = 'status-message error';
+                document.getElementById('statusMessage').textContent = 
+                    `'${leftChar}' ≠ '${rightChar}' - Characters don't match!`;
+                document.getElementById('resultBox').style.display = 'block';
+                document.getElementById('resultBox').className = 'info-box highlight';
+                document.getElementById('resultBox').textContent = '❌ FALSE - Not a palindrome!';
+                document.getElementById('stepBtn').disabled = true;
+                stopAuto();
+            } else {
+                // Characters match
+                document.getElementById('matchResult').textContent = '✅ YES';
+                document.getElementById('matchResult').style.color = '#4caf50';
+                document.getElementById('statusMessage').textContent = 
+                    `'${leftChar}' = '${rightChar}' ✓ Moving pointers inward...`;
+                
+                // Mark as matched
+                document.getElementById(`char-${left}`).style.background = '#c8e6c9';
+                document.getElementById(`char-${left}`).style.borderColor = '#4caf50';
+                document.getElementById(`char-${right}`).style.background = '#c8e6c9';
+                document.getElementById(`char-${right}`).style.borderColor = '#4caf50';
+                
+                left++;
+                right--;
+            }
+
+            renderChars();
+        }
+
+        function toggleAuto() {
+            if (autoInterval) {
+                stopAuto();
+            } else {
+                document.getElementById('autoBtn').textContent = 'Pause';
+                autoInterval = setInterval(() => {
+                    if (phase === 'done') {
+                        stopAuto();
+                    } else {
+                        step();
+                    }
+                }, 600);
+            }
+        }
+
+        function stopAuto() {
+            if (autoInterval) {
+                clearInterval(autoInterval);
+                autoInterval = null;
+            }
+            document.getElementById('autoBtn').textContent = 'Auto Run';
+        }
+
+        function reset() {
+            stopAuto();
+            left = 0;
+            right = chars.length - 1;
+            phase = 'compare';
+            document.getElementById('stepBtn').disabled = false;
+            document.getElementById('statusMessage').className = 'status-message';
+            document.getElementById('statusMessage').textContent = 'Click "Step" or "Auto Run" to start visualization';
+            document.getElementById('leftChar').textContent = '-';
+            document.getElementById('rightChar').textContent = '-';
+            document.getElementById('matchResult').textContent = '-';
+            document.getElementById('matchResult').style.color = '#333';
+            document.getElementById('resultBox').style.display = 'none';
+            init();
+        }
+
+        init();
+    </script>
+</body>
+</html>

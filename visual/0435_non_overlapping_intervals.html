@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Non-overlapping Intervals - LeetCode 435</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="problem-info">
+            <h1><span class="problem-number">#0435</span> Non-overlapping Intervals</h1>
+            <p><strong>Problem:</strong> Find the minimum number of intervals to remove to make the rest non-overlapping.</p>
+            <p><strong>Pattern:</strong> Greedy - Sort by end time, keep intervals that end earliest</p>
+            <div class="problem-meta">
+                <span class="meta-tag">📏 Intervals</span>
+                <span class="meta-tag">⏱️ O(n log n)</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <code>python/0435_non_overlapping_intervals/0435_non_overlapping_intervals.py</code>
+            </div>
+
+        </div>
+
+        <div class="explanation-panel">
+            <h4>🧠 How It Works (Layman's Terms)</h4>
+            <p>Interval problems deal with <strong>ranges and overlaps</strong>:</p>
+            <ul>
+                <li><strong>Sort:</strong> Usually sort by start time</li>
+                <li><strong>Merge:</strong> Combine overlapping intervals</li>
+                <li><strong>Compare:</strong> Check if intervals overlap</li>
+                <li><strong>Track:</strong> Maintain current merged interval</li>
+            </ul>
+        </div>
+
+
+        <div class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+
+            <div class="visualization">
+            <svg id="mainSvg"></svg>
+        </div>
+
+        <div class="controls">
+            <button id="stepBtn">Step</button>
+            <button id="autoBtn">Auto Run</button>
+            <button id="resetBtn">Reset</button>
+            <div class="speed-control">
+                <label for="speed">Speed:</label>
+                <input type="range" id="speed" min="100" max="2000" value="800">
+            </div>
+        </div>
+
+        <div class="status" id="status">Click "Step" to find minimum removals</div>
+
+        <div class="variables">
+            <div class="var-item">
+                <span class="var-label">Previous End:</span>
+                <span id="prevEndDisplay">-</span>
+            </div>
+            <div class="var-item">
+                <span class="var-label">Removed:</span>
+                <span id="removedDisplay">0</span>
+            </div>
+        </div>
+
+        </div>
+
+        <div class="code-section">
+            <h3>Python Solution</h3>
+            <pre><span class="keyword">def</span> <span class="function">eraseOverlapIntervals</span>(intervals):
+    <span class="string">"""
+    Greedy: sort by end time, remove overlapping.
+    Time: O(n log n), Space: O(1)
+    """</span>
+    <span class="keyword">if</span> <span class="keyword">not</span> intervals:
+        <span class="keyword">return</span> <span class="number">0</span>
+    
+    <span class="comment"># Sort by end time</span>
+    intervals.<span class="function">sort</span>(key=<span class="keyword">lambda</span> x: <span class="class-name">x</span>[<span class="number">1</span>])
+    
+    removed = <span class="number">0</span>
+    prev_end = intervals[<span class="number">0</span>][<span class="number">1</span>]
+    
+    <span class="keyword">for</span> i <span class="keyword">in</span> <span class="function">range</span>(<span class="number">1</span>, <span class="function">len</span>(intervals)):
+        <span class="keyword">if</span> intervals[i][<span class="number">0</span>] < prev_end:
+            <span class="comment"># Overlap - remove this interval</span>
+            removed += <span class="number">1</span>
+        <span class="keyword">else</span>:
+            <span class="comment"># No overlap - update prev_end</span>
+            prev_end = intervals[i][<span class="number">1</span>]
+    
+    <span class="keyword">return</span> removed</pre>
+        </div>
+    </div>
+
+    <script>
+        // Intervals: [[1,2], [2,3], [3,4], [1,3]]
+        const intervals = [[1, 2], [2, 3], [3, 4], [1, 3]];
+        
+        let sorted = [];
+        let idx = 0;
+        let prevEnd = -Infinity;
+        let removed = 0;
+        let phase = 'sort'; // 'sort' | 'process' | 'done'
+        let intervalStates = {}; // idx -> 'current' | 'kept' | 'removed'
+        let autoRunning = false;
+        let autoTimer = null;
+
+        const width = 700;
+        const height = 380;
+        const svg = d3.select("#mainSvg")
+            .attr("width", width)
+            .attr("height", height);
+
+        function draw() {
+            svg.selectAll("*").remove();
+
+            svg.append("text")
+                .attr("x", width / 2).attr("y", 25)
+                .attr("text-anchor", "middle")
+                .attr("font-weight", "bold")
+                .text("Non-overlapping Intervals: Minimum Removals");
+
+            // Timeline
+            const timelineY = 200;
+            const timelineStart = 100;
+            const timelineEnd = width - 100;
+            const maxTime = 5;
+            const scale = (timelineEnd - timelineStart) / maxTime;
+
+            svg.append("line")
+                .attr("x1", timelineStart).attr("y1", timelineY)
+                .attr("x2", timelineEnd).attr("y2", timelineY)
+                .attr("stroke", "#333").attr("stroke-width", 2);
+
+            // Time labels
+            for (let t = 0; t <= maxTime; t++) {
+                const x = timelineStart + t * scale;
+                svg.append("line")
+                    .attr("x1", x).attr("y1", timelineY - 5)
+                    .attr("x2", x).attr("y2", timelineY + 5)
+                    .attr("stroke", "#333");
+                svg.append("text")
+                    .attr("x", x).attr("y", timelineY + 20)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "12px")
+                    .text(t);
+            }
+
+            // Previous end line
+            if (prevEnd > -Infinity && prevEnd <= maxTime) {
+                const prevX = timelineStart + prevEnd * scale;
+                svg.append("line")
+                    .attr("x1", prevX).attr("y1", 50)
+                    .attr("x2", prevX).attr("y2", timelineY - 10)
+                    .attr("stroke", "#e53935")
+                    .attr("stroke-width", 2)
+                    .attr("stroke-dasharray", "5,5");
+                svg.append("text")
+                    .attr("x", prevX).attr("y", 45)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "11px")
+                    .attr("fill", "#e53935")
+                    .text(`prevEnd=${prevEnd}`);
+            }
+
+            // Draw intervals
+            const displayIntervals = phase === 'sort' ? intervals : sorted;
+            displayIntervals.forEach((interval, i) => {
+                const [start, end] = interval;
+                const x1 = timelineStart + start * scale;
+                const x2 = timelineStart + end * scale;
+                const y = 60 + i * 32;
+                const state = intervalStates[i];
+
+                let fill = "#e3f2fd", stroke = "#1976d2";
+                if (state === 'current') {
+                    fill = "#ffeb3b"; stroke = "#f57c00";
+                } else if (state === 'kept') {
+                    fill = "#c8e6c9"; stroke = "#4caf50";
+                } else if (state === 'removed') {
+                    fill = "#ffcdd2"; stroke = "#e53935";
+                }
+
+                svg.append("rect")
+                    .attr("x", x1).attr("y", y)
+                    .attr("width", x2 - x1).attr("height", 25)
+                    .attr("rx", 5)
+                    .attr("fill", fill).attr("stroke", stroke)
+                    .attr("stroke-width", 2)
+                    .attr("opacity", state === 'removed' ? 0.5 : 1);
+
+                svg.append("text")
+                    .attr("x", (x1 + x2) / 2).attr("y", y + 17)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "12px")
+                    .attr("font-weight", "bold")
+                    .attr("text-decoration", state === 'removed' ? "line-through" : "none")
+                    .text(`[${start},${end}]`);
+            });
+
+            // Legend
+            const legend = [
+                {color: "#e3f2fd", label: "Pending"},
+                {color: "#ffeb3b", label: "Checking"},
+                {color: "#c8e6c9", label: "Kept"},
+                {color: "#ffcdd2", label: "Removed"}
+            ];
+
+            legend.forEach((item, i) => {
+                svg.append("rect")
+                    .attr("x", 10 + i * 110).attr("y", height - 30)
+                    .attr("width", 15).attr("height", 15)
+                    .attr("fill", item.color)
+                    .attr("stroke", "#999");
+                svg.append("text")
+                    .attr("x", 28 + i * 110).attr("y", height - 18)
+                    .attr("font-size", "11px")
+                    .text(item.label);
+            });
+
+            // Result
+            svg.append("rect")
+                .attr("x", width - 150).attr("y", height - 80)
+                .attr("width", 140).attr("height", 45)
+                .attr("rx", 10)
+                .attr("fill", "#e8eaf6").attr("stroke", "#3f51b5");
+
+            svg.append("text")
+                .attr("x", width - 80).attr("y", height - 55)
+                .attr("text-anchor", "middle")
+                .attr("font-size", "12px")
+                .text("Removed:");
+
+            svg.append("text")
+                .attr("x", width - 80).attr("y", height - 30)
+                .attr("text-anchor", "middle")
+                .attr("font-size", "24px")
+                .attr("font-weight", "bold")
+                .attr("fill", "#3f51b5")
+                .text(removed);
+        }
+
+        function step() {
+            if (phase === 'sort') {
+                sorted = [...intervals].sort((a, b) => a[1] - b[1]);
+                phase = 'process';
+                idx = 0;
+                prevEnd = sorted[0][1];
+                intervalStates[0] = 'kept';
+                idx = 1;
+                document.getElementById("prevEndDisplay").textContent = prevEnd;
+                document.getElementById("status").textContent = 
+                    "Sorted by end time. First interval kept.";
+                draw();
+                return true;
+            }
+
+            if (phase === 'process') {
+                if (idx >= sorted.length) {
+                    phase = 'done';
+                    document.getElementById("status").textContent = 
+                        `Done! Remove ${removed} interval(s) to make non-overlapping.`;
+                    draw();
+                    return false;
+                }
+
+                const [start, end] = sorted[idx];
+                intervalStates[idx] = 'current';
+                draw();
+
+                setTimeout(() => {
+                    if (start < prevEnd) {
+                        // Overlap - remove this interval
+                        intervalStates[idx] = 'removed';
+                        removed++;
+                        document.getElementById("removedDisplay").textContent = removed;
+                        document.getElementById("status").textContent = 
+                            `[${start},${end}] starts at ${start} < prevEnd ${prevEnd}: REMOVE`;
+                    } else {
+                        // No overlap - keep and update prevEnd
+                        intervalStates[idx] = 'kept';
+                        prevEnd = end;
+                        document.getElementById("prevEndDisplay").textContent = prevEnd;
+                        document.getElementById("status").textContent = 
+                            `[${start},${end}] starts at ${start} >= prevEnd: KEEP, update prevEnd=${end}`;
+                    }
+                    idx++;
+                    draw();
+                }, 300);
+
+                return idx < sorted.length;
+            }
+
+            return false;
+        }
+
+        function reset() {
+            sorted = [];
+            idx = 0;
+            prevEnd = -Infinity;
+            removed = 0;
+            phase = 'sort';
+            intervalStates = {};
+            autoRunning = false;
+            if (autoTimer) clearInterval(autoTimer);
+            
+            document.getElementById("prevEndDisplay").textContent = "-";
+            document.getElementById("removedDisplay").textContent = "0";
+            document.getElementById("status").textContent = 
+                'Click "Step" to find minimum removals';
+            document.getElementById("autoBtn").textContent = "Auto Run";
+            
+            draw();
+        }
+
+        function autoRun() {
+            if (autoRunning) {
+                autoRunning = false;
+                clearInterval(autoTimer);
+                document.getElementById("autoBtn").textContent = "Auto Run";
+            } else {
+                autoRunning = true;
+                document.getElementById("autoBtn").textContent = "Pause";
+                const speed = 2100 - document.getElementById("speed").value;
+                autoTimer = setInterval(() => {
+                    if (!step()) {
+                        autoRunning = false;
+                        clearInterval(autoTimer);
+                        document.getElementById("autoBtn").textContent = "Auto Run";
+                    }
+                }, speed);
+            }
+        }
+
+        document.getElementById("stepBtn").addEventListener("click", step);
+        document.getElementById("autoBtn").addEventListener("click", autoRun);
+        document.getElementById("resetBtn").addEventListener("click", reset);
+
+        draw();
+    </script>
+</body>
+</html>

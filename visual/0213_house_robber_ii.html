@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>House Robber II - LeetCode 213</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="problem-info">
+            <h1><span class="problem-number">#0213</span> House Robber II</h1>
+            <p><strong>Problem:</strong> Houses are arranged in a circle. Adjacent houses have security systems connected. Determine the maximum amount you can rob without alerting police.</p>
+            <p><strong>Pattern:</strong> DP - Run House Robber twice: exclude first house OR exclude last house</p>
+            <div class="problem-meta">
+                <span class="meta-tag">🧮 DP</span>
+                <span class="meta-tag">⏱️ O(n)</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <code>python/0213_house_robber_2/0213_house_robber_2.py</code>
+            </div>
+
+        </div>
+
+        <div class="explanation-panel">
+            <h4>🧠 How It Works (Layman's Terms)</h4>
+            <p>Dynamic Programming <strong>breaks big problems into smaller ones</strong>:</p>
+            <ul>
+                <li><strong>Subproblems:</strong> Solve smaller versions first</li>
+                <li><strong>Memoization:</strong> Cache results to avoid recalculation</li>
+                <li><strong>Build up:</strong> Combine small solutions for final answer</li>
+                <li><strong>State:</strong> Define what each position represents</li>
+            </ul>
+        </div>
+
+
+        <div class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+
+            <div class="visualization">
+            <svg id="mainSvg"></svg>
+        </div>
+
+        <div class="controls">
+            <button id="stepBtn">Step</button>
+            <button id="autoBtn">Auto Run</button>
+            <button id="resetBtn">Reset</button>
+            <div class="speed-control">
+                <label for="speed">Speed:</label>
+                <input type="range" id="speed" min="100" max="2000" value="700">
+            </div>
+        </div>
+
+        <div class="status" id="status">Click "Step" to solve circular house robber</div>
+
+        <div class="variables">
+            <div class="var-item">
+                <span class="var-label">Case 1 (skip first):</span>
+                <span id="case1Display">-</span>
+            </div>
+            <div class="var-item">
+                <span class="var-label">Case 2 (skip last):</span>
+                <span id="case2Display">-</span>
+            </div>
+            <div class="var-item">
+                <span class="var-label">Maximum:</span>
+                <span id="maxDisplay">-</span>
+            </div>
+        </div>
+
+        </div>
+
+        <div class="code-section">
+            <h3>Python Solution</h3>
+            <pre><span class="keyword">def</span> <span class="function">rob</span>(nums):
+    <span class="string">"""
+    Circular: can't rob both first and last.
+    Run linear House Robber twice.
+    Time: O(n), Space: O(1)
+    """</span>
+    <span class="keyword">if</span> <span class="function">len</span>(nums) == <span class="number">1</span>:
+        <span class="keyword">return</span> nums[<span class="number">0</span>]
+    
+    <span class="keyword">def</span> <span class="function">robLinear</span>(houses):
+        rob1, rob2 = <span class="number">0</span>, <span class="number">0</span>
+        <span class="keyword">for</span> h <span class="keyword">in</span> houses:
+            temp = <span class="function">max</span>(rob1 + h, rob2)
+            rob1 = rob2
+            rob2 = temp
+        <span class="keyword">return</span> rob2
+    
+    <span class="comment"># Case 1: Skip first house (rob from index 1 to n-1)</span>
+    <span class="comment"># Case 2: Skip last house (rob from index 0 to n-2)</span>
+    <span class="keyword">return</span> <span class="function">max</span>(<span class="function">robLinear</span>(nums[<span class="number">1</span>:]), <span class="function">robLinear</span>(nums[:<span class="number">-1</span>]))</pre>
+        </div>
+    </div>
+
+    <script>
+        const nums = [2, 3, 2];
+        const n = nums.length;
+        
+        let phase = 0; // 0: show circle, 1: case1 (skip first), 2: case2 (skip last), 3: result
+        let caseStep = 0;
+        let rob1 = 0, rob2 = 0;
+        let case1Result = 0, case2Result = 0;
+        let autoRunning = false;
+        let autoTimer = null;
+
+        const width = 700;
+        const height = 400;
+        const svg = d3.select("#mainSvg")
+            .attr("width", width)
+            .attr("height", height);
+
+        const centerX = width / 2;
+        const centerY = 160;
+        const radius = 100;
+
+        function draw(currentIdx = -1, skipIdx = -1, robbed = []) {
+            svg.selectAll("*").remove();
+
+            // Title for current case
+            let title = "Houses in Circle";
+            if (phase === 1) title = "Case 1: Skip First House (indices 1 to n-1)";
+            else if (phase === 2) title = "Case 2: Skip Last House (indices 0 to n-2)";
+            else if (phase === 3) title = "Compare Both Cases";
+
+            svg.append("text")
+                .attr("x", centerX)
+                .attr("y", 30)
+                .attr("text-anchor", "middle")
+                .attr("font-weight", "bold")
+                .text(title);
+
+            // Draw circular connection
+            svg.append("circle")
+                .attr("cx", centerX)
+                .attr("cy", centerY)
+                .attr("r", radius)
+                .attr("fill", "none")
+                .attr("stroke", "#ddd")
+                .attr("stroke-width", 2)
+                .attr("stroke-dasharray", "5,5");
+
+            // Draw houses around circle
+            for (let i = 0; i < n; i++) {
+                const angle = (i / n) * 2 * Math.PI - Math.PI / 2;
+                const x = centerX + radius * Math.cos(angle);
+                const y = centerY + radius * Math.sin(angle);
+                
+                const isSkipped = i === skipIdx;
+                const isCurrent = i === currentIdx;
+                const isRobbed = robbed.includes(i);
+
+                // House
+                svg.append("rect")
+                    .attr("x", x - 25)
+                    .attr("y", y - 25)
+                    .attr("width", 50)
+                    .attr("height", 50)
+                    .attr("rx", 5)
+                    .attr("fill", isSkipped ? "#e0e0e0" : 
+                                 isCurrent ? "#ffeb3b" :
+                                 isRobbed ? "#c8e6c9" : "#e3f2fd")
+                    .attr("stroke", isSkipped ? "#bdbdbd" :
+                                   isCurrent ? "#f57c00" :
+                                   isRobbed ? "#4caf50" : "#1976d2")
+                    .attr("stroke-width", isCurrent ? 3 : 2);
+
+                // Roof
+                svg.append("polygon")
+                    .attr("points", `${x-30},${y-25} ${x},${y-45} ${x+30},${y-25}`)
+                    .attr("fill", isSkipped ? "#bdbdbd" : 
+                                 isRobbed ? "#4caf50" : "#1976d2");
+
+                // House value
+                svg.append("text")
+                    .attr("x", x)
+                    .attr("y", y + 5)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "18px")
+                    .attr("font-weight", "bold")
+                    .attr("fill", isSkipped ? "#999" : "#333")
+                    .text(`$${nums[i]}`);
+
+                // Index
+                svg.append("text")
+                    .attr("x", x)
+                    .attr("y", y + 40)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "12px")
+                    .attr("fill", "#666")
+                    .text(`[${i}]`);
+
+                // Skip indicator
+                if (isSkipped) {
+                    svg.append("line")
+                        .attr("x1", x - 25)
+                        .attr("y1", y - 25)
+                        .attr("x2", x + 25)
+                        .attr("y2", y + 25)
+                        .attr("stroke", "#e53935")
+                        .attr("stroke-width", 3);
+                }
+            }
+
+            // DP state display
+            if (phase === 1 || phase === 2) {
+                svg.append("rect")
+                    .attr("x", 50)
+                    .attr("y", 300)
+                    .attr("width", 280)
+                    .attr("height", 60)
+                    .attr("rx", 8)
+                    .attr("fill", "#f5f5f5")
+                    .attr("stroke", "#ddd");
+
+                svg.append("text")
+                    .attr("x", 60)
+                    .attr("y", 325)
+                    .attr("font-family", "monospace")
+                    .text(`rob1 (skip current) = ${rob1}`);
+
+                svg.append("text")
+                    .attr("x", 60)
+                    .attr("y", 350)
+                    .attr("font-family", "monospace")
+                    .text(`rob2 (include prev) = ${rob2}`);
+            }
+
+            // Results display
+            if (phase >= 1) {
+                svg.append("rect")
+                    .attr("x", 400)
+                    .attr("y", 300)
+                    .attr("width", 250)
+                    .attr("height", 80)
+                    .attr("rx", 8)
+                    .attr("fill", phase === 3 ? "#c8e6c9" : "#e3f2fd")
+                    .attr("stroke", phase === 3 ? "#4caf50" : "#1976d2");
+
+                svg.append("text")
+                    .attr("x", 525)
+                    .attr("y", 325)
+                    .attr("text-anchor", "middle")
+                    .text(`Case 1 (skip first): $${case1Result}`);
+
+                svg.append("text")
+                    .attr("x", 525)
+                    .attr("y", 350)
+                    .attr("text-anchor", "middle")
+                    .text(`Case 2 (skip last): $${case2Result}`);
+
+                if (phase === 3) {
+                    svg.append("text")
+                        .attr("x", 525)
+                        .attr("y", 375)
+                        .attr("text-anchor", "middle")
+                        .attr("font-weight", "bold")
+                        .attr("fill", "#4caf50")
+                        .text(`Maximum: $${Math.max(case1Result, case2Result)}`);
+                }
+            }
+        }
+
+        function step() {
+            if (phase === 0) {
+                phase = 1;
+                caseStep = 0;
+                rob1 = 0;
+                rob2 = 0;
+                draw(-1, 0);
+                document.getElementById("status").textContent = 
+                    "Case 1: Skipping first house, solving for indices 1 to n-1";
+                return true;
+            }
+
+            if (phase === 1) {
+                // Process case 1: skip first house (indices 1 to n-1)
+                const idx = caseStep + 1;
+                if (idx >= n) {
+                    case1Result = rob2;
+                    document.getElementById("case1Display").textContent = `$${case1Result}`;
+                    phase = 2;
+                    caseStep = 0;
+                    rob1 = 0;
+                    rob2 = 0;
+                    draw(-1, n - 1);
+                    document.getElementById("status").textContent = 
+                        `Case 1 complete: $${case1Result}. Now Case 2: skipping last house`;
+                    return true;
+                }
+
+                const house = nums[idx];
+                const newRob2 = Math.max(rob1 + house, rob2);
+                
+                document.getElementById("status").textContent = 
+                    `House ${idx}: max(${rob1} + ${house}, ${rob2}) = ${newRob2}`;
+                
+                rob1 = rob2;
+                rob2 = newRob2;
+                
+                draw(idx, 0);
+                caseStep++;
+                return true;
+            }
+
+            if (phase === 2) {
+                // Process case 2: skip last house (indices 0 to n-2)
+                const idx = caseStep;
+                if (idx >= n - 1) {
+                    case2Result = rob2;
+                    document.getElementById("case2Display").textContent = `$${case2Result}`;
+                    phase = 3;
+                    const maxVal = Math.max(case1Result, case2Result);
+                    document.getElementById("maxDisplay").textContent = `$${maxVal}`;
+                    draw(-1, -1);
+                    document.getElementById("status").textContent = 
+                        `Complete! max(${case1Result}, ${case2Result}) = ${maxVal}`;
+                    return false;
+                }
+
+                const house = nums[idx];
+                const newRob2 = Math.max(rob1 + house, rob2);
+                
+                document.getElementById("status").textContent = 
+                    `House ${idx}: max(${rob1} + ${house}, ${rob2}) = ${newRob2}`;
+                
+                rob1 = rob2;
+                rob2 = newRob2;
+                
+                draw(idx, n - 1);
+                caseStep++;
+                return true;
+            }
+
+            return false;
+        }
+
+        function reset() {
+            phase = 0;
+            caseStep = 0;
+            rob1 = 0;
+            rob2 = 0;
+            case1Result = 0;
+            case2Result = 0;
+            autoRunning = false;
+            if (autoTimer) clearInterval(autoTimer);
+            
+            document.getElementById("case1Display").textContent = "-";
+            document.getElementById("case2Display").textContent = "-";
+            document.getElementById("maxDisplay").textContent = "-";
+            document.getElementById("status").textContent = 
+                'Click "Step" to solve circular house robber';
+            document.getElementById("autoBtn").textContent = "Auto Run";
+            
+            draw();
+        }
+
+        function autoRun() {
+            if (autoRunning) {
+                autoRunning = false;
+                clearInterval(autoTimer);
+                document.getElementById("autoBtn").textContent = "Auto Run";
+            } else {
+                autoRunning = true;
+                document.getElementById("autoBtn").textContent = "Pause";
+                const speed = 2100 - document.getElementById("speed").value;
+                autoTimer = setInterval(() => {
+                    if (!step()) {
+                        autoRunning = false;
+                        clearInterval(autoTimer);
+                        document.getElementById("autoBtn").textContent = "Auto Run";
+                    }
+                }, speed);
+            }
+        }
+
+        document.getElementById("stepBtn").addEventListener("click", step);
+        document.getElementById("autoBtn").addEventListener("click", autoRun);
+        document.getElementById("resetBtn").addEventListener("click", reset);
+
+        draw();
+    </script>
+</body>
+</html>

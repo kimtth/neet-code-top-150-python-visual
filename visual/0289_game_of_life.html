@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LC 289: Game of Life - Algorithm Visualization</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="problem-info">
+            <h1><span class="problem-number">#289</span> Game of Life</h1>
+            <p>Implement Conway's Game of Life. Given an m x n grid of cells, compute the next state based on survival rules.</p>
+            <div class="problem-meta">
+                <span class="meta-tag">🎮 Simulation</span>
+                <span class="meta-tag">📊 Matrix</span>
+                <span class="meta-tag">⏱️ O(m×n)</span>
+                <span class="meta-tag">💾 O(1) in-place</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <code>python/0289_game_of_life/0289_game_of_life.py</code>
+            </div>
+            </div>
+
+        <div class="explanation-panel">
+            <h4>🧠 Rules of the Game</h4>
+            <ul>
+                <li><strong>🟢 Live cell with 2-3 neighbors:</strong> Survives</li>
+                <li><strong>💀 Live cell with &lt;2 or &gt;3 neighbors:</strong> Dies</li>
+                <li><strong>🌱 Dead cell with exactly 3 neighbors:</strong> Becomes alive</li>
+                <li><strong>Trick:</strong> Use intermediate states (2, 3) to update in-place!</li>
+            </ul>
+        </div>
+
+
+        <div class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+            
+            <div class="controls">
+                <button class="btn btn-primary" onclick="nextGeneration()">Next Generation</button>
+                <button class="btn btn-success" id="autoBtn" onclick="toggleAuto()">Auto Play</button>
+                <button class="btn btn-warning" onclick="reset()">Reset</button>
+                <button class="btn" style="background: #9c27b0; color: white;" onclick="randomize()">Randomize</button>
+            </div>
+
+            <div class="status-message" id="statusMessage">
+                Generation: 0 | Click cells to toggle, then run simulation
+            </div>
+
+            <div style="display: flex; gap: 40px; justify-content: center; flex-wrap: wrap; margin-top: 20px;">
+                <div>
+                    <h4 style="text-align: center; margin-bottom: 10px;">Current State</h4>
+                    <div id="gridContainer" style="display: inline-block;"></div>
+                </div>
+                <div>
+                    <h4 style="text-align: center; margin-bottom: 10px;">Legend</h4>
+                    <div style="padding: 15px; background: #f5f5f5; border-radius: 12px;">
+                        <div style="margin: 8px 0;"><span style="display: inline-block; width: 25px; height: 25px; background: #333; border-radius: 4px; vertical-align: middle;"></span> Alive (1)</div>
+                        <div style="margin: 8px 0;"><span style="display: inline-block; width: 25px; height: 25px; background: #eee; border: 1px solid #ccc; border-radius: 4px; vertical-align: middle;"></span> Dead (0)</div>
+                        <div style="margin: 8px 0;"><span style="display: inline-block; width: 25px; height: 25px; background: #f44336; border-radius: 4px; vertical-align: middle;"></span> Will Die</div>
+                        <div style="margin: 8px 0;"><span style="display: inline-block; width: 25px; height: 25px; background: #4caf50; border-radius: 4px; vertical-align: middle;"></span> Will Born</div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="statsContainer" style="margin-top: 20px; text-align: center;">
+                <span class="meta-tag">🟢 Alive: <span id="aliveCount">0</span></span>
+                <span class="meta-tag">💀 Dead: <span id="deadCount">0</span></span>
+            </div>
+        </div>
+
+        <div class="code-section">
+            <h3>💻 Python Solution (In-place)</h3>
+            <div class="code-block">
+                <pre><span class="keyword">def</span> <span class="function">gameOfLife</span>(self, board):
+    <span class="comment"># States: 0=dead, 1=alive, 2=alive→dead, 3=dead→alive</span>
+    m, n = <span class="function">len</span>(board), <span class="function">len</span>(board[<span class="number">0</span>])
+    
+    <span class="keyword">for</span> i <span class="keyword">in</span> <span class="function">range</span>(m):
+        <span class="keyword">for</span> j <span class="keyword">in</span> <span class="function">range</span>(n):
+            neighbors = self.<span class="function">countNeighbors</span>(board, i, j)
+            
+            <span class="keyword">if</span> board[i][j] == <span class="number">1</span>:  <span class="comment"># Currently alive</span>
+                <span class="keyword">if</span> neighbors < <span class="number">2</span> <span class="keyword">or</span> neighbors > <span class="number">3</span>:
+                    board[i][j] = <span class="number">2</span>  <span class="comment"># Will die</span>
+            <span class="keyword">else</span>:  <span class="comment"># Currently dead</span>
+                <span class="keyword">if</span> neighbors == <span class="number">3</span>:
+                    board[i][j] = <span class="number">3</span>  <span class="comment"># Will be born</span>
+    
+    <span class="comment"># Finalize states</span>
+    <span class="keyword">for</span> i <span class="keyword">in</span> <span class="function">range</span>(m):
+        <span class="keyword">for</span> j <span class="keyword">in</span> <span class="function">range</span>(n):
+            board[i][j] %= <span class="number">2</span></pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let grid = [
+            [0, 1, 0, 0, 0],
+            [0, 0, 1, 0, 0],
+            [1, 1, 1, 0, 0],
+            [0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0]
+        ];
+        let generation = 0;
+        let autoInterval = null;
+
+        function countNeighbors(g, row, col) {
+            let count = 0;
+            for (let i = -1; i <= 1; i++) {
+                for (let j = -1; j <= 1; j++) {
+                    if (i === 0 && j === 0) continue;
+                    const r = row + i, c = col + j;
+                    if (r >= 0 && r < g.length && c >= 0 && c < g[0].length) {
+                        // Count cells that are/were alive (1 or 2)
+                        if (g[r][c] === 1 || g[r][c] === 2) count++;
+                    }
+                }
+            }
+            return count;
+        }
+
+        function renderGrid() {
+            const container = document.getElementById('gridContainer');
+            container.innerHTML = '';
+            
+            const table = document.createElement('table');
+            table.style.borderCollapse = 'collapse';
+            
+            let alive = 0, dead = 0;
+            
+            for (let i = 0; i < grid.length; i++) {
+                const tr = document.createElement('tr');
+                for (let j = 0; j < grid[0].length; j++) {
+                    const td = document.createElement('td');
+                    td.style.width = '40px';
+                    td.style.height = '40px';
+                    td.style.border = '1px solid #ccc';
+                    td.style.cursor = 'pointer';
+                    td.style.transition = 'all 0.3s';
+                    td.style.textAlign = 'center';
+                    td.style.fontSize = '12px';
+                    
+                    const val = grid[i][j];
+                    if (val === 0) {
+                        td.style.background = '#eee';
+                        dead++;
+                    } else if (val === 1) {
+                        td.style.background = '#333';
+                        alive++;
+                    } else if (val === 2) {
+                        td.style.background = '#f44336';
+                        td.textContent = '💀';
+                        alive++;
+                    } else if (val === 3) {
+                        td.style.background = '#4caf50';
+                        td.textContent = '🌱';
+                        dead++;
+                    }
+                    
+                    td.onclick = () => toggleCell(i, j);
+                    tr.appendChild(td);
+                }
+                table.appendChild(tr);
+            }
+            
+            container.appendChild(table);
+            document.getElementById('aliveCount').textContent = alive;
+            document.getElementById('deadCount').textContent = dead;
+        }
+
+        function toggleCell(i, j) {
+            grid[i][j] = grid[i][j] === 0 ? 1 : 0;
+            renderGrid();
+        }
+
+        function nextGeneration() {
+            // First pass: mark transitions
+            for (let i = 0; i < grid.length; i++) {
+                for (let j = 0; j < grid[0].length; j++) {
+                    const neighbors = countNeighbors(grid, i, j);
+                    
+                    if (grid[i][j] === 1) {
+                        if (neighbors < 2 || neighbors > 3) {
+                            grid[i][j] = 2; // alive -> dead
+                        }
+                    } else if (grid[i][j] === 0) {
+                        if (neighbors === 3) {
+                            grid[i][j] = 3; // dead -> alive
+                        }
+                    }
+                }
+            }
+            
+            renderGrid();
+            
+            // Wait a moment to show intermediate states
+            setTimeout(() => {
+                // Second pass: finalize
+                for (let i = 0; i < grid.length; i++) {
+                    for (let j = 0; j < grid[0].length; j++) {
+                        grid[i][j] = grid[i][j] % 2;
+                    }
+                }
+                generation++;
+                document.getElementById('statusMessage').textContent = 
+                    `Generation: ${generation} | Click cells to toggle, then run simulation`;
+                renderGrid();
+            }, 500);
+        }
+
+        function toggleAuto() {
+            if (autoInterval) {
+                clearInterval(autoInterval);
+                autoInterval = null;
+                document.getElementById('autoBtn').textContent = 'Auto Play';
+            } else {
+                document.getElementById('autoBtn').textContent = 'Stop';
+                autoInterval = setInterval(nextGeneration, 1200);
+            }
+        }
+
+        function randomize() {
+            for (let i = 0; i < grid.length; i++) {
+                for (let j = 0; j < grid[0].length; j++) {
+                    grid[i][j] = Math.random() > 0.65 ? 1 : 0;
+                }
+            }
+            generation = 0;
+            document.getElementById('statusMessage').textContent = 
+                `Generation: ${generation} | Randomized! Click Next Generation to simulate`;
+            renderGrid();
+        }
+
+        function reset() {
+            if (autoInterval) {
+                clearInterval(autoInterval);
+                autoInterval = null;
+                document.getElementById('autoBtn').textContent = 'Auto Play';
+            }
+            grid = [
+                [0, 1, 0, 0, 0],
+                [0, 0, 1, 0, 0],
+                [1, 1, 1, 0, 0],
+                [0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0]
+            ];
+            generation = 0;
+            document.getElementById('statusMessage').textContent = 
+                `Generation: ${generation} | Click cells to toggle, then run simulation`;
+            renderGrid();
+        }
+
+        renderGrid();
+    </script>
+</body>
+</html>

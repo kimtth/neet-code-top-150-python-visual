@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LC 11: Container With Most Water - Algorithm Visualization</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="problem-info">
+            <h1><span class="problem-number">#11</span> Container With Most Water</h1>
+            <p>Given n vertical lines, find two lines that together with the x-axis form a container that holds the most water.</p>
+            <div class="problem-meta">
+                <span class="meta-tag">📁 Array</span>
+                <span class="meta-tag">👉👈 Two Pointers</span>
+                <span class="meta-tag">⏱️ O(n)</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <code>python/0011_container_with_most_water/0011_container_with_most_water.py</code>
+            </div>
+            </div>
+
+        <div class="explanation-panel">
+            <h4>🧠 How It Works (Layman's Terms)</h4>
+            <p>Imagine vertical walls of different heights. You want to find two walls that can hold the most water between them.</p>
+            <ul>
+                <li><strong>Start with widest:</strong> Begin with pointers at both ends (maximum width)</li>
+                <li><strong>Calculate area:</strong> Area = width × min(left height, right height)</li>
+                <li><strong>Move the shorter one:</strong> The shorter wall limits the water level, so move that pointer inward</li>
+                <li><strong>Why?</strong> Moving the taller wall can only decrease area (width shrinks, height stays same or less)</li>
+            </ul>
+        </div>
+
+
+        <div class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+            
+            <div class="controls">
+                <button class="btn btn-primary" id="stepBtn" onclick="step()">Step</button>
+                <button class="btn btn-success" id="autoBtn" onclick="toggleAuto()">Auto Run</button>
+                <button class="btn btn-warning" onclick="reset()">Reset</button>
+            </div>
+
+            <div class="status-message" id="statusMessage">
+                Click "Step" or "Auto Run" to start visualization
+            </div>
+
+            <div class="variable-display">
+                <div class="variable-box">
+                    <div class="variable-name">Left Pointer</div>
+                    <div class="variable-value" id="leftPtr" style="color: #ff5722;">0</div>
+                </div>
+                <div class="variable-box">
+                    <div class="variable-name">Right Pointer</div>
+                    <div class="variable-value" id="rightPtr" style="color: #3f51b5;">8</div>
+                </div>
+                <div class="variable-box">
+                    <div class="variable-name">Current Area</div>
+                    <div class="variable-value" id="currentArea">0</div>
+                </div>
+                <div class="variable-box">
+                    <div class="variable-name">Max Area</div>
+                    <div class="variable-value" id="maxArea" style="color: #4caf50;">0</div>
+                </div>
+            </div>
+
+            <div class="svg-container">
+                <svg id="visualization" width="700" height="350"></svg>
+            </div>
+        </div>
+
+        <div class="code-section">
+            <h3>💻 Python Solution</h3>
+            <div class="code-block">
+                <pre><span class="keyword">def</span> <span class="function">max_area</span>(self, height: List[<span class="class-name">int</span>]) -> <span class="class-name">int</span>:
+    max_area = <span class="number">0</span>
+    left = <span class="number">0</span>
+    right = <span class="function">len</span>(height) - <span class="number">1</span>
+    
+    <span class="keyword">while</span> left < right:
+        width = right - left
+        container_height = <span class="function">min</span>(height[left], height[right])
+        current_area = width * container_height
+        max_area = <span class="function">max</span>(max_area, current_area)
+        
+        <span class="keyword">if</span> height[left] < height[right]:
+            left += <span class="number">1</span>
+        <span class="keyword">else</span>:
+            right -= <span class="number">1</span>
+            
+    <span class="keyword">return</span> max_area</pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const heights = [1, 8, 6, 2, 5, 4, 8, 3, 7];
+        let left = 0;
+        let right = heights.length - 1;
+        let maxArea = 0;
+        let autoInterval = null;
+
+        const svg = d3.select("#visualization");
+        const margin = { top: 30, right: 30, bottom: 50, left: 40 };
+        const width = 700 - margin.left - margin.right;
+        const height = 300 - margin.top - margin.bottom;
+
+        const g = svg.append("g")
+            .attr("transform", `translate(${margin.left},${margin.top})`);
+
+        const xScale = d3.scaleBand()
+            .domain(heights.map((_, i) => i))
+            .range([0, width])
+            .padding(0.2);
+
+        const yScale = d3.scaleLinear()
+            .domain([0, Math.max(...heights) + 1])
+            .range([height, 0]);
+
+        // Add axes
+        g.append("g")
+            .attr("transform", `translate(0,${height})`)
+            .call(d3.axisBottom(xScale))
+            .append("text")
+            .attr("fill", "#333")
+            .attr("x", width / 2)
+            .attr("y", 35)
+            .text("Index");
+
+        g.append("g")
+            .call(d3.axisLeft(yScale))
+            .append("text")
+            .attr("fill", "#333")
+            .attr("transform", "rotate(-90)")
+            .attr("y", -30)
+            .attr("x", -height / 2)
+            .text("Height");
+
+        function render() {
+            // Clear previous elements
+            g.selectAll(".bar").remove();
+            g.selectAll(".water").remove();
+            g.selectAll(".pointer-label").remove();
+
+            // Draw water area
+            if (left < right) {
+                const waterHeight = Math.min(heights[left], heights[right]);
+                const waterWidth = (right - left) * xScale.bandwidth() + (right - left - 1) * xScale.step() * 0.2;
+                const waterX = xScale(left) + xScale.bandwidth();
+                
+                g.append("rect")
+                    .attr("class", "water")
+                    .attr("x", xScale(left))
+                    .attr("y", yScale(waterHeight))
+                    .attr("width", xScale(right) - xScale(left) + xScale.bandwidth())
+                    .attr("height", height - yScale(waterHeight))
+                    .attr("fill", "rgba(33, 150, 243, 0.3)")
+                    .attr("stroke", "#2196f3")
+                    .attr("stroke-width", 2);
+            }
+
+            // Draw bars
+            g.selectAll(".bar")
+                .data(heights)
+                .enter()
+                .append("rect")
+                .attr("class", "bar")
+                .attr("x", (d, i) => xScale(i))
+                .attr("y", d => yScale(d))
+                .attr("width", xScale.bandwidth())
+                .attr("height", d => height - yScale(d))
+                .attr("fill", (d, i) => {
+                    if (i === left) return "#ff5722";
+                    if (i === right) return "#3f51b5";
+                    return "#667eea";
+                })
+                .attr("stroke", "#333")
+                .attr("stroke-width", 1);
+
+            // Add pointer labels
+            g.append("text")
+                .attr("class", "pointer-label")
+                .attr("x", xScale(left) + xScale.bandwidth() / 2)
+                .attr("y", yScale(heights[left]) - 10)
+                .attr("text-anchor", "middle")
+                .attr("fill", "#ff5722")
+                .attr("font-weight", "bold")
+                .text("L");
+
+            g.append("text")
+                .attr("class", "pointer-label")
+                .attr("x", xScale(right) + xScale.bandwidth() / 2)
+                .attr("y", yScale(heights[right]) - 10)
+                .attr("text-anchor", "middle")
+                .attr("fill", "#3f51b5")
+                .attr("font-weight", "bold")
+                .text("R");
+
+            document.getElementById('leftPtr').textContent = left;
+            document.getElementById('rightPtr').textContent = right;
+        }
+
+        function step() {
+            if (left >= right) {
+                document.getElementById('statusMessage').className = 'status-message success';
+                document.getElementById('statusMessage').textContent = 
+                    `✅ Done! Maximum area = ${maxArea}`;
+                document.getElementById('stepBtn').disabled = true;
+                stopAuto();
+                return;
+            }
+
+            const w = right - left;
+            const h = Math.min(heights[left], heights[right]);
+            const area = w * h;
+            
+            document.getElementById('currentArea').textContent = area;
+            
+            if (area > maxArea) {
+                maxArea = area;
+                document.getElementById('maxArea').textContent = maxArea;
+            }
+
+            let moveDirection = '';
+            if (heights[left] < heights[right]) {
+                moveDirection = `Left (${heights[left]}) < Right (${heights[right]}), moving Left →`;
+                left++;
+            } else {
+                moveDirection = `Left (${heights[left]}) ≥ Right (${heights[right]}), moving Right ←`;
+                right--;
+            }
+
+            document.getElementById('statusMessage').textContent = 
+                `Area = ${w} × ${h} = ${area}. ${moveDirection}`;
+
+            render();
+        }
+
+        function toggleAuto() {
+            if (autoInterval) {
+                stopAuto();
+            } else {
+                document.getElementById('autoBtn').textContent = 'Pause';
+                autoInterval = setInterval(() => {
+                    if (left >= right) {
+                        step();
+                        stopAuto();
+                    } else {
+                        step();
+                    }
+                }, 1200);
+            }
+        }
+
+        function stopAuto() {
+            if (autoInterval) {
+                clearInterval(autoInterval);
+                autoInterval = null;
+            }
+            document.getElementById('autoBtn').textContent = 'Auto Run';
+        }
+
+        function reset() {
+            stopAuto();
+            left = 0;
+            right = heights.length - 1;
+            maxArea = 0;
+            document.getElementById('stepBtn').disabled = false;
+            document.getElementById('statusMessage').className = 'status-message';
+            document.getElementById('statusMessage').textContent = 'Click "Step" or "Auto Run" to start visualization';
+            document.getElementById('currentArea').textContent = '0';
+            document.getElementById('maxArea').textContent = '0';
+            render();
+        }
+
+        render();
+    </script>
+</body>
+</html>

@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>518 - Coin Change II</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="problem-info">
+            <h1><span class="problem-number">#518</span> Coin Change II</h1>
+            <p>
+                Given coins of different denominations and a total amount, find the number of 
+                combinations that make up that amount. This is an unbounded knapsack problem.
+            </p>
+            <div class="problem-meta">
+                <span class="meta-tag">🧮 DP</span>
+                <span class="meta-tag">⏱️ O(n)</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <code>python/0518_coin_change_ii/0518_coin_change_ii.py</code>
+            </div>
+
+            <h3>Example:</h3>
+            <pre>
+amount = 5, coins = [1, 2, 5]
+Output: 4 combinations
+(5, 2+2+1, 2+1+1+1, 1+1+1+1+1)
+            </pre>
+        </div>
+
+        <div class="explanation-panel">
+            <h4>🧠 How It Works (Layman's Terms)</h4>
+            <p>Dynamic Programming <strong>breaks big problems into smaller ones</strong>:</p>
+            <ul>
+                <li><strong>Subproblems:</strong> Solve smaller versions first</li>
+                <li><strong>Memoization:</strong> Cache results to avoid recalculation</li>
+                <li><strong>Build up:</strong> Combine small solutions for final answer</li>
+                <li><strong>State:</strong> Define what each position represents</li>
+            </ul>
+        </div>
+
+
+        <section class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+            <div class="controls">
+                <button id="stepBtn" class="btn">Step</button>
+                <button id="autoBtn" class="btn btn-success">Auto Run</button>
+                <button id="resetBtn" class="btn btn-danger">Reset</button>
+            </div>
+            <div class="status" id="status">Count combinations to make amount (unbounded coins)</div>
+            <svg id="visualization"></svg>
+        </section>
+
+        <section class="code-section">
+            <h2>Python Solution</h2>
+            <pre><span class="keyword">def</span> <span class="function">change</span>(amount, coins):
+    dp = [<span class="number">0</span>] * (amount + <span class="number">1</span>)
+    dp[<span class="number">0</span>] = <span class="number">1</span>
+    
+    <span class="keyword">for</span> coin <span class="keyword">in</span> coins:
+        <span class="keyword">for</span> j <span class="keyword">in</span> <span class="function">range</span>(coin, amount + <span class="number">1</span>):
+            dp[j] += dp[j - coin]
+    
+    <span class="keyword">return</span> dp[amount]</pre>
+        </section>
+    </div>
+
+    <script>
+        const width = 900;
+        const height = 600;
+
+        const svg = d3.select("#visualization")
+            .attr("width", width)
+            .attr("height", height);
+
+        const coins = [1, 2, 5];
+        const amount = 5;
+
+        let dp = [];
+        let currentCoinIdx = -1;
+        let currentJ = -1;
+        let isRunning = false;
+        let phase = "init";
+
+        function reset() {
+            dp = new Array(amount + 1).fill(0);
+            dp[0] = 1;
+            currentCoinIdx = -1;
+            currentJ = -1;
+            phase = "init";
+            isRunning = false;
+            document.getElementById("autoBtn").textContent = "Auto Run";
+            document.getElementById("status").textContent = 
+                `Amount = ${amount}, Coins = [${coins.join(', ')}]. Find combinations.`;
+            render();
+        }
+
+        function render() {
+            svg.selectAll("*").remove();
+
+            const startX = 50;
+
+            // Coins display
+            svg.append("text")
+                .attr("x", startX)
+                .attr("y", 35)
+                .attr("font-size", "16px")
+                .attr("font-weight", "bold")
+                .attr("fill", "#1e293b")
+                .text("Coins:");
+
+            coins.forEach((coin, idx) => {
+                const x = startX + 80 + idx * 80;
+                const isActive = idx === currentCoinIdx;
+                const isProcessed = idx < currentCoinIdx;
+
+                // Coin circle
+                svg.append("circle")
+                    .attr("cx", x + 25)
+                    .attr("cy", 35)
+                    .attr("r", 28)
+                    .attr("fill", () => {
+                        if (isActive) return "#fef3c7";
+                        if (isProcessed) return "#d1fae5";
+                        return "#f8fafc";
+                    })
+                    .attr("stroke", () => {
+                        if (isActive) return "#f59e0b";
+                        if (isProcessed) return "#10b981";
+                        return "#94a3b8";
+                    })
+                    .attr("stroke-width", isActive ? 3 : 2);
+
+                svg.append("text")
+                    .attr("x", x + 25)
+                    .attr("y", 42)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "20px")
+                    .attr("font-weight", "bold")
+                    .attr("fill", "#1e293b")
+                    .text(coin);
+            });
+
+            // DP array
+            const dpY = 120;
+            svg.append("text")
+                .attr("x", startX)
+                .attr("y", dpY - 15)
+                .attr("font-size", "14px")
+                .attr("font-weight", "bold")
+                .attr("fill", "#1e293b")
+                .text("DP[j] = Number of ways to make amount j:");
+
+            const cellWidth = 75;
+            for (let j = 0; j <= amount; j++) {
+                const x = startX + j * cellWidth;
+                const isActive = j === currentJ;
+                const isTarget = j === amount;
+
+                svg.append("rect")
+                    .attr("x", x)
+                    .attr("y", dpY)
+                    .attr("width", cellWidth - 5)
+                    .attr("height", 50)
+                    .attr("rx", 6)
+                    .attr("fill", () => {
+                        if (isTarget && phase === "done") return "#d1fae5";
+                        if (isActive) return "#fef3c7";
+                        if (dp[j] > 0) return "#dbeafe";
+                        return "#f8fafc";
+                    })
+                    .attr("stroke", () => {
+                        if (isTarget) return "#10b981";
+                        if (isActive) return "#f59e0b";
+                        if (dp[j] > 0) return "#3b82f6";
+                        return "#e2e8f0";
+                    })
+                    .attr("stroke-width", (isActive || isTarget) ? 2 : 1);
+
+                svg.append("text")
+                    .attr("x", x + (cellWidth - 5) / 2)
+                    .attr("y", dpY - 5)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "12px")
+                    .attr("fill", "#64748b")
+                    .text(`$${j}`);
+
+                svg.append("text")
+                    .attr("x", x + (cellWidth - 5) / 2)
+                    .attr("y", dpY + 32)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "20px")
+                    .attr("font-weight", "bold")
+                    .attr("fill", dp[j] > 0 ? "#3b82f6" : "#94a3b8")
+                    .text(dp[j]);
+            }
+
+            // Transition arrow
+            if (phase === "update" && currentJ >= coins[currentCoinIdx]) {
+                const coin = coins[currentCoinIdx];
+                const fromJ = currentJ - coin;
+                const x1 = startX + fromJ * cellWidth + (cellWidth - 5) / 2;
+                const x2 = startX + currentJ * cellWidth + (cellWidth - 5) / 2;
+                const y = dpY + 60;
+
+                svg.append("path")
+                    .attr("d", `M ${x1} ${y} Q ${(x1 + x2) / 2} ${y + 25} ${x2} ${y}`)
+                    .attr("fill", "none")
+                    .attr("stroke", "#10b981")
+                    .attr("stroke-width", 2)
+                    .attr("marker-end", "url(#arrow)");
+
+                svg.append("text")
+                    .attr("x", (x1 + x2) / 2)
+                    .attr("y", y + 45)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "12px")
+                    .attr("fill", "#10b981")
+                    .text(`+${coin}¢ → dp[${currentJ}] += dp[${fromJ}]`);
+            }
+
+            // Arrow marker
+            svg.append("defs").append("marker")
+                .attr("id", "arrow")
+                .attr("viewBox", "0 -5 10 10")
+                .attr("refX", 8)
+                .attr("refY", 0)
+                .attr("markerWidth", 6)
+                .attr("markerHeight", 6)
+                .attr("orient", "auto")
+                .append("path")
+                .attr("d", "M0,-5L10,0L0,5")
+                .attr("fill", "#10b981");
+
+            // Combination visualization
+            const combY = 260;
+            svg.append("text")
+                .attr("x", startX)
+                .attr("y", combY)
+                .attr("font-size", "14px")
+                .attr("font-weight", "bold")
+                .attr("fill", "#1e293b")
+                .text("Combinations found:");
+
+            const combinations = [
+                { coins: [5], desc: "5" },
+                { coins: [2, 2, 1], desc: "2+2+1" },
+                { coins: [2, 1, 1, 1], desc: "2+1+1+1" },
+                { coins: [1, 1, 1, 1, 1], desc: "1+1+1+1+1" }
+            ];
+
+            const showCount = phase === "done" ? 4 : 
+                              (currentCoinIdx === 2 && currentJ >= 5) ? 1 :
+                              (currentCoinIdx >= 1) ? Math.min(currentCoinIdx + 1, 4) : 0;
+
+            combinations.slice(0, showCount).forEach((combo, idx) => {
+                const y = combY + 30 + idx * 50;
+
+                // Draw coins
+                combo.coins.forEach((coin, coinIdx) => {
+                    const cx = startX + 30 + coinIdx * 40;
+                    const color = coin === 5 ? "#fef3c7" : coin === 2 ? "#dbeafe" : "#d1fae5";
+                    const stroke = coin === 5 ? "#f59e0b" : coin === 2 ? "#3b82f6" : "#10b981";
+
+                    svg.append("circle")
+                        .attr("cx", cx)
+                        .attr("cy", y)
+                        .attr("r", 16)
+                        .attr("fill", color)
+                        .attr("stroke", stroke)
+                        .attr("stroke-width", 2);
+
+                    svg.append("text")
+                        .attr("x", cx)
+                        .attr("y", y + 5)
+                        .attr("text-anchor", "middle")
+                        .attr("font-size", "12px")
+                        .attr("font-weight", "bold")
+                        .attr("fill", "#1e293b")
+                        .text(coin);
+                });
+
+                svg.append("text")
+                    .attr("x", startX + 250)
+                    .attr("y", y + 5)
+                    .attr("font-size", "14px")
+                    .attr("fill", "#64748b")
+                    .text(`= ${combo.desc} = $${amount}`);
+            });
+
+            // Result
+            if (phase === "done") {
+                const resultY = 500;
+                svg.append("rect")
+                    .attr("x", startX)
+                    .attr("y", resultY)
+                    .attr("width", 400)
+                    .attr("height", 60)
+                    .attr("rx", 10)
+                    .attr("fill", "#d1fae5")
+                    .attr("stroke", "#10b981")
+                    .attr("stroke-width", 2);
+
+                svg.append("text")
+                    .attr("x", startX + 200)
+                    .attr("y", resultY + 38)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "18px")
+                    .attr("font-weight", "bold")
+                    .attr("fill", "#10b981")
+                    .text(`✓ ${dp[amount]} ways to make $${amount}`);
+            }
+
+            // Legend
+            const legend = svg.append("g").attr("transform", `translate(550, 260)`);
+
+            legend.append("text")
+                .attr("x", 0)
+                .attr("y", 0)
+                .attr("font-size", "14px")
+                .attr("font-weight", "bold")
+                .attr("fill", "#1e293b")
+                .text("Key Insight:");
+
+            legend.append("text")
+                .attr("x", 0)
+                .attr("y", 25)
+                .attr("font-size", "12px")
+                .attr("fill", "#64748b")
+                .text("Process coins in order to");
+
+            legend.append("text")
+                .attr("x", 0)
+                .attr("y", 45)
+                .attr("font-size", "12px")
+                .attr("fill", "#64748b")
+                .text("avoid counting duplicates.");
+
+            legend.append("text")
+                .attr("x", 0)
+                .attr("y", 75)
+                .attr("font-size", "12px")
+                .attr("fill", "#64748b")
+                .text("Unlike permutations, we");
+
+            legend.append("text")
+                .attr("x", 0)
+                .attr("y", 95)
+                .attr("font-size", "12px")
+                .attr("fill", "#64748b")
+                .text("count [1,2] and [2,1] once.");
+        }
+
+        function step() {
+            if (phase === "done") return;
+
+            if (phase === "init") {
+                currentCoinIdx = 0;
+                currentJ = coins[0];
+                phase = "update";
+                document.getElementById("status").textContent = 
+                    `Processing coin=${coins[0]}, j=${currentJ} to ${amount}`;
+                render();
+                return;
+            }
+
+            if (phase === "update") {
+                const coin = coins[currentCoinIdx];
+
+                if (currentJ <= amount) {
+                    const oldVal = dp[currentJ];
+                    dp[currentJ] += dp[currentJ - coin];
+                    document.getElementById("status").textContent = 
+                        `dp[${currentJ}] += dp[${currentJ - coin}] → ${oldVal} + ${dp[currentJ - coin]} = ${dp[currentJ]}`;
+                    render();
+                    currentJ++;
+                    return;
+                }
+
+                currentCoinIdx++;
+                if (currentCoinIdx >= coins.length) {
+                    phase = "done";
+                    document.getElementById("status").textContent = 
+                        `✓ ${dp[amount]} combinations to make amount $${amount}`;
+                } else {
+                    currentJ = coins[currentCoinIdx];
+                    document.getElementById("status").textContent = 
+                        `Processing coin=${coins[currentCoinIdx]}`;
+                }
+                render();
+            }
+        }
+
+        async function autoRun() {
+            if (isRunning) {
+                isRunning = false;
+                document.getElementById("autoBtn").textContent = "Auto Run";
+                return;
+            }
+
+            isRunning = true;
+            document.getElementById("autoBtn").textContent = "Pause";
+
+            while (phase !== "done" && isRunning) {
+                step();
+                await new Promise(r => setTimeout(r, 200));
+            }
+
+            isRunning = false;
+            document.getElementById("autoBtn").textContent = "Auto Run";
+        }
+
+        document.getElementById("stepBtn").addEventListener("click", step);
+        document.getElementById("autoBtn").addEventListener("click", autoRun);
+        document.getElementById("resetBtn").addEventListener("click", reset);
+
+        reset();
+    </script>
+</body>
+</html>

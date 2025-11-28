@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>981 - Time Based Key-Value Store</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="problem-info">
+            <h1><span class="problem-number">#981</span> Time Based Key-Value Store</h1>
+            <p>
+                Design a time-based key-value data structure that can store multiple values 
+                for the same key at different timestamps and retrieve the value at a certain timestamp.
+                Use binary search to find the largest timestamp ≤ given timestamp.
+            </p>
+            <div class="problem-meta">
+                <span class="meta-tag">📝 Algorithm</span>
+                <span class="meta-tag">⏱️ O(n)</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <code>python/0981_time_based_key_value_store/0981_time_based_key_value_store.py</code>
+            </div>
+
+        </div>
+
+        <div class="explanation-panel">
+            <h4>🧠 How It Works (Layman's Terms)</h4>
+            <p>This algorithm solves the problem <strong>step by step</strong>:</p>
+            <ul>
+                <li><strong>Understand:</strong> Parse the input data</li>
+                <li><strong>Process:</strong> Apply the core logic</li>
+                <li><strong>Optimize:</strong> Use efficient data structures</li>
+                <li><strong>Return:</strong> Output the computed result</li>
+            </ul>
+        </div>
+
+
+        <section class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+            <div class="controls">
+                <button id="stepBtn" class="btn btn-success">Step Through Operations</button>
+                <button id="resetBtn" class="btn btn-danger">Reset</button>
+            </div>
+            <div class="status" id="status">Step through set() and get() operations</div>
+            <svg id="visualization"></svg>
+        </section>
+
+        <section class="code-section">
+            <h2>Python Solution</h2>
+            <pre><span class="keyword">class</span> TimeMap:
+    <span class="keyword">def</span> <span class="function">__init__</span>(self):
+        self.store = {}  <span class="comment"># key -> [(timestamp, value), ...]</span>
+    
+    <span class="keyword">def</span> <span class="function">set</span>(self, key: <span class="class-name">str</span>, value: <span class="class-name">str</span>, timestamp: <span class="class-name">int</span>):
+        <span class="keyword">if</span> key <span class="keyword">not</span> <span class="keyword">in</span> self.store:
+            self.store[key] = []
+        self.store[key].<span class="function">append</span>((timestamp, value))
+    
+    <span class="keyword">def</span> <span class="function">get</span>(self, key: <span class="class-name">str</span>, timestamp: <span class="class-name">int</span>) -> str:
+        <span class="keyword">if</span> key <span class="keyword">not</span> <span class="keyword">in</span> self.store:
+            <span class="keyword">return</span> <span class="string">""</span>
+        
+        values = self.store[key]
+        <span class="comment"># Binary search for largest timestamp <= given</span>
+        left, right = <span class="number">0</span>, <span class="function">len</span>(values) - <span class="number">1</span>
+        result = <span class="string">""</span>
+        
+        <span class="keyword">while</span> left <= right:
+            mid = (left + right) // <span class="number">2</span>
+            <span class="keyword">if</span> values[mid][<span class="number">0</span>] <= timestamp:
+                result = values[mid][<span class="number">1</span>]
+                left = mid + <span class="number">1</span>
+            <span class="keyword">else</span>:
+                right = mid - <span class="number">1</span>
+        
+        <span class="keyword">return</span> result</pre>
+        </section>
+    </div>
+
+    <script>
+        const width = 900;
+        const height = 550;
+
+        const svg = d3.select("#visualization")
+            .attr("width", width)
+            .attr("height", height);
+
+        // Operations to demonstrate
+        const operations = [
+            { op: "set", key: "foo", value: "bar", timestamp: 1 },
+            { op: "get", key: "foo", timestamp: 1 },
+            { op: "get", key: "foo", timestamp: 3 },
+            { op: "set", key: "foo", value: "bar2", timestamp: 4 },
+            { op: "get", key: "foo", timestamp: 4 },
+            { op: "get", key: "foo", timestamp: 5 },
+            { op: "get", key: "foo", timestamp: 2 }
+        ];
+
+        let store = {};
+        let currentOp = 0;
+        let binarySearchState = null;
+        let result = null;
+
+        function reset() {
+            store = {};
+            currentOp = 0;
+            binarySearchState = null;
+            result = null;
+            document.getElementById("status").textContent = "Step through set() and get() operations";
+            render();
+        }
+
+        function render() {
+            svg.selectAll("*").remove();
+
+            // Title
+            svg.append("text")
+                .attr("x", 30)
+                .attr("y", 35)
+                .attr("font-size", "14px")
+                .attr("font-weight", "bold")
+                .attr("fill", "#1e293b")
+                .text("Time-Based Key-Value Store");
+
+            // Operations list
+            svg.append("text")
+                .attr("x", 30)
+                .attr("y", 70)
+                .attr("font-size", "13px")
+                .attr("font-weight", "bold")
+                .attr("fill", "#64748b")
+                .text("Operations:");
+
+            operations.forEach((op, idx) => {
+                const y = 95 + idx * 25;
+                const isCurrent = idx === currentOp;
+                const isPast = idx < currentOp;
+                
+                let text;
+                if (op.op === "set") {
+                    text = `set("${op.key}", "${op.value}", ${op.timestamp})`;
+                } else {
+                    text = `get("${op.key}", ${op.timestamp})`;
+                }
+
+                svg.append("text")
+                    .attr("x", 40)
+                    .attr("y", y)
+                    .attr("font-size", "12px")
+                    .attr("font-weight", isCurrent ? "bold" : "normal")
+                    .attr("fill", isCurrent ? "#f59e0b" : isPast ? "#10b981" : "#94a3b8")
+                    .text(`${idx + 1}. ${text}`);
+
+                if (isCurrent) {
+                    svg.append("text")
+                        .attr("x", 30)
+                        .attr("y", y)
+                        .attr("font-size", "12px")
+                        .attr("fill", "#f59e0b")
+                        .text("▶");
+                }
+            });
+
+            // Store visualization
+            const storeX = 350;
+            svg.append("text")
+                .attr("x", storeX)
+                .attr("y", 70)
+                .attr("font-size", "14px")
+                .attr("font-weight", "bold")
+                .attr("fill", "#1e293b")
+                .text("Store: { key → [(timestamp, value), ...] }");
+
+            if (Object.keys(store).length === 0) {
+                svg.append("text")
+                    .attr("x", storeX)
+                    .attr("y", 100)
+                    .attr("font-size", "13px")
+                    .attr("fill", "#94a3b8")
+                    .text("(empty)");
+            } else {
+                let yOffset = 100;
+                for (const [key, values] of Object.entries(store)) {
+                    svg.append("text")
+                        .attr("x", storeX)
+                        .attr("y", yOffset)
+                        .attr("font-size", "13px")
+                        .attr("font-weight", "bold")
+                        .attr("fill", "#6366f1")
+                        .text(`"${key}":`);
+
+                    values.forEach((v, i) => {
+                        const x = storeX + 70 + i * 110;
+                        const isSearching = binarySearchState && 
+                            binarySearchState.left <= i && i <= binarySearchState.right;
+                        const isMid = binarySearchState && i === binarySearchState.mid;
+
+                        svg.append("rect")
+                            .attr("x", x)
+                            .attr("y", yOffset - 18)
+                            .attr("width", 100)
+                            .attr("height", 30)
+                            .attr("rx", 6)
+                            .attr("fill", isMid ? "#fef3c7" : isSearching ? "#dbeafe" : "#f8fafc")
+                            .attr("stroke", isMid ? "#f59e0b" : isSearching ? "#3b82f6" : "#94a3b8")
+                            .attr("stroke-width", isMid ? 3 : 1);
+
+                        svg.append("text")
+                            .attr("x", x + 50)
+                            .attr("y", yOffset)
+                            .attr("text-anchor", "middle")
+                            .attr("font-size", "12px")
+                            .attr("fill", "#1e293b")
+                            .text(`(${v[0]}, "${v[1]}")`);
+                    });
+
+                    yOffset += 50;
+                }
+            }
+
+            // Binary search visualization
+            if (binarySearchState) {
+                const bsY = 280;
+                svg.append("rect")
+                    .attr("x", storeX)
+                    .attr("y", bsY)
+                    .attr("width", 400)
+                    .attr("height", 80)
+                    .attr("rx", 10)
+                    .attr("fill", "#eff6ff")
+                    .attr("stroke", "#3b82f6");
+
+                svg.append("text")
+                    .attr("x", storeX + 10)
+                    .attr("y", bsY + 25)
+                    .attr("font-size", "13px")
+                    .attr("font-weight", "bold")
+                    .attr("fill", "#1e293b")
+                    .text("Binary Search State:");
+
+                svg.append("text")
+                    .attr("x", storeX + 10)
+                    .attr("y", bsY + 50)
+                    .attr("font-size", "12px")
+                    .attr("fill", "#64748b")
+                    .text(`left=${binarySearchState.left}, right=${binarySearchState.right}, mid=${binarySearchState.mid}`);
+
+                svg.append("text")
+                    .attr("x", storeX + 10)
+                    .attr("y", bsY + 70)
+                    .attr("font-size", "12px")
+                    .attr("fill", "#64748b")
+                    .text(`Looking for timestamp ≤ ${binarySearchState.target}`);
+            }
+
+            // Result
+            if (result !== null) {
+                const resultY = 400;
+                svg.append("rect")
+                    .attr("x", storeX)
+                    .attr("y", resultY)
+                    .attr("width", 350)
+                    .attr("height", 50)
+                    .attr("rx", 10)
+                    .attr("fill", "#d1fae5")
+                    .attr("stroke", "#10b981")
+                    .attr("stroke-width", 2);
+
+                svg.append("text")
+                    .attr("x", storeX + 175)
+                    .attr("y", resultY + 32)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "16px")
+                    .attr("font-weight", "bold")
+                    .attr("fill", "#10b981")
+                    .text(`Result: "${result}"`);
+            }
+
+            // Algorithm explanation
+            const algoY = 480;
+            svg.append("text")
+                .attr("x", 30)
+                .attr("y", algoY)
+                .attr("font-size", "12px")
+                .attr("fill", "#64748b")
+                .text("Key insight: Timestamps are always increasing → binary search for largest timestamp ≤ target");
+        }
+
+        function step() {
+            if (currentOp >= operations.length) {
+                document.getElementById("status").textContent = "All operations complete!";
+                return;
+            }
+
+            const op = operations[currentOp];
+            result = null;
+            binarySearchState = null;
+
+            if (op.op === "set") {
+                if (!store[op.key]) {
+                    store[op.key] = [];
+                }
+                store[op.key].push([op.timestamp, op.value]);
+                document.getElementById("status").textContent = 
+                    `set("${op.key}", "${op.value}", ${op.timestamp}) - Added to store`;
+            } else {
+                // get operation with binary search
+                if (!store[op.key]) {
+                    result = "";
+                    document.getElementById("status").textContent = 
+                        `get("${op.key}", ${op.timestamp}) → "" (key not found)`;
+                } else {
+                    const values = store[op.key];
+                    let left = 0, right = values.length - 1;
+                    result = "";
+
+                    while (left <= right) {
+                        const mid = Math.floor((left + right) / 2);
+                        if (values[mid][0] <= op.timestamp) {
+                            result = values[mid][1];
+                            left = mid + 1;
+                        } else {
+                            right = mid - 1;
+                        }
+                    }
+
+                    binarySearchState = { 
+                        left: 0, 
+                        right: values.length - 1, 
+                        mid: Math.floor((values.length - 1) / 2),
+                        target: op.timestamp
+                    };
+
+                    document.getElementById("status").textContent = 
+                        `get("${op.key}", ${op.timestamp}) → "${result}" (binary search for timestamp ≤ ${op.timestamp})`;
+                }
+            }
+
+            currentOp++;
+            render();
+        }
+
+        document.getElementById("stepBtn").addEventListener("click", step);
+        document.getElementById("resetBtn").addEventListener("click", reset);
+
+        reset();
+    </script>
+</body>
+</html>

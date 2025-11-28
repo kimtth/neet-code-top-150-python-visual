@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LC 876: Middle of the Linked List - Algorithm Visualization</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="problem-info">
+            <h1><span class="problem-number">#876</span> Middle of the Linked List</h1>
+            <p>Given the head of a singly linked list, return the middle node. If two middle nodes, return the second one.</p>
+            <div class="problem-meta">
+                <span class="meta-tag">🔗 Linked List</span>
+                <span class="meta-tag">👉👉 Two Pointers</span>
+                <span class="meta-tag">⏱️ O(n)</span>
+                <span class="meta-tag">💾 O(1)</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <code>python/0876_middle_of_the_linked_list/0876_middle_of_the_linked_list.py</code>
+            </div>
+            </div>
+
+        <div class="explanation-panel">
+            <h4>🧠 How It Works (Layman's Terms)</h4>
+            <p>Imagine two runners on a track. One runs twice as fast:</p>
+            <ul>
+                <li><strong>Slow pointer:</strong> Moves 1 step at a time 🐢</li>
+                <li><strong>Fast pointer:</strong> Moves 2 steps at a time 🐇</li>
+                <li><strong>When fast reaches end:</strong> Slow is at the middle!</li>
+                <li><strong>Why?</strong> Fast travels 2x distance, so slow is at halfway</li>
+            </ul>
+        </div>
+
+
+        <div class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+            
+            <div class="controls">
+                <button class="btn btn-primary" id="stepBtn" onclick="step()">Step</button>
+                <button class="btn btn-success" id="autoBtn" onclick="toggleAuto()">Auto Run</button>
+                <button class="btn btn-warning" onclick="reset()">Reset</button>
+                <select id="listSize" style="padding: 8px; border-radius: 5px; margin-left: 10px;">
+                    <option value="5">5 nodes</option>
+                    <option value="6" selected>6 nodes</option>
+                    <option value="7">7 nodes</option>
+                </select>
+            </div>
+
+            <div class="status-message" id="statusMessage">
+                Click "Step" to find the middle node using slow/fast pointers
+            </div>
+
+            <div class="variable-display">
+                <div class="variable-box">
+                    <div class="variable-name">🐢 Slow</div>
+                    <div class="variable-value" id="slowVal" style="color: #4caf50;">1</div>
+                </div>
+                <div class="variable-box">
+                    <div class="variable-name">🐇 Fast</div>
+                    <div class="variable-value" id="fastVal" style="color: #ff5722;">1</div>
+                </div>
+                <div class="variable-box">
+                    <div class="variable-name">Middle</div>
+                    <div class="variable-value" id="middleVal">?</div>
+                </div>
+            </div>
+
+            <div class="array-section">
+                <div class="array-label">🔗 Linked List:</div>
+                <div id="listContainer" class="linked-list-container"></div>
+            </div>
+
+            <div style="margin-top: 20px; text-align: center;">
+                <svg id="pointerViz" width="100%" height="80"></svg>
+            </div>
+        </div>
+
+        <div class="code-section">
+            <h3>💻 Python Solution</h3>
+            <div class="code-block">
+                <pre><span class="keyword">def</span> <span class="function">middleNode</span>(self, head):
+    slow = fast = head
+    
+    <span class="keyword">while</span> fast <span class="keyword">and</span> fast.next:
+        slow = slow.next       <span class="comment"># Move 1 step</span>
+        fast = fast.next.next  <span class="comment"># Move 2 steps</span>
+    
+    <span class="keyword">return</span> slow  <span class="comment"># Slow is at middle!</span></pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let values = [1, 2, 3, 4, 5, 6];
+        let slowIdx = 0;
+        let fastIdx = 0;
+        let done = false;
+        let autoInterval = null;
+
+        function init() {
+            const size = parseInt(document.getElementById('listSize').value);
+            values = Array.from({length: size}, (_, i) => i + 1);
+            renderList();
+        }
+
+        function renderList() {
+            const container = document.getElementById('listContainer');
+            container.innerHTML = '';
+            
+            for (let i = 0; i < values.length; i++) {
+                const nodeDiv = document.createElement('div');
+                nodeDiv.className = 'list-node';
+                
+                const box = document.createElement('div');
+                box.className = 'node-box';
+                box.textContent = values[i];
+                box.id = `node-${i}`;
+                
+                if (done && i === slowIdx) {
+                    box.style.background = '#4caf50';
+                    box.style.transform = 'scale(1.2)';
+                } else if (i === slowIdx && i === fastIdx) {
+                    box.style.background = 'linear-gradient(135deg, #4caf50 50%, #ff5722 50%)';
+                } else if (i === slowIdx) {
+                    box.style.background = '#4caf50';
+                } else if (i === fastIdx) {
+                    box.style.background = '#ff5722';
+                }
+                
+                nodeDiv.appendChild(box);
+                
+                if (i < values.length - 1) {
+                    const arrow = document.createElement('span');
+                    arrow.className = 'node-arrow';
+                    arrow.textContent = '→';
+                    nodeDiv.appendChild(arrow);
+                }
+                
+                container.appendChild(nodeDiv);
+            }
+            
+            const nullSpan = document.createElement('span');
+            nullSpan.className = 'null-node';
+            nullSpan.textContent = '→ null';
+            container.appendChild(nullSpan);
+            
+            renderPointers();
+        }
+
+        function renderPointers() {
+            const svg = d3.select("#pointerViz");
+            svg.selectAll("*").remove();
+            
+            const container = document.getElementById('listContainer');
+            const width = container.scrollWidth;
+            svg.attr("viewBox", `0 0 ${width} 80`);
+            
+            const nodeWidth = 60;
+            const gap = 8;
+            const offset = 30;
+            
+            // Slow pointer (turtle)
+            const slowX = offset + slowIdx * (nodeWidth + gap + 20);
+            svg.append("text")
+                .attr("x", slowX)
+                .attr("y", 30)
+                .attr("text-anchor", "middle")
+                .attr("font-size", "24px")
+                .text("🐢");
+            svg.append("text")
+                .attr("x", slowX)
+                .attr("y", 55)
+                .attr("text-anchor", "middle")
+                .attr("fill", "#4caf50")
+                .attr("font-size", "12px")
+                .attr("font-weight", "bold")
+                .text("slow");
+            
+            // Fast pointer (rabbit) - only if not past end
+            if (fastIdx < values.length) {
+                const fastX = offset + fastIdx * (nodeWidth + gap + 20);
+                svg.append("text")
+                    .attr("x", fastX)
+                    .attr("y", 30)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "24px")
+                    .text("🐇");
+                svg.append("text")
+                    .attr("x", fastX)
+                    .attr("y", 55)
+                    .attr("text-anchor", "middle")
+                    .attr("fill", "#ff5722")
+                    .attr("font-size", "12px")
+                    .attr("font-weight", "bold")
+                    .text("fast");
+            }
+        }
+
+        function step() {
+            if (done) return;
+            
+            // Check if fast can move
+            if (fastIdx >= values.length - 1 || fastIdx + 1 >= values.length) {
+                done = true;
+                document.getElementById('middleVal').textContent = values[slowIdx];
+                document.getElementById('statusMessage').className = 'status-message success';
+                document.getElementById('statusMessage').textContent = 
+                    `✅ Found middle! Node with value ${values[slowIdx]} at index ${slowIdx}`;
+                document.getElementById('stepBtn').disabled = true;
+                stopAuto();
+                renderList();
+                return;
+            }
+            
+            // Move pointers
+            slowIdx += 1;
+            fastIdx += 2;
+            
+            document.getElementById('slowVal').textContent = values[slowIdx];
+            document.getElementById('fastVal').textContent = 
+                fastIdx < values.length ? values[fastIdx] : 'null';
+            
+            document.getElementById('statusMessage').textContent = 
+                `slow moves to ${values[slowIdx]}, fast moves to ${fastIdx < values.length ? values[fastIdx] : 'null'}`;
+            
+            renderList();
+            
+            // Check if we should stop
+            if (fastIdx >= values.length - 1) {
+                done = true;
+                document.getElementById('middleVal').textContent = values[slowIdx];
+                document.getElementById('statusMessage').className = 'status-message success';
+                document.getElementById('statusMessage').textContent = 
+                    `✅ Fast reached end! Middle is ${values[slowIdx]}`;
+                document.getElementById('stepBtn').disabled = true;
+                stopAuto();
+            }
+        }
+
+        function toggleAuto() {
+            if (autoInterval) {
+                stopAuto();
+            } else {
+                document.getElementById('autoBtn').textContent = 'Pause';
+                autoInterval = setInterval(() => {
+                    if (done) {
+                        stopAuto();
+                    } else {
+                        step();
+                    }
+                }, 800);
+            }
+        }
+
+        function stopAuto() {
+            if (autoInterval) {
+                clearInterval(autoInterval);
+                autoInterval = null;
+            }
+            document.getElementById('autoBtn').textContent = 'Auto Run';
+        }
+
+        function reset() {
+            stopAuto();
+            slowIdx = 0;
+            fastIdx = 0;
+            done = false;
+            document.getElementById('stepBtn').disabled = false;
+            document.getElementById('statusMessage').className = 'status-message';
+            document.getElementById('statusMessage').textContent = 
+                'Click "Step" to find the middle node using slow/fast pointers';
+            document.getElementById('middleVal').textContent = '?';
+            init();
+            document.getElementById('slowVal').textContent = values[0];
+            document.getElementById('fastVal').textContent = values[0];
+        }
+
+        document.getElementById('listSize').addEventListener('change', reset);
+        init();
+        document.getElementById('slowVal').textContent = values[0];
+        document.getElementById('fastVal').textContent = values[0];
+    </script>
+</body>
+</html>
