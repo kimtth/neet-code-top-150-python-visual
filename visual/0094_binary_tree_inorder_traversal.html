@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Binary Tree Inorder Traversal - LeetCode 94</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="problem-info">
+            <h1><span class="problem-number">#94</span> Binary Tree Inorder Traversal</h1>
+            <p>Return the inorder traversal of a binary tree's values (Left → Root → Right).</p>
+            <div class="problem-meta">
+                <span class="meta-tag">Tree</span>
+                <span class="meta-tag">Stack</span>
+                <span class="meta-tag">Easy</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <code>python/0094_binary_tree_inorder_traversal/0094_binary_tree_inorder_traversal.py</code>
+            </div>
+
+        </div>
+
+        <div class="explanation-panel">
+            <h4>🧠 How It Works (Layman's Terms)</h4>
+            <p>Tree traversal is like <strong>exploring a family tree</strong>:</p>
+            <ul>
+                <li><strong>Root:</strong> Start at the top node</li>
+                <li><strong>Recurse:</strong> Visit left and right children</li>
+                <li><strong>Base case:</strong> Stop at null/leaf nodes</li>
+                <li><strong>Combine:</strong> Build answer from subtree results</li>
+            </ul>
+        </div>
+
+
+        <div class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+            <div class="controls">
+                <button id="stepBtn">Step</button>
+                <button id="autoBtn">Auto Run</button>
+                <button id="resetBtn">Reset</button>
+            </div>
+            <svg id="mainSvg" width="700" height="400"></svg>
+            <div class="status-message" id="status">Click "Step" for inorder traversal</div>
+        </div>
+
+        <div class="code-section">
+            <h3>💻 Python Solution</h3>
+            <div class="code-block">
+                <pre><span class="keyword">def</span> <span class="function">inorderTraversal</span>(root):
+    result, stack = [], []
+    current = root
+    
+    <span class="keyword">while</span> current <span class="keyword">or</span> stack:
+        <span class="keyword">while</span> current:
+            stack.<span class="function">append</span>(current)
+            current = current.left
+        
+        current = stack.<span class="function">pop</span>()
+        result.<span class="function">append</span>(current.val)
+        current = current.right
+    
+    <span class="keyword">return</span> result</pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const tree = {
+            val: 1, id: 'root',
+            left: null,
+            right: { val: 2, id: 'right',
+                left: { val: 3, id: 'right-left', left: null, right: null },
+                right: null
+            }
+        };
+
+        let stack = [];
+        let current = tree;
+        let result = [];
+        let nodeStates = {};
+        let phase = 'go_left';
+
+        const width = 700, height = 400;
+        const svg = d3.select("#mainSvg");
+        let autoTimer = null, autoRunning = false;
+
+        function drawTree(node, x, y, dx, path) {
+            if (!node) return;
+
+            const r = 25;
+            const state = nodeStates[path] || 'unvisited';
+
+            if (node.left) {
+                svg.append("line").attr("x1", x).attr("y1", y + r)
+                    .attr("x2", x - dx).attr("y2", y + 60 - r)
+                    .attr("stroke", "#ccc").attr("stroke-width", 2);
+                drawTree(node.left, x - dx, y + 60, dx / 2, path + 'L');
+            }
+            if (node.right) {
+                svg.append("line").attr("x1", x).attr("y1", y + r)
+                    .attr("x2", x + dx).attr("y2", y + 60 - r)
+                    .attr("stroke", "#ccc").attr("stroke-width", 2);
+                drawTree(node.right, x + dx, y + 60, dx / 2, path + 'R');
+            }
+
+            let fill = "#e3f2fd", stroke = "#1976d2";
+            if (state === 'current') { fill = "#fef3c7"; stroke = "#f59e0b"; }
+            else if (state === 'instack') { fill = "#fff3e0"; stroke = "#ff9800"; }
+            else if (state === 'visited') { fill = "#d1fae5"; stroke = "#10b981"; }
+
+            svg.append("circle").attr("cx", x).attr("cy", y).attr("r", r)
+                .attr("fill", fill).attr("stroke", stroke).attr("stroke-width", 2);
+            svg.append("text").attr("x", x).attr("y", y + 6)
+                .attr("text-anchor", "middle").attr("font-size", "18px")
+                .attr("font-weight", "bold").text(node.val);
+        }
+
+        function draw() {
+            svg.selectAll("*").remove();
+
+            svg.append("text").attr("x", width/2).attr("y", 25)
+                .attr("text-anchor", "middle").attr("font-weight", "bold")
+                .text("Inorder Traversal: Left → Root → Right");
+
+            drawTree(tree, width/2, 70, 80, 'root');
+
+            // Stack
+            svg.append("text").attr("x", 30).attr("y", 250).attr("font-weight", "bold").text("Stack:");
+            stack.forEach((item, idx) => {
+                svg.append("rect").attr("x", 90 + idx * 50).attr("y", 235)
+                    .attr("width", 45).attr("height", 30).attr("rx", 5)
+                    .attr("fill", "#fff3e0").attr("stroke", "#ff9800");
+                svg.append("text").attr("x", 112 + idx * 50).attr("y", 255)
+                    .attr("text-anchor", "middle").attr("font-weight", "bold").text(item.val);
+            });
+
+            // Result
+            svg.append("text").attr("x", 30).attr("y", 310).attr("font-weight", "bold").text("Result:");
+            result.forEach((val, idx) => {
+                svg.append("rect").attr("x", 100 + idx * 50).attr("y", 295)
+                    .attr("width", 45).attr("height", 30).attr("rx", 5)
+                    .attr("fill", "#d1fae5").attr("stroke", "#10b981");
+                svg.append("text").attr("x", 122 + idx * 50).attr("y", 315)
+                    .attr("text-anchor", "middle").attr("font-weight", "bold").text(val);
+            });
+
+            // Legend
+            const legend = [{c: "#fef3c7", t: "Current"}, {c: "#fff3e0", t: "In Stack"}, {c: "#d1fae5", t: "Visited"}];
+            legend.forEach((l, i) => {
+                svg.append("rect").attr("x", 30 + i * 100).attr("y", 355)
+                    .attr("width", 18).attr("height", 18).attr("fill", l.c).attr("stroke", "#999");
+                svg.append("text").attr("x", 55 + i * 100).attr("y", 368).attr("font-size", "12px").text(l.t);
+            });
+        }
+
+        function getPath(node, target, path = 'root') {
+            if (!node) return null;
+            if (node === target) return path;
+            return getPath(node.left, target, path + 'L') || getPath(node.right, target, path + 'R');
+        }
+
+        function step() {
+            if (!current && stack.length === 0) {
+                document.getElementById("status").textContent = `Done! Inorder: [${result.join(", ")}]`;
+                return false;
+            }
+
+            if (phase === 'go_left') {
+                if (current) {
+                    const path = getPath(tree, current);
+                    nodeStates[path] = 'instack';
+                    stack.push(current);
+                    document.getElementById("status").textContent = `Push ${current.val} to stack, go left`;
+                    current = current.left;
+                } else {
+                    phase = 'process';
+                }
+            } else if (phase === 'process') {
+                current = stack.pop();
+                const path = getPath(tree, current);
+                nodeStates[path] = 'visited';
+                result.push(current.val);
+                document.getElementById("status").textContent = `Pop and visit ${current.val}`;
+                current = current.right;
+                phase = 'go_left';
+            }
+
+            draw();
+            return current || stack.length > 0;
+        }
+
+        function reset() {
+            stack = []; current = tree; result = []; nodeStates = {}; phase = 'go_left';
+            if (autoTimer) clearInterval(autoTimer);
+            autoRunning = false;
+            document.getElementById("autoBtn").textContent = "Auto Run";
+            document.getElementById("status").textContent = 'Click "Step" for inorder traversal';
+            draw();
+        }
+
+        function autoRun() {
+            if (autoRunning) { clearInterval(autoTimer); autoRunning = false; document.getElementById("autoBtn").textContent = "Auto Run"; }
+            else {
+                autoRunning = true; document.getElementById("autoBtn").textContent = "Pause";
+                autoTimer = setInterval(() => { if (!step()) { clearInterval(autoTimer); autoRunning = false; document.getElementById("autoBtn").textContent = "Auto Run"; } }, 800);
+            }
+        }
+
+        document.getElementById("stepBtn").addEventListener("click", step);
+        document.getElementById("autoBtn").addEventListener("click", autoRun);
+        document.getElementById("resetBtn").addEventListener("click", reset);
+        reset();
+    </script>
+</body>
+</html>

@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Car Fleet - LeetCode 853</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="problem-info">
+            <h1><span class="problem-number">#853</span> Car Fleet</h1>
+            <p>Cars on a road heading to a target. Faster cars can't pass slower ones, they form "fleets." Count how many fleets reach the destination!</p>
+            <div class="problem-meta">
+                <span class="meta-tag">📚 Stack</span>
+                <span class="meta-tag">🔢 Sorting</span>
+                <span class="meta-tag">⏱️ O(n log n)</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <a href="../python/0853_car_fleet/0853_car_fleet.py">0853_car_fleet.py</a>
+            </div>
+            </div>
+
+        <div class="explanation-panel">
+            <h4>💡 How It Works (Layman's Terms)</h4>
+            <ul>
+                <li><strong>Problem:</strong> Cars can't pass each other on a single-lane road. Faster cars behind slow down to match slower cars ahead.</li>
+                <li><strong>Fleet:</strong> Cars that catch up and travel together at the same speed.</li>
+                <li><strong>Key insight:</strong> Process cars from closest to target first. A car forms a new fleet if it takes longer to reach target than any car ahead.</li>
+                <li><strong>Time to target:</strong> (target - position) / speed</li>
+                <li><strong>Logic:</strong> If a car takes MORE time than the max time seen so far, it can't catch up → new fleet!</li>
+                <li><strong>If LESS time:</strong> It would catch up and merge with the fleet ahead.</li>
+            </ul>
+        </div>
+
+
+        <div class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+            
+            <div class="controls">
+                <button class="btn btn-primary" id="stepBtn" onclick="step()">Step</button>
+                <button class="btn btn-success" id="autoBtn" onclick="toggleAuto()">Auto Run</button>
+                <button class="btn btn-warning" onclick="reset()">Reset</button>
+            </div>
+
+            <div class="info-box">
+                Target = 12 miles
+            </div>
+
+            <div class="status-message" id="statusMessage">
+                Click "Step" or "Auto Run" to see how cars form fleets
+            </div>
+
+            <div class="svg-container">
+                <svg id="roadSvg" width="800" height="200"></svg>
+            </div>
+
+            <div class="array-section">
+                <div class="array-label">Cars (sorted by position, closest to target first):</div>
+                <div id="carsTable" style="overflow-x: auto;"></div>
+            </div>
+
+            <div class="variable-display">
+                <div class="variable-box">
+                    <div class="variable-name">Current Max Time</div>
+                    <div class="variable-value" id="maxTimeVal">0</div>
+                </div>
+                <div class="variable-box">
+                    <div class="variable-name">Fleet Count</div>
+                    <div class="variable-value" id="fleetVal">0</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="code-section">
+            <h3>💻 Python Solution</h3>
+            <div class="code-block">
+                <pre><span class="keyword">def</span> <span class="function">carFleet</span>(self, target: <span class="class-name">int</span>, position: List[<span class="class-name">int</span>], speed: List[<span class="class-name">int</span>]) -> <span class="class-name">int</span>:
+    <span class="comment"># Create pairs of (position, time_to_target)</span>
+    cars = []
+    <span class="keyword">for</span> i <span class="keyword">in</span> <span class="function">range</span>(<span class="function">len</span>(position)):
+        time = (target - position[i]) / speed[i]
+        cars.append([position[i], time])
+    
+    <span class="comment"># Sort by position descending (closest to target first)</span>
+    cars.<span class="function">sort</span>(reverse=<span class="class-name">True</span>)
+    
+    fleets = <span class="number">0</span>
+    current_max_time = <span class="number">0</span>
+    
+    <span class="keyword">for</span> pos, time <span class="keyword">in</span> cars:
+        <span class="keyword">if</span> time > current_max_time:
+            fleets += <span class="number">1</span>
+            current_max_time = time
+    
+    <span class="keyword">return</span> fleets</pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const target = 12;
+        const positions = [10, 8, 0, 5, 3];
+        const speeds = [2, 4, 1, 1, 3];
+        
+        let cars = [];
+        let sortedCars = [];
+        let currentCarIndex = 0;
+        let currentMaxTime = 0;
+        let fleets = 0;
+        let phase = 'init';
+        let autoInterval = null;
+
+        function init() {
+            cars = positions.map((pos, i) => ({
+                position: pos,
+                speed: speeds[i],
+                time: (target - pos) / speeds[i],
+                fleet: null
+            }));
+            sortedCars = [...cars].sort((a, b) => b.position - a.position);
+            currentCarIndex = 0;
+            currentMaxTime = 0;
+            fleets = 0;
+            
+            drawRoad();
+            renderCarsTable();
+            document.getElementById('maxTimeVal').textContent = '0';
+            document.getElementById('fleetVal').textContent = '0';
+        }
+
+        function drawRoad() {
+            const svg = d3.select("#roadSvg");
+            svg.selectAll("*").remove();
+
+            const roadY = 100;
+            const roadStart = 50;
+            const roadEnd = 750;
+            const scale = (roadEnd - roadStart) / target;
+
+            // Draw road
+            svg.append("line")
+                .attr("x1", roadStart)
+                .attr("y1", roadY)
+                .attr("x2", roadEnd)
+                .attr("y2", roadY)
+                .attr("stroke", "#333")
+                .attr("stroke-width", 4);
+
+            // Draw target
+            svg.append("rect")
+                .attr("x", roadEnd - 5)
+                .attr("y", roadY - 30)
+                .attr("width", 10)
+                .attr("height", 60)
+                .attr("fill", "#f44336");
+
+            svg.append("text")
+                .attr("x", roadEnd)
+                .attr("y", roadY - 40)
+                .attr("text-anchor", "middle")
+                .attr("font-weight", "bold")
+                .text("TARGET");
+
+            // Draw cars
+            const fleetColors = ['#667eea', '#11998e', '#f093fb', '#ff9800', '#4caf50'];
+            
+            sortedCars.forEach((car, i) => {
+                const x = roadStart + car.position * scale;
+                const color = car.fleet !== null ? fleetColors[car.fleet % fleetColors.length] : '#999';
+                
+                // Car body
+                svg.append("rect")
+                    .attr("x", x - 15)
+                    .attr("y", roadY - 25)
+                    .attr("width", 30)
+                    .attr("height", 20)
+                    .attr("rx", 5)
+                    .attr("fill", color)
+                    .attr("stroke", i === currentCarIndex && phase === 'processing' ? "#f44336" : "none")
+                    .attr("stroke-width", 3);
+
+                // Car info
+                svg.append("text")
+                    .attr("x", x)
+                    .attr("y", roadY + 30)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "10px")
+                    .text(`pos:${car.position}`);
+
+                svg.append("text")
+                    .attr("x", x)
+                    .attr("y", roadY + 42)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "10px")
+                    .text(`spd:${car.speed}`);
+
+                svg.append("text")
+                    .attr("x", x)
+                    .attr("y", roadY + 54)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "10px")
+                    .text(`t:${car.time.toFixed(1)}`);
+            });
+
+            // Position markers
+            for (let p = 0; p <= target; p += 2) {
+                const x = roadStart + p * scale;
+                svg.append("text")
+                    .attr("x", x)
+                    .attr("y", roadY + 70)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "10px")
+                    .attr("fill", "#666")
+                    .text(p);
+            }
+        }
+
+        function renderCarsTable() {
+            const container = document.getElementById('carsTable');
+            let html = '<table class="problem-table"><tr><th>Order</th><th>Position</th><th>Speed</th><th>Time to Target</th><th>Fleet</th></tr>';
+            
+            sortedCars.forEach((car, i) => {
+                const highlight = i === currentCarIndex && phase === 'processing' ? 'style="background: #fff3e0;"' : '';
+                const fleetDisplay = car.fleet !== null ? `Fleet ${car.fleet + 1}` : '-';
+                html += `<tr ${highlight}>
+                    <td>${i + 1}</td>
+                    <td>${car.position}</td>
+                    <td>${car.speed}</td>
+                    <td>${car.time.toFixed(2)}</td>
+                    <td>${fleetDisplay}</td>
+                </tr>`;
+            });
+            
+            html += '</table>';
+            container.innerHTML = html;
+        }
+
+        function step() {
+            if (phase === 'init') {
+                phase = 'processing';
+                document.getElementById('statusMessage').textContent = 
+                    'Processing cars from closest to target (position 10) to farthest...';
+            }
+
+            if (phase === 'processing') {
+                if (currentCarIndex >= sortedCars.length) {
+                    phase = 'done';
+                    document.getElementById('statusMessage').textContent = 
+                        `✅ Done! Total fleets: ${fleets}`;
+                    document.getElementById('stepBtn').disabled = true;
+                    stopAuto();
+                    return;
+                }
+
+                const car = sortedCars[currentCarIndex];
+                
+                if (car.time > currentMaxTime) {
+                    // New fleet!
+                    car.fleet = fleets;
+                    fleets++;
+                    currentMaxTime = car.time;
+                    document.getElementById('statusMessage').textContent = 
+                        `Car at position ${car.position}: time=${car.time.toFixed(2)} > maxTime=${(currentMaxTime === car.time ? 0 : currentMaxTime).toFixed(2)} → NEW FLEET #${fleets}!`;
+                } else {
+                    // Joins previous fleet
+                    car.fleet = fleets - 1;
+                    document.getElementById('statusMessage').textContent = 
+                        `Car at position ${car.position}: time=${car.time.toFixed(2)} ≤ maxTime=${currentMaxTime.toFixed(2)} → Catches up & joins Fleet #${fleets}`;
+                }
+
+                document.getElementById('maxTimeVal').textContent = currentMaxTime.toFixed(2);
+                document.getElementById('fleetVal').textContent = fleets;
+
+                drawRoad();
+                renderCarsTable();
+
+                currentCarIndex++;
+            }
+        }
+
+        function toggleAuto() {
+            if (autoInterval) {
+                stopAuto();
+            } else {
+                document.getElementById('autoBtn').textContent = 'Pause';
+                autoInterval = setInterval(() => {
+                    if (phase === 'done') {
+                        stopAuto();
+                    } else {
+                        step();
+                    }
+                }, 1500);
+            }
+        }
+
+        function stopAuto() {
+            if (autoInterval) {
+                clearInterval(autoInterval);
+                autoInterval = null;
+            }
+            document.getElementById('autoBtn').textContent = 'Auto Run';
+        }
+
+        function reset() {
+            stopAuto();
+            phase = 'init';
+            document.getElementById('stepBtn').disabled = false;
+            document.getElementById('statusMessage').textContent = 
+                'Click "Step" or "Auto Run" to see how cars form fleets';
+            init();
+        }
+
+        init();
+    </script>
+</body>
+</html>

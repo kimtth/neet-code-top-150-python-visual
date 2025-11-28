@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>124 - Binary Tree Maximum Path Sum</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="problem-info">
+            <h1><span class="problem-number">#124</span> Binary Tree Maximum Path Sum</h1>
+            <p>
+                Find the maximum path sum in a binary tree. Path doesn't need to pass through root.
+                Uses DFS, tracking max gain from each subtree and updating global maximum.
+            </p>
+            <div class="problem-meta">
+                <span class="meta-tag">🌳 Tree</span>
+                <span class="meta-tag">📊 Array</span>
+                <span class="meta-tag">⏱️ O(n)</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <code>python/0124_binary_tree_maximum_path_sum/0124_binary_tree_maximum_path_sum.py</code>
+            </div>
+
+        </div>
+
+        <div class="explanation-panel">
+            <h4>🧠 How It Works (Layman's Terms)</h4>
+            <p>Tree traversal is like <strong>exploring a family tree</strong>:</p>
+            <ul>
+                <li><strong>Root:</strong> Start at the top node</li>
+                <li><strong>Recurse:</strong> Visit left and right children</li>
+                <li><strong>Base case:</strong> Stop at null/leaf nodes</li>
+                <li><strong>Combine:</strong> Build answer from subtree results</li>
+            </ul>
+        </div>
+
+
+        <section class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+            <div class="controls">
+                <button id="autoRunBtn" class="btn">▶ Auto Run</button>
+                <button id="stepBtn" class="btn btn-success">Step</button>
+                <button id="resetBtn" class="btn btn-danger">Reset</button>
+            </div>
+            <div class="status" id="status">Click Auto Run to find maximum path sum</div>
+            <svg id="visualization"></svg>
+        </section>
+
+        <section class="code-section">
+            <h3>💻 Python Solution</h3>
+            <div class="code-block">
+                <pre><span class="keyword">def</span> <span class="function">maxPathSum</span>(root):
+    max_sum = <span class="function">float</span>(<span class="string">'-inf'</span>)
+    
+    <span class="keyword">def</span> <span class="function">max_gain</span>(node):
+        <span class="keyword">nonlocal</span> max_sum
+        <span class="keyword">if</span> <span class="keyword">not</span> node:
+            <span class="keyword">return</span> <span class="number">0</span>
+        
+        <span class="comment"># Max gain from left/right, ignore negative paths</span>
+        left_gain = <span class="function">max</span>(<span class="number">0</span>, <span class="function">max_gain</span>(node.left))
+        right_gain = <span class="function">max</span>(<span class="number">0</span>, <span class="function">max_gain</span>(node.right))
+        
+        <span class="comment"># Path through current node (can't extend further)</span>
+        current_path = node.val + left_gain + right_gain
+        max_sum = <span class="function">max</span>(max_sum, current_path)
+        
+        <span class="comment"># Return max extendable path (only one direction)</span>
+        <span class="keyword">return</span> node.val + <span class="function">max</span>(left_gain, right_gain)
+    
+    <span class="function">max_gain</span>(root)
+    <span class="keyword">return</span> max_sum</pre>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        const width = 900;
+        const height = 600;
+
+        const svg = d3.select("#visualization")
+            .attr("width", width)
+            .attr("height", height);
+
+        // Tree: [-10, 9, 20, null, null, 15, 7]
+        // Best path: 15 -> 20 -> 7 = 42
+        const treeData = {
+            val: -10,
+            left: { val: 9, left: null, right: null },
+            right: {
+                val: 20,
+                left: { val: 15, left: null, right: null },
+                right: { val: 7, left: null, right: null }
+            }
+        };
+
+        let nodeStates = {};  // nodeId -> { gain, leftGain, rightGain, pathSum, processed }
+        let maxSum = -Infinity;
+        let callStack = [];
+        let currentNode = null;
+        let bestPath = [];
+        let animationTimer = null;
+
+        function getNodeId(node, path = '') {
+            if (!node) return null;
+            return `${path}_${node.val}`;
+        }
+
+        function initializeNodes(node, path = 'root') {
+            if (!node) return;
+            const id = getNodeId(node, path);
+            nodeStates[id] = {
+                node,
+                path,
+                gain: null,
+                leftGain: null,
+                rightGain: null,
+                pathSum: null,
+                processed: false
+            };
+            if (node.left) initializeNodes(node.left, path + 'L');
+            if (node.right) initializeNodes(node.right, path + 'R');
+        }
+
+        function reset() {
+            nodeStates = {};
+            maxSum = -Infinity;
+            callStack = [];
+            currentNode = null;
+            bestPath = [];
+            
+            initializeNodes(treeData);
+            callStack.push({ node: treeData, path: 'root', phase: 'visit' });
+            
+            if (animationTimer) clearInterval(animationTimer);
+            document.getElementById("status").textContent = "Find maximum path sum (path doesn't need to include root)";
+            render();
+        }
+
+        function render() {
+            svg.selectAll("*").remove();
+
+            // Draw tree
+            drawTree(treeData, 250, 80, 0, 'root');
+
+            // Draw max sum
+            drawMaxSum();
+
+            // Draw explanation
+            drawExplanation();
+        }
+
+        function drawTree(node, x, y, level, path) {
+            if (!node) return;
+
+            const nodeRadius = 28;
+            const levelHeight = 90;
+            const spread = 120 / (level + 1);
+
+            const id = getNodeId(node, path);
+            const state = nodeStates[id] || {};
+            const isCurrent = currentNode === id;
+            const isInBestPath = bestPath.includes(id);
+            const isProcessed = state.processed;
+
+            // Draw edges first
+            if (node.left) {
+                const childX = x - spread;
+                const childY = y + levelHeight;
+                
+                svg.append("line")
+                    .attr("x1", x)
+                    .attr("y1", y + nodeRadius)
+                    .attr("x2", childX)
+                    .attr("y2", childY - nodeRadius)
+                    .attr("stroke", isInBestPath && bestPath.includes(getNodeId(node.left, path + 'L')) ? "#10b981" : "#cbd5e1")
+                    .attr("stroke-width", isInBestPath ? 3 : 2);
+
+                drawTree(node.left, childX, childY, level + 1, path + 'L');
+            }
+
+            if (node.right) {
+                const childX = x + spread;
+                const childY = y + levelHeight;
+                
+                svg.append("line")
+                    .attr("x1", x)
+                    .attr("y1", y + nodeRadius)
+                    .attr("x2", childX)
+                    .attr("y2", childY - nodeRadius)
+                    .attr("stroke", isInBestPath && bestPath.includes(getNodeId(node.right, path + 'R')) ? "#10b981" : "#cbd5e1")
+                    .attr("stroke-width", isInBestPath ? 3 : 2);
+
+                drawTree(node.right, childX, childY, level + 1, path + 'R');
+            }
+
+            // Draw node
+            svg.append("circle")
+                .attr("cx", x)
+                .attr("cy", y)
+                .attr("r", nodeRadius)
+                .attr("fill", () => {
+                    if (isInBestPath) return "#bbf7d0";
+                    if (isCurrent) return "#fef3c7";
+                    if (isProcessed) return "#dbeafe";
+                    return "#f8fafc";
+                })
+                .attr("stroke", () => {
+                    if (isInBestPath) return "#10b981";
+                    if (isCurrent) return "#f59e0b";
+                    if (isProcessed) return "#3b82f6";
+                    return "#94a3b8";
+                })
+                .attr("stroke-width", isCurrent || isInBestPath ? 3 : 2);
+
+            svg.append("text")
+                .attr("x", x)
+                .attr("y", y + 6)
+                .attr("text-anchor", "middle")
+                .attr("font-size", "16px")
+                .attr("font-weight", "bold")
+                .attr("fill", "#1e293b")
+                .text(node.val);
+
+            // Draw gain if calculated
+            if (state.gain !== null) {
+                svg.append("rect")
+                    .attr("x", x + nodeRadius + 5)
+                    .attr("y", y - 10)
+                    .attr("width", 35)
+                    .attr("height", 20)
+                    .attr("rx", 4)
+                    .attr("fill", "#dbeafe")
+                    .attr("stroke", "#3b82f6");
+
+                svg.append("text")
+                    .attr("x", x + nodeRadius + 22)
+                    .attr("y", y + 5)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "11px")
+                    .attr("fill", "#1e293b")
+                    .text(`+${state.gain}`);
+            }
+        }
+
+        function drawMaxSum() {
+            svg.append("text")
+                .attr("x", 550)
+                .attr("y", 50)
+                .attr("font-size", "14px")
+                .attr("font-weight", "bold")
+                .attr("fill", "#1e293b")
+                .text("Maximum Path Sum:");
+
+            svg.append("rect")
+                .attr("x", 550)
+                .attr("y", 60)
+                .attr("width", 100)
+                .attr("height", 40)
+                .attr("rx", 8)
+                .attr("fill", maxSum === -Infinity ? "#f8fafc" : "#d1fae5")
+                .attr("stroke", maxSum === -Infinity ? "#94a3b8" : "#10b981")
+                .attr("stroke-width", 2);
+
+            svg.append("text")
+                .attr("x", 600)
+                .attr("y", 88)
+                .attr("text-anchor", "middle")
+                .attr("font-size", "20px")
+                .attr("font-weight", "bold")
+                .attr("fill", "#1e293b")
+                .text(maxSum === -Infinity ? "?" : maxSum);
+
+            // Best path
+            if (bestPath.length > 0) {
+                svg.append("text")
+                    .attr("x", 550)
+                    .attr("y", 130)
+                    .attr("font-size", "12px")
+                    .attr("fill", "#10b981")
+                    .text("Best: 15 → 20 → 7");
+            }
+        }
+
+        function drawExplanation() {
+            const startX = 550;
+            const startY = 180;
+
+            svg.append("text")
+                .attr("x", startX)
+                .attr("y", startY)
+                .attr("font-size", "14px")
+                .attr("font-weight", "bold")
+                .attr("fill", "#1e293b")
+                .text("Key Insight:");
+
+            const explanations = [
+                "• max_gain(node) returns the max",
+                "  sum path starting from node going",
+                "  down (can only go one direction)",
+                "",
+                "• At each node, we also compute",
+                "  the path sum through that node",
+                "  (left_gain + node + right_gain)",
+                "",
+                "• Negative gains are replaced with 0",
+                "  (don't include negative subtrees)"
+            ];
+
+            explanations.forEach((exp, idx) => {
+                svg.append("text")
+                    .attr("x", startX)
+                    .attr("y", startY + 25 + idx * 18)
+                    .attr("font-size", "12px")
+                    .attr("fill", "#64748b")
+                    .text(exp);
+            });
+
+            // Current state
+            if (currentNode) {
+                const state = nodeStates[currentNode];
+                if (state) {
+                    svg.append("text")
+                        .attr("x", startX)
+                        .attr("y", 430)
+                        .attr("font-size", "13px")
+                        .attr("font-weight", "bold")
+                        .attr("fill", "#1e293b")
+                        .text(`Current: node=${state.node.val}`);
+
+                    if (state.leftGain !== null) {
+                        svg.append("text")
+                            .attr("x", startX)
+                            .attr("y", 455)
+                            .attr("font-size", "12px")
+                            .attr("fill", "#64748b")
+                            .text(`left_gain = max(0, ${state.leftGain}) = ${Math.max(0, state.leftGain)}`);
+                    }
+
+                    if (state.rightGain !== null) {
+                        svg.append("text")
+                            .attr("x", startX)
+                            .attr("y", 475)
+                            .attr("font-size", "12px")
+                            .attr("fill", "#64748b")
+                            .text(`right_gain = max(0, ${state.rightGain}) = ${Math.max(0, state.rightGain)}`);
+                    }
+
+                    if (state.pathSum !== null) {
+                        svg.append("text")
+                            .attr("x", startX)
+                            .attr("y", 495)
+                            .attr("font-size", "12px")
+                            .attr("fill", "#64748b")
+                            .text(`path_sum = ${state.pathSum}`);
+                    }
+                }
+            }
+        }
+
+        function step() {
+            if (callStack.length === 0) {
+                document.getElementById("status").textContent = 
+                    `✓ Complete! Maximum path sum = ${maxSum} (path: 15 → 20 → 7)`;
+                bestPath = ['root_-10R_20L_15', 'root_-10R_20', 'root_-10R_20R_7'];
+                render();
+                return;
+            }
+
+            const { node, path, phase, leftGain, rightGain } = callStack.pop();
+            const id = getNodeId(node, path);
+            currentNode = id;
+
+            if (phase === 'visit') {
+                // Need to process children first
+                if (node.right) {
+                    callStack.push({ node, path, phase: 'processRight', leftGain: null });
+                    callStack.push({ node: node.right, path: path + 'R', phase: 'visit' });
+                } else if (node.left) {
+                    callStack.push({ node, path, phase: 'processLeft', leftGain: null, rightGain: 0 });
+                    callStack.push({ node: node.left, path: path + 'L', phase: 'visit' });
+                } else {
+                    // Leaf node
+                    const gain = node.val;
+                    nodeStates[id].gain = gain;
+                    nodeStates[id].leftGain = 0;
+                    nodeStates[id].rightGain = 0;
+                    nodeStates[id].pathSum = node.val;
+                    nodeStates[id].processed = true;
+                    maxSum = Math.max(maxSum, node.val);
+                    document.getElementById("status").textContent = 
+                        `Leaf node ${node.val}: gain=${gain}, max_sum=${maxSum}`;
+                }
+            } else if (phase === 'processRight') {
+                const rightId = getNodeId(node.right, path + 'R');
+                const rGain = nodeStates[rightId].gain;
+                
+                if (node.left) {
+                    callStack.push({ node, path, phase: 'processLeft', rightGain: rGain });
+                    callStack.push({ node: node.left, path: path + 'L', phase: 'visit' });
+                } else {
+                    // No left child
+                    const leftGainVal = 0;
+                    const rightGainVal = Math.max(0, rGain);
+                    const pathSum = node.val + leftGainVal + rightGainVal;
+                    const gain = node.val + Math.max(leftGainVal, rightGainVal);
+                    
+                    nodeStates[id].gain = gain;
+                    nodeStates[id].leftGain = 0;
+                    nodeStates[id].rightGain = rGain;
+                    nodeStates[id].pathSum = pathSum;
+                    nodeStates[id].processed = true;
+                    maxSum = Math.max(maxSum, pathSum);
+                    
+                    document.getElementById("status").textContent = 
+                        `Node ${node.val}: path_sum=${pathSum}, gain=${gain}, max_sum=${maxSum}`;
+                }
+            } else if (phase === 'processLeft') {
+                const leftId = getNodeId(node.left, path + 'L');
+                const lGain = nodeStates[leftId].gain;
+                const rGain = rightGain !== undefined ? rightGain : 0;
+                
+                const leftGainVal = Math.max(0, lGain);
+                const rightGainVal = Math.max(0, rGain);
+                const pathSum = node.val + leftGainVal + rightGainVal;
+                const gain = node.val + Math.max(leftGainVal, rightGainVal);
+                
+                nodeStates[id].gain = gain;
+                nodeStates[id].leftGain = lGain;
+                nodeStates[id].rightGain = rGain;
+                nodeStates[id].pathSum = pathSum;
+                nodeStates[id].processed = true;
+                maxSum = Math.max(maxSum, pathSum);
+                
+                document.getElementById("status").textContent = 
+                    `Node ${node.val}: left=${lGain}, right=${rGain}, path_sum=${pathSum}, max_sum=${maxSum}`;
+            }
+
+            render();
+        }
+
+        function autoRun() {
+            if (animationTimer) {
+                clearInterval(animationTimer);
+                animationTimer = null;
+                document.getElementById("autoRunBtn").textContent = "▶ Auto Run";
+                return;
+            }
+
+            document.getElementById("autoRunBtn").textContent = "⏸ Pause";
+            animationTimer = setInterval(() => {
+                if (callStack.length === 0) {
+                    clearInterval(animationTimer);
+                    animationTimer = null;
+                    document.getElementById("autoRunBtn").textContent = "▶ Auto Run";
+                    step(); // Final update
+                    return;
+                }
+                step();
+            }, 1000);
+        }
+
+        document.getElementById("autoRunBtn").addEventListener("click", autoRun);
+        document.getElementById("stepBtn").addEventListener("click", step);
+        document.getElementById("resetBtn").addEventListener("click", reset);
+
+        reset();
+    </script>
+</body>
+</html>

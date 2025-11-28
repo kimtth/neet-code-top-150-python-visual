@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LC 198: House Robber - Algorithm Visualization</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="problem-info">
+            <h1><span class="problem-number">#198</span> House Robber</h1>
+            <p>You are a robber planning to rob houses along a street. Adjacent houses have connected security systems - if you rob two adjacent houses, the police will be alerted. What's the maximum amount you can rob?</p>
+            <div class="problem-meta">
+                <span class="meta-tag">📈 Dynamic Programming</span>
+                <span class="meta-tag">🏠 Array</span>
+                <span class="meta-tag">⏱️ O(n)</span>
+                <span class="meta-tag">💾 O(1)</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <code>python/0198_house_robber/0198_house_robber.py</code>
+            </div>
+            </div>
+
+        <div class="explanation-panel">
+            <h4>🧠 How It Works (Layman's Terms)</h4>
+            <p>At each house, you have a choice: <strong>rob it</strong> or <strong>skip it</strong>.</p>
+            <ul>
+                <li><strong>If you rob this house:</strong> You get its money + whatever you made from 2 houses back (you must skip the previous house)</li>
+                <li><strong>If you skip this house:</strong> You keep whatever you made from the previous house</li>
+                <li><strong>Decision:</strong> Pick whichever option gives you more money!</li>
+                <li><strong>Key insight:</strong> We only need to track 2 values (not the entire history)</li>
+            </ul>
+        </div>
+
+
+        <div class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+            
+            <div class="controls">
+                <button class="btn btn-primary" id="stepBtn" onclick="step()">Step</button>
+                <button class="btn btn-success" id="autoBtn" onclick="toggleAuto()">Auto Run</button>
+                <button class="btn btn-warning" onclick="reset()">Reset</button>
+            </div>
+
+            <div class="info-box secondary" style="margin-bottom: 20px;">
+                🏠 Houses with money: <strong>[2, 7, 9, 3, 1]</strong>
+            </div>
+
+            <div class="status-message" id="statusMessage">
+                Click "Step" or "Auto Run" to start visualization
+            </div>
+
+            <div class="array-section">
+                <div class="array-label">🏠 Houses (money in each):</div>
+                <div class="array-container" id="housesContainer"></div>
+            </div>
+
+            <div class="variable-section" style="margin: 20px 0; display: flex; gap: 30px; justify-content: center;">
+                <div class="variable">
+                    <span class="var-name">rob1</span>
+                    <span class="var-value" id="rob1Value">0</span>
+                    <span class="var-desc">(max from 2 back)</span>
+                </div>
+                <div class="variable">
+                    <span class="var-name">rob2</span>
+                    <span class="var-value" id="rob2Value">0</span>
+                    <span class="var-desc">(max from prev)</span>
+                </div>
+                <div class="variable">
+                    <span class="var-name">temp</span>
+                    <span class="var-value" id="tempValue">-</span>
+                    <span class="var-desc">(new best)</span>
+                </div>
+            </div>
+
+            <div class="explanation-panel" style="margin-top: 20px;">
+                <h4>📝 Decision at Each House</h4>
+                <div id="decisionDisplay" style="font-size: 1.1em; padding: 10px;">
+                    Waiting to start...
+                </div>
+            </div>
+
+            <div id="chartContainer" style="width: 100%; height: 250px; margin-top: 20px;"></div>
+        </div>
+
+        <div class="code-section">
+            <h3>💻 Python Solution</h3>
+            <div class="code-block">
+                <pre><span class="keyword">def</span> <span class="function">rob</span>(self, nums: <span class="class-name">list</span>[<span class="class-name">int</span>]) -> <span class="class-name">int</span>:
+    <span class="keyword">if</span> <span class="keyword">not</span> nums:
+        <span class="keyword">return</span> <span class="number">0</span>
+    <span class="keyword">if</span> <span class="function">len</span>(nums) == <span class="number">1</span>:
+        <span class="keyword">return</span> nums[<span class="number">0</span>]
+    
+    rob1 = <span class="number">0</span>  <span class="comment"># max money up to i-2</span>
+    rob2 = <span class="number">0</span>  <span class="comment"># max money up to i-1</span>
+    
+    <span class="keyword">for</span> num <span class="keyword">in</span> nums:
+        temp = <span class="function">max</span>(rob1 + num, rob2)
+        rob1 = rob2
+        rob2 = temp
+    
+    <span class="keyword">return</span> rob2</pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const houses = [2, 7, 9, 3, 1];
+        let rob1 = 0;
+        let rob2 = 0;
+        let currentIndex = -1;
+        let autoInterval = null;
+        let history = [{rob1: 0, rob2: 0}];
+        let decisions = [];
+
+        function init() {
+            renderHouses();
+            renderChart();
+        }
+
+        function renderHouses() {
+            const container = document.getElementById('housesContainer');
+            container.innerHTML = '';
+            
+            houses.forEach((value, i) => {
+                const box = document.createElement('div');
+                box.className = 'array-box';
+                box.id = `house-${i}`;
+                box.innerHTML = `$${value}<span class="index-label">🏠 ${i}</span>`;
+                box.style.background = '#f5f5f5';
+                
+                if (i < currentIndex) {
+                    const robbed = decisions[i];
+                    box.style.background = robbed ? '#c8e6c9' : '#ffcdd2';
+                    box.style.borderColor = robbed ? '#4caf50' : '#f44336';
+                }
+                if (i === currentIndex) {
+                    box.classList.add('highlight');
+                }
+                
+                container.appendChild(box);
+            });
+        }
+
+        function renderChart() {
+            d3.select('#chartContainer').selectAll('*').remove();
+            
+            const margin = {top: 20, right: 30, bottom: 40, left: 50};
+            const width = document.getElementById('chartContainer').offsetWidth - margin.left - margin.right;
+            const height = 200 - margin.top - margin.bottom;
+            
+            const svg = d3.select('#chartContainer')
+                .append('svg')
+                .attr('width', width + margin.left + margin.right)
+                .attr('height', height + margin.top + margin.bottom)
+                .append('g')
+                .attr('transform', `translate(${margin.left},${margin.top})`);
+
+            const maxVal = Math.max(12, d3.max(history, d => Math.max(d.rob1, d.rob2)));
+            
+            const xScale = d3.scaleLinear()
+                .domain([0, Math.max(houses.length, history.length - 1)])
+                .range([0, width]);
+            
+            const yScale = d3.scaleLinear()
+                .domain([0, maxVal])
+                .range([height, 0]);
+
+            // X axis
+            svg.append('g')
+                .attr('transform', `translate(0,${height})`)
+                .call(d3.axisBottom(xScale).ticks(houses.length));
+            
+            // Y axis
+            svg.append('g')
+                .call(d3.axisLeft(yScale));
+            
+            // Labels
+            svg.append('text')
+                .attr('x', width / 2)
+                .attr('y', height + 35)
+                .attr('text-anchor', 'middle')
+                .text('House Index');
+            
+            // rob2 line (current max)
+            const rob2Line = d3.line()
+                .x((d, i) => xScale(i))
+                .y(d => yScale(d.rob2));
+            
+            svg.append('path')
+                .datum(history)
+                .attr('fill', 'none')
+                .attr('stroke', '#4caf50')
+                .attr('stroke-width', 3)
+                .attr('d', rob2Line);
+            
+            // rob1 line (previous max)
+            const rob1Line = d3.line()
+                .x((d, i) => xScale(i))
+                .y(d => yScale(d.rob1));
+            
+            svg.append('path')
+                .datum(history)
+                .attr('fill', 'none')
+                .attr('stroke', '#2196f3')
+                .attr('stroke-width', 2)
+                .attr('stroke-dasharray', '5,5')
+                .attr('d', rob1Line);
+            
+            // Legend
+            svg.append('circle').attr('cx', width - 100).attr('cy', 10).attr('r', 6).style('fill', '#4caf50');
+            svg.append('text').attr('x', width - 90).attr('y', 10).text('rob2 (current max)').style('font-size', '12px').attr('alignment-baseline', 'middle');
+            svg.append('circle').attr('cx', width - 100).attr('cy', 30).attr('r', 6).style('fill', '#2196f3');
+            svg.append('text').attr('x', width - 90).attr('y', 30).text('rob1 (2 back)').style('font-size', '12px').attr('alignment-baseline', 'middle');
+        }
+
+        function step() {
+            currentIndex++;
+            
+            if (currentIndex >= houses.length) {
+                document.getElementById('statusMessage').className = 'status-message success';
+                document.getElementById('statusMessage').textContent = 
+                    `✅ Done! Maximum money that can be robbed: $${rob2}`;
+                document.getElementById('stepBtn').disabled = true;
+                stopAuto();
+                return;
+            }
+
+            const num = houses[currentIndex];
+            const option1 = rob1 + num;  // rob this house
+            const option2 = rob2;         // skip this house
+            const temp = Math.max(option1, option2);
+            const robbed = option1 > option2;
+            
+            decisions.push(robbed);
+
+            document.getElementById('statusMessage').textContent = 
+                `House ${currentIndex}: Rob ($${rob1} + $${num} = $${option1}) vs Skip ($${rob2})`;
+            
+            document.getElementById('decisionDisplay').innerHTML = 
+                `<strong>At House ${currentIndex} ($${num}):</strong><br>` +
+                `Option 1 (Rob): $${rob1} + $${num} = $${option1}<br>` +
+                `Option 2 (Skip): keep $${rob2}<br>` +
+                `<strong>Decision: ${robbed ? '✅ ROB' : '❌ SKIP'} → Max = $${temp}</strong>`;
+
+            document.getElementById('tempValue').textContent = temp;
+            
+            // Update for next iteration
+            rob1 = rob2;
+            rob2 = temp;
+            
+            document.getElementById('rob1Value').textContent = rob1;
+            document.getElementById('rob2Value').textContent = rob2;
+            
+            history.push({rob1, rob2});
+            
+            renderHouses();
+            renderChart();
+        }
+
+        function toggleAuto() {
+            if (autoInterval) {
+                stopAuto();
+            } else {
+                document.getElementById('autoBtn').textContent = 'Pause';
+                autoInterval = setInterval(() => {
+                    if (currentIndex >= houses.length - 1) {
+                        step();
+                        stopAuto();
+                    } else {
+                        step();
+                    }
+                }, 1500);
+            }
+        }
+
+        function stopAuto() {
+            if (autoInterval) {
+                clearInterval(autoInterval);
+                autoInterval = null;
+            }
+            document.getElementById('autoBtn').textContent = 'Auto Run';
+        }
+
+        function reset() {
+            stopAuto();
+            rob1 = 0;
+            rob2 = 0;
+            currentIndex = -1;
+            history = [{rob1: 0, rob2: 0}];
+            decisions = [];
+            document.getElementById('stepBtn').disabled = false;
+            document.getElementById('statusMessage').className = 'status-message';
+            document.getElementById('statusMessage').textContent = 'Click "Step" or "Auto Run" to start visualization';
+            document.getElementById('rob1Value').textContent = '0';
+            document.getElementById('rob2Value').textContent = '0';
+            document.getElementById('tempValue').textContent = '-';
+            document.getElementById('decisionDisplay').textContent = 'Waiting to start...';
+            init();
+        }
+
+        init();
+    </script>
+</body>
+</html>

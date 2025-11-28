@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Valid Anagram - LeetCode 242</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="problem-info">
+            <h1><span class="problem-number">#0242</span> Valid Anagram</h1>
+            <p><strong>Problem:</strong> Given two strings s and t, return true if t is an anagram of s, and false otherwise. An anagram uses all the original letters exactly once.</p>
+            <p><strong>Pattern:</strong> Character Count / Hash Map</p>
+            <p><strong>File:</strong> 0242_valid_anagram/0242_valid_anagram.py</p>
+            <div class="problem-meta">
+                <span class="meta-tag">🔤 String</span>
+                <span class="meta-tag">📚 Stack</span>
+                <span class="meta-tag">⏱️ O(n)</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <code>python/0242_valid_anagram/0242_valid_anagram.py</code>
+            </div>
+
+        </div>
+
+        <div class="explanation-panel">
+            <h4>🧠 How It Works (Layman's Terms)</h4>
+            <p>A stack works like a <strong>pile of plates</strong> - last in, first out (LIFO):</p>
+            <ul>
+                <li><strong>Push:</strong> Add item to the top</li>
+                <li><strong>Pop:</strong> Remove and return the top item</li>
+                <li><strong>Peek:</strong> Look at top without removing</li>
+                <li><strong>Match pairs:</strong> Great for matching brackets, parentheses</li>
+            </ul>
+        </div>
+
+
+        <div class="controls">
+            <button id="stepBtn">Step</button>
+            <button id="autoBtn">Auto Run</button>
+            <button id="resetBtn">Reset</button>
+            <div class="speed-control">
+                <label for="speed">Speed:</label>
+                <input type="range" id="speed" min="100" max="2000" value="800">
+            </div>
+        </div>
+
+        <div class="status" id="status">Click "Step" or "Auto Run" to begin</div>
+
+        <div class="variables">
+            <div class="var-item">
+                <span class="var-label">String s:</span>
+                <span id="sDisplay">"anagram"</span>
+            </div>
+            <div class="var-item">
+                <span class="var-label">String t:</span>
+                <span id="tDisplay">"nagaram"</span>
+            </div>
+            <div class="var-item">
+                <span class="var-label">Current Index:</span>
+                <span id="indexDisplay">-</span>
+            </div>
+            <div class="var-item">
+                <span class="var-label">Result:</span>
+                <span id="resultDisplay">-</span>
+            </div>
+        </div>
+
+        <div class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+
+            <div class="visualization">
+            <svg id="mainSvg"></svg>
+        </div>
+
+        <div class="chart-container">
+            <h3>Character Count Array (a-z)</h3>
+            <svg id="chartSvg"></svg>
+        </div>
+
+        </div>
+
+        <div class="code-section">
+            <h3>💻 Python Solution</h3>
+            <div class="code-block">
+                <pre><span class="keyword">def</span> <span class="function">is_anagram</span>(s, t):
+    <span class="string">"""
+    Determine if t is an anagram of s using character count.
+    Time: O(n), Space: O(1) - fixed 26 letters
+    """</span>
+    <span class="keyword">if</span> <span class="function">len</span>(s) != <span class="function">len</span>(t):
+        <span class="keyword">return</span> <span class="keyword">False</span>
+    
+    count = [<span class="number">0</span>] * <span class="number">26</span>  <span class="comment"># count for each letter a-z</span>
+    
+    <span class="keyword">for</span> i <span class="keyword">in</span> <span class="function">range</span>(<span class="function">len</span>(s)):
+        count[<span class="function">ord</span>(s[i]) - <span class="function">ord</span>(<span class="string">'a'</span>)] += <span class="number">1</span>  <span class="comment"># increment for s</span>
+        count[<span class="function">ord</span>(t[i]) - <span class="function">ord</span>(<span class="string">'a'</span>)] -= <span class="number">1</span>  <span class="comment"># decrement for t</span>
+    
+    <span class="comment"># If all counts are 0, it's an anagram</span>
+    <span class="keyword">for</span> i <span class="keyword">in</span> <span class="function">range</span>(<span class="number">26</span>):
+        <span class="keyword">if</span> count[i] != <span class="number">0</span>:
+            <span class="keyword">return</span> <span class="keyword">False</span>
+    <span class="keyword">return</span> <span class="keyword">True</span></pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Visualization state
+        const s = "anagram";
+        const t = "nagaram";
+        let currentIndex = -1;
+        let count = new Array(26).fill(0);
+        let phase = "counting"; // "counting" or "checking"
+        let checkIndex = 0;
+        let autoRunning = false;
+        let autoTimer = null;
+
+        // SVG setup for strings
+        const width = 800;
+        const height = 180;
+        const svg = d3.select("#mainSvg")
+            .attr("width", width)
+            .attr("height", height);
+
+        // Chart setup
+        const chartWidth = 800;
+        const chartHeight = 200;
+        const chartSvg = d3.select("#chartSvg")
+            .attr("width", chartWidth)
+            .attr("height", chartHeight);
+
+        const cellWidth = 45;
+        const cellHeight = 40;
+        const startX = (width - Math.max(s.length, t.length) * cellWidth) / 2;
+
+        function drawStrings() {
+            svg.selectAll("*").remove();
+
+            // String s
+            svg.append("text")
+                .attr("x", startX - 40)
+                .attr("y", 45)
+                .attr("class", "label")
+                .text("s:");
+
+            const sCells = svg.selectAll(".s-cell")
+                .data(s.split(""))
+                .enter()
+                .append("g")
+                .attr("transform", (d, i) => `translate(${startX + i * cellWidth}, 20)`);
+
+            sCells.append("rect")
+                .attr("width", cellWidth - 4)
+                .attr("height", cellHeight)
+                .attr("rx", 5)
+                .attr("class", "cell s-cell-rect")
+                .attr("id", (d, i) => `s-cell-${i}`);
+
+            sCells.append("text")
+                .attr("x", (cellWidth - 4) / 2)
+                .attr("y", cellHeight / 2)
+                .attr("dy", ".35em")
+                .attr("text-anchor", "middle")
+                .attr("class", "cell-text")
+                .text(d => d);
+
+            // String t
+            svg.append("text")
+                .attr("x", startX - 40)
+                .attr("y", 115)
+                .attr("class", "label")
+                .text("t:");
+
+            const tCells = svg.selectAll(".t-cell")
+                .data(t.split(""))
+                .enter()
+                .append("g")
+                .attr("transform", (d, i) => `translate(${startX + i * cellWidth}, 90)`);
+
+            tCells.append("rect")
+                .attr("width", cellWidth - 4)
+                .attr("height", cellHeight)
+                .attr("rx", 5)
+                .attr("class", "cell t-cell-rect")
+                .attr("id", (d, i) => `t-cell-${i}`);
+
+            tCells.append("text")
+                .attr("x", (cellWidth - 4) / 2)
+                .attr("y", cellHeight / 2)
+                .attr("dy", ".35em")
+                .attr("text-anchor", "middle")
+                .attr("class", "cell-text")
+                .text(d => d);
+        }
+
+        function drawChart() {
+            chartSvg.selectAll("*").remove();
+
+            const barWidth = 25;
+            const barSpacing = 5;
+            const maxHeight = 80;
+            const baseY = 140;
+            const chartStartX = (chartWidth - 26 * (barWidth + barSpacing)) / 2;
+
+            // Draw bars for each letter
+            for (let i = 0; i < 26; i++) {
+                const letter = String.fromCharCode(97 + i);
+                const x = chartStartX + i * (barWidth + barSpacing);
+                
+                // Bar (can go up or down from baseline)
+                const barHeight = Math.abs(count[i]) * 20;
+                const barY = count[i] >= 0 ? baseY - barHeight : baseY;
+                
+                chartSvg.append("rect")
+                    .attr("x", x)
+                    .attr("y", barY)
+                    .attr("width", barWidth)
+                    .attr("height", Math.max(barHeight, 2))
+                    .attr("class", count[i] === 0 ? "bar zero" : (count[i] > 0 ? "bar positive" : "bar negative"))
+                    .attr("rx", 2);
+
+                // Count value
+                if (count[i] !== 0) {
+                    chartSvg.append("text")
+                        .attr("x", x + barWidth / 2)
+                        .attr("y", count[i] >= 0 ? barY - 5 : barY + barHeight + 15)
+                        .attr("text-anchor", "middle")
+                        .attr("class", "count-text")
+                        .text(count[i]);
+                }
+
+                // Letter label
+                chartSvg.append("text")
+                    .attr("x", x + barWidth / 2)
+                    .attr("y", 175)
+                    .attr("text-anchor", "middle")
+                    .attr("class", "letter-label")
+                    .text(letter);
+            }
+
+            // Baseline
+            chartSvg.append("line")
+                .attr("x1", chartStartX - 10)
+                .attr("y1", baseY)
+                .attr("x2", chartStartX + 26 * (barWidth + barSpacing))
+                .attr("y2", baseY)
+                .attr("class", "baseline");
+        }
+
+        function step() {
+            if (phase === "counting") {
+                currentIndex++;
+                if (currentIndex >= s.length) {
+                    phase = "checking";
+                    checkIndex = 0;
+                    document.getElementById("status").textContent = "Counting done! Now checking if all counts are zero...";
+                    highlightCode("for i in range(26)");
+                    return true;
+                }
+
+                const sChar = s[currentIndex];
+                const tChar = t[currentIndex];
+                const sIdx = sChar.charCodeAt(0) - 97;
+                const tIdx = tChar.charCodeAt(0) - 97;
+
+                count[sIdx]++;
+                count[tIdx]--;
+
+                // Update UI
+                document.getElementById("indexDisplay").textContent = currentIndex;
+                
+                // Highlight current cells
+                svg.selectAll(".s-cell-rect, .t-cell-rect").attr("class", d => "cell");
+                svg.select(`#s-cell-${currentIndex}`).attr("class", "cell current");
+                svg.select(`#t-cell-${currentIndex}`).attr("class", "cell current");
+
+                document.getElementById("status").textContent = 
+                    `Index ${currentIndex}: s[${currentIndex}]='${sChar}' (count[${sChar}]++), t[${currentIndex}]='${tChar}' (count[${tChar}]--)`;
+                
+                highlightCode("count[ord(s[i])");
+                drawChart();
+                return true;
+            } else {
+                // Checking phase
+                while (checkIndex < 26 && count[checkIndex] === 0) {
+                    checkIndex++;
+                }
+
+                if (checkIndex < 26) {
+                    // Found non-zero - not an anagram
+                    const letter = String.fromCharCode(97 + checkIndex);
+                    document.getElementById("status").textContent = 
+                        `count['${letter}'] = ${count[checkIndex]} ≠ 0 → NOT an anagram!`;
+                    document.getElementById("resultDisplay").textContent = "false";
+                    highlightCode("return False");
+                    return false;
+                } else {
+                    // All zeros - is an anagram
+                    document.getElementById("status").textContent = "All counts are zero → It's an anagram!";
+                    document.getElementById("resultDisplay").textContent = "true";
+                    highlightCode("return True");
+                    
+                    // Highlight all cells green
+                    svg.selectAll(".s-cell-rect, .t-cell-rect").attr("class", "cell found");
+                    return false;
+                }
+            }
+        }
+
+        function highlightCode(text) {
+            const codeDisplay = document.getElementById("codeDisplay");
+            const code = codeDisplay.textContent;
+            const highlighted = code.replace(
+                new RegExp(`(.*${text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}.*)`),
+                '<span class="highlight-line">$1</span>'
+            );
+            codeDisplay.innerHTML = highlighted;
+        }
+
+        function reset() {
+            currentIndex = -1;
+            count = new Array(26).fill(0);
+            phase = "counting";
+            checkIndex = 0;
+            autoRunning = false;
+            if (autoTimer) {
+                clearInterval(autoTimer);
+                autoTimer = null;
+            }
+            
+            document.getElementById("indexDisplay").textContent = "-";
+            document.getElementById("resultDisplay").textContent = "-";
+            document.getElementById("status").textContent = 'Click "Step" or "Auto Run" to begin';
+            document.getElementById("autoBtn").textContent = "Auto Run";
+            
+            drawStrings();
+            drawChart();
+            document.getElementById("codeDisplay").innerHTML = document.getElementById("codeDisplay").textContent;
+        }
+
+        function autoRun() {
+            if (autoRunning) {
+                autoRunning = false;
+                clearInterval(autoTimer);
+                autoTimer = null;
+                document.getElementById("autoBtn").textContent = "Auto Run";
+            } else {
+                autoRunning = true;
+                document.getElementById("autoBtn").textContent = "Pause";
+                const speed = 2100 - document.getElementById("speed").value;
+                autoTimer = setInterval(() => {
+                    if (!step()) {
+                        autoRunning = false;
+                        clearInterval(autoTimer);
+                        autoTimer = null;
+                        document.getElementById("autoBtn").textContent = "Auto Run";
+                    }
+                }, speed);
+            }
+        }
+
+        // Event listeners
+        document.getElementById("stepBtn").addEventListener("click", step);
+        document.getElementById("autoBtn").addEventListener("click", autoRun);
+        document.getElementById("resetBtn").addEventListener("click", reset);
+
+        // Initialize
+        drawStrings();
+        drawChart();
+    </script>
+
+    <style>
+        .chart-container {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+        .chart-container h3 {
+            margin: 0 0 10px 0;
+            color: #333;
+        }
+        .cell {
+            fill: #e3f2fd;
+            stroke: #1976d2;
+            stroke-width: 2;
+        }
+        .cell.current {
+            fill: #fff3e0;
+            stroke: #f57c00;
+            stroke-width: 3;
+        }
+        .cell.found {
+            fill: #c8e6c9;
+            stroke: #388e3c;
+            stroke-width: 3;
+        }
+        .cell-text {
+            font-size: 18px;
+            font-weight: bold;
+            fill: #333;
+        }
+        .label {
+            font-size: 18px;
+            font-weight: bold;
+            fill: #333;
+        }
+        .bar.zero {
+            fill: #e0e0e0;
+        }
+        .bar.positive {
+            fill: #4caf50;
+        }
+        .bar.negative {
+            fill: #f44336;
+        }
+        .baseline {
+            stroke: #333;
+            stroke-width: 2;
+        }
+        .count-text {
+            font-size: 12px;
+            font-weight: bold;
+            fill: #333;
+        }
+        .letter-label {
+            font-size: 11px;
+            fill: #666;
+        }
+    </style>
+</body>
+</html>

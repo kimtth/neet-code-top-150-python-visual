@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LC 704: Binary Search - Algorithm Visualization</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="problem-info">
+            <h1><span class="problem-number">#704</span> Binary Search</h1>
+            <p>Given a sorted array of integers and a target, return the index of the target if found, otherwise return -1. Must run in O(log n) time.</p>
+            <div class="problem-meta">
+                <span class="meta-tag">📁 Array</span>
+                <span class="meta-tag">🔍 Binary Search</span>
+                <span class="meta-tag">⏱️ O(log n)</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <code>python/0704_binary_search/0704_binary_search.py</code>
+            </div>
+            </div>
+
+        <div class="explanation-panel">
+            <h4>🧠 How It Works (Layman's Terms)</h4>
+            <p>Imagine looking for a word in a dictionary - you don't start from page 1:</p>
+            <ul>
+                <li><strong>Open to middle:</strong> Check if target is before or after the middle</li>
+                <li><strong>Too small:</strong> Target is in the right half → ignore left half</li>
+                <li><strong>Too big:</strong> Target is in the left half → ignore right half</li>
+                <li><strong>Found:</strong> Middle equals target → return index</li>
+                <li><strong>Each step halves the search space → O(log n)!</strong></li>
+            </ul>
+        </div>
+
+
+        <div class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+            
+            <div class="controls">
+                <button class="btn btn-primary" id="stepBtn" onclick="step()">Step</button>
+                <button class="btn btn-success" id="autoBtn" onclick="toggleAuto()">Auto Run</button>
+                <button class="btn btn-warning" onclick="reset()">Reset</button>
+            </div>
+
+            <div class="info-box secondary" style="margin-bottom: 20px;">
+                🎯 Target: <strong id="targetDisplay">9</strong>
+            </div>
+
+            <div class="status-message" id="statusMessage">
+                Click "Step" or "Auto Run" to start visualization
+            </div>
+
+            <div class="variable-display">
+                <div class="variable-box">
+                    <div class="variable-name">Left</div>
+                    <div class="variable-value" id="leftVal" style="color: #ff5722;">0</div>
+                </div>
+                <div class="variable-box">
+                    <div class="variable-name">Right</div>
+                    <div class="variable-value" id="rightVal" style="color: #3f51b5;">5</div>
+                </div>
+                <div class="variable-box">
+                    <div class="variable-name">Mid</div>
+                    <div class="variable-value" id="midVal" style="color: #4caf50;">-</div>
+                </div>
+                <div class="variable-box">
+                    <div class="variable-name">nums[mid]</div>
+                    <div class="variable-value" id="midNumVal">-</div>
+                </div>
+            </div>
+
+            <div class="array-section">
+                <div class="array-label">📥 Sorted Array:</div>
+                <div class="array-container" id="arrayContainer"></div>
+            </div>
+
+            <div class="info-box" id="resultBox" style="display: none; margin-top: 20px;">
+                Result will appear here
+            </div>
+        </div>
+
+        <div class="code-section">
+            <h3>💻 Python Solution</h3>
+            <div class="code-block">
+                <pre><span class="keyword">def</span> <span class="function">search</span>(self, nums: List[<span class="class-name">int</span>], target: <span class="class-name">int</span>) -> <span class="class-name">int</span>:
+    left, right = <span class="number">0</span>, <span class="function">len</span>(nums) - <span class="number">1</span>
+    
+    <span class="keyword">while</span> left <= right:
+        mid = left + (right - left) // <span class="number">2</span>
+        
+        <span class="keyword">if</span> nums[mid] == target:
+            <span class="keyword">return</span> mid
+        <span class="keyword">elif</span> nums[mid] < target:
+            left = mid + <span class="number">1</span>
+        <span class="keyword">else</span>:
+            right = mid - <span class="number">1</span>
+            
+    <span class="keyword">return</span> -<span class="number">1</span></pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const nums = [-1, 0, 3, 5, 9, 12];
+        const target = 9;
+        let left = 0;
+        let right = nums.length - 1;
+        let mid = -1;
+        let found = false;
+        let autoInterval = null;
+
+        document.getElementById('targetDisplay').textContent = target;
+
+        function init() {
+            renderArray();
+        }
+
+        function renderArray() {
+            const container = document.getElementById('arrayContainer');
+            container.innerHTML = '';
+            
+            nums.forEach((num, idx) => {
+                const box = document.createElement('div');
+                box.className = 'array-box';
+                box.id = `arr-${idx}`;
+                box.innerHTML = `${num}<span class="index-label">[${idx}]</span>`;
+                
+                // Gray out elements outside current range
+                if (idx < left || idx > right) {
+                    box.style.background = '#e0e0e0';
+                    box.style.opacity = '0.5';
+                }
+                
+                // Highlight mid
+                if (idx === mid) {
+                    box.style.background = '#c8e6c9';
+                    box.style.borderColor = '#4caf50';
+                    box.style.borderWidth = '3px';
+                }
+                
+                // Left pointer
+                if (idx === left && idx !== mid) {
+                    box.style.borderColor = '#ff5722';
+                    box.style.borderWidth = '3px';
+                }
+                
+                // Right pointer
+                if (idx === right && idx !== mid) {
+                    box.style.borderColor = '#3f51b5';
+                    box.style.borderWidth = '3px';
+                }
+                
+                // Found!
+                if (found && idx === mid) {
+                    box.classList.add('complete');
+                }
+                
+                container.appendChild(box);
+            });
+        }
+
+        function step() {
+            if (found || left > right) {
+                if (found) {
+                    document.getElementById('statusMessage').className = 'status-message success';
+                    document.getElementById('statusMessage').textContent = `✅ Found ${target} at index ${mid}!`;
+                    document.getElementById('resultBox').style.display = 'block';
+                    document.getElementById('resultBox').className = 'info-box secondary';
+                    document.getElementById('resultBox').textContent = `Return ${mid}`;
+                } else {
+                    document.getElementById('statusMessage').className = 'status-message warning';
+                    document.getElementById('statusMessage').textContent = `❌ ${target} not found in array!`;
+                    document.getElementById('resultBox').style.display = 'block';
+                    document.getElementById('resultBox').className = 'info-box highlight';
+                    document.getElementById('resultBox').textContent = 'Return -1';
+                }
+                document.getElementById('stepBtn').disabled = true;
+                stopAuto();
+                return;
+            }
+
+            // Calculate mid
+            mid = left + Math.floor((right - left) / 2);
+            
+            document.getElementById('leftVal').textContent = left;
+            document.getElementById('rightVal').textContent = right;
+            document.getElementById('midVal').textContent = mid;
+            document.getElementById('midNumVal').textContent = nums[mid];
+
+            if (nums[mid] === target) {
+                found = true;
+                document.getElementById('statusMessage').textContent = 
+                    `mid = ${mid}, nums[${mid}] = ${nums[mid]} = target. FOUND!`;
+            } else if (nums[mid] < target) {
+                document.getElementById('statusMessage').textContent = 
+                    `mid = ${mid}, nums[${mid}] = ${nums[mid]} < ${target}. Search right half (left = ${mid + 1})`;
+                left = mid + 1;
+            } else {
+                document.getElementById('statusMessage').textContent = 
+                    `mid = ${mid}, nums[${mid}] = ${nums[mid]} > ${target}. Search left half (right = ${mid - 1})`;
+                right = mid - 1;
+            }
+
+            renderArray();
+        }
+
+        function toggleAuto() {
+            if (autoInterval) {
+                stopAuto();
+            } else {
+                document.getElementById('autoBtn').textContent = 'Pause';
+                autoInterval = setInterval(() => {
+                    if (found || left > right) {
+                        step();
+                        stopAuto();
+                    } else {
+                        step();
+                    }
+                }, 1200);
+            }
+        }
+
+        function stopAuto() {
+            if (autoInterval) {
+                clearInterval(autoInterval);
+                autoInterval = null;
+            }
+            document.getElementById('autoBtn').textContent = 'Auto Run';
+        }
+
+        function reset() {
+            stopAuto();
+            left = 0;
+            right = nums.length - 1;
+            mid = -1;
+            found = false;
+            document.getElementById('stepBtn').disabled = false;
+            document.getElementById('statusMessage').className = 'status-message';
+            document.getElementById('statusMessage').textContent = 'Click "Step" or "Auto Run" to start visualization';
+            document.getElementById('leftVal').textContent = '0';
+            document.getElementById('rightVal').textContent = nums.length - 1;
+            document.getElementById('midVal').textContent = '-';
+            document.getElementById('midNumVal').textContent = '-';
+            document.getElementById('resultBox').style.display = 'none';
+            init();
+        }
+
+        init();
+    </script>
+</body>
+</html>

@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LC 739: Daily Temperatures - Algorithm Visualization</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="problem-info">
+            <h1><span class="problem-number">#739</span> Daily Temperatures</h1>
+            <p>Given an array of daily temperatures, return an array where answer[i] is the number of days you have to wait after day i to get a warmer temperature. If no future day is warmer, answer[i] = 0.</p>
+            <div class="problem-meta">
+                <span class="meta-tag">📚 Stack</span>
+                <span class="meta-tag">🔄 Monotonic Stack</span>
+                <span class="meta-tag">⏱️ O(n)</span>
+                <span class="meta-tag">💾 O(n)</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <code>python/0739 Daily Temperatures/0739_daily_temperatures.py</code>
+            </div>
+            </div>
+
+        <div class="explanation-panel">
+            <h4>🧠 How It Works (Layman's Terms)</h4>
+            <p>Think of it like people waiting in line for a warm day:</p>
+            <ul>
+                <li><strong>Monotonic Stack:</strong> We keep a stack of days "waiting" for a warmer day</li>
+                <li><strong>When we find a warmer day:</strong> Pop all cooler days and calculate how long they waited</li>
+                <li><strong>Stack stores:</strong> (temperature, day index) pairs</li>
+                <li><strong>Days left in stack:</strong> Never found a warmer day → answer stays 0</li>
+            </ul>
+        </div>
+
+
+        <div class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+            
+            <div class="controls">
+                <button class="btn btn-primary" onclick="step()">Step</button>
+                <button class="btn btn-success" onclick="autoRun()">Auto Run</button>
+                <button class="btn" style="background: #607d8b; color: white;" onclick="reset()">Reset</button>
+            </div>
+
+            <div class="status-message" id="statusMessage">
+                Click Step to process temperatures one by one
+            </div>
+
+            <div style="margin-top: 20px;">
+                <h4 style="margin-bottom: 10px;">🌡️ Temperatures</h4>
+                <svg id="tempChart" width="100%" height="200"></svg>
+            </div>
+
+            <div style="display: flex; gap: 30px; flex-wrap: wrap; margin-top: 20px;">
+                <div style="flex: 1; min-width: 250px;">
+                    <h4 style="margin-bottom: 10px;">📚 Stack (waiting for warmer day)</h4>
+                    <div id="stackContainer" style="display: flex; flex-direction: column-reverse; gap: 5px; padding: 20px; background: #f5f5f5; border-radius: 12px; min-height: 200px;">
+                    </div>
+                </div>
+                <div style="flex: 1; min-width: 250px;">
+                    <h4 style="margin-bottom: 10px;">📊 Result Array</h4>
+                    <div id="resultContainer" style="display: flex; flex-wrap: wrap; gap: 10px; padding: 20px; background: #f5f5f5; border-radius: 12px; min-height: 100px;">
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="code-section">
+            <h3>💻 Python Solution</h3>
+            <div class="code-block">
+                <pre><span class="keyword">def</span> <span class="function">daily_temperatures</span>(temperatures):
+    res = [<span class="number">0</span>] * <span class="function">len</span>(temperatures)
+    stack = []  <span class="comment"># Stores (temp, index)</span>
+
+    <span class="keyword">for</span> i, t <span class="keyword">in</span> <span class="function">enumerate</span>(temperatures):
+        <span class="comment"># Pop all cooler temperatures from stack</span>
+        <span class="keyword">while</span> stack <span class="keyword">and</span> t > stack[<span class="number">-1</span>][<span class="number">0</span>]:
+            stack_temp, stack_idx = stack.<span class="function">pop</span>()
+            res[stack_idx] = i - stack_idx  <span class="comment"># Days to wait</span>
+        stack.<span class="function">append</span>((t, i))
+    
+    <span class="keyword">return</span> res  <span class="comment"># Remaining stack elements stay 0</span></pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const temps = [73, 74, 75, 71, 69, 72, 76, 73];
+        let result = new Array(temps.length).fill(0);
+        let stack = []; // {temp, idx}
+        let currentIdx = 0;
+        let isRunning = false;
+
+        const svg = d3.select("#tempChart");
+        const margin = { top: 20, right: 30, bottom: 40, left: 50 };
+        let width, height;
+
+        function initChart() {
+            const container = svg.node().parentElement;
+            width = container.clientWidth - margin.left - margin.right;
+            height = 200 - margin.top - margin.bottom;
+
+            svg.attr("viewBox", `0 0 ${width + margin.left + margin.right} 200`);
+
+            svg.selectAll("*").remove();
+
+            const g = svg.append("g")
+                .attr("transform", `translate(${margin.left},${margin.top})`);
+
+            const xScale = d3.scaleBand()
+                .domain(temps.map((_, i) => i))
+                .range([0, width])
+                .padding(0.2);
+
+            const yScale = d3.scaleLinear()
+                .domain([60, 80])
+                .range([height, 0]);
+
+            // Bars
+            g.selectAll(".bar")
+                .data(temps)
+                .enter()
+                .append("rect")
+                .attr("class", "bar")
+                .attr("x", (d, i) => xScale(i))
+                .attr("y", d => yScale(d))
+                .attr("width", xScale.bandwidth())
+                .attr("height", d => height - yScale(d))
+                .attr("fill", "#90caf9")
+                .attr("rx", 4);
+
+            // Temperature labels
+            g.selectAll(".temp-label")
+                .data(temps)
+                .enter()
+                .append("text")
+                .attr("class", "temp-label")
+                .attr("x", (d, i) => xScale(i) + xScale.bandwidth() / 2)
+                .attr("y", d => yScale(d) - 5)
+                .attr("text-anchor", "middle")
+                .attr("font-size", "12px")
+                .attr("fill", "#333")
+                .text(d => d + "°");
+
+            // Day labels
+            g.selectAll(".day-label")
+                .data(temps)
+                .enter()
+                .append("text")
+                .attr("class", "day-label")
+                .attr("x", (d, i) => xScale(i) + xScale.bandwidth() / 2)
+                .attr("y", height + 20)
+                .attr("text-anchor", "middle")
+                .attr("font-size", "12px")
+                .attr("fill", "#666")
+                .text((d, i) => `Day ${i}`);
+
+            // Current pointer
+            g.append("polygon")
+                .attr("id", "pointer")
+                .attr("points", "0,-10 -8,0 8,0")
+                .attr("fill", "#f44336")
+                .attr("opacity", 0);
+        }
+
+        function updateChart() {
+            const g = svg.select("g");
+            const xScale = d3.scaleBand()
+                .domain(temps.map((_, i) => i))
+                .range([0, width])
+                .padding(0.2);
+
+            const yScale = d3.scaleLinear()
+                .domain([60, 80])
+                .range([height, 0]);
+
+            // Update bar colors
+            g.selectAll(".bar")
+                .transition()
+                .duration(300)
+                .attr("fill", (d, i) => {
+                    if (i === currentIdx) return "#f44336"; // Current
+                    if (stack.some(s => s.idx === i)) return "#ff9800"; // In stack
+                    if (result[i] > 0) return "#4caf50"; // Resolved
+                    if (i < currentIdx) return "#90caf9"; // Passed (no warmer)
+                    return "#e0e0e0"; // Not processed
+                });
+
+            // Update pointer
+            if (currentIdx < temps.length) {
+                g.select("#pointer")
+                    .attr("opacity", 1)
+                    .transition()
+                    .duration(300)
+                    .attr("transform", `translate(${xScale(currentIdx) + xScale.bandwidth() / 2}, ${height + 35})`);
+            } else {
+                g.select("#pointer").attr("opacity", 0);
+            }
+        }
+
+        function renderStack() {
+            const container = document.getElementById('stackContainer');
+            
+            if (stack.length === 0) {
+                container.innerHTML = '<div style="color: #999; text-align: center;">Empty - no days waiting</div>';
+                return;
+            }
+
+            container.innerHTML = stack.map((item, i) => {
+                const isTop = i === stack.length - 1;
+                return `
+                    <div style="display: flex; align-items: center; justify-content: space-between; 
+                                padding: 10px 15px; background: ${isTop ? '#ff9800' : '#fff'}; 
+                                border: 2px solid ${isTop ? '#f57c00' : '#ddd'}; border-radius: 8px;
+                                color: ${isTop ? 'white' : '#333'};">
+                        <span>Day ${item.idx}: <strong>${item.temp}°</strong></span>
+                        <span style="font-size: 0.8em; opacity: 0.8;">waiting...</span>
+                        ${isTop ? '<span>← TOP</span>' : ''}
+                    </div>
+                `;
+            }).reverse().join('');
+        }
+
+        function renderResult() {
+            const container = document.getElementById('resultContainer');
+            container.innerHTML = result.map((r, i) => `
+                <div style="display: flex; flex-direction: column; align-items: center; padding: 10px;
+                            background: ${r > 0 ? '#e8f5e9' : (i < currentIdx ? '#ffebee' : '#fff')}; 
+                            border: 2px solid ${r > 0 ? '#4caf50' : '#ddd'}; border-radius: 8px; min-width: 50px;">
+                    <span style="font-size: 0.8em; color: #666;">Day ${i}</span>
+                    <strong style="font-size: 1.2em; color: ${r > 0 ? '#4caf50' : '#999'};">${r}</strong>
+
+        </div>
+            `).join('');
+        }
+
+        function step() {
+            if (currentIdx >= temps.length) {
+                document.getElementById('statusMessage').textContent = 
+                    `Done! Days in stack never found warmer temperature → stay 0`;
+                return;
+            }
+
+            const t = temps[currentIdx];
+            let message = `Day ${currentIdx}: ${t}°. `;
+
+            // Pop all cooler temperatures
+            let popped = [];
+            while (stack.length > 0 && t > stack[stack.length - 1].temp) {
+                const item = stack.pop();
+                result[item.idx] = currentIdx - item.idx;
+                popped.push(`Day ${item.idx} waited ${result[item.idx]} days`);
+            }
+
+            if (popped.length > 0) {
+                message += `Found warmer! ${popped.join(', ')}. `;
+            }
+
+            stack.push({ temp: t, idx: currentIdx });
+            message += `Push Day ${currentIdx} to stack.`;
+
+            document.getElementById('statusMessage').textContent = message;
+            currentIdx++;
+
+            updateChart();
+            renderStack();
+            renderResult();
+        }
+
+        function autoRun() {
+            if (isRunning) return;
+            isRunning = true;
+
+            const interval = setInterval(() => {
+                if (currentIdx >= temps.length) {
+                    clearInterval(interval);
+                    isRunning = false;
+                    document.getElementById('statusMessage').textContent = 
+                        `Complete! Result: [${result.join(', ')}]`;
+                    return;
+                }
+                step();
+            }, 1200);
+        }
+
+        function reset() {
+            result = new Array(temps.length).fill(0);
+            stack = [];
+            currentIdx = 0;
+            isRunning = false;
+            document.getElementById('statusMessage').textContent = 
+                'Click Step to process temperatures one by one';
+            initChart();
+            renderStack();
+            renderResult();
+        }
+
+        initChart();
+        renderStack();
+        renderResult();
+
+        window.addEventListener('resize', () => {
+            initChart();
+            updateChart();
+        });
+    </script>
+</body>
+</html>

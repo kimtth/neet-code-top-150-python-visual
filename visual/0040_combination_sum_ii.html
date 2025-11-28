@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>040 - Combination Sum II</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="problem-info">
+            <h1><span class="problem-number">#040</span> Combination Sum II</h1>
+            <p>
+                Find all unique combinations where numbers sum to target. Each number can only be used once.
+                Sort array first, then skip duplicates at same recursion level.
+            </p>
+            <div class="problem-meta">
+                <span class="meta-tag">📊 Array</span>
+                <span class="meta-tag">🔄 Backtracking</span>
+                <span class="meta-tag">⏱️ O(2ⁿ)</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <code>python/0040_combination_sum_ii/0040_combination_sum_ii.py</code>
+            </div>
+
+        </div>
+
+        <div class="explanation-panel">
+            <h4>🧠 How It Works (Layman's Terms)</h4>
+            <p>Backtracking <strong>explores all possibilities</strong> like solving a maze:</p>
+            <ul>
+                <li><strong>Choose:</strong> Make a decision</li>
+                <li><strong>Explore:</strong> Recursively continue</li>
+                <li><strong>Validate:</strong> Check if path is valid</li>
+                <li><strong>Backtrack:</strong> Undo choice if stuck, try another</li>
+            </ul>
+        </div>
+
+
+        <section class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+            <div class="controls">
+                <button id="autoRunBtn" class="btn">▶ Auto Run</button>
+                <button id="stepBtn" class="btn btn-success">Step</button>
+                <button id="resetBtn" class="btn btn-danger">Reset</button>
+            </div>
+            <div class="status" id="status">Click Auto Run to find combinations summing to 8</div>
+            <svg id="visualization"></svg>
+        </section>
+
+        <section class="code-section">
+            <h3>💻 Python Solution</h3>
+            <div class="code-block">
+                <pre><span class="keyword">def</span> <span class="function">combinationSum2</span>(candidates, target):
+    candidates.<span class="function">sort</span>()  <span class="comment"># Sort to handle duplicates</span>
+    result = []
+    
+    <span class="keyword">def</span> <span class="function">backtrack</span>(start, path, remaining):
+        <span class="keyword">if</span> remaining == <span class="number">0</span>:
+            result.<span class="function">append</span>(path[:])
+            <span class="keyword">return</span>
+        <span class="keyword">if</span> remaining < <span class="number">0</span>:
+            <span class="keyword">return</span>
+        
+        <span class="keyword">for</span> i <span class="keyword">in</span> <span class="function">range</span>(start, <span class="function">len</span>(candidates)):
+            <span class="comment"># Skip duplicates at same level</span>
+            <span class="keyword">if</span> i > start <span class="keyword">and</span> candidates[i] == candidates[i-<span class="number">1</span>]:
+                <span class="keyword">continue</span>
+            <span class="keyword">if</span> candidates[i] > remaining:
+                <span class="keyword">break</span>  <span class="comment"># Pruning</span>
+            
+            path.<span class="function">append</span>(candidates[i])
+            <span class="function">backtrack</span>(i + <span class="number">1</span>, path, remaining - candidates[i])
+            path.<span class="function">pop</span>()
+    
+    <span class="function">backtrack</span>(<span class="number">0</span>, [], target)
+    <span class="keyword">return</span> result</pre>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        const width = 900;
+        const height = 600;
+
+        const svg = d3.select("#visualization")
+            .attr("width", width)
+            .attr("height", height);
+
+        const candidates = [10, 1, 2, 7, 6, 1, 5];
+        const target = 8;
+        let sortedCandidates = [];
+        let result = [];
+        let currentPath = [];
+        let callStack = [];
+        let treeNodes = [];
+        let treeEdges = [];
+        let animationTimer = null;
+        let skippedEdges = [];
+
+        function reset() {
+            sortedCandidates = [...candidates].sort((a, b) => a - b);
+            result = [];
+            currentPath = [];
+            treeNodes = [];
+            treeEdges = [];
+            skippedEdges = [];
+            
+            // Root node
+            treeNodes.push({
+                id: 0,
+                path: [],
+                remaining: target,
+                depth: 0,
+                x: 0,
+                y: 0
+            });
+            
+            // Initialize with root call
+            callStack = [{ start: 0, path: [], remaining: target, depth: 0, parentIdx: 0 }];
+            
+            if (animationTimer) clearInterval(animationTimer);
+            document.getElementById("status").textContent = 
+                `Finding combinations from [${sortedCandidates.join(', ')}] that sum to ${target}`;
+            render();
+        }
+
+        function render() {
+            svg.selectAll("*").remove();
+
+            // Draw input
+            drawInput();
+
+            // Draw tree
+            drawTree();
+
+            // Draw results
+            drawResults();
+        }
+
+        function drawInput() {
+            svg.append("text")
+                .attr("x", 30)
+                .attr("y", 30)
+                .attr("font-size", "14px")
+                .attr("font-weight", "bold")
+                .attr("fill", "#1e293b")
+                .text(`Sorted Candidates: [${sortedCandidates.join(', ')}], Target: ${target}`);
+
+            // Draw current path
+            svg.append("text")
+                .attr("x", 500)
+                .attr("y", 30)
+                .attr("font-size", "14px")
+                .attr("font-weight", "bold")
+                .attr("fill", "#1e293b")
+                .text(`Current Path: [${currentPath.join(', ')}]`);
+
+            const sum = currentPath.reduce((a, b) => a + b, 0);
+            svg.append("text")
+                .attr("x", 500)
+                .attr("y", 50)
+                .attr("font-size", "12px")
+                .attr("fill", "#64748b")
+                .text(`Sum: ${sum}, Remaining: ${target - sum}`);
+        }
+
+        function drawTree() {
+            // Calculate positions using BFS
+            const levels = {};
+            treeNodes.forEach(node => {
+                if (!levels[node.depth]) levels[node.depth] = [];
+                levels[node.depth].push(node);
+            });
+
+            Object.entries(levels).forEach(([depth, nodes]) => {
+                const d = parseInt(depth);
+                const y = 80 + d * 70;
+                const spacing = Math.min(100, (width - 100) / Math.max(nodes.length, 1));
+                const startX = (width - (nodes.length - 1) * spacing) / 2;
+                
+                nodes.forEach((node, idx) => {
+                    node.x = startX + idx * spacing;
+                    node.y = y;
+                });
+            });
+
+            // Draw edges
+            treeEdges.forEach(edge => {
+                const from = treeNodes[edge.from];
+                const to = treeNodes[edge.to];
+                if (!from || !to) return;
+
+                svg.append("line")
+                    .attr("x1", from.x)
+                    .attr("y1", from.y + 15)
+                    .attr("x2", to.x)
+                    .attr("y2", to.y - 15)
+                    .attr("stroke", edge.skipped ? "#fca5a5" : "#cbd5e1")
+                    .attr("stroke-width", edge.skipped ? 2 : 1.5)
+                    .attr("stroke-dasharray", edge.skipped ? "5,5" : "none");
+
+                // Edge label
+                const midX = (from.x + to.x) / 2;
+                const midY = (from.y + 15 + to.y - 15) / 2;
+
+                svg.append("circle")
+                    .attr("cx", midX)
+                    .attr("cy", midY)
+                    .attr("r", 12)
+                    .attr("fill", edge.skipped ? "#fee2e2" : "#dbeafe");
+
+                svg.append("text")
+                    .attr("x", midX)
+                    .attr("y", midY + 4)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "10px")
+                    .attr("fill", edge.skipped ? "#ef4444" : "#1e293b")
+                    .text(edge.skipped ? "×" : `+${edge.value}`);
+            });
+
+            // Draw nodes
+            treeNodes.forEach((node, idx) => {
+                if (idx === 0) return; // Skip root in display
+                
+                const isCurrent = JSON.stringify(node.path) === JSON.stringify(currentPath);
+                const isResult = result.some(r => JSON.stringify(r) === JSON.stringify(node.path));
+                const isPruned = node.remaining < 0;
+
+                svg.append("rect")
+                    .attr("x", node.x - 25)
+                    .attr("y", node.y - 15)
+                    .attr("width", 50)
+                    .attr("height", 30)
+                    .attr("rx", 6)
+                    .attr("fill", () => {
+                        if (isResult) return "#bbf7d0";
+                        if (isCurrent) return "#fef3c7";
+                        if (isPruned) return "#fee2e2";
+                        return "#f8fafc";
+                    })
+                    .attr("stroke", () => {
+                        if (isResult) return "#10b981";
+                        if (isCurrent) return "#f59e0b";
+                        if (isPruned) return "#ef4444";
+                        return "#94a3b8";
+                    })
+                    .attr("stroke-width", isCurrent || isResult ? 2 : 1);
+
+                svg.append("text")
+                    .attr("x", node.x)
+                    .attr("y", node.y + 5)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "11px")
+                    .attr("fill", "#1e293b")
+                    .text(node.remaining);
+            });
+        }
+
+        function drawResults() {
+            const startX = 30;
+            const startY = 450;
+
+            svg.append("text")
+                .attr("x", startX)
+                .attr("y", startY)
+                .attr("font-size", "14px")
+                .attr("font-weight", "bold")
+                .attr("fill", "#1e293b")
+                .text(`Found Combinations (${result.length}):`);
+
+            result.forEach((combo, idx) => {
+                const x = startX + (idx % 4) * 180;
+                const y = startY + 25 + Math.floor(idx / 4) * 40;
+
+                svg.append("rect")
+                    .attr("x", x)
+                    .attr("y", y)
+                    .attr("width", 170)
+                    .attr("height", 32)
+                    .attr("rx", 6)
+                    .attr("fill", "#d1fae5")
+                    .attr("stroke", "#10b981")
+                    .attr("stroke-width", 2);
+
+                svg.append("text")
+                    .attr("x", x + 85)
+                    .attr("y", y + 21)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "13px")
+                    .attr("fill", "#1e293b")
+                    .text(`[${combo.join(', ')}] = ${target}`);
+            });
+
+            // Legend
+            svg.append("text")
+                .attr("x", startX)
+                .attr("y", 560)
+                .attr("font-size", "12px")
+                .attr("fill", "#64748b")
+                .text("• Nodes show remaining target. Skip duplicates at same level to avoid duplicate combinations.");
+        }
+
+        function step() {
+            if (callStack.length === 0) {
+                document.getElementById("status").textContent = 
+                    `✓ Complete! Found ${result.length} unique combinations`;
+                return;
+            }
+
+            const { start, path, remaining, depth, parentIdx } = callStack.pop();
+            currentPath = [...path];
+
+            // Found a valid combination
+            if (remaining === 0) {
+                result.push([...path]);
+                document.getElementById("status").textContent = 
+                    `✓ Found combination: [${path.join(', ')}]`;
+                render();
+                return;
+            }
+
+            // Prune if remaining is negative
+            if (remaining < 0) {
+                document.getElementById("status").textContent = 
+                    `Pruned: [${path.join(', ')}] exceeds target`;
+                render();
+                return;
+            }
+
+            // Add children
+            for (let i = sortedCandidates.length - 1; i >= start; i--) {
+                const num = sortedCandidates[i];
+                
+                // Check for duplicates
+                if (i > start && sortedCandidates[i] === sortedCandidates[i - 1]) {
+                    // Mark as skipped in tree
+                    const skippedNodeIdx = treeNodes.length;
+                    treeNodes.push({
+                        id: skippedNodeIdx,
+                        path: [...path, num],
+                        remaining: remaining - num,
+                        depth: depth + 1,
+                        skipped: true
+                    });
+                    treeEdges.push({
+                        from: parentIdx,
+                        to: skippedNodeIdx,
+                        value: num,
+                        skipped: true
+                    });
+                    continue;
+                }
+
+                // Pruning: if current number > remaining, skip (since array is sorted)
+                if (num > remaining) {
+                    continue;
+                }
+
+                // Add new node
+                const nodeIdx = treeNodes.length;
+                treeNodes.push({
+                    id: nodeIdx,
+                    path: [...path, num],
+                    remaining: remaining - num,
+                    depth: depth + 1
+                });
+                treeEdges.push({
+                    from: parentIdx,
+                    to: nodeIdx,
+                    value: num
+                });
+
+                callStack.push({
+                    start: i + 1,
+                    path: [...path, num],
+                    remaining: remaining - num,
+                    depth: depth + 1,
+                    parentIdx: nodeIdx
+                });
+            }
+
+            document.getElementById("status").textContent = 
+                `Exploring path: [${path.join(', ')}], remaining: ${remaining}`;
+            render();
+        }
+
+        function autoRun() {
+            if (animationTimer) {
+                clearInterval(animationTimer);
+                animationTimer = null;
+                document.getElementById("autoRunBtn").textContent = "▶ Auto Run";
+                return;
+            }
+
+            document.getElementById("autoRunBtn").textContent = "⏸ Pause";
+            animationTimer = setInterval(() => {
+                if (callStack.length === 0) {
+                    clearInterval(animationTimer);
+                    animationTimer = null;
+                    document.getElementById("autoRunBtn").textContent = "▶ Auto Run";
+                    return;
+                }
+                step();
+            }, 400);
+        }
+
+        document.getElementById("autoRunBtn").addEventListener("click", autoRun);
+        document.getElementById("stepBtn").addEventListener("click", step);
+        document.getElementById("resetBtn").addEventListener("click", reset);
+
+        reset();
+    </script>
+</body>
+</html>

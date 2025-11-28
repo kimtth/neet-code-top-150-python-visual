@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Binary Tree Right Side View - Algorithm Visualization</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    </div>
+
+    <div class="container">
+        <div class="problem-info">
+            <h1><span class="problem-number">#0199</span> Binary Tree Right Side View</h1>
+            <p>
+                Given the root of a binary tree, imagine yourself standing on the <strong>right side</strong> of it.
+                Return the values of the nodes you can see ordered from top to bottom.
+            </p>
+            <p><strong>Example:</strong> [1,2,3,null,5,null,4] → [1,3,4]</p>
+            <p><strong>Approach:</strong> BFS level order, take the rightmost node at each level</p>
+            <p><strong>Time Complexity:</strong> O(n) | <strong>Space Complexity:</strong> O(n)</p>
+            <div class="problem-meta">
+                <span class="meta-tag">🌳 Tree</span>
+                <span class="meta-tag">⏱️ O(n)</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <code>python/0199_binary_tree_right_side_view/0199_binary_tree_right_side_view.py</code>
+            </div>
+
+        </div>
+
+        <div class="explanation-panel">
+            <h4>🧠 How It Works (Layman's Terms)</h4>
+            <p>Tree traversal is like <strong>exploring a family tree</strong>:</p>
+            <ul>
+                <li><strong>Root:</strong> Start at the top node</li>
+                <li><strong>Recurse:</strong> Visit left and right children</li>
+                <li><strong>Base case:</strong> Stop at null/leaf nodes</li>
+                <li><strong>Combine:</strong> Build answer from subtree results</li>
+            </ul>
+        </div>
+
+
+        <div class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+            <div class="controls">
+                <button id="stepBtn" class="btn">Step</button>
+                <button id="autoBtn" class="btn">Auto Run</button>
+                <button id="resetBtn" class="btn btn-secondary">Reset</button>
+                <div class="speed-control">
+                    <label for="speedSlider">Speed:</label>
+                    <input type="range" id="speedSlider" min="1" max="10" value="5">
+                </div>
+            </div>
+            <svg id="visualization" width="900" height="500"></svg>
+            <div class="variables-display">
+                <div id="varDisplay"></div>
+            </div>
+            <div class="status-message" id="statusMessage">Press "Step" or "Auto Run" to begin</div>
+        </div>
+
+        <div class="code-section">
+            <h3>💻 Python Solution</h3>
+            <div class="code-block">
+                <pre><span class="keyword">def</span> <span class="function">right_side_view</span>(self, root: <span class="class-name">TreeNode</span>) -> List[int]:
+    result = []
+    <span class="keyword">if</span> <span class="keyword">not</span> root:
+        <span class="keyword">return</span> result
+    
+    queue = <span class="function">deque</span>([root])
+    
+    <span class="keyword">while</span> queue:
+        level_size = <span class="function">len</span>(queue)
+        
+        <span class="keyword">for</span> i <span class="keyword">in</span> <span class="function">range</span>(level_size):
+            node = queue.<span class="function">popleft</span>()
+            
+            <span class="comment"># Last node in level = rightmost = visible</span>
+            <span class="keyword">if</span> i == level_size - <span class="number">1</span>:
+                result.<span class="function">append</span>(node.val)
+            
+            <span class="keyword">if</span> node.left:
+                queue.<span class="function">append</span>(node.left)
+            <span class="keyword">if</span> node.right:
+                queue.<span class="function">append</span>(node.right)
+    
+    <span class="keyword">return</span> result</pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Tree: [1,2,3,null,5,null,4]
+        //       1
+        //      / \
+        //     2   3
+        //      \   \
+        //       5   4
+        
+        const positions = {
+            1: { x: 250, y: 80 },
+            2: { x: 150, y: 160 },
+            3: { x: 350, y: 160 },
+            5: { x: 200, y: 240 },
+            4: { x: 400, y: 240 }
+        };
+        
+        const edges = [[1, 2], [1, 3], [2, 5], [3, 4]];
+        
+        // State
+        let step = 0;
+        let autoRunning = false;
+        let autoInterval = null;
+        
+        // Generate steps
+        const steps = [];
+        
+        function generateSteps() {
+            steps.length = 0;
+            
+            steps.push({
+                type: 'init',
+                queue: [1],
+                processed: [],
+                visible: [],
+                level: 0,
+                message: 'Initialize: Standing on the right side, looking at the tree'
+            });
+            
+            // Level 0
+            steps.push({
+                type: 'level_start',
+                queue: [1],
+                processed: [],
+                visible: [],
+                level: 0,
+                levelSize: 1,
+                message: 'Level 0: Only 1 node. It must be visible from the right.'
+            });
+            
+            steps.push({
+                type: 'process',
+                queue: [2, 3],
+                processed: [1],
+                visible: [1],
+                level: 0,
+                currentNode: 1,
+                isLast: true,
+                message: 'Node 1 is the last (rightmost) in level 0. Add to result!'
+            });
+            
+            // Level 1
+            steps.push({
+                type: 'level_start',
+                queue: [2, 3],
+                processed: [1],
+                visible: [1],
+                level: 1,
+                levelSize: 2,
+                message: 'Level 1: 2 nodes (2, 3). Only rightmost (3) is visible.'
+            });
+            
+            steps.push({
+                type: 'process',
+                queue: [3, 5],
+                processed: [1, 2],
+                visible: [1],
+                level: 1,
+                currentNode: 2,
+                isLast: false,
+                message: 'Node 2 is NOT the last in level. Skip (blocked by node 3).'
+            });
+            
+            steps.push({
+                type: 'process',
+                queue: [5, 4],
+                processed: [1, 2, 3],
+                visible: [1, 3],
+                level: 1,
+                currentNode: 3,
+                isLast: true,
+                message: 'Node 3 is the last (rightmost) in level 1. Add to result!'
+            });
+            
+            // Level 2
+            steps.push({
+                type: 'level_start',
+                queue: [5, 4],
+                processed: [1, 2, 3],
+                visible: [1, 3],
+                level: 2,
+                levelSize: 2,
+                message: 'Level 2: 2 nodes (5, 4). Only rightmost (4) is visible.'
+            });
+            
+            steps.push({
+                type: 'process',
+                queue: [4],
+                processed: [1, 2, 3, 5],
+                visible: [1, 3],
+                level: 2,
+                currentNode: 5,
+                isLast: false,
+                message: 'Node 5 is NOT the last in level. Skip (blocked by node 4).'
+            });
+            
+            steps.push({
+                type: 'process',
+                queue: [],
+                processed: [1, 2, 3, 5, 4],
+                visible: [1, 3, 4],
+                level: 2,
+                currentNode: 4,
+                isLast: true,
+                message: 'Node 4 is the last (rightmost) in level 2. Add to result!'
+            });
+            
+            steps.push({
+                type: 'done',
+                queue: [],
+                processed: [1, 2, 3, 5, 4],
+                visible: [1, 3, 4],
+                message: 'Done! Right side view: [1, 3, 4]'
+            });
+        }
+        
+        // SVG setup
+        const svg = d3.select("#visualization");
+        const width = 900;
+        const height = 500;
+        
+        function draw(currentStep) {
+            svg.selectAll("*").remove();
+            
+            const data = currentStep || steps[0];
+            
+            // Draw viewing perspective
+            svg.append("text")
+                .attr("x", 550)
+                .attr("y", 160)
+                .attr("text-anchor", "middle")
+                .attr("fill", "#667eea")
+                .attr("font-size", "24px")
+                .text("👁️");
+            
+            svg.append("text")
+                .attr("x", 550)
+                .attr("y", 185)
+                .attr("text-anchor", "middle")
+                .attr("fill", "#667eea")
+                .text("You are here");
+            
+            // Draw viewing lines
+            if (data.type !== 'init') {
+                [80, 160, 240].forEach((y, i) => {
+                    const visibleNode = data.visible && data.visible[i];
+                    if (visibleNode !== undefined) {
+                        const pos = positions[visibleNode];
+                        if (pos) {
+                            svg.append("line")
+                                .attr("x1", 530)
+                                .attr("y1", 150)
+                                .attr("x2", pos.x + 25)
+                                .attr("y2", pos.y)
+                                .attr("stroke", "#4ade80")
+                                .attr("stroke-width", 2)
+                                .attr("stroke-dasharray", "5,5")
+                                .attr("opacity", 0.7);
+                        }
+                    }
+                });
+            }
+            
+            // Draw tree label
+            svg.append("text")
+                .attr("x", 250)
+                .attr("y", 30)
+                .attr("text-anchor", "middle")
+                .attr("class", "label")
+                .text("Binary Tree");
+            
+            // Draw edges
+            edges.forEach(([from, to]) => {
+                svg.append("line")
+                    .attr("x1", positions[from].x)
+                    .attr("y1", positions[from].y + 20)
+                    .attr("x2", positions[to].x)
+                    .attr("y2", positions[to].y - 20)
+                    .attr("stroke", "#d1d5db")
+                    .attr("stroke-width", 2);
+            });
+            
+            // Draw level lines
+            [0, 1, 2].forEach(level => {
+                const y = 80 + level * 80;
+                svg.append("line")
+                    .attr("x1", 50)
+                    .attr("y1", y)
+                    .attr("x2", 480)
+                    .attr("y2", y)
+                    .attr("stroke", data.level === level ? "#f59e0b" : "#e5e7eb")
+                    .attr("stroke-width", data.level === level ? 2 : 1)
+                    .attr("stroke-dasharray", "3,3");
+                
+                svg.append("text")
+                    .attr("x", 30)
+                    .attr("y", y + 5)
+                    .attr("fill", data.level === level ? "#f59e0b" : "#9ca3af")
+                    .attr("font-size", "12px")
+                    .text(`L${level}`);
+            });
+            
+            // Draw nodes
+            [1, 2, 3, 5, 4].forEach(val => {
+                const pos = positions[val];
+                
+                let fill = "#667eea";
+                let stroke = "none";
+                let strokeWidth = 0;
+                
+                if (data.currentNode === val) {
+                    fill = data.isLast ? "#4ade80" : "#f59e0b";
+                    stroke = data.isLast ? "#16a34a" : "#d97706";
+                    strokeWidth = 3;
+                } else if (data.visible && data.visible.includes(val)) {
+                    fill = "#4ade80";
+                } else if (data.processed && data.processed.includes(val)) {
+                    fill = "#9ca3af";
+                } else if (data.queue && data.queue.includes(val)) {
+                    fill = "#06b6d4";
+                }
+                
+                svg.append("circle")
+                    .attr("cx", pos.x)
+                    .attr("cy", pos.y)
+                    .attr("r", 22)
+                    .attr("fill", fill)
+                    .attr("stroke", stroke)
+                    .attr("stroke-width", strokeWidth);
+                
+                svg.append("text")
+                    .attr("x", pos.x)
+                    .attr("y", pos.y + 6)
+                    .attr("text-anchor", "middle")
+                    .attr("fill", "white")
+                    .attr("font-weight", "bold")
+                    .attr("font-size", "16px")
+                    .text(val);
+            });
+            
+            // Draw result (right side view)
+            svg.append("text")
+                .attr("x", 650)
+                .attr("y", 60)
+                .attr("class", "label")
+                .text("Right Side View:");
+            
+            if (data.visible && data.visible.length > 0) {
+                data.visible.forEach((val, i) => {
+                    const isNew = data.currentNode === val && data.isLast;
+                    
+                    svg.append("rect")
+                        .attr("x", 650 + i * 55)
+                        .attr("y", 70)
+                        .attr("width", 45)
+                        .attr("height", 40)
+                        .attr("rx", 8)
+                        .attr("fill", "#4ade80")
+                        .attr("stroke", isNew ? "#16a34a" : "none")
+                        .attr("stroke-width", isNew ? 3 : 0);
+                    
+                    svg.append("text")
+                        .attr("x", 672 + i * 55)
+                        .attr("y", 97)
+                        .attr("text-anchor", "middle")
+                        .attr("fill", "white")
+                        .attr("font-weight", "bold")
+                        .attr("font-size", "18px")
+                        .text(val);
+                });
+            } else {
+                svg.append("text")
+                    .attr("x", 650)
+                    .attr("y", 95)
+                    .attr("fill", "#9ca3af")
+                    .text("[]");
+            }
+            
+            // Draw queue
+            svg.append("text")
+                .attr("x", 650)
+                .attr("y", 170)
+                .attr("class", "label")
+                .text("Queue:");
+            
+            if (data.queue && data.queue.length > 0) {
+                data.queue.forEach((val, i) => {
+                    svg.append("rect")
+                        .attr("x", 650 + i * 45)
+                        .attr("y", 180)
+                        .attr("width", 35)
+                        .attr("height", 30)
+                        .attr("rx", 6)
+                        .attr("fill", "#06b6d4");
+                    
+                    svg.append("text")
+                        .attr("x", 667 + i * 45)
+                        .attr("y", 200)
+                        .attr("text-anchor", "middle")
+                        .attr("fill", "white")
+                        .attr("font-weight", "bold")
+                        .text(val);
+                });
+            } else {
+                svg.append("text")
+                    .attr("x", 650)
+                    .attr("y", 200)
+                    .attr("fill", "#9ca3af")
+                    .text("(empty)");
+            }
+            
+            // Legend
+            const legendY = 400;
+            svg.append("circle").attr("cx", 100).attr("cy", legendY).attr("r", 10).attr("fill", "#4ade80");
+            svg.append("text").attr("x", 115).attr("y", legendY + 4).attr("fill", "#4b5563").text("Visible");
+            
+            svg.append("circle").attr("cx", 210).attr("cy", legendY).attr("r", 10).attr("fill", "#9ca3af");
+            svg.append("text").attr("x", 225).attr("y", legendY + 4).attr("fill", "#4b5563").text("Blocked");
+            
+            svg.append("circle").attr("cx", 320).attr("cy", legendY).attr("r", 10).attr("fill", "#06b6d4");
+            svg.append("text").attr("x", 335).attr("y", legendY + 4).attr("fill", "#4b5563").text("In Queue");
+            
+            svg.append("circle").attr("cx", 430).attr("cy", legendY).attr("r", 10).attr("fill", "#f59e0b");
+            svg.append("text").attr("x", 445).attr("y", legendY + 4).attr("fill", "#4b5563").text("Processing");
+            
+            // Update status
+            document.getElementById("statusMessage").textContent = data.message;
+            
+            // Update variables
+            document.getElementById("varDisplay").innerHTML = `
+                <span class="var-item">Level: ${data.level !== undefined ? data.level : 'N/A'}</span>
+                <span class="var-item">Queue: [${data.queue ? data.queue.join(', ') : ''}]</span>
+                <span class="var-item">Result: [${data.visible ? data.visible.join(', ') : ''}]</span>
+            `;
+        }
+        
+        function doStep() {
+            if (step >= steps.length) {
+                stopAuto();
+                return;
+            }
+            draw(steps[step]);
+            step++;
+        }
+        
+        function stopAuto() {
+            autoRunning = false;
+            if (autoInterval) {
+                clearInterval(autoInterval);
+                autoInterval = null;
+            }
+            document.getElementById("autoBtn").textContent = "Auto Run";
+        }
+        
+        function toggleAuto() {
+            if (autoRunning) {
+                stopAuto();
+            } else {
+                autoRunning = true;
+                document.getElementById("autoBtn").textContent = "Pause";
+                const speed = 11 - document.getElementById("speedSlider").value;
+                autoInterval = setInterval(() => {
+                    if (step >= steps.length) {
+                        stopAuto();
+                        return;
+                    }
+                    doStep();
+                }, speed * 200);
+            }
+        }
+        
+        function reset() {
+            stopAuto();
+            step = 0;
+            draw(steps[0]);
+        }
+        
+        // Initialize
+        generateSteps();
+        draw(steps[0]);
+        
+        // Event listeners
+        document.getElementById("stepBtn").addEventListener("click", doStep);
+        document.getElementById("autoBtn").addEventListener("click", toggleAuto);
+        document.getElementById("resetBtn").addEventListener("click", reset);
+    </script>
+</body>
+</html>

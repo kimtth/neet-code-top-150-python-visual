@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>211 - Design Add and Search Words</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="problem-info">
+            <h1><span class="problem-number">#211</span> Design Add and Search Words Data Structure</h1>
+            <p>
+                Design a data structure supporting addWord and search with wildcard '.'.
+                Uses Trie with DFS for wildcard matching.
+            </p>
+            <div class="problem-meta">
+                <span class="meta-tag">🔤 String</span>
+                <span class="meta-tag">🏗️ Design</span>
+                <span class="meta-tag">⏱️ O(n)</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <code>python/0211_design_add_and_search_words_data_structure/0211_design_add_and_search_words_data_structure.py</code>
+            </div>
+
+        </div>
+
+        <div class="explanation-panel">
+            <h4>🧠 How It Works (Layman's Terms)</h4>
+            <p>A Trie is a <strong>prefix tree</strong> for efficient word lookup:</p>
+            <ul>
+                <li><strong>Nodes:</strong> Each node represents a character</li>
+                <li><strong>Paths:</strong> Words are formed by paths from root</li>
+                <li><strong>Prefix search:</strong> Find all words with a prefix</li>
+                <li><strong>Efficiency:</strong> O(word length) for operations</li>
+            </ul>
+        </div>
+
+
+        <section class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+            <div class="controls">
+                <button id="autoRunBtn" class="btn">▶ Auto Run</button>
+                <button id="stepBtn" class="btn btn-success">Step</button>
+                <button id="resetBtn" class="btn btn-danger">Reset</button>
+            </div>
+            <div class="status" id="status">Click Auto Run to simulate operations</div>
+            <svg id="visualization"></svg>
+        </section>
+
+        <section class="code-section">
+            <h3>💻 Python Solution</h3>
+            <div class="code-block">
+                <pre><span class="keyword">class</span> WordDictionary:
+    <span class="keyword">def</span> <span class="function">__init__</span>(self):
+        self.root = <span class="function">TrieNode</span>()
+    
+    <span class="keyword">def</span> <span class="function">addWord</span>(self, word):
+        node = self.root
+        <span class="keyword">for</span> ch <span class="keyword">in</span> word:
+            <span class="keyword">if</span> ch <span class="keyword">not</span> <span class="keyword">in</span> node.children:
+                node.children[ch] = <span class="function">TrieNode</span>()
+            node = node.children[ch]
+        node.is_word = <span class="keyword">True</span>
+    
+    <span class="keyword">def</span> <span class="function">search</span>(self, word):
+        <span class="keyword">def</span> <span class="function">dfs</span>(idx, node):
+            <span class="keyword">if</span> idx == <span class="function">len</span>(word):
+                <span class="keyword">return</span> node.is_word
+            
+            ch = word[idx]
+            <span class="keyword">if</span> ch == <span class="string">'.'</span>:  <span class="comment"># Wildcard: try all children</span>
+                <span class="keyword">for</span> child <span class="keyword">in</span> node.children.<span class="function">values</span>():
+                    <span class="keyword">if</span> <span class="function">dfs</span>(idx + <span class="number">1</span>, child):
+                        <span class="keyword">return</span> <span class="keyword">True</span>
+                <span class="keyword">return</span> <span class="keyword">False</span>
+            
+            <span class="keyword">if</span> ch <span class="keyword">in</span> node.children:
+                <span class="keyword">return</span> <span class="function">dfs</span>(idx + <span class="number">1</span>, node.children[ch])
+            <span class="keyword">return</span> <span class="keyword">False</span>
+        
+        <span class="keyword">return</span> <span class="function">dfs</span>(<span class="number">0</span>, self.root)</pre>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        const width = 900;
+        const height = 600;
+
+        const svg = d3.select("#visualization")
+            .attr("width", width)
+            .attr("height", height);
+
+        // Operations
+        const operations = [
+            { op: "addWord", arg: "bad" },
+            { op: "addWord", arg: "dad" },
+            { op: "addWord", arg: "mad" },
+            { op: "search", arg: "pad", expected: false },
+            { op: "search", arg: "bad", expected: true },
+            { op: "search", arg: ".ad", expected: true },
+            { op: "search", arg: "b..", expected: true }
+        ];
+
+        let trie = { children: {}, isWord: false };
+        let operationIdx = 0;
+        let lastResult = null;
+        let highlightPath = [];
+        let wildcardPaths = [];
+        let animationTimer = null;
+
+        function reset() {
+            trie = { children: {}, isWord: false };
+            operationIdx = 0;
+            lastResult = null;
+            highlightPath = [];
+            wildcardPaths = [];
+            if (animationTimer) clearInterval(animationTimer);
+            document.getElementById("status").textContent = "Click Auto Run to simulate operations";
+            render();
+        }
+
+        function render() {
+            svg.selectAll("*").remove();
+
+            // Draw Trie
+            drawTrie();
+
+            // Draw operations
+            drawOperations();
+
+            // Draw search pattern
+            if (operationIdx > 0 && operations[operationIdx - 1].op === "search") {
+                drawSearchPattern(operations[operationIdx - 1].arg);
+            }
+        }
+
+        function drawTrie() {
+            const startX = 200;
+            const startY = 100;
+
+            svg.append("text")
+                .attr("x", 50)
+                .attr("y", 40)
+                .attr("font-size", "16px")
+                .attr("font-weight", "bold")
+                .attr("fill", "#1e293b")
+                .text("Trie Structure:");
+
+            // Draw root
+            svg.append("circle")
+                .attr("cx", startX)
+                .attr("cy", startY)
+                .attr("r", 20)
+                .attr("fill", "#f8fafc")
+                .attr("stroke", "#94a3b8")
+                .attr("stroke-width", 2);
+
+            svg.append("text")
+                .attr("x", startX)
+                .attr("y", startY + 5)
+                .attr("text-anchor", "middle")
+                .attr("font-size", "12px")
+                .attr("fill", "#64748b")
+                .text("root");
+
+            // Draw trie nodes
+            const nodePositions = {};
+            let level1X = 80;
+
+            Object.entries(trie.children).forEach(([char, node], idx) => {
+                const x = level1X + idx * 100;
+                const y = startY + 80;
+                nodePositions[char] = { x, y, node };
+
+                // Edge from root
+                svg.append("line")
+                    .attr("x1", startX)
+                    .attr("y1", startY + 20)
+                    .attr("x2", x)
+                    .attr("y2", y - 20)
+                    .attr("stroke", highlightPath.includes(char) ? "#10b981" : "#94a3b8")
+                    .attr("stroke-width", highlightPath.includes(char) ? 3 : 2);
+
+                // Edge label
+                svg.append("text")
+                    .attr("x", (startX + x) / 2 - 10)
+                    .attr("y", (startY + 20 + y - 20) / 2)
+                    .attr("font-size", "14px")
+                    .attr("font-weight", "bold")
+                    .attr("fill", highlightPath.includes(char) ? "#10b981" : "#1e293b")
+                    .text(char);
+
+                drawTrieNode(x, y, char, node, 1, char);
+            });
+        }
+
+        function drawTrieNode(x, y, char, node, level, pathKey) {
+            const isHighlighted = highlightPath.length > level - 1 && 
+                highlightPath.slice(0, level).join('') === pathKey;
+            const isWildcard = wildcardPaths.some(p => p.startsWith(pathKey));
+
+            svg.append("circle")
+                .attr("cx", x)
+                .attr("cy", y)
+                .attr("r", 18)
+                .attr("fill", () => {
+                    if (node.isWord && isHighlighted) return "#d1fae5";
+                    if (isHighlighted) return "#fef3c7";
+                    if (isWildcard) return "#e0e7ff";
+                    return "#dbeafe";
+                })
+                .attr("stroke", () => {
+                    if (isHighlighted) return "#10b981";
+                    if (isWildcard) return "#6366f1";
+                    return "#3b82f6";
+                })
+                .attr("stroke-width", isHighlighted || isWildcard ? 3 : 2);
+
+            // Word marker
+            if (node.isWord) {
+                svg.append("circle")
+                    .attr("cx", x + 12)
+                    .attr("cy", y - 12)
+                    .attr("r", 6)
+                    .attr("fill", "#10b981");
+            }
+
+            // Draw children
+            const childCount = Object.keys(node.children).length;
+            let childIdx = 0;
+            const spacing = 60;
+
+            Object.entries(node.children).forEach(([childChar, childNode]) => {
+                const childX = x + (childIdx - (childCount - 1) / 2) * spacing;
+                const childY = y + 70;
+                const childPathKey = pathKey + childChar;
+
+                // Edge
+                svg.append("line")
+                    .attr("x1", x)
+                    .attr("y1", y + 18)
+                    .attr("x2", childX)
+                    .attr("y2", childY - 18)
+                    .attr("stroke", highlightPath.join('').startsWith(childPathKey) || 
+                        wildcardPaths.some(p => p.startsWith(childPathKey)) ? "#10b981" : "#94a3b8")
+                    .attr("stroke-width", 2);
+
+                // Edge label
+                svg.append("text")
+                    .attr("x", (x + childX) / 2 + 5)
+                    .attr("y", (y + 18 + childY - 18) / 2)
+                    .attr("font-size", "12px")
+                    .attr("font-weight", "bold")
+                    .attr("fill", "#1e293b")
+                    .text(childChar);
+
+                drawTrieNode(childX, childY, childChar, childNode, level + 1, childPathKey);
+                childIdx++;
+            });
+        }
+
+        function drawOperations() {
+            const x = 550;
+            const y = 80;
+
+            svg.append("text")
+                .attr("x", x)
+                .attr("y", y - 30)
+                .attr("font-size", "14px")
+                .attr("font-weight", "bold")
+                .attr("fill", "#1e293b")
+                .text("Operations:");
+
+            operations.forEach((op, idx) => {
+                const isComplete = idx < operationIdx;
+                const isCurrent = idx === operationIdx;
+                const opY = y + idx * 35;
+                const text = op.op === "search" 
+                    ? `search("${op.arg}") → ${isComplete ? (lastResult && idx === operationIdx - 1 ? lastResult : op.expected) : "?"}`
+                    : `addWord("${op.arg}")`;
+
+                svg.append("rect")
+                    .attr("x", x)
+                    .attr("y", opY)
+                    .attr("width", 220)
+                    .attr("height", 28)
+                    .attr("rx", 4)
+                    .attr("fill", () => {
+                        if (isCurrent) return "#fef3c7";
+                        if (isComplete) return "#d1fae5";
+                        return "#f8fafc";
+                    })
+                    .attr("stroke", () => {
+                        if (isCurrent) return "#f59e0b";
+                        if (isComplete) return "#10b981";
+                        return "#94a3b8";
+                    });
+
+                svg.append("text")
+                    .attr("x", x + 10)
+                    .attr("y", opY + 19)
+                    .attr("font-size", "12px")
+                    .attr("fill", "#1e293b")
+                    .text(text);
+            });
+
+            // Explanation
+            svg.append("text")
+                .attr("x", 50)
+                .attr("y", 430)
+                .attr("font-size", "12px")
+                .attr("fill", "#64748b")
+                .text("• '.' matches any single character - requires DFS through all children");
+
+            svg.append("text")
+                .attr("x", 50)
+                .attr("y", 450)
+                .attr("font-size", "12px")
+                .attr("fill", "#64748b")
+                .text("• Regular characters follow the exact path in the Trie");
+
+            svg.append("text")
+                .attr("x", 50)
+                .attr("y", 470)
+                .attr("font-size", "12px")
+                .attr("fill", "#64748b")
+                .text("• Green dot indicates end of a valid word");
+        }
+
+        function drawSearchPattern(pattern) {
+            const x = 550;
+            const y = 360;
+
+            svg.append("text")
+                .attr("x", x)
+                .attr("y", y)
+                .attr("font-size", "14px")
+                .attr("font-weight", "bold")
+                .attr("fill", "#1e293b")
+                .text(`Search Pattern: "${pattern}"`);
+
+            pattern.split('').forEach((ch, idx) => {
+                const isWildcard = ch === '.';
+                svg.append("rect")
+                    .attr("x", x + idx * 40)
+                    .attr("y", y + 15)
+                    .attr("width", 35)
+                    .attr("height", 35)
+                    .attr("rx", 4)
+                    .attr("fill", isWildcard ? "#e0e7ff" : "#dbeafe")
+                    .attr("stroke", isWildcard ? "#6366f1" : "#3b82f6");
+
+                svg.append("text")
+                    .attr("x", x + idx * 40 + 17)
+                    .attr("y", y + 38)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "18px")
+                    .attr("font-weight", "bold")
+                    .attr("fill", isWildcard ? "#6366f1" : "#1e293b")
+                    .text(ch);
+            });
+        }
+
+        function addWord(word) {
+            let node = trie;
+            for (const ch of word) {
+                if (!node.children[ch]) {
+                    node.children[ch] = { children: {}, isWord: false };
+                }
+                node = node.children[ch];
+            }
+            node.isWord = true;
+        }
+
+        function search(word) {
+            highlightPath = [];
+            wildcardPaths = [];
+
+            function dfs(idx, node, path) {
+                if (idx === word.length) {
+                    if (node.isWord) {
+                        highlightPath = path.split('');
+                        return true;
+                    }
+                    return false;
+                }
+
+                const ch = word[idx];
+                if (ch === '.') {
+                    for (const [childCh, childNode] of Object.entries(node.children)) {
+                        wildcardPaths.push(path + childCh);
+                        if (dfs(idx + 1, childNode, path + childCh)) {
+                            return true;
+                        }
+                    }
+                    return false;
+                }
+
+                if (node.children[ch]) {
+                    return dfs(idx + 1, node.children[ch], path + ch);
+                }
+                return false;
+            }
+
+            return dfs(0, trie, '');
+        }
+
+        function step() {
+            if (operationIdx >= operations.length) {
+                document.getElementById("status").textContent = "✓ All operations complete!";
+                return;
+            }
+
+            const op = operations[operationIdx];
+            highlightPath = [];
+            wildcardPaths = [];
+
+            if (op.op === "addWord") {
+                addWord(op.arg);
+                highlightPath = op.arg.split('');
+                document.getElementById("status").textContent = 
+                    `Added word: "${op.arg}"`;
+                lastResult = null;
+            } else {
+                lastResult = search(op.arg);
+                document.getElementById("status").textContent = 
+                    `search("${op.arg}") = ${lastResult}`;
+            }
+
+            operationIdx++;
+            render();
+        }
+
+        function autoRun() {
+            if (animationTimer) {
+                clearInterval(animationTimer);
+                animationTimer = null;
+                document.getElementById("autoRunBtn").textContent = "▶ Auto Run";
+                return;
+            }
+
+            document.getElementById("autoRunBtn").textContent = "⏸ Pause";
+            animationTimer = setInterval(() => {
+                if (operationIdx >= operations.length) {
+                    clearInterval(animationTimer);
+                    animationTimer = null;
+                    document.getElementById("autoRunBtn").textContent = "▶ Auto Run";
+                    return;
+                }
+                step();
+            }, 1200);
+        }
+
+        document.getElementById("autoRunBtn").addEventListener("click", autoRun);
+        document.getElementById("stepBtn").addEventListener("click", step);
+        document.getElementById("resetBtn").addEventListener("click", reset);
+
+        reset();
+    </script>
+</body>
+</html>

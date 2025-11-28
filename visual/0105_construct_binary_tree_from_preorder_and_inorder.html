@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>105 - Construct Binary Tree from Preorder and Inorder</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="problem-info">
+            <h1><span class="problem-number">#105</span> Construct Binary Tree from Preorder and Inorder</h1>
+            <p>
+                Given preorder and inorder traversal arrays, construct the binary tree.
+                Preorder's first element is root. Find root in inorder to split left/right subtrees.
+            </p>
+            <div class="problem-meta">
+                <span class="meta-tag">🌳 Tree</span>
+                <span class="meta-tag">⏱️ O(n)</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <code>python/0105_construct_binary_tree_from_preorder_and_inorder_traversal/0105_construct_binary_tree_from_preorder_and_inorder_traversal.py</code>
+            </div>
+
+        </div>
+
+        <div class="explanation-panel">
+            <h4>🧠 How It Works (Layman's Terms)</h4>
+            <p>Tree traversal is like <strong>exploring a family tree</strong>:</p>
+            <ul>
+                <li><strong>Root:</strong> Start at the top node</li>
+                <li><strong>Recurse:</strong> Visit left and right children</li>
+                <li><strong>Base case:</strong> Stop at null/leaf nodes</li>
+                <li><strong>Combine:</strong> Build answer from subtree results</li>
+            </ul>
+        </div>
+
+
+        <section class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+            <div class="controls">
+                <button id="autoRunBtn" class="btn">▶ Auto Run</button>
+                <button id="stepBtn" class="btn btn-success">Step</button>
+                <button id="resetBtn" class="btn btn-danger">Reset</button>
+            </div>
+            <div class="status" id="status">Click Auto Run to construct the tree</div>
+            <svg id="visualization"></svg>
+        </section>
+
+        <section class="code-section">
+            <h3>💻 Python Solution</h3>
+            <div class="code-block">
+                <pre><span class="keyword">def</span> <span class="function">buildTree</span>(preorder, inorder):
+    <span class="keyword">if</span> <span class="keyword">not</span> preorder <span class="keyword">or</span> <span class="keyword">not</span> inorder:
+        <span class="keyword">return</span> <span class="keyword">None</span>
+    
+    inorder_map = {val: <span class="class-name">idx</span> <span class="keyword">for</span> idx, val <span class="keyword">in</span> <span class="function">enumerate</span>(inorder)}
+    
+    <span class="keyword">def</span> <span class="function">build</span>(pre_start, pre_end, in_start, in_end):
+        <span class="keyword">if</span> pre_start > pre_end:
+            <span class="keyword">return</span> <span class="keyword">None</span>
+        
+        root_val = preorder[pre_start]
+        root = <span class="function">TreeNode</span>(root_val)
+        
+        in_root_idx = inorder_map[root_val]
+        left_size = in_root_idx - in_start
+        
+        root.left = <span class="function">build</span>(pre_start + <span class="number">1</span>, pre_start + left_size,
+                          in_start, in_root_idx - <span class="number">1</span>)
+        root.right = <span class="function">build</span>(pre_start + left_size + <span class="number">1</span>, pre_end,
+                           in_root_idx + <span class="number">1</span>, in_end)
+        <span class="keyword">return</span> root
+    
+    <span class="keyword">return</span> <span class="function">build</span>(<span class="number">0</span>, <span class="function">len</span>(preorder) - <span class="number">1</span>, <span class="number">0</span>, <span class="function">len</span>(inorder) - <span class="number">1</span>)</pre>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        const width = 900;
+        const height = 650;
+
+        const svg = d3.select("#visualization")
+            .attr("width", width)
+            .attr("height", height);
+
+        const preorder = [3, 9, 20, 15, 7];
+        const inorder = [9, 3, 15, 20, 7];
+
+        let tree = null;
+        let currentPreIdx = 0;
+        let currentInRange = null;
+        let highlightValue = null;
+        let steps = [];
+        let stepIdx = 0;
+        let animationTimer = null;
+
+        function reset() {
+            tree = null;
+            currentPreIdx = 0;
+            currentInRange = null;
+            highlightValue = null;
+            steps = [];
+            stepIdx = 0;
+            
+            generateSteps();
+            
+            if (animationTimer) clearInterval(animationTimer);
+            document.getElementById("status").textContent = "Click Auto Run to construct the tree";
+            render();
+        }
+
+        function generateSteps() {
+            const inorderMap = {};
+            inorder.forEach((val, idx) => inorderMap[val] = idx);
+
+            function build(preStart, preEnd, inStart, inEnd, depth, side) {
+                if (preStart > preEnd) return null;
+
+                const rootVal = preorder[preStart];
+                const inRootIdx = inorderMap[rootVal];
+                const leftSize = inRootIdx - inStart;
+
+                steps.push({
+                    type: "select_root",
+                    preIdx: preStart,
+                    value: rootVal,
+                    inRange: [inStart, inEnd],
+                    depth,
+                    side
+                });
+
+                steps.push({
+                    type: "find_in_inorder",
+                    value: rootVal,
+                    inIdx: inRootIdx,
+                    leftRange: [inStart, inRootIdx - 1],
+                    rightRange: [inRootIdx + 1, inEnd]
+                });
+
+                const node = { val: rootVal, left: null, right: null, depth, side };
+
+                steps.push({
+                    type: "create_node",
+                    node: { ...node },
+                    tree: JSON.parse(JSON.stringify(tree || node))
+                });
+
+                node.left = build(preStart + 1, preStart + leftSize, inStart, inRootIdx - 1, depth + 1, "left");
+                node.right = build(preStart + leftSize + 1, preEnd, inRootIdx + 1, inEnd, depth + 1, "right");
+
+                return node;
+            }
+
+            tree = build(0, preorder.length - 1, 0, inorder.length - 1, 0, "root");
+            tree = null; // Reset for visualization
+        }
+
+        function render() {
+            svg.selectAll("*").remove();
+
+            // Draw preorder array
+            drawArray(preorder, "Preorder:", 50, 50, currentPreIdx);
+
+            // Draw inorder array
+            drawArray(inorder, "Inorder:", 50, 130, null, currentInRange, highlightValue);
+
+            // Draw constructed tree
+            if (tree) {
+                drawTree();
+            }
+
+            // Draw explanation
+            drawExplanation();
+        }
+
+        function drawArray(arr, label, x, y, highlightIdx = null, range = null, highlightVal = null) {
+            svg.append("text")
+                .attr("x", x)
+                .attr("y", y)
+                .attr("font-size", "14px")
+                .attr("font-weight", "bold")
+                .attr("fill", "#1e293b")
+                .text(label);
+
+            arr.forEach((val, idx) => {
+                const cellX = x + idx * 60;
+                const cellY = y + 15;
+                let fill = "#f8fafc";
+                let stroke = "#94a3b8";
+
+                if (highlightIdx !== null && idx === highlightIdx) {
+                    fill = "#fef3c7";
+                    stroke = "#f59e0b";
+                }
+                if (range && idx >= range[0] && idx <= range[1]) {
+                    fill = "#dbeafe";
+                    stroke = "#3b82f6";
+                }
+                if (highlightVal !== null && val === highlightVal) {
+                    fill = "#d1fae5";
+                    stroke = "#10b981";
+                }
+
+                svg.append("rect")
+                    .attr("x", cellX)
+                    .attr("y", cellY)
+                    .attr("width", 50)
+                    .attr("height", 35)
+                    .attr("rx", 4)
+                    .attr("fill", fill)
+                    .attr("stroke", stroke)
+                    .attr("stroke-width", 2);
+
+                svg.append("text")
+                    .attr("x", cellX + 25)
+                    .attr("y", cellY + 23)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "16px")
+                    .attr("font-weight", "bold")
+                    .attr("fill", "#1e293b")
+                    .text(val);
+
+                svg.append("text")
+                    .attr("x", cellX + 25)
+                    .attr("y", cellY + 52)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "10px")
+                    .attr("fill", "#64748b")
+                    .text(idx);
+            });
+        }
+
+        function drawTree() {
+            const treeX = 450;
+            const treeY = 280;
+            
+            svg.append("text")
+                .attr("x", 50)
+                .attr("y", 250)
+                .attr("font-size", "14px")
+                .attr("font-weight", "bold")
+                .attr("fill", "#1e293b")
+                .text("Constructed Tree:");
+
+            function drawNode(node, x, y, level) {
+                if (!node) return;
+
+                const spacing = 120 / (level + 1);
+
+                // Draw edges first
+                if (node.left) {
+                    svg.append("line")
+                        .attr("x1", x)
+                        .attr("y1", y)
+                        .attr("x2", x - spacing)
+                        .attr("y2", y + 60)
+                        .attr("stroke", "#94a3b8")
+                        .attr("stroke-width", 2);
+                    drawNode(node.left, x - spacing, y + 60, level + 1);
+                }
+                if (node.right) {
+                    svg.append("line")
+                        .attr("x1", x)
+                        .attr("y1", y)
+                        .attr("x2", x + spacing)
+                        .attr("y2", y + 60)
+                        .attr("stroke", "#94a3b8")
+                        .attr("stroke-width", 2);
+                    drawNode(node.right, x + spacing, y + 60, level + 1);
+                }
+
+                // Draw node
+                const isHighlight = highlightValue !== null && node.val === highlightValue;
+                
+                svg.append("circle")
+                    .attr("cx", x)
+                    .attr("cy", y)
+                    .attr("r", 22)
+                    .attr("fill", isHighlight ? "#fef3c7" : "#dbeafe")
+                    .attr("stroke", isHighlight ? "#f59e0b" : "#3b82f6")
+                    .attr("stroke-width", 2);
+
+                svg.append("text")
+                    .attr("x", x)
+                    .attr("y", y + 6)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "16px")
+                    .attr("font-weight", "bold")
+                    .attr("fill", "#1e293b")
+                    .text(node.val);
+            }
+
+            drawNode(tree, treeX, treeY, 0);
+        }
+
+        function drawExplanation() {
+            const y = 520;
+
+            svg.append("text")
+                .attr("x", 50)
+                .attr("y", y)
+                .attr("font-size", "12px")
+                .attr("fill", "#64748b")
+                .text("Key Insight: Preorder gives us the root first. Inorder helps find left/right subtree boundaries.");
+
+            svg.append("text")
+                .attr("x", 50)
+                .attr("y", y + 20)
+                .attr("font-size", "12px")
+                .attr("fill", "#64748b")
+                .text("• First element in preorder range = current subtree's root");
+
+            svg.append("text")
+                .attr("x", 50)
+                .attr("y", y + 40)
+                .attr("font-size", "12px")
+                .attr("fill", "#64748b")
+                .text("• Find root in inorder: elements to left = left subtree, elements to right = right subtree");
+
+            svg.append("text")
+                .attr("x", 50)
+                .attr("y", y + 60)
+                .attr("font-size", "12px")
+                .attr("fill", "#64748b")
+                .text("• Recursively build left and right subtrees with updated ranges");
+        }
+
+        function buildTreeFromSteps() {
+            const inorderMap = {};
+            inorder.forEach((val, idx) => inorderMap[val] = idx);
+
+            function build(preStart, preEnd, inStart, inEnd) {
+                if (preStart > preEnd) return null;
+
+                const rootVal = preorder[preStart];
+                const inRootIdx = inorderMap[rootVal];
+                const leftSize = inRootIdx - inStart;
+
+                return {
+                    val: rootVal,
+                    left: build(preStart + 1, preStart + leftSize, inStart, inRootIdx - 1),
+                    right: build(preStart + leftSize + 1, preEnd, inRootIdx + 1, inEnd)
+                };
+            }
+
+            return build(0, preorder.length - 1, 0, inorder.length - 1);
+        }
+
+        function step() {
+            if (stepIdx >= steps.length) {
+                tree = buildTreeFromSteps();
+                highlightValue = null;
+                currentPreIdx = null;
+                currentInRange = null;
+                document.getElementById("status").textContent = "✓ Tree construction complete!";
+                render();
+                return;
+            }
+
+            const s = steps[stepIdx++];
+
+            switch (s.type) {
+                case "select_root":
+                    currentPreIdx = s.preIdx;
+                    currentInRange = s.inRange;
+                    highlightValue = s.value;
+                    document.getElementById("status").textContent = 
+                        `Select root: preorder[${s.preIdx}] = ${s.value}`;
+                    break;
+                case "find_in_inorder":
+                    highlightValue = s.value;
+                    document.getElementById("status").textContent = 
+                        `Found ${s.value} at inorder[${s.inIdx}]. Left: [${s.leftRange[0]},${s.leftRange[1]}], Right: [${s.rightRange[0]},${s.rightRange[1]}]`;
+                    break;
+                case "create_node":
+                    // Build partial tree up to this point
+                    const nodesCreated = Math.floor(stepIdx / 3);
+                    if (nodesCreated > 0) {
+                        tree = buildPartialTree(nodesCreated);
+                    }
+                    document.getElementById("status").textContent = 
+                        `Created node with value ${s.node.val}`;
+                    break;
+            }
+
+            render();
+        }
+
+        function buildPartialTree(nodeCount) {
+            const inorderMap = {};
+            inorder.forEach((val, idx) => inorderMap[val] = idx);
+            let count = 0;
+
+            function build(preStart, preEnd, inStart, inEnd) {
+                if (preStart > preEnd || count >= nodeCount) return null;
+
+                const rootVal = preorder[preStart];
+                const inRootIdx = inorderMap[rootVal];
+                const leftSize = inRootIdx - inStart;
+                count++;
+
+                return {
+                    val: rootVal,
+                    left: build(preStart + 1, preStart + leftSize, inStart, inRootIdx - 1),
+                    right: build(preStart + leftSize + 1, preEnd, inRootIdx + 1, inEnd)
+                };
+            }
+
+            return build(0, preorder.length - 1, 0, inorder.length - 1);
+        }
+
+        function autoRun() {
+            if (animationTimer) {
+                clearInterval(animationTimer);
+                animationTimer = null;
+                document.getElementById("autoRunBtn").textContent = "▶ Auto Run";
+                return;
+            }
+
+            document.getElementById("autoRunBtn").textContent = "⏸ Pause";
+            animationTimer = setInterval(() => {
+                if (stepIdx >= steps.length) {
+                    clearInterval(animationTimer);
+                    animationTimer = null;
+                    document.getElementById("autoRunBtn").textContent = "▶ Auto Run";
+                    tree = buildTreeFromSteps();
+                    highlightValue = null;
+                    currentPreIdx = null;
+                    currentInRange = null;
+                    document.getElementById("status").textContent = "✓ Tree construction complete!";
+                    render();
+                    return;
+                }
+                step();
+            }, 1000);
+        }
+
+        document.getElementById("autoRunBtn").addEventListener("click", autoRun);
+        document.getElementById("stepBtn").addEventListener("click", step);
+        document.getElementById("resetBtn").addEventListener("click", reset);
+
+        reset();
+    </script>
+</body>
+</html>

@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>057 - Insert Interval</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="problem-info">
+            <h1><span class="problem-number">#057</span> Insert Interval</h1>
+            <p>
+                Given a sorted list of non-overlapping intervals, insert a new interval and merge overlaps.
+                The algorithm processes intervals in three phases: before, overlapping, and after.
+            </p>
+            <div class="problem-meta">
+                <span class="meta-tag">📏 Intervals</span>
+                <span class="meta-tag">⏱️ O(n log n)</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <code>python/0057_insert_interval/0057_insert_interval.py</code>
+            </div>
+
+        </div>
+
+        <div class="explanation-panel">
+            <h4>🧠 How It Works (Layman's Terms)</h4>
+            <p>Interval problems deal with <strong>ranges and overlaps</strong>:</p>
+            <ul>
+                <li><strong>Sort:</strong> Usually sort by start time</li>
+                <li><strong>Merge:</strong> Combine overlapping intervals</li>
+                <li><strong>Compare:</strong> Check if intervals overlap</li>
+                <li><strong>Track:</strong> Maintain current merged interval</li>
+            </ul>
+        </div>
+
+
+        <section class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+            <div class="controls">
+                <button id="autoRunBtn" class="btn">▶ Auto Run</button>
+                <button id="stepBtn" class="btn btn-success">Step</button>
+                <button id="resetBtn" class="btn btn-danger">Reset</button>
+            </div>
+            <div class="status" id="status">Click Auto Run to visualize interval insertion</div>
+            <svg id="visualization"></svg>
+        </section>
+
+        <section class="code-section">
+            <h3>💻 Python Solution</h3>
+            <div class="code-block">
+                <pre><span class="keyword">def</span> <span class="function">insert</span>(intervals, newInterval):
+    result = []
+    i = <span class="number">0</span>
+    
+    <span class="comment"># Phase 1: Add intervals that come before newInterval</span>
+    <span class="keyword">while</span> i < <span class="function">len</span>(intervals) <span class="keyword">and</span> intervals[i][<span class="number">1</span>] < newInterval[<span class="number">0</span>]:
+        result.<span class="function">append</span>(intervals[i])
+        i += <span class="number">1</span>
+    
+    <span class="comment"># Phase 2: Merge overlapping intervals</span>
+    <span class="keyword">while</span> i < <span class="function">len</span>(intervals) <span class="keyword">and</span> intervals[i][<span class="number">0</span>] <= newInterval[<span class="number">1</span>]:
+        newInterval[<span class="number">0</span>] = <span class="function">min</span>(newInterval[<span class="number">0</span>], intervals[i][<span class="number">0</span>])
+        newInterval[<span class="number">1</span>] = <span class="function">max</span>(newInterval[<span class="number">1</span>], intervals[i][<span class="number">1</span>])
+        i += <span class="number">1</span>
+    result.<span class="function">append</span>(newInterval)
+    
+    <span class="comment"># Phase 3: Add remaining intervals</span>
+    <span class="keyword">while</span> i < <span class="function">len</span>(intervals):
+        result.<span class="function">append</span>(intervals[i])
+        i += <span class="number">1</span>
+    
+    <span class="keyword">return</span> result</pre>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        const width = 900;
+        const height = 500;
+
+        const svg = d3.select("#visualization")
+            .attr("width", width)
+            .attr("height", height);
+
+        // Example: intervals = [[1,2],[3,5],[6,7],[8,10],[12,16]], newInterval = [4,8]
+        const originalIntervals = [[1,2],[3,5],[6,7],[8,10],[12,16]];
+        const newInterval = [4, 8];
+
+        let intervals = [];
+        let result = [];
+        let phase = 0;  // 0: init, 1: before, 2: merging, 3: after, 4: done
+        let currentIdx = 0;
+        let mergedInterval = null;
+        let animationTimer = null;
+
+        function reset() {
+            intervals = originalIntervals.map(i => [...i]);
+            result = [];
+            phase = 0;
+            currentIdx = 0;
+            mergedInterval = [...newInterval];
+            if (animationTimer) clearInterval(animationTimer);
+            document.getElementById("status").textContent = "Click Auto Run to visualize interval insertion";
+            render();
+        }
+
+        function render() {
+            svg.selectAll("*").remove();
+
+            const scale = d3.scaleLinear()
+                .domain([0, 18])
+                .range([50, width - 50]);
+
+            // Draw axis
+            svg.append("line")
+                .attr("x1", 50)
+                .attr("y1", 120)
+                .attr("x2", width - 50)
+                .attr("y2", 120)
+                .attr("stroke", "#94a3b8")
+                .attr("stroke-width", 2);
+
+            // Axis labels
+            for (let i = 0; i <= 18; i += 2) {
+                svg.append("text")
+                    .attr("x", scale(i))
+                    .attr("y", 140)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "12px")
+                    .attr("fill", "#64748b")
+                    .text(i);
+            }
+
+            // Labels
+            svg.append("text")
+                .attr("x", 30)
+                .attr("y", 50)
+                .attr("font-size", "14px")
+                .attr("font-weight", "bold")
+                .attr("fill", "#1e293b")
+                .text("Original Intervals:");
+
+            svg.append("text")
+                .attr("x", 30)
+                .attr("y", 185)
+                .attr("font-size", "14px")
+                .attr("font-weight", "bold")
+                .attr("fill", "#1e293b")
+                .text("New Interval:");
+
+            svg.append("text")
+                .attr("x", 30)
+                .attr("y", 260)
+                .attr("font-size", "14px")
+                .attr("font-weight", "bold")
+                .attr("fill", "#1e293b")
+                .text("Result:");
+
+            // Draw original intervals
+            intervals.forEach((interval, idx) => {
+                const isProcessed = idx < currentIdx;
+                const isCurrent = idx === currentIdx && phase > 0 && phase < 4;
+                
+                svg.append("rect")
+                    .attr("x", scale(interval[0]))
+                    .attr("y", 60)
+                    .attr("width", scale(interval[1]) - scale(interval[0]))
+                    .attr("height", 30)
+                    .attr("rx", 5)
+                    .attr("fill", () => {
+                        if (isCurrent) return "#fef3c7";
+                        if (isProcessed) return "#e2e8f0";
+                        return "#dbeafe";
+                    })
+                    .attr("stroke", () => {
+                        if (isCurrent) return "#f59e0b";
+                        if (isProcessed) return "#94a3b8";
+                        return "#3b82f6";
+                    })
+                    .attr("stroke-width", isCurrent ? 3 : 2);
+
+                svg.append("text")
+                    .attr("x", (scale(interval[0]) + scale(interval[1])) / 2)
+                    .attr("y", 80)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "11px")
+                    .attr("fill", "#1e293b")
+                    .text(`[${interval[0]},${interval[1]}]`);
+            });
+
+            // Draw new interval (before merge)
+            if (phase < 4) {
+                const intervalToDraw = mergedInterval;
+                svg.append("rect")
+                    .attr("x", scale(intervalToDraw[0]))
+                    .attr("y", 195)
+                    .attr("width", scale(intervalToDraw[1]) - scale(intervalToDraw[0]))
+                    .attr("height", 30)
+                    .attr("rx", 5)
+                    .attr("fill", phase === 2 ? "#bbf7d0" : "#fecaca")
+                    .attr("stroke", phase === 2 ? "#10b981" : "#ef4444")
+                    .attr("stroke-width", 3);
+
+                svg.append("text")
+                    .attr("x", (scale(intervalToDraw[0]) + scale(intervalToDraw[1])) / 2)
+                    .attr("y", 215)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "11px")
+                    .attr("font-weight", "bold")
+                    .attr("fill", "#1e293b")
+                    .text(`[${intervalToDraw[0]},${intervalToDraw[1]}]`);
+            }
+
+            // Draw result
+            result.forEach((interval, idx) => {
+                const isNew = interval === mergedInterval || 
+                    (interval[0] === mergedInterval[0] && interval[1] === mergedInterval[1]);
+                
+                svg.append("rect")
+                    .attr("x", scale(interval[0]))
+                    .attr("y", 275)
+                    .attr("width", scale(interval[1]) - scale(interval[0]))
+                    .attr("height", 30)
+                    .attr("rx", 5)
+                    .attr("fill", isNew ? "#bbf7d0" : "#dbeafe")
+                    .attr("stroke", isNew ? "#10b981" : "#3b82f6")
+                    .attr("stroke-width", 2);
+
+                svg.append("text")
+                    .attr("x", (scale(interval[0]) + scale(interval[1])) / 2)
+                    .attr("y", 295)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "11px")
+                    .attr("fill", "#1e293b")
+                    .text(`[${interval[0]},${interval[1]}]`);
+            });
+
+            // Phase indicator
+            const phases = ["Initialize", "Before (non-overlapping)", "Merging overlaps", "After (remaining)", "Complete"];
+            svg.append("text")
+                .attr("x", 30)
+                .attr("y", 350)
+                .attr("font-size", "14px")
+                .attr("font-weight", "bold")
+                .attr("fill", "#1e293b")
+                .text(`Current Phase: ${phases[phase]}`);
+
+            // Algorithm explanation
+            const explanations = [
+                "Phase 1: Add all intervals that end before new interval starts",
+                "Phase 2: Merge all intervals that overlap with new interval",
+                "Phase 3: Add all remaining intervals"
+            ];
+
+            explanations.forEach((exp, idx) => {
+                svg.append("text")
+                    .attr("x", 30)
+                    .attr("y", 390 + idx * 25)
+                    .attr("font-size", "12px")
+                    .attr("fill", phase === idx + 1 ? "#10b981" : "#64748b")
+                    .attr("font-weight", phase === idx + 1 ? "bold" : "normal")
+                    .text(exp);
+            });
+        }
+
+        function step() {
+            if (phase === 4) {
+                document.getElementById("status").textContent = "✓ Complete! Result: " + 
+                    result.map(i => `[${i[0]},${i[1]}]`).join(", ");
+                return;
+            }
+
+            if (phase === 0) {
+                phase = 1;
+                document.getElementById("status").textContent = "Phase 1: Finding intervals before new interval";
+            } else if (phase === 1) {
+                // Phase 1: Add intervals before
+                if (currentIdx < intervals.length && intervals[currentIdx][1] < mergedInterval[0]) {
+                    result.push([...intervals[currentIdx]]);
+                    document.getElementById("status").textContent = 
+                        `Added [${intervals[currentIdx][0]},${intervals[currentIdx][1]}] - ends before new interval starts`;
+                    currentIdx++;
+                } else {
+                    phase = 2;
+                    document.getElementById("status").textContent = "Phase 2: Merging overlapping intervals";
+                }
+            } else if (phase === 2) {
+                // Phase 2: Merge overlapping
+                if (currentIdx < intervals.length && intervals[currentIdx][0] <= mergedInterval[1]) {
+                    const oldMerged = [...mergedInterval];
+                    mergedInterval[0] = Math.min(mergedInterval[0], intervals[currentIdx][0]);
+                    mergedInterval[1] = Math.max(mergedInterval[1], intervals[currentIdx][1]);
+                    document.getElementById("status").textContent = 
+                        `Merged [${intervals[currentIdx][0]},${intervals[currentIdx][1]}] → new interval: [${mergedInterval[0]},${mergedInterval[1]}]`;
+                    currentIdx++;
+                } else {
+                    result.push([...mergedInterval]);
+                    document.getElementById("status").textContent = 
+                        `Added merged interval [${mergedInterval[0]},${mergedInterval[1]}] to result`;
+                    phase = 3;
+                }
+            } else if (phase === 3) {
+                // Phase 3: Add remaining
+                if (currentIdx < intervals.length) {
+                    result.push([...intervals[currentIdx]]);
+                    document.getElementById("status").textContent = 
+                        `Added remaining interval [${intervals[currentIdx][0]},${intervals[currentIdx][1]}]`;
+                    currentIdx++;
+                } else {
+                    phase = 4;
+                    document.getElementById("status").textContent = "✓ Complete! Result: " + 
+                        result.map(i => `[${i[0]},${i[1]}]`).join(", ");
+                }
+            }
+
+            render();
+        }
+
+        function autoRun() {
+            if (animationTimer) {
+                clearInterval(animationTimer);
+                animationTimer = null;
+                document.getElementById("autoRunBtn").textContent = "▶ Auto Run";
+                return;
+            }
+
+            document.getElementById("autoRunBtn").textContent = "⏸ Pause";
+            animationTimer = setInterval(() => {
+                if (phase === 4) {
+                    clearInterval(animationTimer);
+                    animationTimer = null;
+                    document.getElementById("autoRunBtn").textContent = "▶ Auto Run";
+                    return;
+                }
+                step();
+            }, 1000);
+        }
+
+        document.getElementById("autoRunBtn").addEventListener("click", autoRun);
+        document.getElementById("stepBtn").addEventListener("click", step);
+        document.getElementById("resetBtn").addEventListener("click", reset);
+
+        reset();
+    </script>
+</body>
+</html>

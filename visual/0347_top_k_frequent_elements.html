@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Top K Frequent Elements - LeetCode 347</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="problem-info">
+            <h1><span class="problem-number">#0347</span> Top K Frequent Elements</h1>
+            <p><strong>Problem:</strong> Given an integer array nums and an integer k, return the k most frequent elements. You may return the answer in any order.</p>
+            <p><strong>Pattern:</strong> Bucket Sort (O(n) time complexity)</p>
+            <p><strong>File:</strong> 0347_top_k_frequent_elements/0347_top_k_frequent_elements.py</p>
+            <div class="problem-meta">
+                <span class="meta-tag">⛰️ Heap</span>
+                <span class="meta-tag">⏱️ O(n)</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <code>python/0347_top_k_frequent_elements/0347_top_k_frequent_elements.py</code>
+            </div>
+
+        </div>
+
+        <div class="explanation-panel">
+            <h4>🧠 How It Works (Layman's Terms)</h4>
+            <p>A heap is like a <strong>priority queue</strong> - always access the best element:</p>
+            <ul>
+                <li><strong>Min heap:</strong> Smallest element always on top</li>
+                <li><strong>Max heap:</strong> Largest element always on top</li>
+                <li><strong>Insert/Remove:</strong> O(log n) to maintain order</li>
+                <li><strong>Use case:</strong> Great for "top K" problems</li>
+            </ul>
+        </div>
+
+
+        <div class="controls">
+            <button id="stepBtn">Step</button>
+            <button id="autoBtn">Auto Run</button>
+            <button id="resetBtn">Reset</button>
+            <div class="speed-control">
+                <label for="speed">Speed:</label>
+                <input type="range" id="speed" min="100" max="2000" value="800">
+            </div>
+        </div>
+
+        <div class="status" id="status">Click "Step" or "Auto Run" to begin</div>
+
+        <div class="variables">
+            <div class="var-item">
+                <span class="var-label">Input:</span>
+                <span id="inputDisplay">[1,1,1,2,2,3], k=2</span>
+            </div>
+            <div class="var-item">
+                <span class="var-label">Phase:</span>
+                <span id="phaseDisplay">Count Frequencies</span>
+            </div>
+            <div class="var-item">
+                <span class="var-label">Result:</span>
+                <span id="resultDisplay">[]</span>
+            </div>
+        </div>
+
+        <div class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+
+            <div class="visualization">
+            <svg id="mainSvg"></svg>
+        </div>
+
+        </div>
+
+        <div class="code-section">
+            <h3>Python Solution (Bucket Sort)</h3>
+            <div class="code-block">
+                <pre><span class="keyword">def</span> <span class="function">topKFrequent_bucket_sort</span>(nums, k):
+    <span class="string">"""
+    Find k most frequent elements using bucket sort.
+    Time: O(n), Space: O(n)
+    """</span>
+    <span class="comment"># Step 1: Count frequencies</span>
+    count = {}
+    <span class="keyword">for</span> n <span class="keyword">in</span> nums:
+        count[n] = count.<span class="function">get</span>(n, <span class="number">0</span>) + <span class="number">1</span>
+    
+    <span class="comment"># Step 2: Create frequency buckets (index = frequency)</span>
+    freq = [[] <span class="keyword">for</span> _ <span class="keyword">in</span> <span class="function">range</span>(<span class="function">len</span>(nums) + <span class="number">1</span>)]
+    <span class="keyword">for</span> num, cnt <span class="keyword">in</span> count.<span class="function">items</span>():
+        freq[cnt].<span class="function">append</span>(num)
+    
+    <span class="comment"># Step 3: Collect k elements from highest frequency buckets</span>
+    result = []
+    <span class="keyword">for</span> i <span class="keyword">in</span> <span class="function">range</span>(<span class="function">len</span>(freq) - <span class="number">1</span>, <span class="number">0</span>, <span class="number">-1</span>):
+        <span class="keyword">for</span> num <span class="keyword">in</span> freq[i]:
+            result.<span class="function">append</span>(num)
+            <span class="keyword">if</span> <span class="function">len</span>(result) == k:
+                <span class="keyword">return</span> result
+    <span class="keyword">return</span> result</pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Visualization state
+        const nums = [1, 1, 1, 2, 2, 3];
+        const k = 2;
+        let count = {};
+        let freq = [];
+        let result = [];
+        let phase = "counting"; // "counting", "bucketing", "collecting"
+        let currentIndex = 0;
+        let collectIndex = 0;
+        let autoRunning = false;
+        let autoTimer = null;
+
+        // SVG setup
+        const width = 850;
+        const height = 450;
+        const svg = d3.select("#mainSvg")
+            .attr("width", width)
+            .attr("height", height);
+
+        function drawVisualization() {
+            svg.selectAll("*").remove();
+
+            const cellWidth = 50;
+            const cellHeight = 40;
+
+            // Draw input array
+            svg.append("text")
+                .attr("x", 30)
+                .attr("y", 30)
+                .attr("class", "section-title")
+                .text("Input Array:");
+
+            const inputStartX = 150;
+            nums.forEach((num, i) => {
+                const isHighlighted = phase === "counting" && i === currentIndex - 1;
+                svg.append("rect")
+                    .attr("x", inputStartX + i * cellWidth)
+                    .attr("y", 15)
+                    .attr("width", cellWidth - 4)
+                    .attr("height", cellHeight)
+                    .attr("rx", 5)
+                    .attr("class", isHighlighted ? "cell current" : "cell");
+
+                svg.append("text")
+                    .attr("x", inputStartX + i * cellWidth + (cellWidth - 4) / 2)
+                    .attr("y", 15 + cellHeight / 2)
+                    .attr("dy", ".35em")
+                    .attr("text-anchor", "middle")
+                    .attr("class", "cell-text")
+                    .text(num);
+            });
+
+            // Draw frequency count map
+            svg.append("text")
+                .attr("x", 30)
+                .attr("y", 100)
+                .attr("class", "section-title")
+                .text("Frequency Count:");
+
+            const countEntries = Object.entries(count);
+            let countX = 180;
+            countEntries.forEach(([num, cnt], i) => {
+                svg.append("rect")
+                    .attr("x", countX)
+                    .attr("y", 80)
+                    .attr("width", 80)
+                    .attr("height", cellHeight)
+                    .attr("rx", 5)
+                    .attr("class", "cell count-cell");
+
+                svg.append("text")
+                    .attr("x", countX + 40)
+                    .attr("y", 80 + cellHeight / 2)
+                    .attr("dy", ".35em")
+                    .attr("text-anchor", "middle")
+                    .attr("class", "cell-text")
+                    .text(`${num}→${cnt}`);
+
+                countX += 90;
+            });
+
+            if (countEntries.length === 0) {
+                svg.append("text")
+                    .attr("x", 180)
+                    .attr("y", 100)
+                    .attr("class", "empty-text")
+                    .text("{ empty }");
+            }
+
+            // Draw frequency buckets
+            svg.append("text")
+                .attr("x", 30)
+                .attr("y", 170)
+                .attr("class", "section-title")
+                .text("Frequency Buckets:");
+
+            const bucketY = 185;
+            const bucketWidth = 100;
+            const bucketHeight = 50;
+            const maxFreq = nums.length;
+
+            for (let i = 1; i <= maxFreq; i++) {
+                const bucketX = 30 + (i - 1) * (bucketWidth + 10);
+                const bucket = freq[i] || [];
+                const isCollecting = phase === "collecting" && collectIndex === i;
+
+                svg.append("rect")
+                    .attr("x", bucketX)
+                    .attr("y", bucketY)
+                    .attr("width", bucketWidth)
+                    .attr("height", bucketHeight)
+                    .attr("rx", 5)
+                    .attr("class", isCollecting ? "bucket current" : (bucket.length > 0 ? "bucket filled" : "bucket empty"));
+
+                svg.append("text")
+                    .attr("x", bucketX + bucketWidth / 2)
+                    .attr("y", bucketY - 10)
+                    .attr("text-anchor", "middle")
+                    .attr("class", "bucket-label")
+                    .text(`freq=${i}`);
+
+                svg.append("text")
+                    .attr("x", bucketX + bucketWidth / 2)
+                    .attr("y", bucketY + bucketHeight / 2)
+                    .attr("dy", ".35em")
+                    .attr("text-anchor", "middle")
+                    .attr("class", "bucket-text")
+                    .text(bucket.length > 0 ? `[${bucket.join(", ")}]` : "[ ]");
+            }
+
+            // Draw result collection
+            svg.append("text")
+                .attr("x", 30)
+                .attr("y", 300)
+                .attr("class", "section-title")
+                .text(`Result (need ${k} elements):`);
+
+            const resultStartX = 230;
+            if (result.length === 0) {
+                svg.append("text")
+                    .attr("x", resultStartX)
+                    .attr("y", 300)
+                    .attr("class", "empty-text")
+                    .text("[ ]");
+            } else {
+                result.forEach((num, i) => {
+                    svg.append("rect")
+                        .attr("x", resultStartX + i * 60)
+                        .attr("y", 280)
+                        .attr("width", 50)
+                        .attr("height", cellHeight)
+                        .attr("rx", 5)
+                        .attr("class", "cell result-cell");
+
+                    svg.append("text")
+                        .attr("x", resultStartX + i * 60 + 25)
+                        .attr("y", 280 + cellHeight / 2)
+                        .attr("dy", ".35em")
+                        .attr("text-anchor", "middle")
+                        .attr("class", "cell-text")
+                        .text(num);
+                });
+            }
+
+            // Arrow showing collection direction
+            if (phase === "collecting") {
+                svg.append("text")
+                    .attr("x", width / 2)
+                    .attr("y", 360)
+                    .attr("text-anchor", "middle")
+                    .attr("class", "direction-text")
+                    .text("← Collecting from highest frequency to lowest");
+            }
+
+            // Final result
+            if (result.length === k) {
+                svg.append("text")
+                    .attr("x", width / 2)
+                    .attr("y", 400)
+                    .attr("text-anchor", "middle")
+                    .attr("class", "result-final")
+                    .text(`✓ Found ${k} most frequent: [${result.join(", ")}]`);
+            }
+        }
+
+        function step() {
+            if (phase === "counting") {
+                if (currentIndex >= nums.length) {
+                    phase = "bucketing";
+                    currentIndex = 0;
+                    // Initialize frequency buckets
+                    freq = Array.from({length: nums.length + 1}, () => []);
+                    document.getElementById("phaseDisplay").textContent = "Create Buckets";
+                    document.getElementById("status").textContent = "Counting done! Now creating frequency buckets...";
+                    highlightCode("freq = [[] for");
+                    drawVisualization();
+                    return true;
+                }
+
+                const num = nums[currentIndex];
+                count[num] = (count[num] || 0) + 1;
+                currentIndex++;
+
+                document.getElementById("status").textContent = 
+                    `Counting: nums[${currentIndex - 1}] = ${num}, count[${num}] = ${count[num]}`;
+                highlightCode("count[n] = count.get");
+                drawVisualization();
+                return true;
+            } else if (phase === "bucketing") {
+                const entries = Object.entries(count);
+                if (currentIndex >= entries.length) {
+                    phase = "collecting";
+                    collectIndex = nums.length;
+                    document.getElementById("phaseDisplay").textContent = "Collect Top K";
+                    document.getElementById("status").textContent = "Buckets created! Now collecting k most frequent from highest frequency...";
+                    highlightCode("for i in range(len(freq) - 1");
+                    drawVisualization();
+                    return true;
+                }
+
+                const [num, cnt] = entries[currentIndex];
+                freq[cnt].push(parseInt(num));
+                currentIndex++;
+
+                document.getElementById("status").textContent = 
+                    `Bucketing: ${num} has frequency ${cnt}, adding to bucket[${cnt}]`;
+                highlightCode("freq[cnt].append(num)");
+                drawVisualization();
+                return true;
+            } else if (phase === "collecting") {
+                if (result.length >= k) {
+                    document.getElementById("status").textContent = `Done! Top ${k} frequent elements: [${result.join(", ")}]`;
+                    document.getElementById("resultDisplay").textContent = `[${result.join(", ")}]`;
+                    highlightCode("return result");
+                    drawVisualization();
+                    return false;
+                }
+
+                // Find next non-empty bucket from high to low
+                while (collectIndex > 0 && (freq[collectIndex] || []).length === 0) {
+                    collectIndex--;
+                }
+
+                if (collectIndex <= 0) {
+                    document.getElementById("status").textContent = "No more elements!";
+                    return false;
+                }
+
+                const bucket = freq[collectIndex];
+                if (bucket.length > 0) {
+                    const num = bucket.shift();
+                    result.push(num);
+                    document.getElementById("status").textContent = 
+                        `Collecting: Taking ${num} from bucket[${collectIndex}], result = [${result.join(", ")}]`;
+                    document.getElementById("resultDisplay").textContent = `[${result.join(", ")}]`;
+                    highlightCode("result.append(num)");
+                }
+
+                if (bucket.length === 0) {
+                    collectIndex--;
+                }
+
+                drawVisualization();
+                return result.length < k;
+            }
+            return false;
+        }
+
+        function highlightCode(text) {
+            const codeDisplay = document.getElementById("codeDisplay");
+            const code = codeDisplay.textContent;
+            const highlighted = code.replace(
+                new RegExp(`(.*${text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}.*)`),
+                '<span class="highlight-line">$1</span>'
+            );
+            codeDisplay.innerHTML = highlighted;
+        }
+
+        function reset() {
+            count = {};
+            freq = [];
+            result = [];
+            phase = "counting";
+            currentIndex = 0;
+            collectIndex = 0;
+            autoRunning = false;
+            if (autoTimer) {
+                clearInterval(autoTimer);
+                autoTimer = null;
+            }
+            
+            document.getElementById("phaseDisplay").textContent = "Count Frequencies";
+            document.getElementById("resultDisplay").textContent = "[]";
+            document.getElementById("status").textContent = 'Click "Step" or "Auto Run" to begin';
+            document.getElementById("autoBtn").textContent = "Auto Run";
+            
+            drawVisualization();
+            document.getElementById("codeDisplay").innerHTML = document.getElementById("codeDisplay").textContent;
+        }
+
+        function autoRun() {
+            if (autoRunning) {
+                autoRunning = false;
+                clearInterval(autoTimer);
+                autoTimer = null;
+                document.getElementById("autoBtn").textContent = "Auto Run";
+            } else {
+                autoRunning = true;
+                document.getElementById("autoBtn").textContent = "Pause";
+                const speed = 2100 - document.getElementById("speed").value;
+                autoTimer = setInterval(() => {
+                    if (!step()) {
+                        autoRunning = false;
+                        clearInterval(autoTimer);
+                        autoTimer = null;
+                        document.getElementById("autoBtn").textContent = "Auto Run";
+                    }
+                }, speed);
+            }
+        }
+
+        // Event listeners
+        document.getElementById("stepBtn").addEventListener("click", step);
+        document.getElementById("autoBtn").addEventListener("click", autoRun);
+        document.getElementById("resetBtn").addEventListener("click", reset);
+
+        // Initialize
+        drawVisualization();
+    </script>
+
+    <style>
+        .section-title {
+            font-size: 14px;
+            font-weight: bold;
+            fill: #333;
+        }
+        .cell {
+            fill: #e3f2fd;
+            stroke: #1976d2;
+            stroke-width: 2;
+        }
+        .cell.current {
+            fill: #fff3e0;
+            stroke: #f57c00;
+            stroke-width: 3;
+        }
+        .count-cell {
+            fill: #f3e5f5;
+            stroke: #7b1fa2;
+        }
+        .result-cell {
+            fill: #c8e6c9;
+            stroke: #388e3c;
+            stroke-width: 2;
+        }
+        .bucket {
+            stroke-width: 2;
+        }
+        .bucket.empty {
+            fill: #f5f5f5;
+            stroke: #bdbdbd;
+        }
+        .bucket.filled {
+            fill: #e8f5e9;
+            stroke: #4caf50;
+        }
+        .bucket.current {
+            fill: #fff3e0;
+            stroke: #f57c00;
+            stroke-width: 3;
+        }
+        .cell-text {
+            font-size: 14px;
+            font-weight: bold;
+            fill: #333;
+        }
+        .bucket-label {
+            font-size: 11px;
+            fill: #666;
+        }
+        .bucket-text {
+            font-size: 12px;
+            fill: #333;
+        }
+        .empty-text {
+            font-size: 14px;
+            fill: #999;
+            font-style: italic;
+        }
+        .direction-text {
+            font-size: 14px;
+            fill: #666;
+        }
+        .result-final {
+            font-size: 18px;
+            font-weight: bold;
+            fill: #388e3c;
+        }
+    </style>
+</body>
+</html>

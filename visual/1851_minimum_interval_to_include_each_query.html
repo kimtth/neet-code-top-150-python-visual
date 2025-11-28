@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>1851 - Minimum Interval to Include Each Query</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="problem-info">
+            <h1><span class="problem-number">#1851</span> Minimum Interval to Include Each Query</h1>
+            <p>
+                For each query, find the smallest interval containing that query point.
+                Uses sorting + min-heap: process queries in order, maintain valid intervals in heap.
+            </p>
+            <div class="problem-meta">
+                <span class="meta-tag">📏 Intervals</span>
+                <span class="meta-tag">⏱️ O(n log n)</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <code>python/1851_minimum_interval_to_include_each_query/1851_minimum_interval_to_include_each_query.py</code>
+            </div>
+
+        </div>
+
+        <div class="explanation-panel">
+            <h4>🧠 How It Works (Layman's Terms)</h4>
+            <p>Interval problems deal with <strong>ranges and overlaps</strong>:</p>
+            <ul>
+                <li><strong>Sort:</strong> Usually sort by start time</li>
+                <li><strong>Merge:</strong> Combine overlapping intervals</li>
+                <li><strong>Compare:</strong> Check if intervals overlap</li>
+                <li><strong>Track:</strong> Maintain current merged interval</li>
+            </ul>
+        </div>
+
+
+        <section class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+            <div class="controls">
+                <button id="autoRunBtn" class="btn">▶ Auto Run</button>
+                <button id="stepBtn" class="btn btn-success">Step</button>
+                <button id="resetBtn" class="btn btn-danger">Reset</button>
+            </div>
+            <div class="status" id="status">Click Auto Run to find minimum intervals</div>
+            <svg id="visualization"></svg>
+        </section>
+
+        <section class="code-section">
+            <h3>💻 Python Solution</h3>
+            <div class="code-block">
+                <pre><span class="keyword">def</span> <span class="function">minInterval</span>(intervals, queries):
+    result = [<span class="number">-1</span>] * <span class="function">len</span>(queries)
+    query_indices = <span class="function">sorted</span>(<span class="function">enumerate</span>(queries), key=<span class="keyword">lambda</span> x: <span class="class-name">x</span>[<span class="number">1</span>])
+    intervals.<span class="function">sort</span>()
+    min_heap = []  <span class="comment"># (size, end)</span>
+    interval_idx = <span class="number">0</span>
+    
+    <span class="keyword">for</span> original_idx, query <span class="keyword">in</span> query_indices:
+        <span class="comment"># Add all intervals that start <= query</span>
+        <span class="keyword">while</span> interval_idx < <span class="function">len</span>(intervals) <span class="keyword">and</span> intervals[interval_idx][<span class="number">0</span>] <= query:
+            start, end = intervals[interval_idx]
+            <span class="keyword">if</span> end >= query:
+                heapq.<span class="function">heappush</span>(min_heap, (end - start + <span class="number">1</span>, end))
+            interval_idx += <span class="number">1</span>
+        
+        <span class="comment"># Remove intervals that ended before query</span>
+        <span class="keyword">while</span> min_heap <span class="keyword">and</span> min_heap[<span class="number">0</span>][<span class="number">1</span>] < query:
+            heapq.<span class="function">heappop</span>(min_heap)
+        
+        <span class="keyword">if</span> min_heap:
+            result[original_idx] = min_heap[<span class="number">0</span>][<span class="number">0</span>]
+    
+    <span class="keyword">return</span> result</pre>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        const width = 900;
+        const height = 600;
+
+        const svg = d3.select("#visualization")
+            .attr("width", width)
+            .attr("height", height);
+
+        // Example data
+        const intervals = [[1, 4], [2, 4], [3, 6], [4, 4]];
+        const queries = [2, 3, 4, 5];
+        const numLineStart = 0;
+        const numLineEnd = 8;
+
+        let sortedIntervals = [];
+        let sortedQueries = [];
+        let currentQueryIdx = 0;
+        let intervalIdx = 0;
+        let minHeap = [];
+        let result = {};
+        let activeIntervals = [];
+        let animationTimer = null;
+
+        function reset() {
+            sortedIntervals = [...intervals].sort((a, b) => a[0] - b[0]);
+            sortedQueries = queries.map((q, i) => [q, i]).sort((a, b) => a[0] - b[0]);
+            currentQueryIdx = 0;
+            intervalIdx = 0;
+            minHeap = [];
+            result = {};
+            activeIntervals = [];
+            if (animationTimer) clearInterval(animationTimer);
+            document.getElementById("status").textContent = "Click Auto Run to find minimum intervals";
+            render();
+        }
+
+        function heapPush(heap, item) {
+            heap.push(item);
+            let i = heap.length - 1;
+            while (i > 0) {
+                const parent = Math.floor((i - 1) / 2);
+                if (heap[parent][0] <= heap[i][0]) break;
+                [heap[parent], heap[i]] = [heap[i], heap[parent]];
+                i = parent;
+            }
+        }
+
+        function heapPop(heap) {
+            if (heap.length === 0) return null;
+            const result = heap[0];
+            const last = heap.pop();
+            if (heap.length > 0) {
+                heap[0] = last;
+                let i = 0;
+                while (true) {
+                    const left = 2 * i + 1;
+                    const right = 2 * i + 2;
+                    let smallest = i;
+                    if (left < heap.length && heap[left][0] < heap[smallest][0]) smallest = left;
+                    if (right < heap.length && heap[right][0] < heap[smallest][0]) smallest = right;
+                    if (smallest === i) break;
+                    [heap[i], heap[smallest]] = [heap[smallest], heap[i]];
+                    i = smallest;
+                }
+            }
+            return result;
+        }
+
+        function render() {
+            svg.selectAll("*").remove();
+
+            // Draw number line
+            drawNumberLine();
+
+            // Draw intervals
+            drawIntervals();
+
+            // Draw queries
+            drawQueries();
+
+            // Draw min-heap
+            drawMinHeap();
+
+            // Draw results
+            drawResults();
+        }
+
+        function drawNumberLine() {
+            const y = 120;
+            const leftX = 80;
+            const rightX = 700;
+            const scale = (rightX - leftX) / (numLineEnd - numLineStart);
+
+            // Line
+            svg.append("line")
+                .attr("x1", leftX)
+                .attr("y1", y)
+                .attr("x2", rightX)
+                .attr("y2", y)
+                .attr("stroke", "#94a3b8")
+                .attr("stroke-width", 2);
+
+            // Ticks
+            for (let i = numLineStart; i <= numLineEnd; i++) {
+                const x = leftX + (i - numLineStart) * scale;
+                svg.append("line")
+                    .attr("x1", x)
+                    .attr("y1", y - 5)
+                    .attr("x2", x)
+                    .attr("y2", y + 5)
+                    .attr("stroke", "#64748b")
+                    .attr("stroke-width", 1);
+
+                svg.append("text")
+                    .attr("x", x)
+                    .attr("y", y + 20)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "12px")
+                    .attr("fill", "#64748b")
+                    .text(i);
+            }
+        }
+
+        function drawIntervals() {
+            const baseY = 60;
+            const leftX = 80;
+            const rightX = 700;
+            const scale = (rightX - leftX) / (numLineEnd - numLineStart);
+
+            svg.append("text")
+                .attr("x", 50)
+                .attr("y", 30)
+                .attr("font-size", "14px")
+                .attr("font-weight", "bold")
+                .attr("fill", "#1e293b")
+                .text("Intervals (sorted by start):");
+
+            sortedIntervals.forEach((interval, idx) => {
+                const [start, end] = interval;
+                const x1 = leftX + (start - numLineStart) * scale;
+                const x2 = leftX + (end - numLineStart) * scale;
+                const y = baseY - idx * 15;
+                const isProcessed = idx < intervalIdx;
+                const isActive = activeIntervals.some(a => a[0] === start && a[1] === end);
+
+                svg.append("line")
+                    .attr("x1", x1)
+                    .attr("y1", y)
+                    .attr("x2", x2)
+                    .attr("y2", y)
+                    .attr("stroke", () => {
+                        if (isActive) return "#10b981";
+                        if (isProcessed) return "#d1d5db";
+                        return "#3b82f6";
+                    })
+                    .attr("stroke-width", isActive ? 5 : 3)
+                    .attr("stroke-linecap", "round");
+
+                // Size label
+                const size = end - start + 1;
+                svg.append("text")
+                    .attr("x", x2 + 10)
+                    .attr("y", y + 4)
+                    .attr("font-size", "10px")
+                    .attr("fill", isActive ? "#10b981" : "#64748b")
+                    .text(`size=${size}`);
+            });
+        }
+
+        function drawQueries() {
+            const y = 120;
+            const leftX = 80;
+            const rightX = 700;
+            const scale = (rightX - leftX) / (numLineEnd - numLineStart);
+
+            queries.forEach((query, idx) => {
+                const x = leftX + (query - numLineStart) * scale;
+                const isCurrentSorted = currentQueryIdx < sortedQueries.length && 
+                    sortedQueries[currentQueryIdx][0] === query && 
+                    sortedQueries[currentQueryIdx][1] === idx;
+                const isProcessed = result[idx] !== undefined;
+
+                svg.append("circle")
+                    .attr("cx", x)
+                    .attr("cy", y)
+                    .attr("r", 8)
+                    .attr("fill", () => {
+                        if (isCurrentSorted) return "#fef3c7";
+                        if (isProcessed) return "#d1fae5";
+                        return "#f8fafc";
+                    })
+                    .attr("stroke", () => {
+                        if (isCurrentSorted) return "#f59e0b";
+                        if (isProcessed) return "#10b981";
+                        return "#ec4899";
+                    })
+                    .attr("stroke-width", 2);
+
+                svg.append("text")
+                    .attr("x", x)
+                    .attr("y", y + 4)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "10px")
+                    .attr("font-weight", "bold")
+                    .attr("fill", "#1e293b")
+                    .text(query);
+
+                // Query index
+                svg.append("text")
+                    .attr("x", x)
+                    .attr("y", y + 38)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "9px")
+                    .attr("fill", "#64748b")
+                    .text(`Q[${idx}]`);
+            });
+
+            svg.append("text")
+                .attr("x", 50)
+                .attr("y", y + 35)
+                .attr("font-size", "11px")
+                .attr("fill", "#64748b")
+                .text("Queries:");
+        }
+
+        function drawMinHeap() {
+            const x = 50;
+            const y = 200;
+
+            svg.append("text")
+                .attr("x", x)
+                .attr("y", y)
+                .attr("font-size", "14px")
+                .attr("font-weight", "bold")
+                .attr("fill", "#1e293b")
+                .text("Min-Heap (by interval size):");
+
+            if (minHeap.length === 0) {
+                svg.append("text")
+                    .attr("x", x)
+                    .attr("y", y + 30)
+                    .attr("font-size", "12px")
+                    .attr("fill", "#64748b")
+                    .text("(empty)");
+            } else {
+                const sortedHeap = [...minHeap].sort((a, b) => a[0] - b[0]);
+                sortedHeap.forEach((item, idx) => {
+                    const px = x + idx * 100;
+
+                    svg.append("rect")
+                        .attr("x", px)
+                        .attr("y", y + 15)
+                        .attr("width", 90)
+                        .attr("height", 35)
+                        .attr("rx", 4)
+                        .attr("fill", idx === 0 ? "#d1fae5" : "#f8fafc")
+                        .attr("stroke", idx === 0 ? "#10b981" : "#94a3b8");
+
+                    svg.append("text")
+                        .attr("x", px + 45)
+                        .attr("y", y + 38)
+                        .attr("text-anchor", "middle")
+                        .attr("font-size", "11px")
+                        .attr("font-weight", idx === 0 ? "bold" : "normal")
+                        .attr("fill", "#1e293b")
+                        .text(`size=${item[0]}, end=${item[1]}`);
+                });
+            }
+        }
+
+        function drawResults() {
+            const x = 50;
+            const y = 300;
+
+            svg.append("text")
+                .attr("x", x)
+                .attr("y", y)
+                .attr("font-size", "14px")
+                .attr("font-weight", "bold")
+                .attr("fill", "#1e293b")
+                .text("Results:");
+
+            queries.forEach((query, idx) => {
+                const px = x + idx * 100;
+
+                svg.append("rect")
+                    .attr("x", px)
+                    .attr("y", y + 15)
+                    .attr("width", 90)
+                    .attr("height", 40)
+                    .attr("rx", 4)
+                    .attr("fill", result[idx] !== undefined ? "#d1fae5" : "#f8fafc")
+                    .attr("stroke", result[idx] !== undefined ? "#10b981" : "#94a3b8");
+
+                svg.append("text")
+                    .attr("x", px + 45)
+                    .attr("y", y + 33)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "10px")
+                    .attr("fill", "#64748b")
+                    .text(`Q[${idx}]=${query}`);
+
+                svg.append("text")
+                    .attr("x", px + 45)
+                    .attr("y", y + 48)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "14px")
+                    .attr("font-weight", "bold")
+                    .attr("fill", result[idx] !== undefined ? "#10b981" : "#94a3b8")
+                    .text(result[idx] !== undefined ? result[idx] : "?");
+            });
+
+            // Final result array
+            if (Object.keys(result).length === queries.length) {
+                const finalResult = queries.map((_, i) => result[i]);
+                svg.append("text")
+                    .attr("x", x)
+                    .attr("y", y + 85)
+                    .attr("font-size", "14px")
+                    .attr("font-weight", "bold")
+                    .attr("fill", "#10b981")
+                    .text(`✓ Final: [${finalResult.join(", ")}]`);
+            }
+        }
+
+        function step() {
+            if (currentQueryIdx >= sortedQueries.length) {
+                document.getElementById("status").textContent = 
+                    `✓ Complete! Results: [${queries.map((_, i) => result[i]).join(", ")}]`;
+                return;
+            }
+
+            const [query, originalIdx] = sortedQueries[currentQueryIdx];
+
+            // Add intervals that start <= query
+            while (intervalIdx < sortedIntervals.length && sortedIntervals[intervalIdx][0] <= query) {
+                const [start, end] = sortedIntervals[intervalIdx];
+                if (end >= query) {
+                    heapPush(minHeap, [end - start + 1, end, start]);
+                    activeIntervals.push([start, end]);
+                }
+                intervalIdx++;
+            }
+
+            // Remove expired intervals
+            while (minHeap.length > 0 && minHeap[0][1] < query) {
+                const removed = heapPop(minHeap);
+                activeIntervals = activeIntervals.filter(a => !(a[1] === removed[1] && a[0] === removed[2]));
+            }
+
+            // Record result
+            if (minHeap.length > 0) {
+                result[originalIdx] = minHeap[0][0];
+                document.getElementById("status").textContent = 
+                    `Query ${query} (idx ${originalIdx}): Smallest interval has size ${minHeap[0][0]}`;
+            } else {
+                result[originalIdx] = -1;
+                document.getElementById("status").textContent = 
+                    `Query ${query} (idx ${originalIdx}): No interval contains this point → -1`;
+            }
+
+            currentQueryIdx++;
+            render();
+        }
+
+        function autoRun() {
+            if (animationTimer) {
+                clearInterval(animationTimer);
+                animationTimer = null;
+                document.getElementById("autoRunBtn").textContent = "▶ Auto Run";
+                return;
+            }
+
+            document.getElementById("autoRunBtn").textContent = "⏸ Pause";
+            animationTimer = setInterval(() => {
+                if (currentQueryIdx >= sortedQueries.length) {
+                    clearInterval(animationTimer);
+                    animationTimer = null;
+                    document.getElementById("autoRunBtn").textContent = "▶ Auto Run";
+                    return;
+                }
+                step();
+            }, 1000);
+        }
+
+        document.getElementById("autoRunBtn").addEventListener("click", autoRun);
+        document.getElementById("stepBtn").addEventListener("click", step);
+        document.getElementById("resetBtn").addEventListener("click", reset);
+
+        reset();
+    </script>
+</body>
+</html>

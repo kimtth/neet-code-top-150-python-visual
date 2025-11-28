@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>090 - Subsets II</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="problem-info">
+            <h1><span class="problem-number">#090</span> Subsets II</h1>
+            <p>
+                Given an array with duplicates, return all unique subsets.
+                Sort the array first, then skip duplicates during backtracking.
+            </p>
+            <div class="problem-meta">
+                <span class="meta-tag">🔄 Backtracking</span>
+                <span class="meta-tag">⏱️ O(2ⁿ)</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <code>python/0090_subsets_ii/0090_subsets_ii.py</code>
+            </div>
+
+        </div>
+
+        <div class="explanation-panel">
+            <h4>🧠 How It Works (Layman's Terms)</h4>
+            <p>Backtracking <strong>explores all possibilities</strong> like solving a maze:</p>
+            <ul>
+                <li><strong>Choose:</strong> Make a decision</li>
+                <li><strong>Explore:</strong> Recursively continue</li>
+                <li><strong>Validate:</strong> Check if path is valid</li>
+                <li><strong>Backtrack:</strong> Undo choice if stuck, try another</li>
+            </ul>
+        </div>
+
+
+        <section class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+            <div class="controls">
+                <button id="autoRunBtn" class="btn">▶ Auto Run</button>
+                <button id="stepBtn" class="btn btn-success">Step</button>
+                <button id="resetBtn" class="btn btn-danger">Reset</button>
+            </div>
+            <div class="status" id="status">Click Auto Run to generate subsets of [1, 2, 2]</div>
+            <svg id="visualization"></svg>
+        </section>
+
+        <section class="code-section">
+            <h3>💻 Python Solution</h3>
+            <div class="code-block">
+                <pre><span class="keyword">def</span> <span class="function">subsetsWithDup</span>(nums):
+    nums.<span class="function">sort</span>()  <span class="comment"># Sort to handle duplicates</span>
+    result = []
+    
+    <span class="keyword">def</span> <span class="function">backtrack</span>(start, path):
+        result.<span class="function">append</span>(path[:])
+        
+        <span class="keyword">for</span> i <span class="keyword">in</span> <span class="function">range</span>(start, <span class="function">len</span>(nums)):
+            <span class="comment"># Skip duplicates</span>
+            <span class="keyword">if</span> i > start <span class="keyword">and</span> nums[i] == nums[i-<span class="number">1</span>]:
+                <span class="keyword">continue</span>
+            
+            path.<span class="function">append</span>(nums[i])
+            <span class="function">backtrack</span>(i + <span class="number">1</span>, path)
+            path.<span class="function">pop</span>()  <span class="comment"># Backtrack</span>
+    
+    <span class="function">backtrack</span>(<span class="number">0</span>, [])
+    <span class="keyword">return</span> result</pre>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        const width = 900;
+        const height = 600;
+
+        const svg = d3.select("#visualization")
+            .attr("width", width)
+            .attr("height", height);
+
+        const nums = [1, 2, 2];
+        let sortedNums = [];
+        let result = [];
+        let currentPath = [];
+        let callStack = [];
+        let skippedNodes = [];
+        let animationTimer = null;
+        let treeNodes = [];
+        let treeEdges = [];
+
+        function reset() {
+            sortedNums = [...nums].sort((a, b) => a - b);
+            result = [];
+            currentPath = [];
+            skippedNodes = [];
+            treeNodes = [];
+            treeEdges = [];
+            
+            // Initialize with root call
+            callStack = [{ start: 0, path: [], depth: 0, parentIdx: -1 }];
+            
+            // Add root node
+            treeNodes.push({ 
+                id: 0, 
+                path: [], 
+                x: 0, 
+                y: 0, 
+                depth: 0,
+                children: [],
+                isResult: true
+            });
+            
+            if (animationTimer) clearInterval(animationTimer);
+            document.getElementById("status").textContent = `Generating subsets of [${nums.join(', ')}] (sorted: [${sortedNums.join(', ')}])`;
+            render();
+        }
+
+        function render() {
+            svg.selectAll("*").remove();
+
+            // Draw input array
+            svg.append("text")
+                .attr("x", 30)
+                .attr("y", 30)
+                .attr("font-size", "14px")
+                .attr("font-weight", "bold")
+                .attr("fill", "#1e293b")
+                .text(`Input: [${nums.join(', ')}] → Sorted: [${sortedNums.join(', ')}]`);
+
+            // Draw decision tree
+            drawTree();
+
+            // Draw results
+            drawResults();
+
+            // Draw current path
+            drawCurrentPath();
+        }
+
+        function drawTree() {
+            const startX = 450;
+            const startY = 80;
+            const levelHeight = 70;
+            const minSpacing = 80;
+
+            // Calculate positions
+            function calculatePositions(nodeIdx, x, y, width) {
+                if (nodeIdx >= treeNodes.length) return;
+                
+                const node = treeNodes[nodeIdx];
+                node.x = x;
+                node.y = y;
+
+                const children = treeNodes.filter((n, i) => 
+                    treeEdges.some(e => e.from === nodeIdx && e.to === i));
+                
+                if (children.length === 0) return;
+
+                const childWidth = width / children.length;
+                children.forEach((child, i) => {
+                    const childIdx = treeNodes.indexOf(child);
+                    const childX = x - width/2 + childWidth/2 + i * childWidth;
+                    calculatePositions(childIdx, childX, y + levelHeight, childWidth);
+                });
+            }
+
+            calculatePositions(0, startX, startY, 700);
+
+            // Draw edges
+            treeEdges.forEach(edge => {
+                const from = treeNodes[edge.from];
+                const to = treeNodes[edge.to];
+                
+                svg.append("line")
+                    .attr("x1", from.x)
+                    .attr("y1", from.y + 15)
+                    .attr("x2", to.x)
+                    .attr("y2", to.y - 15)
+                    .attr("stroke", edge.skipped ? "#fca5a5" : "#cbd5e1")
+                    .attr("stroke-width", edge.skipped ? 2 : 1.5)
+                    .attr("stroke-dasharray", edge.skipped ? "5,5" : "none");
+
+                // Edge label
+                const midX = (from.x + to.x) / 2;
+                const midY = (from.y + 15 + to.y - 15) / 2;
+                
+                if (edge.value !== undefined) {
+                    svg.append("circle")
+                        .attr("cx", midX)
+                        .attr("cy", midY)
+                        .attr("r", 12)
+                        .attr("fill", edge.skipped ? "#fee2e2" : "#dbeafe");
+
+                    svg.append("text")
+                        .attr("x", midX)
+                        .attr("y", midY + 4)
+                        .attr("text-anchor", "middle")
+                        .attr("font-size", "12px")
+                        .attr("fill", edge.skipped ? "#ef4444" : "#1e293b")
+                        .text(edge.skipped ? "×" : `+${edge.value}`);
+                }
+            });
+
+            // Draw nodes
+            treeNodes.forEach((node, idx) => {
+                const isCurrent = JSON.stringify(node.path) === JSON.stringify(currentPath);
+                const isInResult = result.some(r => JSON.stringify(r) === JSON.stringify(node.path));
+                
+                svg.append("rect")
+                    .attr("x", node.x - 30)
+                    .attr("y", node.y - 15)
+                    .attr("width", 60)
+                    .attr("height", 30)
+                    .attr("rx", 6)
+                    .attr("fill", () => {
+                        if (isCurrent) return "#fef3c7";
+                        if (isInResult) return "#d1fae5";
+                        return "#f8fafc";
+                    })
+                    .attr("stroke", () => {
+                        if (isCurrent) return "#f59e0b";
+                        if (isInResult) return "#10b981";
+                        return "#94a3b8";
+                    })
+                    .attr("stroke-width", isCurrent ? 3 : 2);
+
+                const label = node.path.length === 0 ? "[]" : `[${node.path.join(',')}]`;
+                svg.append("text")
+                    .attr("x", node.x)
+                    .attr("y", node.y + 4)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "11px")
+                    .attr("fill", "#1e293b")
+                    .text(label);
+            });
+        }
+
+        function drawResults() {
+            const startX = 30;
+            const startY = 380;
+
+            svg.append("text")
+                .attr("x", startX)
+                .attr("y", startY)
+                .attr("font-size", "14px")
+                .attr("font-weight", "bold")
+                .attr("fill", "#1e293b")
+                .text("Result Subsets:");
+
+            result.forEach((subset, idx) => {
+                const x = startX + (idx % 7) * 100;
+                const y = startY + 25 + Math.floor(idx / 7) * 35;
+                const label = subset.length === 0 ? "[]" : `[${subset.join(', ')}]`;
+
+                svg.append("rect")
+                    .attr("x", x)
+                    .attr("y", y)
+                    .attr("width", 90)
+                    .attr("height", 28)
+                    .attr("rx", 5)
+                    .attr("fill", "#d1fae5")
+                    .attr("stroke", "#10b981")
+                    .attr("stroke-width", 2);
+
+                svg.append("text")
+                    .attr("x", x + 45)
+                    .attr("y", y + 19)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "12px")
+                    .attr("fill", "#1e293b")
+                    .text(label);
+            });
+        }
+
+        function drawCurrentPath() {
+            const startX = 30;
+            const startY = 500;
+
+            svg.append("text")
+                .attr("x", startX)
+                .attr("y", startY)
+                .attr("font-size", "14px")
+                .attr("font-weight", "bold")
+                .attr("fill", "#1e293b")
+                .text("Current Path:");
+
+            const label = currentPath.length === 0 ? "[]" : `[${currentPath.join(', ')}]`;
+            
+            svg.append("rect")
+                .attr("x", startX + 110)
+                .attr("y", startY - 18)
+                .attr("width", 80)
+                .attr("height", 28)
+                .attr("rx", 5)
+                .attr("fill", "#fef3c7")
+                .attr("stroke", "#f59e0b")
+                .attr("stroke-width", 2);
+
+            svg.append("text")
+                .attr("x", startX + 150)
+                .attr("y", startY + 2)
+                .attr("text-anchor", "middle")
+                .attr("font-size", "12px")
+                .attr("fill", "#1e293b")
+                .text(label);
+
+            // Explanation
+            svg.append("text")
+                .attr("x", startX)
+                .attr("y", startY + 40)
+                .attr("font-size", "12px")
+                .attr("fill", "#64748b")
+                .text("• Skip duplicates: if nums[i] == nums[i-1] and i > start, skip to avoid duplicate subsets");
+
+            svg.append("text")
+                .attr("x", startX)
+                .attr("y", startY + 60)
+                .attr("font-size", "12px")
+                .attr("fill", "#64748b")
+                .text("• Each path in the tree represents a unique subset");
+        }
+
+        function step() {
+            if (callStack.length === 0) {
+                document.getElementById("status").textContent = `✓ Complete! Found ${result.length} unique subsets`;
+                return;
+            }
+
+            const { start, path, depth, parentIdx } = callStack.pop();
+            currentPath = [...path];
+
+            // Find or create current node
+            let currentNodeIdx = treeNodes.findIndex(n => 
+                JSON.stringify(n.path) === JSON.stringify(path));
+            
+            if (currentNodeIdx === -1) {
+                currentNodeIdx = treeNodes.length;
+                treeNodes.push({
+                    id: currentNodeIdx,
+                    path: [...path],
+                    depth: depth,
+                    children: []
+                });
+                
+                if (parentIdx >= 0) {
+                    treeEdges.push({ 
+                        from: parentIdx, 
+                        to: currentNodeIdx,
+                        value: path[path.length - 1]
+                    });
+                }
+            }
+
+            // Add to result
+            if (!result.some(r => JSON.stringify(r) === JSON.stringify(path))) {
+                result.push([...path]);
+            }
+
+            // Add children to stack (in reverse to process in order)
+            for (let i = sortedNums.length - 1; i >= start; i--) {
+                // Skip duplicates
+                if (i > start && sortedNums[i] === sortedNums[i - 1]) {
+                    // Add skipped edge for visualization
+                    const skippedNodeIdx = treeNodes.length;
+                    treeNodes.push({
+                        id: skippedNodeIdx,
+                        path: [...path, sortedNums[i]],
+                        depth: depth + 1,
+                        skipped: true
+                    });
+                    treeEdges.push({
+                        from: currentNodeIdx,
+                        to: skippedNodeIdx,
+                        value: sortedNums[i],
+                        skipped: true
+                    });
+                    continue;
+                }
+
+                callStack.push({
+                    start: i + 1,
+                    path: [...path, sortedNums[i]],
+                    depth: depth + 1,
+                    parentIdx: currentNodeIdx
+                });
+            }
+
+            const pathStr = path.length === 0 ? "[]" : `[${path.join(', ')}]`;
+            document.getElementById("status").textContent = 
+                `Added subset ${pathStr} to result. Total: ${result.length} subsets`;
+
+            render();
+        }
+
+        function autoRun() {
+            if (animationTimer) {
+                clearInterval(animationTimer);
+                animationTimer = null;
+                document.getElementById("autoRunBtn").textContent = "▶ Auto Run";
+                return;
+            }
+
+            document.getElementById("autoRunBtn").textContent = "⏸ Pause";
+            animationTimer = setInterval(() => {
+                if (callStack.length === 0) {
+                    clearInterval(animationTimer);
+                    animationTimer = null;
+                    document.getElementById("autoRunBtn").textContent = "▶ Auto Run";
+                    return;
+                }
+                step();
+            }, 800);
+        }
+
+        document.getElementById("autoRunBtn").addEventListener("click", autoRun);
+        document.getElementById("stepBtn").addEventListener("click", step);
+        document.getElementById("resetBtn").addEventListener("click", reset);
+
+        reset();
+    </script>
+</body>
+</html>

@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>72 - Edit Distance</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="problem-info">
+            <h1><span class="problem-number">#72</span> Edit Distance</h1>
+            <p>
+                Given two strings, find the minimum number of operations (insert, delete, replace) 
+                required to convert word1 to word2. Classic Levenshtein distance problem.
+            </p>
+            <div class="problem-meta">
+                <span class="meta-tag">🧮 DP</span>
+                <span class="meta-tag">⏱️ O(n)</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <code>python/0072_edit_distance/0072_edit_distance.py</code>
+            </div>
+
+            <h3>Example:</h3>
+            <pre>
+word1 = "horse", word2 = "ros"
+Output: 3
+horse → rorse (replace h→r) → rose (delete r) → ros (delete e)
+            </pre>
+        </div>
+
+        <div class="explanation-panel">
+            <h4>🧠 How It Works (Layman's Terms)</h4>
+            <p>Dynamic Programming <strong>breaks big problems into smaller ones</strong>:</p>
+            <ul>
+                <li><strong>Subproblems:</strong> Solve smaller versions first</li>
+                <li><strong>Memoization:</strong> Cache results to avoid recalculation</li>
+                <li><strong>Build up:</strong> Combine small solutions for final answer</li>
+                <li><strong>State:</strong> Define what each position represents</li>
+            </ul>
+        </div>
+
+
+        <section class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+            <div class="controls">
+                <button id="stepBtn" class="btn">Step</button>
+                <button id="autoBtn" class="btn btn-success">Auto Run</button>
+                <button id="resetBtn" class="btn btn-danger">Reset</button>
+            </div>
+            <div class="status" id="status">Compute minimum edit distance between two strings</div>
+            <svg id="visualization"></svg>
+        </section>
+
+        <section class="code-section">
+            <h3>💻 Python Solution</h3>
+            <div class="code-block">
+                <pre><span class="keyword">def</span> <span class="function">minDistance</span>(word1, word2):
+    m, n = <span class="function">len</span>(word1), <span class="function">len</span>(word2)
+    dp = [[<span class="number">0</span>] * (n + <span class="number">1</span>) <span class="keyword">for</span> _ <span class="keyword">in</span> <span class="function">range</span>(m + <span class="number">1</span>)]
+    
+    <span class="keyword">for</span> i <span class="keyword">in</span> <span class="function">range</span>(m + <span class="number">1</span>):
+        dp[i][<span class="number">0</span>] = i
+    <span class="keyword">for</span> j <span class="keyword">in</span> <span class="function">range</span>(n + <span class="number">1</span>):
+        dp[<span class="number">0</span>][j] = j
+    
+    <span class="keyword">for</span> i <span class="keyword">in</span> <span class="function">range</span>(<span class="number">1</span>, m + <span class="number">1</span>):
+        <span class="keyword">for</span> j <span class="keyword">in</span> <span class="function">range</span>(<span class="number">1</span>, n + <span class="number">1</span>):
+            <span class="keyword">if</span> word1[i-<span class="number">1</span>] == word2[j-<span class="number">1</span>]:
+                dp[i][j] = dp[i-<span class="number">1</span>][j-<span class="number">1</span>]
+            <span class="keyword">else</span>:
+                dp[i][j] = <span class="number">1</span> + <span class="function">min</span>(dp[i-<span class="number">1</span>][j-<span class="number">1</span>],  <span class="comment"># replace</span>
+                                   dp[i-<span class="number">1</span>][j],    <span class="comment"># delete</span>
+                                   dp[i][j-<span class="number">1</span>])    <span class="comment"># insert</span>
+    <span class="keyword">return</span> dp[m][n]</pre>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        const width = 900;
+        const height = 650;
+
+        const svg = d3.select("#visualization")
+            .attr("width", width)
+            .attr("height", height);
+
+        const word1 = "horse";
+        const word2 = "ros";
+        const m = word1.length;
+        const n = word2.length;
+
+        let dp = [];
+        let currentI = 0;
+        let currentJ = 0;
+        let isRunning = false;
+        let phase = "init";
+
+        function reset() {
+            dp = Array.from({ length: m + 1 }, () => Array(n + 1).fill(0));
+            currentI = 0;
+            currentJ = 0;
+            phase = "init";
+            isRunning = false;
+            document.getElementById("autoBtn").textContent = "Auto Run";
+            document.getElementById("status").textContent = 
+                `Convert "${word1}" → "${word2}". Find minimum operations.`;
+            render();
+        }
+
+        function render() {
+            svg.selectAll("*").remove();
+
+            const startX = 120;
+            const startY = 100;
+            const cellSize = 55;
+
+            // Word1 (rows) label
+            svg.append("text")
+                .attr("x", 30)
+                .attr("y", startY + (m/2) * cellSize + 15)
+                .attr("font-size", "14px")
+                .attr("font-weight", "bold")
+                .attr("fill", "#1e293b")
+                .text("word1");
+
+            // Word2 (cols) label
+            svg.append("text")
+                .attr("x", startX + (n/2) * cellSize + 30)
+                .attr("y", 40)
+                .attr("font-size", "14px")
+                .attr("font-weight", "bold")
+                .attr("fill", "#1e293b")
+                .text("word2");
+
+            // Column headers (word2 chars)
+            svg.append("text")
+                .attr("x", startX + cellSize/2)
+                .attr("y", startY - 25)
+                .attr("text-anchor", "middle")
+                .attr("font-size", "14px")
+                .attr("fill", "#94a3b8")
+                .text("ε");
+
+            for (let j = 0; j < n; j++) {
+                svg.append("text")
+                    .attr("x", startX + (j + 1.5) * cellSize)
+                    .attr("y", startY - 25)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "16px")
+                    .attr("font-weight", "bold")
+                    .attr("fill", currentJ === j + 1 ? "#f59e0b" : "#3b82f6")
+                    .text(word2[j]);
+            }
+
+            // Row headers (word1 chars)
+            svg.append("text")
+                .attr("x", startX - 20)
+                .attr("y", startY + cellSize/2 + 5)
+                .attr("text-anchor", "middle")
+                .attr("font-size", "14px")
+                .attr("fill", "#94a3b8")
+                .text("ε");
+
+            for (let i = 0; i < m; i++) {
+                svg.append("text")
+                    .attr("x", startX - 20)
+                    .attr("y", startY + (i + 1.5) * cellSize + 5)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "16px")
+                    .attr("font-weight", "bold")
+                    .attr("fill", currentI === i + 1 ? "#f59e0b" : "#3b82f6")
+                    .text(word1[i]);
+            }
+
+            // DP table
+            for (let i = 0; i <= m; i++) {
+                for (let j = 0; j <= n; j++) {
+                    const x = startX + j * cellSize;
+                    const y = startY + i * cellSize;
+                    const isActive = i === currentI && j === currentJ;
+                    const isResult = i === m && j === n && phase === "done";
+                    const isFilled = (phase === "base" && (i === 0 || j === 0)) ||
+                                    (phase === "fill" && (i < currentI || (i === currentI && j <= currentJ))) ||
+                                    phase === "done";
+
+                    svg.append("rect")
+                        .attr("x", x)
+                        .attr("y", y)
+                        .attr("width", cellSize - 2)
+                        .attr("height", cellSize - 2)
+                        .attr("rx", 4)
+                        .attr("fill", () => {
+                            if (isResult) return "#d1fae5";
+                            if (isActive) return "#fef3c7";
+                            if (isFilled && dp[i][j] !== undefined) return "#dbeafe";
+                            return "#f8fafc";
+                        })
+                        .attr("stroke", () => {
+                            if (isResult) return "#10b981";
+                            if (isActive) return "#f59e0b";
+                            return "#e2e8f0";
+                        })
+                        .attr("stroke-width", isActive || isResult ? 2 : 1);
+
+                    if (dp[i][j] !== undefined && (isFilled || phase === "done")) {
+                        svg.append("text")
+                            .attr("x", x + (cellSize - 2) / 2)
+                            .attr("y", y + (cellSize - 2) / 2 + 5)
+                            .attr("text-anchor", "middle")
+                            .attr("font-size", "18px")
+                            .attr("font-weight", "bold")
+                            .attr("fill", "#1e293b")
+                            .text(dp[i][j]);
+                    }
+                }
+            }
+
+            // Highlight source cells for current calculation
+            if (phase === "fill" && currentI > 0 && currentJ > 0) {
+                const sources = [
+                    { i: currentI - 1, j: currentJ - 1, op: "Replace", color: "#a855f7" },
+                    { i: currentI - 1, j: currentJ, op: "Delete", color: "#ef4444" },
+                    { i: currentI, j: currentJ - 1, op: "Insert", color: "#3b82f6" }
+                ];
+
+                sources.forEach(({ i, j, op, color }) => {
+                    const x = startX + j * cellSize;
+                    const y = startY + i * cellSize;
+                    svg.append("rect")
+                        .attr("x", x)
+                        .attr("y", y)
+                        .attr("width", cellSize - 2)
+                        .attr("height", cellSize - 2)
+                        .attr("rx", 4)
+                        .attr("fill", "none")
+                        .attr("stroke", color)
+                        .attr("stroke-width", 2)
+                        .attr("stroke-dasharray", "4,2");
+                });
+            }
+
+            // Legend and operations
+            const legendX = startX + (n + 2) * cellSize;
+            const legendY = startY;
+
+            svg.append("text")
+                .attr("x", legendX)
+                .attr("y", legendY)
+                .attr("font-size", "14px")
+                .attr("font-weight", "bold")
+                .attr("fill", "#1e293b")
+                .text("Operations:");
+
+            const ops = [
+                { name: "Replace", color: "#a855f7", desc: "dp[i-1][j-1] + 1" },
+                { name: "Delete", color: "#ef4444", desc: "dp[i-1][j] + 1" },
+                { name: "Insert", color: "#3b82f6", desc: "dp[i][j-1] + 1" },
+                { name: "Match", color: "#10b981", desc: "dp[i-1][j-1]" }
+            ];
+
+            ops.forEach((op, idx) => {
+                const y = legendY + 30 + idx * 35;
+                svg.append("rect")
+                    .attr("x", legendX)
+                    .attr("y", y - 12)
+                    .attr("width", 15)
+                    .attr("height", 15)
+                    .attr("rx", 3)
+                    .attr("fill", op.color)
+                    .attr("opacity", 0.3)
+                    .attr("stroke", op.color);
+
+                svg.append("text")
+                    .attr("x", legendX + 22)
+                    .attr("y", y)
+                    .attr("font-size", "12px")
+                    .attr("fill", "#1e293b")
+                    .text(`${op.name}: ${op.desc}`);
+            });
+
+            // Current comparison
+            if (phase === "fill" && currentI > 0 && currentJ > 0) {
+                const char1 = word1[currentI - 1];
+                const char2 = word2[currentJ - 1];
+                const match = char1 === char2;
+
+                svg.append("rect")
+                    .attr("x", legendX)
+                    .attr("y", legendY + 180)
+                    .attr("width", 200)
+                    .attr("height", 60)
+                    .attr("rx", 8)
+                    .attr("fill", match ? "#d1fae5" : "#fef3c7")
+                    .attr("stroke", match ? "#10b981" : "#f59e0b");
+
+                svg.append("text")
+                    .attr("x", legendX + 100)
+                    .attr("y", legendY + 210)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "16px")
+                    .attr("font-weight", "bold")
+                    .attr("fill", "#1e293b")
+                    .text(`'${char1}' ${match ? "==" : "!="} '${char2}'`);
+
+                svg.append("text")
+                    .attr("x", legendX + 100)
+                    .attr("y", legendY + 230)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "12px")
+                    .attr("fill", "#64748b")
+                    .text(match ? "No operation needed" : "Need 1 operation");
+            }
+
+            // Result
+            if (phase === "done") {
+                svg.append("rect")
+                    .attr("x", 50)
+                    .attr("y", 550)
+                    .attr("width", 500)
+                    .attr("height", 60)
+                    .attr("rx", 10)
+                    .attr("fill", "#d1fae5")
+                    .attr("stroke", "#10b981")
+                    .attr("stroke-width", 2);
+
+                svg.append("text")
+                    .attr("x", 300)
+                    .attr("y", 588)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "18px")
+                    .attr("font-weight", "bold")
+                    .attr("fill", "#10b981")
+                    .text(`✓ Minimum ${dp[m][n]} operations: "${word1}" → "${word2}"`);
+            }
+        }
+
+        function step() {
+            if (phase === "done") return;
+
+            if (phase === "init") {
+                // Initialize base cases
+                for (let i = 0; i <= m; i++) dp[i][0] = i;
+                for (let j = 0; j <= n; j++) dp[0][j] = j;
+                phase = "base";
+                currentI = 1;
+                currentJ = 1;
+                document.getElementById("status").textContent = 
+                    "Base cases initialized: dp[i][0]=i (deletions), dp[0][j]=j (insertions)";
+                render();
+                return;
+            }
+
+            if (phase === "base") {
+                phase = "fill";
+                document.getElementById("status").textContent = 
+                    `Fill table: comparing word1[${currentI-1}]='${word1[currentI-1]}' with word2[${currentJ-1}]='${word2[currentJ-1]}'`;
+                render();
+                return;
+            }
+
+            if (phase === "fill") {
+                const char1 = word1[currentI - 1];
+                const char2 = word2[currentJ - 1];
+
+                if (char1 === char2) {
+                    dp[currentI][currentJ] = dp[currentI - 1][currentJ - 1];
+                    document.getElementById("status").textContent = 
+                        `'${char1}' == '${char2}' → dp[${currentI}][${currentJ}] = dp[${currentI-1}][${currentJ-1}] = ${dp[currentI][currentJ]}`;
+                } else {
+                    const replace = dp[currentI - 1][currentJ - 1];
+                    const del = dp[currentI - 1][currentJ];
+                    const insert = dp[currentI][currentJ - 1];
+                    dp[currentI][currentJ] = 1 + Math.min(replace, del, insert);
+                    document.getElementById("status").textContent = 
+                        `'${char1}' != '${char2}' → 1 + min(${replace}, ${del}, ${insert}) = ${dp[currentI][currentJ]}`;
+                }
+
+                render();
+
+                // Move to next cell
+                currentJ++;
+                if (currentJ > n) {
+                    currentJ = 1;
+                    currentI++;
+                    if (currentI > m) {
+                        phase = "done";
+                        document.getElementById("status").textContent = 
+                            `✓ Edit distance = ${dp[m][n]} operations`;
+                        render();
+                    }
+                }
+            }
+        }
+
+        async function autoRun() {
+            if (isRunning) {
+                isRunning = false;
+                document.getElementById("autoBtn").textContent = "Auto Run";
+                return;
+            }
+
+            isRunning = true;
+            document.getElementById("autoBtn").textContent = "Pause";
+
+            while (phase !== "done" && isRunning) {
+                step();
+                await new Promise(r => setTimeout(r, 300));
+            }
+
+            isRunning = false;
+            document.getElementById("autoBtn").textContent = "Auto Run";
+        }
+
+        document.getElementById("stepBtn").addEventListener("click", step);
+        document.getElementById("autoBtn").addEventListener("click", autoRun);
+        document.getElementById("resetBtn").addEventListener("click", reset);
+
+        reset();
+    </script>
+</body>
+</html>

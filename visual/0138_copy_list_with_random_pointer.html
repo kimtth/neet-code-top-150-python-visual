@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>138 - Copy List with Random Pointer</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="problem-info">
+            <h1><span class="problem-number">#138</span> Copy List with Random Pointer</h1>
+            <p>
+                Deep copy a linked list where each node has an additional random pointer.
+                Uses a hash map to map original nodes to their copies.
+            </p>
+            <div class="problem-meta">
+                <span class="meta-tag">📝 Algorithm</span>
+                <span class="meta-tag">⏱️ O(n)</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <code>python/0138_copy_list_with_random_pointer/0138_copy_list_with_random_pointer.py</code>
+            </div>
+
+        </div>
+
+        <div class="explanation-panel">
+            <h4>🧠 How It Works (Layman's Terms)</h4>
+            <p>This algorithm solves the problem <strong>step by step</strong>:</p>
+            <ul>
+                <li><strong>Understand:</strong> Parse the input data</li>
+                <li><strong>Process:</strong> Apply the core logic</li>
+                <li><strong>Optimize:</strong> Use efficient data structures</li>
+                <li><strong>Return:</strong> Output the computed result</li>
+            </ul>
+        </div>
+
+
+        <section class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+            <div class="controls">
+                <button id="autoRunBtn" class="btn">▶ Auto Run</button>
+                <button id="stepBtn" class="btn btn-success">Step</button>
+                <button id="resetBtn" class="btn btn-danger">Reset</button>
+            </div>
+            <div class="status" id="status">Click Auto Run to copy the linked list</div>
+            <svg id="visualization"></svg>
+        </section>
+
+        <section class="code-section">
+            <h3>💻 Python Solution</h3>
+            <div class="code-block">
+                <pre><span class="keyword">def</span> <span class="function">copyRandomList</span>(head):
+    <span class="keyword">if</span> <span class="keyword">not</span> head:
+        <span class="keyword">return</span> <span class="keyword">None</span>
+    
+    old_to_new = {}
+    
+    <span class="comment"># First pass: create new nodes</span>
+    current = head
+    <span class="keyword">while</span> current:
+        old_to_new[current] = <span class="function">Node</span>(current.val)
+        current = current.next
+    
+    <span class="comment"># Second pass: set next and random pointers</span>
+    current = head
+    <span class="keyword">while</span> current:
+        <span class="keyword">if</span> current.next:
+            old_to_new[current].next = old_to_new[current.next]
+        <span class="keyword">if</span> current.random:
+            old_to_new[current].random = old_to_new[current.random]
+        current = current.next
+    
+    <span class="keyword">return</span> old_to_new[head]</pre>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        const width = 900;
+        const height = 550;
+
+        const svg = d3.select("#visualization")
+            .attr("width", width)
+            .attr("height", height);
+
+        // Original list: [[7,null],[13,0],[11,4],[10,2],[1,0]]
+        const originalList = [
+            { val: 7, randomIdx: null },
+            { val: 13, randomIdx: 0 },
+            { val: 11, randomIdx: 4 },
+            { val: 10, randomIdx: 2 },
+            { val: 1, randomIdx: 0 }
+        ];
+
+        let copiedList = [];
+        let phase = 0;  // 0: init, 1: creating nodes, 2: setting next, 3: setting random, 4: done
+        let currentIdx = 0;
+        let animationTimer = null;
+        let hashMap = {};
+
+        function reset() {
+            copiedList = [];
+            phase = 0;
+            currentIdx = 0;
+            hashMap = {};
+            
+            if (animationTimer) clearInterval(animationTimer);
+            document.getElementById("status").textContent = "Click Auto Run to deep copy the linked list";
+            render();
+        }
+
+        function render() {
+            svg.selectAll("*").remove();
+
+            const nodeWidth = 60;
+            const nodeHeight = 40;
+            const spacing = 120;
+
+            // Draw original list
+            drawList(originalList, 50, 80, "Original List", "#3b82f6", "#dbeafe", true);
+
+            // Draw copied list
+            if (copiedList.length > 0) {
+                drawList(copiedList, 50, 280, "Copied List", "#10b981", "#d1fae5", false);
+            }
+
+            // Draw hash map
+            drawHashMap();
+
+            // Draw phase indicator
+            drawPhaseIndicator();
+        }
+
+        function drawList(list, startX, startY, title, strokeColor, fillColor, isOriginal) {
+            const nodeWidth = 60;
+            const nodeHeight = 40;
+            const spacing = 130;
+
+            svg.append("text")
+                .attr("x", startX)
+                .attr("y", startY - 30)
+                .attr("font-size", "14px")
+                .attr("font-weight", "bold")
+                .attr("fill", "#1e293b")
+                .text(title);
+
+            list.forEach((node, idx) => {
+                const x = startX + idx * spacing;
+                const y = startY;
+                const isCurrent = isOriginal && idx === currentIdx && phase > 0 && phase < 4;
+
+                // Node box
+                svg.append("rect")
+                    .attr("x", x)
+                    .attr("y", y)
+                    .attr("width", nodeWidth)
+                    .attr("height", nodeHeight)
+                    .attr("rx", 8)
+                    .attr("fill", isCurrent ? "#fef3c7" : fillColor)
+                    .attr("stroke", isCurrent ? "#f59e0b" : strokeColor)
+                    .attr("stroke-width", isCurrent ? 3 : 2);
+
+                // Value
+                svg.append("text")
+                    .attr("x", x + nodeWidth / 2)
+                    .attr("y", y + 25)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "16px")
+                    .attr("font-weight", "bold")
+                    .attr("fill", "#1e293b")
+                    .text(node.val);
+
+                // Index label
+                svg.append("text")
+                    .attr("x", x + nodeWidth / 2)
+                    .attr("y", y + nodeHeight + 15)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "10px")
+                    .attr("fill", "#64748b")
+                    .text(`[${idx}]`);
+
+                // Next pointer (arrow to right)
+                if (idx < list.length - 1) {
+                    const arrowStartX = x + nodeWidth;
+                    const arrowEndX = x + spacing - 5;
+                    const arrowY = y + nodeHeight / 2;
+
+                    svg.append("line")
+                        .attr("x1", arrowStartX)
+                        .attr("y1", arrowY)
+                        .attr("x2", arrowEndX - 10)
+                        .attr("y2", arrowY)
+                        .attr("stroke", strokeColor)
+                        .attr("stroke-width", 2)
+                        .attr("marker-end", `url(#arrow-${isOriginal ? 'orig' : 'copy'})`);
+                }
+            });
+
+            // Draw random pointers
+            if ((isOriginal && phase >= 3) || (!isOriginal && phase === 4)) {
+                list.forEach((node, idx) => {
+                    if (node.randomIdx !== null) {
+                        const fromX = startX + idx * spacing + nodeWidth / 2;
+                        const fromY = startY;
+                        const toX = startX + node.randomIdx * spacing + nodeWidth / 2;
+                        const toY = startY + nodeHeight;
+
+                        // Curved path for random pointer
+                        const midY = fromY - 30 - Math.abs(idx - node.randomIdx) * 10;
+                        
+                        svg.append("path")
+                            .attr("d", `M ${fromX} ${fromY} Q ${(fromX + toX) / 2} ${midY} ${toX} ${startY}`)
+                            .attr("fill", "none")
+                            .attr("stroke", "#ef4444")
+                            .attr("stroke-width", 2)
+                            .attr("stroke-dasharray", "5,5")
+                            .attr("marker-end", "url(#arrow-random)");
+                    }
+                });
+            }
+
+            // Arrow markers
+            const defs = svg.append("defs");
+            
+            defs.append("marker")
+                .attr("id", `arrow-${isOriginal ? 'orig' : 'copy'}`)
+                .attr("viewBox", "0 0 10 10")
+                .attr("refX", 9)
+                .attr("refY", 5)
+                .attr("markerWidth", 6)
+                .attr("markerHeight", 6)
+                .attr("orient", "auto")
+                .append("path")
+                .attr("d", "M 0 0 L 10 5 L 0 10 z")
+                .attr("fill", strokeColor);
+
+            defs.append("marker")
+                .attr("id", "arrow-random")
+                .attr("viewBox", "0 0 10 10")
+                .attr("refX", 9)
+                .attr("refY", 5)
+                .attr("markerWidth", 6)
+                .attr("markerHeight", 6)
+                .attr("orient", "auto")
+                .append("path")
+                .attr("d", "M 0 0 L 10 5 L 0 10 z")
+                .attr("fill", "#ef4444");
+        }
+
+        function drawHashMap() {
+            const startX = 30;
+            const startY = 420;
+
+            svg.append("text")
+                .attr("x", startX)
+                .attr("y", startY)
+                .attr("font-size", "14px")
+                .attr("font-weight", "bold")
+                .attr("fill", "#1e293b")
+                .text("Hash Map (old → new):");
+
+            Object.entries(hashMap).forEach(([key, value], idx) => {
+                const x = startX + (idx % 5) * 150;
+                const y = startY + 20 + Math.floor(idx / 5) * 35;
+
+                svg.append("rect")
+                    .attr("x", x)
+                    .attr("y", y)
+                    .attr("width", 140)
+                    .attr("height", 28)
+                    .attr("rx", 5)
+                    .attr("fill", "#e0e7ff")
+                    .attr("stroke", "#6366f1")
+                    .attr("stroke-width", 1);
+
+                svg.append("text")
+                    .attr("x", x + 70)
+                    .attr("y", y + 19)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "12px")
+                    .attr("fill", "#1e293b")
+                    .text(`Node(${key}) → Node(${value})`);
+            });
+        }
+
+        function drawPhaseIndicator() {
+            const phases = [
+                "Initialize",
+                "Phase 1: Create new nodes",
+                "Phase 2: Set next pointers",
+                "Phase 3: Set random pointers",
+                "Complete!"
+            ];
+
+            const startX = 550;
+            const startY = 420;
+
+            svg.append("text")
+                .attr("x", startX)
+                .attr("y", startY)
+                .attr("font-size", "14px")
+                .attr("font-weight", "bold")
+                .attr("fill", "#1e293b")
+                .text("Algorithm Steps:");
+
+            phases.forEach((p, idx) => {
+                const y = startY + 25 + idx * 25;
+                const isCurrent = idx === phase;
+                const isComplete = idx < phase;
+
+                svg.append("circle")
+                    .attr("cx", startX + 10)
+                    .attr("cy", y - 4)
+                    .attr("r", 6)
+                    .attr("fill", () => {
+                        if (isComplete) return "#10b981";
+                        if (isCurrent) return "#f59e0b";
+                        return "#e2e8f0";
+                    });
+
+                svg.append("text")
+                    .attr("x", startX + 25)
+                    .attr("y", y)
+                    .attr("font-size", "12px")
+                    .attr("font-weight", isCurrent ? "bold" : "normal")
+                    .attr("fill", isCurrent ? "#f59e0b" : (isComplete ? "#10b981" : "#64748b"))
+                    .text(p);
+            });
+        }
+
+        function step() {
+            if (phase === 4) {
+                document.getElementById("status").textContent = "✓ Deep copy complete!";
+                return;
+            }
+
+            if (phase === 0) {
+                phase = 1;
+                currentIdx = 0;
+                document.getElementById("status").textContent = "Phase 1: Creating new nodes and building hash map";
+            } else if (phase === 1) {
+                // Create new nodes
+                if (currentIdx < originalList.length) {
+                    const node = originalList[currentIdx];
+                    copiedList.push({ val: node.val, randomIdx: null });
+                    hashMap[node.val] = node.val;
+                    document.getElementById("status").textContent = 
+                        `Created copy of Node(${node.val}), added to hash map`;
+                    currentIdx++;
+                } else {
+                    phase = 2;
+                    currentIdx = 0;
+                    document.getElementById("status").textContent = 
+                        "Phase 2: Setting next pointers (using hash map)";
+                }
+            } else if (phase === 2) {
+                // Set next pointers (simulated - they're already connected)
+                if (currentIdx < originalList.length) {
+                    const node = originalList[currentIdx];
+                    document.getElementById("status").textContent = 
+                        `Set copy(${node.val}).next → ${currentIdx < originalList.length - 1 ? `copy(${originalList[currentIdx + 1].val})` : 'null'}`;
+                    currentIdx++;
+                } else {
+                    phase = 3;
+                    currentIdx = 0;
+                    document.getElementById("status").textContent = 
+                        "Phase 3: Setting random pointers";
+                }
+            } else if (phase === 3) {
+                // Set random pointers
+                if (currentIdx < originalList.length) {
+                    const node = originalList[currentIdx];
+                    copiedList[currentIdx].randomIdx = node.randomIdx;
+                    const randomTarget = node.randomIdx !== null ? `copy(${originalList[node.randomIdx].val})` : 'null';
+                    document.getElementById("status").textContent = 
+                        `Set copy(${node.val}).random → ${randomTarget}`;
+                    currentIdx++;
+                } else {
+                    phase = 4;
+                    document.getElementById("status").textContent = 
+                        "✓ Deep copy complete! All pointers correctly set.";
+                }
+            }
+
+            render();
+        }
+
+        function autoRun() {
+            if (animationTimer) {
+                clearInterval(animationTimer);
+                animationTimer = null;
+                document.getElementById("autoRunBtn").textContent = "▶ Auto Run";
+                return;
+            }
+
+            document.getElementById("autoRunBtn").textContent = "⏸ Pause";
+            animationTimer = setInterval(() => {
+                if (phase === 4) {
+                    clearInterval(animationTimer);
+                    animationTimer = null;
+                    document.getElementById("autoRunBtn").textContent = "▶ Auto Run";
+                    return;
+                }
+                step();
+            }, 800);
+        }
+
+        document.getElementById("autoRunBtn").addEventListener("click", autoRun);
+        document.getElementById("stepBtn").addEventListener("click", step);
+        document.getElementById("resetBtn").addEventListener("click", reset);
+
+        reset();
+    </script>
+</body>
+</html>

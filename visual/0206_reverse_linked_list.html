@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LC 206: Reverse Linked List - Algorithm Visualization</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="problem-info">
+            <h1><span class="problem-number">#206</span> Reverse Linked List</h1>
+            <p>Given the head of a singly linked list, reverse the list and return the reversed list.</p>
+            <div class="problem-meta">
+                <span class="meta-tag">🔗 Linked List</span>
+                <span class="meta-tag">⏱️ O(n)</span>
+                <span class="meta-tag">💾 O(1)</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <code>python/0206_reverse_linked_list/0206_reverse_linked_list.py</code>
+            </div>
+            </div>
+
+        <div class="explanation-panel">
+            <h4>🧠 How It Works (Layman's Terms)</h4>
+            <p>Imagine a chain of train cars pointing one direction. We want to reverse them:</p>
+            <ul>
+                <li><strong>prev:</strong> The car we've already processed (starts as None)</li>
+                <li><strong>curr:</strong> The car we're currently working on</li>
+                <li><strong>temp:</strong> Temporary save of next car before we change the link</li>
+                <li><strong>Process:</strong> Disconnect current from next, point it backwards to prev</li>
+            </ul>
+        </div>
+
+
+        <div class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+            
+            <div class="controls">
+                <button class="btn btn-primary" id="stepBtn" onclick="step()">Step</button>
+                <button class="btn btn-success" id="autoBtn" onclick="toggleAuto()">Auto Run</button>
+                <button class="btn btn-warning" onclick="reset()">Reset</button>
+            </div>
+
+            <div class="status-message" id="statusMessage">
+                Click "Step" or "Auto Run" to start visualization
+            </div>
+
+            <div class="variable-display">
+                <div class="variable-box">
+                    <div class="variable-name">prev</div>
+                    <div class="variable-value" id="prevVal" style="color: #9c27b0;">None</div>
+                </div>
+                <div class="variable-box">
+                    <div class="variable-name">curr</div>
+                    <div class="variable-value" id="currVal" style="color: #ff5722;">1</div>
+                </div>
+                <div class="variable-box">
+                    <div class="variable-name">temp</div>
+                    <div class="variable-value" id="tempVal" style="color: #2196f3;">-</div>
+                </div>
+            </div>
+
+            <div class="array-section">
+                <div class="array-label">🔗 Original List:</div>
+                <div id="originalList" class="linked-list-container"></div>
+            </div>
+
+            <div class="array-section">
+                <div class="array-label">🔄 Reversed Part (prev chain):</div>
+                <div id="reversedList" class="linked-list-container">
+                    <span style="color: #999;">None</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="code-section">
+            <h3>💻 Python Solution (Iterative)</h3>
+            <div class="code-block">
+                <pre><span class="keyword">def</span> <span class="function">reverse_list</span>(self, head: ListNode) -> ListNode:
+    prev = <span class="keyword">None</span>
+    curr = head
+    
+    <span class="keyword">while</span> curr <span class="keyword">is not None</span>:
+        temp = curr.next       <span class="comment"># Save next node</span>
+        curr.next = prev       <span class="comment"># Reverse pointer</span>
+        prev = curr            <span class="comment"># Move prev forward</span>
+        curr = temp            <span class="comment"># Move curr forward</span>
+        
+    <span class="keyword">return</span> prev</pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const values = [1, 2, 3, 4, 5];
+        let nodes = values.map(v => ({ val: v }));
+        let prev = null;
+        let prevIndex = -1;
+        let currIndex = 0;
+        let autoInterval = null;
+        let reversedNodes = [];
+
+        function init() {
+            renderOriginalList();
+            renderReversedList();
+        }
+
+        function renderOriginalList() {
+            const container = document.getElementById('originalList');
+            container.innerHTML = '';
+            
+            for (let i = currIndex; i < values.length; i++) {
+                const nodeDiv = document.createElement('div');
+                nodeDiv.className = 'list-node';
+                
+                const box = document.createElement('div');
+                box.className = 'node-box';
+                box.textContent = values[i];
+                
+                if (i === currIndex) {
+                    box.classList.add('current');
+                }
+                
+                nodeDiv.appendChild(box);
+                
+                if (i < values.length - 1) {
+                    const arrow = document.createElement('span');
+                    arrow.className = 'node-arrow';
+                    arrow.textContent = '→';
+                    nodeDiv.appendChild(arrow);
+                }
+                
+                container.appendChild(nodeDiv);
+            }
+            
+            if (currIndex >= values.length) {
+                container.innerHTML = '<span class="null-node">None (empty)</span>';
+            } else {
+                const nullSpan = document.createElement('span');
+                nullSpan.className = 'null-node';
+                nullSpan.textContent = '→ None';
+                container.appendChild(nullSpan);
+            }
+        }
+
+        function renderReversedList() {
+            const container = document.getElementById('reversedList');
+            container.innerHTML = '';
+            
+            if (reversedNodes.length === 0) {
+                container.innerHTML = '<span class="null-node">None</span>';
+                return;
+            }
+
+            for (let i = 0; i < reversedNodes.length; i++) {
+                const nodeDiv = document.createElement('div');
+                nodeDiv.className = 'list-node';
+                
+                const box = document.createElement('div');
+                box.className = 'node-box visited';
+                box.textContent = reversedNodes[i];
+                
+                nodeDiv.appendChild(box);
+                
+                if (i < reversedNodes.length - 1) {
+                    const arrow = document.createElement('span');
+                    arrow.className = 'node-arrow';
+                    arrow.textContent = '→';
+                    nodeDiv.appendChild(arrow);
+                }
+                
+                container.appendChild(nodeDiv);
+            }
+            
+            const nullSpan = document.createElement('span');
+            nullSpan.className = 'null-node';
+            nullSpan.textContent = '→ None';
+            container.appendChild(nullSpan);
+        }
+
+        function step() {
+            if (currIndex >= values.length) {
+                document.getElementById('statusMessage').className = 'status-message success';
+                document.getElementById('statusMessage').textContent = 
+                    `✅ Done! Reversed list: [${reversedNodes.join(' → ')}]`;
+                document.getElementById('stepBtn').disabled = true;
+                stopAuto();
+                return;
+            }
+
+            const currVal = values[currIndex];
+            const nextVal = currIndex + 1 < values.length ? values[currIndex + 1] : 'None';
+            
+            document.getElementById('tempVal').textContent = nextVal;
+            document.getElementById('statusMessage').textContent = 
+                `temp = ${nextVal}, curr(${currVal}).next = prev(${prev !== null ? prev : 'None'}), ` +
+                `prev = ${currVal}, curr = ${nextVal}`;
+
+            // Update reversed list
+            reversedNodes.unshift(currVal);
+            
+            // Move pointers
+            prev = currVal;
+            currIndex++;
+            
+            // Update displays
+            document.getElementById('prevVal').textContent = prev;
+            document.getElementById('currVal').textContent = currIndex < values.length ? values[currIndex] : 'None';
+            
+            renderOriginalList();
+            renderReversedList();
+        }
+
+        function toggleAuto() {
+            if (autoInterval) {
+                stopAuto();
+            } else {
+                document.getElementById('autoBtn').textContent = 'Pause';
+                autoInterval = setInterval(() => {
+                    if (currIndex >= values.length) {
+                        step();
+                        stopAuto();
+                    } else {
+                        step();
+                    }
+                }, 1200);
+            }
+        }
+
+        function stopAuto() {
+            if (autoInterval) {
+                clearInterval(autoInterval);
+                autoInterval = null;
+            }
+            document.getElementById('autoBtn').textContent = 'Auto Run';
+        }
+
+        function reset() {
+            stopAuto();
+            prev = null;
+            prevIndex = -1;
+            currIndex = 0;
+            reversedNodes = [];
+            document.getElementById('stepBtn').disabled = false;
+            document.getElementById('statusMessage').className = 'status-message';
+            document.getElementById('statusMessage').textContent = 'Click "Step" or "Auto Run" to start visualization';
+            document.getElementById('prevVal').textContent = 'None';
+            document.getElementById('currVal').textContent = values[0];
+            document.getElementById('tempVal').textContent = '-';
+            init();
+        }
+
+        init();
+    </script>
+</body>
+</html>

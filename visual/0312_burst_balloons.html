@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>312 - Burst Balloons</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="problem-info">
+            <h1><span class="problem-number">#312</span> Burst Balloons</h1>
+            <p>
+                Given n balloons with values, burst all balloons to maximize coins. 
+                When you burst balloon i, you get nums[i-1] × nums[i] × nums[i+1] coins.
+                Key insight: think about which balloon to burst LAST in each range.
+            </p>
+            <div class="problem-meta">
+                <span class="meta-tag">📝 Algorithm</span>
+                <span class="meta-tag">⏱️ O(n)</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <code>python/0312_burst_balloons/0312_burst_balloons.py</code>
+            </div>
+
+            <h3>Example:</h3>
+            <pre>
+nums = [3, 1, 5, 8]
+Output: 167
+Burst order: 1→5→3→8 gives 3×1×5 + 3×5×8 + 1×3×8 + 1×8×1 = 167
+            </pre>
+        </div>
+
+        <div class="explanation-panel">
+            <h4>🧠 How It Works (Layman's Terms)</h4>
+            <p>This algorithm solves the problem <strong>step by step</strong>:</p>
+            <ul>
+                <li><strong>Understand:</strong> Parse the input data</li>
+                <li><strong>Process:</strong> Apply the core logic</li>
+                <li><strong>Optimize:</strong> Use efficient data structures</li>
+                <li><strong>Return:</strong> Output the computed result</li>
+            </ul>
+        </div>
+
+
+        <section class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+            <div class="controls">
+                <button id="stepBtn" class="btn">Step</button>
+                <button id="autoBtn" class="btn btn-success">Auto Run</button>
+                <button id="resetBtn" class="btn btn-danger">Reset</button>
+            </div>
+            <div class="status" id="status">Think: which balloon to burst LAST in each range?</div>
+            <svg id="visualization"></svg>
+        </section>
+
+        <section class="code-section">
+            <h3>💻 Python Solution</h3>
+            <div class="code-block">
+                <pre><span class="keyword">def</span> <span class="function">maxCoins</span>(nums):
+    nums = [<span class="number">1</span>] + nums + [<span class="number">1</span>]
+    n = <span class="function">len</span>(nums) - <span class="number">2</span>
+    dp = [[<span class="number">0</span>] * (n + <span class="number">2</span>) <span class="keyword">for</span> _ <span class="keyword">in</span> <span class="function">range</span>(n + <span class="number">2</span>)]
+    
+    <span class="keyword">for</span> length <span class="keyword">in</span> <span class="function">range</span>(<span class="number">1</span>, n + <span class="number">1</span>):
+        <span class="keyword">for</span> left <span class="keyword">in</span> <span class="function">range</span>(<span class="number">1</span>, n - length + <span class="number">2</span>):
+            right = left + length - <span class="number">1</span>
+            <span class="keyword">for</span> i <span class="keyword">in</span> <span class="function">range</span>(left, right + <span class="number">1</span>):
+                coins = nums[left-<span class="number">1</span>] * nums[i] * nums[right+<span class="number">1</span>]
+                coins += dp[left][i-<span class="number">1</span>] + dp[i+<span class="number">1</span>][right]
+                dp[left][right] = <span class="function">max</span>(dp[left][right], coins)
+    
+    <span class="keyword">return</span> dp[<span class="number">1</span>][n]</pre>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        const width = 900;
+        const height = 650;
+
+        const svg = d3.select("#visualization")
+            .attr("width", width)
+            .attr("height", height);
+
+        const originalNums = [3, 1, 5, 8];
+        const nums = [1, ...originalNums, 1]; // Extended with boundary 1s
+        const n = originalNums.length;
+
+        let dp = [];
+        let currentLength = 1;
+        let currentLeft = 1;
+        let currentI = 1;
+        let isRunning = false;
+        let phase = "init";
+        let bestForRange = {};
+
+        function reset() {
+            dp = Array.from({ length: n + 2 }, () => Array(n + 2).fill(0));
+            currentLength = 1;
+            currentLeft = 1;
+            currentI = 1;
+            phase = "init";
+            bestForRange = {};
+            isRunning = false;
+            document.getElementById("autoBtn").textContent = "Auto Run";
+            document.getElementById("status").textContent = 
+                `Balloons: [${originalNums.join(', ')}]. Maximize coins by choosing burst order wisely.`;
+            render();
+        }
+
+        function render() {
+            svg.selectAll("*").remove();
+
+            const startX = 50;
+
+            // Balloon display
+            svg.append("text")
+                .attr("x", startX)
+                .attr("y", 30)
+                .attr("font-size", "14px")
+                .attr("font-weight", "bold")
+                .attr("fill", "#1e293b")
+                .text("Balloons (with boundary 1s):");
+
+            nums.forEach((num, idx) => {
+                const x = startX + idx * 80;
+                const isBoundary = idx === 0 || idx === nums.length - 1;
+                const isInRange = phase !== "init" && idx >= currentLeft && idx <= currentLeft + currentLength - 1;
+                const isLastBurst = phase === "try" && idx === currentI;
+
+                // Balloon string
+                svg.append("line")
+                    .attr("x1", x + 30)
+                    .attr("y1", 50)
+                    .attr("x2", x + 30)
+                    .attr("y2", 70)
+                    .attr("stroke", "#94a3b8")
+                    .attr("stroke-width", 2);
+
+                // Balloon
+                svg.append("ellipse")
+                    .attr("cx", x + 30)
+                    .attr("cy", 95)
+                    .attr("rx", 28)
+                    .attr("ry", 35)
+                    .attr("fill", () => {
+                        if (isBoundary) return "#e2e8f0";
+                        if (isLastBurst) return "#fef3c7";
+                        if (isInRange) return "#dbeafe";
+                        return "#fecaca";
+                    })
+                    .attr("stroke", () => {
+                        if (isBoundary) return "#94a3b8";
+                        if (isLastBurst) return "#f59e0b";
+                        if (isInRange) return "#3b82f6";
+                        return "#ef4444";
+                    })
+                    .attr("stroke-width", isLastBurst ? 3 : 2);
+
+                svg.append("text")
+                    .attr("x", x + 30)
+                    .attr("y", 100)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "18px")
+                    .attr("font-weight", "bold")
+                    .attr("fill", isBoundary ? "#94a3b8" : "#1e293b")
+                    .text(num);
+
+                // Index label
+                svg.append("text")
+                    .attr("x", x + 30)
+                    .attr("y", 145)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "11px")
+                    .attr("fill", "#64748b")
+                    .text(isBoundary ? (idx === 0 ? "L" : "R") : `[${idx}]`);
+            });
+
+            // Current range highlight
+            if (phase === "try") {
+                const right = currentLeft + currentLength - 1;
+                const rangeX = startX + currentLeft * 80 - 10;
+                const rangeWidth = currentLength * 80 + 20;
+
+                svg.append("rect")
+                    .attr("x", rangeX)
+                    .attr("y", 40)
+                    .attr("width", rangeWidth)
+                    .attr("height", 115)
+                    .attr("rx", 10)
+                    .attr("fill", "none")
+                    .attr("stroke", "#3b82f6")
+                    .attr("stroke-width", 2)
+                    .attr("stroke-dasharray", "5,5");
+
+                svg.append("text")
+                    .attr("x", rangeX + rangeWidth / 2)
+                    .attr("y", 170)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "12px")
+                    .attr("fill", "#3b82f6")
+                    .text(`Range [${currentLeft}, ${right}]`);
+            }
+
+            // DP table
+            const dpStartX = 500;
+            const dpStartY = 50;
+            const cellSize = 45;
+
+            svg.append("text")
+                .attr("x", dpStartX)
+                .attr("y", dpStartY - 15)
+                .attr("font-size", "14px")
+                .attr("font-weight", "bold")
+                .attr("fill", "#1e293b")
+                .text("DP[left][right] = max coins for range:");
+
+            // Column headers
+            for (let j = 1; j <= n; j++) {
+                svg.append("text")
+                    .attr("x", dpStartX + j * cellSize + cellSize/2)
+                    .attr("y", dpStartY + 15)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "12px")
+                    .attr("fill", "#64748b")
+                    .text(j);
+            }
+
+            // Row headers and cells
+            for (let i = 1; i <= n; i++) {
+                svg.append("text")
+                    .attr("x", dpStartX + 20)
+                    .attr("y", dpStartY + i * cellSize + 28)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "12px")
+                    .attr("fill", "#64748b")
+                    .text(i);
+
+                for (let j = 1; j <= n; j++) {
+                    const x = dpStartX + j * cellSize;
+                    const y = dpStartY + i * cellSize;
+                    const isActive = i === currentLeft && j === currentLeft + currentLength - 1;
+                    const isResult = i === 1 && j === n && phase === "done";
+
+                    if (j >= i) {
+                        svg.append("rect")
+                            .attr("x", x)
+                            .attr("y", y)
+                            .attr("width", cellSize - 2)
+                            .attr("height", cellSize - 2)
+                            .attr("rx", 4)
+                            .attr("fill", () => {
+                                if (isResult) return "#d1fae5";
+                                if (isActive) return "#fef3c7";
+                                if (dp[i][j] > 0) return "#dbeafe";
+                                return "#f8fafc";
+                            })
+                            .attr("stroke", () => {
+                                if (isResult) return "#10b981";
+                                if (isActive) return "#f59e0b";
+                                return "#e2e8f0";
+                            })
+                            .attr("stroke-width", (isActive || isResult) ? 2 : 1);
+
+                        if (dp[i][j] > 0) {
+                            svg.append("text")
+                                .attr("x", x + (cellSize - 2) / 2)
+                                .attr("y", y + (cellSize - 2) / 2 + 5)
+                                .attr("text-anchor", "middle")
+                                .attr("font-size", "12px")
+                                .attr("font-weight", "bold")
+                                .attr("fill", "#1e293b")
+                                .text(dp[i][j]);
+                        }
+                    }
+                }
+            }
+
+            // Current calculation
+            if (phase === "try") {
+                const right = currentLeft + currentLength - 1;
+                const coins = nums[currentLeft - 1] * nums[currentI] * nums[right + 1];
+                const leftCoins = dp[currentLeft][currentI - 1] || 0;
+                const rightCoins = dp[currentI + 1][right] || 0;
+
+                const calcY = 350;
+                svg.append("rect")
+                    .attr("x", 50)
+                    .attr("y", calcY)
+                    .attr("width", 400)
+                    .attr("height", 120)
+                    .attr("rx", 10)
+                    .attr("fill", "#f8fafc")
+                    .attr("stroke", "#e2e8f0");
+
+                svg.append("text")
+                    .attr("x", 70)
+                    .attr("y", calcY + 30)
+                    .attr("font-size", "14px")
+                    .attr("font-weight", "bold")
+                    .attr("fill", "#1e293b")
+                    .text(`If balloon ${currentI} (value ${nums[currentI]}) bursts LAST:`);
+
+                svg.append("text")
+                    .attr("x", 70)
+                    .attr("y", calcY + 55)
+                    .attr("font-size", "12px")
+                    .attr("fill", "#64748b")
+                    .text(`Coins = ${nums[currentLeft-1]} × ${nums[currentI]} × ${nums[right+1]} = ${coins}`);
+
+                svg.append("text")
+                    .attr("x", 70)
+                    .attr("y", calcY + 80)
+                    .attr("font-size", "12px")
+                    .attr("fill", "#64748b")
+                    .text(`+ left subproblem: ${leftCoins}`);
+
+                svg.append("text")
+                    .attr("x", 70)
+                    .attr("y", calcY + 100)
+                    .attr("font-size", "12px")
+                    .attr("fill", "#64748b")
+                    .text(`+ right subproblem: ${rightCoins}`);
+
+                svg.append("text")
+                    .attr("x", 280)
+                    .attr("y", calcY + 90)
+                    .attr("font-size", "16px")
+                    .attr("font-weight", "bold")
+                    .attr("fill", "#3b82f6")
+                    .text(`Total: ${coins + leftCoins + rightCoins}`);
+            }
+
+            // Key insight
+            svg.append("text")
+                .attr("x", 50)
+                .attr("y", 520)
+                .attr("font-size", "13px")
+                .attr("fill", "#64748b")
+                .text("Key: Think backwards! Which balloon bursts LAST in each range?");
+
+            svg.append("text")
+                .attr("x", 50)
+                .attr("y", 545)
+                .attr("font-size", "13px")
+                .attr("fill", "#64748b")
+                .text("When i bursts last, neighbors are the range boundaries (not adjacent balloons).");
+
+            // Result
+            if (phase === "done") {
+                svg.append("rect")
+                    .attr("x", 50)
+                    .attr("y", 570)
+                    .attr("width", 400)
+                    .attr("height", 55)
+                    .attr("rx", 10)
+                    .attr("fill", "#d1fae5")
+                    .attr("stroke", "#10b981")
+                    .attr("stroke-width", 2);
+
+                svg.append("text")
+                    .attr("x", 250)
+                    .attr("y", 605)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "18px")
+                    .attr("font-weight", "bold")
+                    .attr("fill", "#10b981")
+                    .text(`✓ Maximum coins: ${dp[1][n]}`);
+            }
+        }
+
+        function step() {
+            if (phase === "done") return;
+
+            if (phase === "init") {
+                phase = "try";
+                document.getElementById("status").textContent = 
+                    `Length ${currentLength}: Range [${currentLeft}, ${currentLeft}], try balloon ${currentI} last`;
+                render();
+                return;
+            }
+
+            if (phase === "try") {
+                const right = currentLeft + currentLength - 1;
+                const coins = nums[currentLeft - 1] * nums[currentI] * nums[right + 1];
+                const leftCoins = dp[currentLeft][currentI - 1] || 0;
+                const rightCoins = dp[currentI + 1][right] || 0;
+                const total = coins + leftCoins + rightCoins;
+
+                dp[currentLeft][right] = Math.max(dp[currentLeft][right], total);
+
+                document.getElementById("status").textContent = 
+                    `Balloon ${currentI} last: ${nums[currentLeft-1]}×${nums[currentI]}×${nums[right+1]}+${leftCoins}+${rightCoins}=${total}. Best: ${dp[currentLeft][right]}`;
+
+                render();
+
+                // Move to next balloon in range
+                currentI++;
+                if (currentI > right) {
+                    // Move to next range of same length
+                    currentLeft++;
+                    if (currentLeft > n - currentLength + 1) {
+                        // Move to next length
+                        currentLength++;
+                        if (currentLength > n) {
+                            phase = "done";
+                            document.getElementById("status").textContent = 
+                                `✓ Maximum coins = ${dp[1][n]}`;
+                            render();
+                            return;
+                        }
+                        currentLeft = 1;
+                    }
+                    currentI = currentLeft;
+                }
+            }
+        }
+
+        async function autoRun() {
+            if (isRunning) {
+                isRunning = false;
+                document.getElementById("autoBtn").textContent = "Auto Run";
+                return;
+            }
+
+            isRunning = true;
+            document.getElementById("autoBtn").textContent = "Pause";
+
+            while (phase !== "done" && isRunning) {
+                step();
+                await new Promise(r => setTimeout(r, 300));
+            }
+
+            isRunning = false;
+            document.getElementById("autoBtn").textContent = "Auto Run";
+        }
+
+        document.getElementById("stepBtn").addEventListener("click", step);
+        document.getElementById("autoBtn").addEventListener("click", autoRun);
+        document.getElementById("resetBtn").addEventListener("click", reset);
+
+        reset();
+    </script>
+</body>
+</html>

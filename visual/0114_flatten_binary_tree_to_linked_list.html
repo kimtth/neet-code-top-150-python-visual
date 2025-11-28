@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LC 114: Flatten Binary Tree to Linked List - Algorithm Visualization</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="problem-info">
+            <h1><span class="problem-number">#114</span> Flatten Binary Tree to Linked List</h1>
+            <p>Flatten a binary tree to a linked list in-place. The "linked list" should use the right child pointer, following pre-order traversal.</p>
+            <div class="problem-meta">
+                <span class="meta-tag">🌳 Tree</span>
+                <span class="meta-tag">🔗 Linked List</span>
+                <span class="meta-tag">⏱️ O(n)</span>
+                <span class="meta-tag">💾 O(1) Morris</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <code>python/0114_flatten_binary_tree_to_linked_list/0114_flatten_binary_tree_to_linked_list.py</code>
+            </div>
+            </div>
+
+        <div class="explanation-panel">
+            <h4>🧠 How It Works (Morris-like approach)</h4>
+            <ul>
+                <li><strong>Key Insight:</strong> Move right subtree to rightmost node of left subtree</li>
+                <li><strong>Then:</strong> Move left subtree to right, set left to null</li>
+                <li><strong>Repeat:</strong> Move to right child, continue process</li>
+                <li><strong>O(1) Space:</strong> No recursion stack needed!</li>
+            </ul>
+        </div>
+
+
+        <div class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+            
+            <div class="controls">
+                <button class="btn btn-primary" id="startBtn" onclick="start()">▶ Start</button>
+                <button class="btn" onclick="stepForward()">Step →</button>
+                <button class="btn btn-warning" onclick="reset()">Reset</button>
+            </div>
+
+            <div class="status-message" id="statusMessage">
+                Click Start to begin flattening
+            </div>
+
+            <div style="display: flex; gap: 30px; flex-wrap: wrap; margin-top: 20px;">
+                <div style="flex: 1; min-width: 300px;">
+                    <h4>🌳 Original Tree Structure</h4>
+                    <svg id="treeViz" width="100%" height="280"></svg>
+                </div>
+                <div style="flex: 1; min-width: 300px;">
+                    <h4>🔗 Flattened List</h4>
+                    <svg id="listViz" width="100%" height="280"></svg>
+                </div>
+            </div>
+
+            <div style="margin-top: 20px; padding: 15px; background: #f5f5f5; border-radius: 12px;">
+                <h4 style="margin-bottom: 10px;">📝 Pre-order Traversal</h4>
+                <div id="preorderDisplay" style="display: flex; flex-wrap: wrap; gap: 8px;"></div>
+            </div>
+        </div>
+
+        <div class="code-section">
+            <h3>💻 Python Solution (O(1) Space)</h3>
+            <div class="code-block">
+                <pre><span class="keyword">def</span> <span class="function">flatten</span>(root):
+    curr = root
+    <span class="keyword">while</span> curr:
+        <span class="keyword">if</span> curr.left:
+            <span class="comment"># Find rightmost node of left subtree</span>
+            rightmost = curr.left
+            <span class="keyword">while</span> rightmost.right:
+                rightmost = rightmost.right
+            
+            <span class="comment"># Move right subtree to rightmost</span>
+            rightmost.right = curr.right
+            
+            <span class="comment"># Move left subtree to right</span>
+            curr.right = curr.left
+            curr.left = <span class="keyword">None</span>
+        
+        curr = curr.right</pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Tree data structure
+        function createTree() {
+            return {
+                val: 1, id: 1,
+                left: {
+                    val: 2, id: 2,
+                    left: { val: 3, id: 3, left: null, right: null },
+                    right: { val: 4, id: 4, left: null, right: null }
+                },
+                right: {
+                    val: 5, id: 5,
+                    left: null,
+                    right: { val: 6, id: 6, left: null, right: null }
+                }
+            };
+        }
+
+        let tree = createTree();
+        let flattenedList = [];
+        let currentNode = null;
+        let highlightEdge = null;
+        let isRunning = false;
+        let stepIndex = 0;
+        let steps = [];
+
+        function getPreorder(node, arr = []) {
+            if (!node) return arr;
+            arr.push(node.val);
+            getPreorder(node.left, arr);
+            getPreorder(node.right, arr);
+            return arr;
+        }
+
+        function precomputeSteps() {
+            steps = [];
+            tree = createTree();
+            flattenedList = [];
+            
+            const preorder = getPreorder(tree);
+            
+            steps.push({
+                type: 'init',
+                tree: JSON.parse(JSON.stringify(tree)),
+                flattened: [],
+                current: 1,
+                message: `Pre-order: [${preorder.join(', ')}]. Start at root (1)`
+            });
+
+            // Simulate flattening
+            let curr = tree;
+            let flatList = [];
+            
+            while (curr) {
+                flatList.push(curr.val);
+                
+                if (curr.left) {
+                    // Find rightmost of left subtree
+                    let rightmost = curr.left;
+                    while (rightmost.right) {
+                        rightmost = rightmost.right;
+                    }
+                    
+                    steps.push({
+                        type: 'find_rightmost',
+                        tree: JSON.parse(JSON.stringify(tree)),
+                        flattened: [...flatList],
+                        current: curr.val,
+                        rightmost: rightmost.val,
+                        message: `Node ${curr.val}: Found rightmost of left subtree = ${rightmost.val}`
+                    });
+
+                    // Move right subtree to rightmost
+                    rightmost.right = curr.right;
+                    
+                    steps.push({
+                        type: 'move_right',
+                        tree: JSON.parse(JSON.stringify(tree)),
+                        flattened: [...flatList],
+                        current: curr.val,
+                        message: `Connect ${rightmost.val}.right → ${curr.right ? curr.right.val : 'null'}`
+                    });
+
+                    // Move left to right
+                    curr.right = curr.left;
+                    curr.left = null;
+                    
+                    steps.push({
+                        type: 'move_left',
+                        tree: JSON.parse(JSON.stringify(tree)),
+                        flattened: [...flatList],
+                        current: curr.val,
+                        message: `Move left subtree to right, set left = null`
+                    });
+                }
+                
+                curr = curr.right;
+                
+                if (curr) {
+                    steps.push({
+                        type: 'advance',
+                        tree: JSON.parse(JSON.stringify(tree)),
+                        flattened: [...flatList],
+                        current: curr.val,
+                        message: `Move to next node: ${curr.val}`
+                    });
+                }
+            }
+
+            steps.push({
+                type: 'done',
+                tree: JSON.parse(JSON.stringify(tree)),
+                flattened: flatList,
+                current: null,
+                message: `Done! Flattened to: [${flatList.join(' → ')}]`
+            });
+        }
+
+        function computePositions(node, x, y, dx, positions = []) {
+            if (!node) return positions;
+            positions.push({ ...node, x, y });
+            computePositions(node.left, x - dx, y + 60, dx * 0.6, positions);
+            computePositions(node.right, x + dx, y + 60, dx * 0.6, positions);
+            return positions;
+        }
+
+        function renderTree() {
+            const svg = d3.select("#treeViz");
+            svg.selectAll("*").remove();
+
+            const container = svg.node().parentElement;
+            const width = container.clientWidth;
+            const height = 280;
+            svg.attr("viewBox", `0 0 ${width} ${height}`);
+
+            const positions = computePositions(tree, width / 2, 40, 80);
+            const g = svg.append("g");
+
+            // Draw edges
+            function drawEdges(node, pos) {
+                if (!node) return;
+                const nodePos = pos.find(p => p.id === node.id);
+                if (node.left) {
+                    const leftPos = pos.find(p => p.id === node.left.id);
+                    if (leftPos) {
+                        g.append("line")
+                            .attr("x1", nodePos.x).attr("y1", nodePos.y)
+                            .attr("x2", leftPos.x).attr("y2", leftPos.y)
+                            .attr("stroke", "#ccc").attr("stroke-width", 2);
+                    }
+                    drawEdges(node.left, pos);
+                }
+                if (node.right) {
+                    const rightPos = pos.find(p => p.id === node.right.id);
+                    if (rightPos) {
+                        g.append("line")
+                            .attr("x1", nodePos.x).attr("y1", nodePos.y)
+                            .attr("x2", rightPos.x).attr("y2", rightPos.y)
+                            .attr("stroke", "#4caf50").attr("stroke-width", 3);
+                    }
+                    drawEdges(node.right, pos);
+                }
+            }
+            drawEdges(tree, positions);
+
+            // Draw nodes
+            positions.forEach(node => {
+                const isCurrent = currentNode === node.val;
+                
+                g.append("circle")
+                    .attr("cx", node.x).attr("cy", node.y).attr("r", 22)
+                    .attr("fill", isCurrent ? "#ff9800" : "#667eea")
+                    .attr("stroke", isCurrent ? "#e65100" : "#5a6fd6")
+                    .attr("stroke-width", isCurrent ? 4 : 2);
+
+                g.append("text")
+                    .attr("x", node.x).attr("y", node.y + 6)
+                    .attr("text-anchor", "middle")
+                    .attr("fill", "white").attr("font-weight", "bold").attr("font-size", "16px")
+                    .text(node.val);
+            });
+        }
+
+        function renderList() {
+            const svg = d3.select("#listViz");
+            svg.selectAll("*").remove();
+
+            const container = svg.node().parentElement;
+            const width = container.clientWidth;
+            const height = 280;
+            svg.attr("viewBox", `0 0 ${width} ${height}`);
+
+            if (flattenedList.length === 0) {
+                svg.append("text")
+                    .attr("x", width / 2).attr("y", height / 2)
+                    .attr("text-anchor", "middle")
+                    .attr("fill", "#999")
+                    .text("Linked list will appear here...");
+                return;
+            }
+
+            const g = svg.append("g");
+            const nodeSpacing = 60;
+            const startX = 60;
+            const startY = height / 2;
+
+            flattenedList.forEach((val, i) => {
+                const x = startX + (i % 5) * nodeSpacing;
+                const y = startY + Math.floor(i / 5) * 70 - 60;
+
+                // Draw arrow to next
+                if (i < flattenedList.length - 1) {
+                    const nextX = startX + ((i + 1) % 5) * nodeSpacing;
+                    const nextY = startY + Math.floor((i + 1) / 5) * 70 - 60;
+                    
+                    if (Math.floor(i / 5) === Math.floor((i + 1) / 5)) {
+                        g.append("line")
+                            .attr("x1", x + 22).attr("y1", y)
+                            .attr("x2", nextX - 22).attr("y2", nextY)
+                            .attr("stroke", "#4caf50").attr("stroke-width", 3)
+                            .attr("marker-end", "url(#arrowhead)");
+                    } else {
+                        g.append("path")
+                            .attr("d", `M ${x + 22} ${y} Q ${x + 50} ${y + 35} ${nextX - 22} ${nextY}`)
+                            .attr("fill", "none")
+                            .attr("stroke", "#4caf50").attr("stroke-width", 3)
+                            .attr("marker-end", "url(#arrowhead)");
+                    }
+                }
+
+                g.append("circle")
+                    .attr("cx", x).attr("cy", y).attr("r", 22)
+                    .attr("fill", "#4caf50")
+                    .attr("stroke", "#388e3c").attr("stroke-width", 2);
+
+                g.append("text")
+                    .attr("x", x).attr("y", y + 6)
+                    .attr("text-anchor", "middle")
+                    .attr("fill", "white").attr("font-weight", "bold").attr("font-size", "16px")
+                    .text(val);
+            });
+
+            // Arrow marker
+            svg.append("defs").append("marker")
+                .attr("id", "arrowhead")
+                .attr("viewBox", "0 -5 10 10")
+                .attr("refX", 5).attr("refY", 0)
+                .attr("markerWidth", 6).attr("markerHeight", 6)
+                .attr("orient", "auto")
+                .append("path")
+                .attr("d", "M0,-5L10,0L0,5")
+                .attr("fill", "#4caf50");
+        }
+
+        function updatePreorderDisplay() {
+            const preorder = getPreorder(createTree());
+            const container = document.getElementById('preorderDisplay');
+            container.innerHTML = preorder.map((val, i) => 
+                `<span style="background: ${flattenedList.includes(val) ? '#4caf50' : '#667eea'}; color: white; padding: 8px 15px; border-radius: 20px; font-weight: bold;">${val}</span>`
+            ).join('');
+        }
+
+        function stepForward() {
+            if (stepIndex >= steps.length) return;
+            
+            const step = steps[stepIndex];
+            tree = step.tree ? JSON.parse(JSON.stringify(step.tree)) : tree;
+            flattenedList = step.flattened || [];
+            currentNode = step.current;
+            
+            document.getElementById('statusMessage').textContent = step.message;
+            
+            if (step.type === 'done') {
+                isRunning = false;
+                document.getElementById('startBtn').textContent = '▶ Start';
+            }
+            
+            stepIndex++;
+            renderTree();
+            renderList();
+            updatePreorderDisplay();
+        }
+
+        async function start() {
+            if (isRunning) {
+                isRunning = false;
+                document.getElementById('startBtn').textContent = '▶ Start';
+                return;
+            }
+            
+            isRunning = true;
+            document.getElementById('startBtn').textContent = '⏸ Pause';
+            
+            while (stepIndex < steps.length && isRunning) {
+                stepForward();
+                await new Promise(r => setTimeout(r, 800));
+            }
+        }
+
+        function reset() {
+            isRunning = false;
+            stepIndex = 0;
+            tree = createTree();
+            flattenedList = [];
+            currentNode = null;
+            
+            document.getElementById('statusMessage').textContent = 'Click Start to begin flattening';
+            document.getElementById('startBtn').textContent = '▶ Start';
+            
+            precomputeSteps();
+            renderTree();
+            renderList();
+            updatePreorderDisplay();
+        }
+
+        reset();
+        window.addEventListener('resize', () => {
+            renderTree();
+            renderList();
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LC 818: Race Car - Algorithm Visualization</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="problem-info">
+            <h1><span class="problem-number">#818</span> Race Car</h1>
+            <p>Your car starts at position 0 with speed +1. Use 'A' (accelerate) and 'R' (reverse) commands to reach target position with minimum instructions.</p>
+            <div class="problem-meta">
+                <span class="meta-tag">🚗 Simulation</span>
+                <span class="meta-tag">🔍 BFS</span>
+                <span class="meta-tag">⏱️ O(t log t)</span>
+                <span class="meta-tag">💾 O(t)</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <code>python/0818_race_car/0818_race_car.py</code>
+            </div>
+            </div>
+
+        <div class="explanation-panel">
+            <h4>🧠 How It Works (Layman's Terms)</h4>
+            <p>BFS explores all possible states (position, speed):</p>
+            <ul>
+                <li><strong>'A' (Accelerate):</strong> position += speed, speed *= 2</li>
+                <li><strong>'R' (Reverse):</strong> speed = -1 if positive, +1 if negative</li>
+                <li><strong>Pruning:</strong> Skip states too far from target</li>
+                <li><strong>Goal:</strong> Find shortest sequence to reach target</li>
+            </ul>
+        </div>
+
+
+        <div class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+            
+            <div class="controls">
+                <label>Target: </label>
+                <input type="number" id="targetInput" value="6" min="1" max="20" style="width: 60px; padding: 8px; border-radius: 6px; border: 1px solid #ddd;">
+                <button class="btn btn-primary" id="startBtn" onclick="solve()">🚗 Find Path</button>
+                <button class="btn" onclick="stepForward()">Step →</button>
+                <button class="btn btn-warning" onclick="reset()">Reset</button>
+            </div>
+
+            <div class="status-message" id="statusMessage">
+                Set target and click Find Path
+            </div>
+
+            <svg id="raceViz" width="100%" height="200"></svg>
+
+            <div style="display: flex; gap: 20px; flex-wrap: wrap; margin-top: 20px;">
+                <div style="flex: 1; min-width: 200px; padding: 15px; background: #e3f2fd; border-radius: 12px;">
+                    <h4 style="margin: 0 0 10px 0;">🎮 Commands</h4>
+                    <div id="commandsDisplay" style="font-size: 24px; font-family: monospace; letter-spacing: 2px;">-</div>
+                </div>
+                <div style="flex: 1; min-width: 200px;">
+                    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                        <div style="flex: 1; padding: 15px; background: #fff3e0; border-radius: 12px; text-align: center;">
+                            <div style="font-size: 12px; color: #666;">Position</div>
+                            <div id="posDisplay" style="font-size: 28px; font-weight: bold; color: #ff9800;">0</div>
+                        </div>
+                        <div style="flex: 1; padding: 15px; background: #f3e5f5; border-radius: 12px; text-align: center;">
+                            <div style="font-size: 12px; color: #666;">Speed</div>
+                            <div id="speedDisplay" style="font-size: 28px; font-weight: bold; color: #9c27b0;">+1</div>
+                        </div>
+                        <div style="flex: 1; padding: 15px; background: #e8f5e9; border-radius: 12px; text-align: center;">
+                            <div style="font-size: 12px; color: #666;">Step</div>
+                            <div id="stepDisplay" style="font-size: 28px; font-weight: bold; color: #4caf50;">0</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div style="margin-top: 20px; padding: 15px; background: #fce4ec; border-radius: 12px;">
+                <h4 style="margin: 0 0 10px 0;">📜 History</h4>
+                <div id="historyDisplay" style="font-size: 14px; max-height: 150px; overflow-y: auto;"></div>
+            </div>
+        </div>
+
+        <div class="code-section">
+            <h3>💻 Python Solution (BFS)</h3>
+            <div class="code-block">
+                <pre><span class="keyword">from</span> collections <span class="keyword">import</span> deque
+
+<span class="keyword">def</span> <span class="function">racecar</span>(target):
+    <span class="comment"># BFS: (position, speed)</span>
+    queue = deque([(0, 1, <span class="string">""</span>)])  <span class="comment"># (pos, speed, path)</span>
+    visited = {(0, 1)}
+    
+    <span class="keyword">while</span> queue:
+        pos, speed, path = queue.popleft()
+        
+        <span class="keyword">if</span> pos == target:
+            <span class="keyword">return</span> <span class="function">len</span>(path)
+        
+        <span class="comment"># Accelerate</span>
+        new_pos, new_speed = pos + speed, speed * <span class="number">2</span>
+        <span class="keyword">if</span> (new_pos, new_speed) <span class="keyword">not in</span> visited <span class="keyword">and</span> \
+           <span class="number">0</span> < new_pos < <span class="number">2</span> * target:
+            visited.<span class="function">add</span>((new_pos, new_speed))
+            queue.<span class="function">append</span>((new_pos, new_speed, path + <span class="string">"A"</span>))
+        
+        <span class="comment"># Reverse</span>
+        new_speed = -<span class="number">1</span> <span class="keyword">if</span> speed > <span class="number">0</span> <span class="keyword">else</span> <span class="number">1</span>
+        <span class="keyword">if</span> (pos, new_speed) <span class="keyword">not in</span> visited:
+            visited.<span class="function">add</span>((pos, new_speed))
+            queue.<span class="function">append</span>((pos, new_speed, path + <span class="string">"R"</span>))
+    
+    <span class="keyword">return</span> -<span class="number">1</span></pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let target = 6;
+        let optimalPath = "";
+        let currentStep = 0;
+        let position = 0;
+        let speed = 1;
+        let history = [];
+        let isRunning = false;
+
+        // BFS to find optimal path
+        function findPath(target) {
+            const queue = [[0, 1, ""]]; // [pos, speed, path]
+            const visited = new Set(["0,1"]);
+
+            while (queue.length > 0) {
+                const [pos, spd, path] = queue.shift();
+
+                if (pos === target) {
+                    return path;
+                }
+
+                // Accelerate
+                const newPos = pos + spd;
+                const newSpeed = spd * 2;
+                const key1 = `${newPos},${newSpeed}`;
+                if (!visited.has(key1) && newPos > 0 && newPos < 2 * target) {
+                    visited.add(key1);
+                    queue.push([newPos, newSpeed, path + "A"]);
+                }
+
+                // Reverse
+                const revSpeed = spd > 0 ? -1 : 1;
+                const key2 = `${pos},${revSpeed}`;
+                if (!visited.has(key2)) {
+                    visited.add(key2);
+                    queue.push([pos, revSpeed, path + "R"]);
+                }
+            }
+            return "";
+        }
+
+        function render() {
+            const svg = d3.select("#raceViz");
+            svg.selectAll("*").remove();
+
+            const container = svg.node().parentElement;
+            const width = container.clientWidth;
+            const height = 200;
+            svg.attr("viewBox", `0 0 ${width} ${height}`);
+
+            const margin = { left: 40, right: 40 };
+            const trackWidth = width - margin.left - margin.right;
+            const maxPos = Math.max(target * 1.5, Math.abs(position) + 3, 10);
+            const minPos = Math.min(0, position - 2);
+            const xScale = d3.scaleLinear().domain([minPos, maxPos]).range([margin.left, width - margin.right]);
+
+            // Track
+            svg.append("rect")
+                .attr("x", margin.left).attr("y", 80)
+                .attr("width", trackWidth).attr("height", 40)
+                .attr("fill", "#e0e0e0").attr("rx", 5);
+
+            // Position markers
+            for (let p = Math.floor(minPos); p <= Math.ceil(maxPos); p++) {
+                const x = xScale(p);
+                svg.append("line")
+                    .attr("x1", x).attr("y1", 75)
+                    .attr("x2", x).attr("y2", 125)
+                    .attr("stroke", p === target ? "#4caf50" : "#bdbdbd")
+                    .attr("stroke-width", p === target ? 3 : 1);
+                
+                svg.append("text")
+                    .attr("x", x).attr("y", 145)
+                    .attr("text-anchor", "middle")
+                    .attr("fill", p === target ? "#4caf50" : "#666")
+                    .attr("font-size", p === target ? "14px" : "11px")
+                    .attr("font-weight", p === target ? "bold" : "normal")
+                    .text(p);
+            }
+
+            // Target flag
+            svg.append("text")
+                .attr("x", xScale(target)).attr("y", 65)
+                .attr("text-anchor", "middle")
+                .attr("font-size", "24px")
+                .text("🏁");
+
+            // Car
+            const carX = xScale(position);
+            svg.append("text")
+                .attr("x", carX).attr("y", 45)
+                .attr("text-anchor", "middle")
+                .attr("font-size", "36px")
+                .attr("transform", speed < 0 ? `scale(-1,1) translate(${-2 * carX}, 0)` : "")
+                .text("🚗");
+
+            // Speed arrow
+            const arrowLength = Math.min(Math.abs(speed) * 10, 50);
+            const arrowEnd = carX + (speed > 0 ? arrowLength : -arrowLength);
+            svg.append("line")
+                .attr("x1", carX).attr("y1", 100)
+                .attr("x2", arrowEnd).attr("y2", 100)
+                .attr("stroke", speed > 0 ? "#4caf50" : "#f44336")
+                .attr("stroke-width", 3)
+                .attr("marker-end", "url(#arrowhead)");
+
+            // Arrow marker
+            svg.append("defs").append("marker")
+                .attr("id", "arrowhead")
+                .attr("viewBox", "-5 -5 10 10")
+                .attr("refX", 0).attr("refY", 0)
+                .attr("markerWidth", 6).attr("markerHeight", 6)
+                .attr("orient", "auto")
+                .append("path")
+                .attr("d", "M-5,-5 L5,0 L-5,5 Z")
+                .attr("fill", speed > 0 ? "#4caf50" : "#f44336");
+
+            // Update displays
+            document.getElementById('posDisplay').textContent = position;
+            document.getElementById('speedDisplay').textContent = (speed > 0 ? '+' : '') + speed;
+            document.getElementById('stepDisplay').textContent = currentStep;
+            
+            // Commands display
+            const commandsHtml = optimalPath.split('').map((cmd, i) => {
+                let color = '#ccc';
+                if (i < currentStep) color = '#4caf50';
+                else if (i === currentStep) color = '#ff9800';
+                return `<span style="color: ${color}; ${i === currentStep ? 'text-decoration: underline;' : ''}">${cmd}</span>`;
+            }).join('');
+            document.getElementById('commandsDisplay').innerHTML = commandsHtml || '-';
+
+            // History
+            const historyHtml = history.map((h, i) => 
+                `<div style="padding: 5px; ${i === history.length - 1 ? 'background: #fff9c4;' : ''} border-radius: 4px; margin: 2px 0;">
+                    <strong>Step ${i}:</strong> ${h.cmd ? `<span style="color: ${h.cmd === 'A' ? '#2196f3' : '#f44336'}">${h.cmd}</span>` : 'Start'} 
+                    → pos=${h.pos}, speed=${h.speed > 0 ? '+' : ''}${h.speed}
+                </div>`
+            ).join('');
+            document.getElementById('historyDisplay').innerHTML = historyHtml;
+
+            if (position === target) {
+                document.getElementById('statusMessage').textContent = `🎉 Reached target in ${optimalPath.length} moves: ${optimalPath}`;
+            }
+        }
+
+        function stepForward() {
+            if (currentStep >= optimalPath.length) return;
+            
+            const cmd = optimalPath[currentStep];
+            
+            if (cmd === 'A') {
+                position += speed;
+                speed *= 2;
+            } else if (cmd === 'R') {
+                speed = speed > 0 ? -1 : 1;
+            }
+            
+            currentStep++;
+            history.push({ cmd, pos: position, speed });
+            
+            document.getElementById('statusMessage').textContent = 
+                `Step ${currentStep}: ${cmd === 'A' ? 'Accelerate' : 'Reverse'} → position=${position}, speed=${speed > 0 ? '+' : ''}${speed}`;
+            
+            render();
+        }
+
+        async function solve() {
+            target = parseInt(document.getElementById('targetInput').value) || 6;
+            if (target < 1) target = 1;
+            if (target > 20) target = 20;
+            
+            reset();
+            optimalPath = findPath(target);
+            
+            document.getElementById('statusMessage').textContent = 
+                `Found optimal path: ${optimalPath} (${optimalPath.length} moves)`;
+            
+            isRunning = true;
+            document.getElementById('startBtn').textContent = '⏸ Pause';
+            
+            while (currentStep < optimalPath.length && isRunning) {
+                await new Promise(r => setTimeout(r, 800));
+                stepForward();
+            }
+            
+            isRunning = false;
+            document.getElementById('startBtn').textContent = '🚗 Find Path';
+        }
+
+        function reset() {
+            isRunning = false;
+            target = parseInt(document.getElementById('targetInput').value) || 6;
+            optimalPath = "";
+            currentStep = 0;
+            position = 0;
+            speed = 1;
+            history = [{ cmd: null, pos: 0, speed: 1 }];
+            
+            document.getElementById('statusMessage').textContent = 'Set target and click Find Path';
+            document.getElementById('startBtn').textContent = '🚗 Find Path';
+            render();
+        }
+
+        reset();
+        window.addEventListener('resize', render);
+    </script>
+</body>
+</html>

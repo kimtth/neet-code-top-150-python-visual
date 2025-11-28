@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LC 2013: Detect Squares - Algorithm Visualization</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="problem-info">
+            <h1><span class="problem-number">#2013</span> Detect Squares</h1>
+            <p>Design a data structure to add points and count axis-aligned squares that can be formed with a query point.</p>
+            <div class="problem-meta">
+                <span class="meta-tag">🔧 Design</span>
+                <span class="meta-tag">📊 Hash Map</span>
+                <span class="meta-tag">⏱️ O(n) count</span>
+                <span class="meta-tag">💾 O(n)</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <code>python/2013_detect_squares/2013_detect_squares.py</code>
+            </div>
+            </div>
+
+        <div class="explanation-panel">
+            <h4>🧠 How It Works (Layman's Terms)</h4>
+            <p>For counting squares with a query point:</p>
+            <ul>
+                <li><strong>Fix diagonal:</strong> Query point is one corner</li>
+                <li><strong>Find opposite:</strong> Look for points that could be diagonal opposite</li>
+                <li><strong>Check others:</strong> Need 2 more corners to complete square</li>
+                <li><strong>Count:</strong> Multiply counts of matching corners</li>
+            </ul>
+        </div>
+
+
+        <div class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+            
+            <div class="controls">
+                <input type="number" id="xInput" placeholder="X" style="padding: 8px; width: 60px; border-radius: 5px; border: 2px solid #ddd;" min="0" max="10">
+                <input type="number" id="yInput" placeholder="Y" style="padding: 8px; width: 60px; border-radius: 5px; border: 2px solid #ddd;" min="0" max="10">
+                <button class="btn btn-primary" onclick="addPoint()">Add Point</button>
+                <button class="btn" style="background: #9c27b0; color: white;" onclick="countSquares()">Count Squares</button>
+                <button class="btn btn-warning" onclick="reset()">Reset</button>
+            </div>
+
+            <div class="status-message" id="statusMessage">
+                Add points, then count squares with a query point
+            </div>
+
+            <div style="display: flex; gap: 30px; flex-wrap: wrap; margin-top: 20px;">
+                <div style="flex: 2; min-width: 350px;">
+                    <svg id="gridViz" width="100%" height="400"></svg>
+                </div>
+                <div style="flex: 1; min-width: 200px;">
+                    <h4>📊 Points Added</h4>
+                    <div id="pointsDisplay" style="padding: 15px; background: #e3f2fd; border-radius: 12px; max-height: 150px; overflow-y: auto; margin-bottom: 15px;"></div>
+                    
+                    <h4>🔢 Square Count</h4>
+                    <div id="countDisplay" style="padding: 25px; background: linear-gradient(135deg, #667eea, #764ba2); border-radius: 12px; text-align: center;">
+                        <div style="color: rgba(255,255,255,0.8); font-size: 0.9em;">Squares Found</div>
+                        <div style="color: white; font-size: 2.5em; font-weight: bold;">0</div>
+                    </div>
+                    
+                    <h4 style="margin-top: 15px;">🔲 Detected Squares</h4>
+                    <div id="squaresDisplay" style="padding: 15px; background: #f5f5f5; border-radius: 12px; max-height: 150px; overflow-y: auto;"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="code-section">
+            <h3>💻 Python Solution</h3>
+            <div class="code-block">
+                <pre><span class="keyword">from</span> collections <span class="keyword">import</span> defaultdict
+
+<span class="keyword">class</span> <span class="function">DetectSquares</span>:
+    <span class="keyword">def</span> <span class="function">__init__</span>(self):
+        self.points = defaultdict(<span class="function">int</span>)  <span class="comment"># (x, y) → count</span>
+    
+    <span class="keyword">def</span> <span class="function">add</span>(self, point):
+        self.points[<span class="function">tuple</span>(point)] += <span class="number">1</span>
+    
+    <span class="keyword">def</span> <span class="function">count</span>(self, point):
+        px, py = point
+        result = <span class="number">0</span>
+        
+        <span class="keyword">for</span> (x, y), cnt <span class="keyword">in</span> self.points.<span class="function">items</span>():
+            <span class="comment"># Find diagonal point (same diagonal distance)</span>
+            <span class="keyword">if</span> <span class="function">abs</span>(px - x) != <span class="function">abs</span>(py - y) <span class="keyword">or</span> x == px:
+                <span class="keyword">continue</span>
+            
+            <span class="comment"># Check if other 2 corners exist</span>
+            result += cnt * \
+                      self.points[(px, y)] * \
+                      self.points[(x, py)]
+        
+        <span class="keyword">return</span> result</pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let points = {}; // (x,y) as string → count
+        let queryPoint = null;
+        let foundSquares = [];
+        const gridSize = 11;
+        const cellSize = 35;
+
+        function render() {
+            const svg = d3.select("#gridViz");
+            svg.selectAll("*").remove();
+
+            const container = svg.node().parentElement;
+            const width = container.clientWidth;
+            const height = 400;
+            svg.attr("viewBox", `0 0 ${width} ${height}`);
+
+            const offsetX = (width - gridSize * cellSize) / 2;
+            const offsetY = 20;
+            const g = svg.append("g").attr("transform", `translate(${offsetX}, ${offsetY})`);
+
+            // Draw grid
+            for (let i = 0; i <= gridSize; i++) {
+                g.append("line")
+                    .attr("x1", 0).attr("y1", i * cellSize)
+                    .attr("x2", gridSize * cellSize).attr("y2", i * cellSize)
+                    .attr("stroke", "#eee").attr("stroke-width", 1);
+                g.append("line")
+                    .attr("x1", i * cellSize).attr("y1", 0)
+                    .attr("x2", i * cellSize).attr("y2", gridSize * cellSize)
+                    .attr("stroke", "#eee").attr("stroke-width", 1);
+                
+                // Axis labels
+                if (i < gridSize) {
+                    g.append("text")
+                        .attr("x", i * cellSize + cellSize / 2)
+                        .attr("y", gridSize * cellSize + 15)
+                        .attr("text-anchor", "middle")
+                        .attr("font-size", "10px").attr("fill", "#999")
+                        .text(i);
+                    g.append("text")
+                        .attr("x", -10)
+                        .attr("y", (gridSize - 1 - i) * cellSize + cellSize / 2 + 4)
+                        .attr("text-anchor", "middle")
+                        .attr("font-size", "10px").attr("fill", "#999")
+                        .text(i);
+                }
+            }
+
+            // Draw found squares
+            foundSquares.forEach((sq, i) => {
+                const color = `hsl(${(i * 60) % 360}, 70%, 80%)`;
+                const [x1, y1] = sq[0];
+                const [x2, y2] = sq[1];
+                
+                g.append("rect")
+                    .attr("x", Math.min(x1, x2) * cellSize + cellSize / 2)
+                    .attr("y", (gridSize - 1 - Math.max(y1, y2)) * cellSize + cellSize / 2)
+                    .attr("width", Math.abs(x2 - x1) * cellSize)
+                    .attr("height", Math.abs(y2 - y1) * cellSize)
+                    .attr("fill", color)
+                    .attr("stroke", `hsl(${(i * 60) % 360}, 70%, 50%)`)
+                    .attr("stroke-width", 2)
+                    .attr("opacity", 0.5);
+            });
+
+            // Draw points
+            Object.entries(points).forEach(([key, count]) => {
+                const [x, y] = key.split(',').map(Number);
+                const screenX = x * cellSize + cellSize / 2;
+                const screenY = (gridSize - 1 - y) * cellSize + cellSize / 2;
+                
+                g.append("circle")
+                    .attr("cx", screenX).attr("cy", screenY).attr("r", 12)
+                    .attr("fill", "#667eea")
+                    .attr("stroke", "#5a6fd6").attr("stroke-width", 2);
+                
+                if (count > 1) {
+                    g.append("text")
+                        .attr("x", screenX).attr("y", screenY + 4)
+                        .attr("text-anchor", "middle")
+                        .attr("font-size", "10px").attr("fill", "white").attr("font-weight", "bold")
+                        .text(count);
+                }
+            });
+
+            // Draw query point
+            if (queryPoint) {
+                const screenX = queryPoint[0] * cellSize + cellSize / 2;
+                const screenY = (gridSize - 1 - queryPoint[1]) * cellSize + cellSize / 2;
+                
+                g.append("circle")
+                    .attr("cx", screenX).attr("cy", screenY).attr("r", 15)
+                    .attr("fill", "#e91e63")
+                    .attr("stroke", "#c2185b").attr("stroke-width", 3);
+                
+                g.append("text")
+                    .attr("x", screenX).attr("y", screenY + 5)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "12px").attr("fill", "white").attr("font-weight", "bold")
+                    .text("Q");
+            }
+
+            updatePointsDisplay();
+            updateSquaresDisplay();
+        }
+
+        function updatePointsDisplay() {
+            const container = document.getElementById('pointsDisplay');
+            const entries = Object.entries(points);
+            if (entries.length === 0) {
+                container.innerHTML = '<span style="color: #999;">(no points)</span>';
+                return;
+            }
+            container.innerHTML = entries.map(([key, count]) => 
+                `<span style="background: #667eea; color: white; padding: 4px 10px; margin: 3px; border-radius: 15px; display: inline-block;">(${key})${count > 1 ? ' ×' + count : ''}</span>`
+            ).join(' ');
+        }
+
+        function updateSquaresDisplay() {
+            const container = document.getElementById('squaresDisplay');
+            if (foundSquares.length === 0) {
+                container.innerHTML = '<span style="color: #999;">(no squares found)</span>';
+                return;
+            }
+            container.innerHTML = foundSquares.map((sq, i) => 
+                `<div style="padding: 6px 10px; margin: 3px 0; background: hsl(${(i * 60) % 360}, 70%, 90%); border-radius: 6px; font-size: 0.85em;">
+                    Square ${i + 1}: (${sq[0].join(',')}) ↔ (${sq[1].join(',')})
+                </div>`
+            ).join('');
+        }
+
+        function addPoint() {
+            const x = parseInt(document.getElementById('xInput').value);
+            const y = parseInt(document.getElementById('yInput').value);
+            
+            if (isNaN(x) || isNaN(y) || x < 0 || x >= gridSize || y < 0 || y >= gridSize) {
+                document.getElementById('statusMessage').textContent = `Please enter valid coordinates (0-${gridSize - 1})`;
+                return;
+            }
+
+            const key = `${x},${y}`;
+            points[key] = (points[key] || 0) + 1;
+            
+            document.getElementById('statusMessage').textContent = `Added point (${x}, ${y})`;
+            document.getElementById('xInput').value = '';
+            document.getElementById('yInput').value = '';
+            queryPoint = null;
+            foundSquares = [];
+            
+            render();
+        }
+
+        function countSquares() {
+            const px = parseInt(document.getElementById('xInput').value);
+            const py = parseInt(document.getElementById('yInput').value);
+            
+            if (isNaN(px) || isNaN(py) || px < 0 || px >= gridSize || py < 0 || py >= gridSize) {
+                document.getElementById('statusMessage').textContent = `Please enter valid query point (0-${gridSize - 1})`;
+                return;
+            }
+
+            queryPoint = [px, py];
+            foundSquares = [];
+            let count = 0;
+
+            Object.entries(points).forEach(([key, cnt]) => {
+                const [x, y] = key.split(',').map(Number);
+                
+                // Check if this could be diagonal opposite
+                if (Math.abs(px - x) !== Math.abs(py - y) || x === px) return;
+                
+                // Check other two corners
+                const corner1 = `${px},${y}`;
+                const corner2 = `${x},${py}`;
+                
+                if (points[corner1] && points[corner2]) {
+                    const numSquares = cnt * points[corner1] * points[corner2];
+                    count += numSquares;
+                    foundSquares.push([[px, py], [x, y]]);
+                }
+            });
+
+            document.getElementById('countDisplay').querySelector('div:last-child').textContent = count;
+            document.getElementById('statusMessage').textContent = 
+                count > 0 
+                    ? `Found ${count} square(s) with query point (${px}, ${py})`
+                    : `No squares found with query point (${px}, ${py})`;
+            
+            render();
+        }
+
+        function reset() {
+            points = {};
+            queryPoint = null;
+            foundSquares = [];
+            document.getElementById('statusMessage').textContent = 'Add points, then count squares with a query point';
+            document.getElementById('xInput').value = '';
+            document.getElementById('yInput').value = '';
+            document.getElementById('countDisplay').querySelector('div:last-child').textContent = '0';
+            render();
+        }
+
+        reset();
+        window.addEventListener('resize', render);
+    </script>
+</body>
+</html>

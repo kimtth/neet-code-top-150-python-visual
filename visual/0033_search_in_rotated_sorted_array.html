@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LC 33: Search in Rotated Sorted Array - Algorithm Visualization</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="problem-info">
+            <h1><span class="problem-number">#33</span> Search in Rotated Sorted Array</h1>
+            <p>Given a rotated sorted array (like [4,5,6,7,0,1,2]) and a target, return the index of the target or -1 if not found. Must be O(log n).</p>
+            <div class="problem-meta">
+                <span class="meta-tag">🔍 Binary Search</span>
+                <span class="meta-tag">📊 Array</span>
+                <span class="meta-tag">⏱️ O(log n)</span>
+                <span class="meta-tag">💾 O(1)</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <code>python/0033_search_in_rotated_sorted_array/0033_search_in_rotated_sorted_array.py</code>
+            </div>
+            </div>
+
+        <div class="explanation-panel">
+            <h4>🧠 How It Works (Layman's Terms)</h4>
+            <p>A rotated sorted array has TWO sorted halves. The trick is to figure out which half to search:</p>
+            <ul>
+                <li><strong>Key insight:</strong> At least one half is always properly sorted</li>
+                <li><strong>Check if left half sorted:</strong> nums[left] ≤ nums[mid]</li>
+                <li><strong>Then ask:</strong> Is target in the sorted range? If yes, search there. Otherwise, search the other half.</li>
+                <li><strong>Each step:</strong> We eliminate half the array - O(log n)!</li>
+            </ul>
+        </div>
+
+
+        <div class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+            
+            <div class="controls">
+                <input type="number" id="targetInput" value="0" style="width: 60px; padding: 8px; border-radius: 5px; border: 2px solid #ddd;">
+                <button class="btn btn-primary" onclick="setTarget()">Set Target</button>
+                <button class="btn btn-primary" onclick="step()">Step</button>
+                <button class="btn btn-success" onclick="autoRun()">Auto Run</button>
+                <button class="btn" style="background: #607d8b; color: white;" onclick="reset()">Reset</button>
+            </div>
+
+            <div class="status-message" id="statusMessage">
+                Click Step to perform binary search on rotated array
+            </div>
+
+            <div class="variable-display" id="variables">
+                <div class="var-box">
+                    <span class="var-label">left</span>
+                    <span class="var-value" id="varLeft">0</span>
+                </div>
+                <div class="var-box">
+                    <span class="var-label">mid</span>
+                    <span class="var-value" id="varMid">-</span>
+                </div>
+                <div class="var-box">
+                    <span class="var-label">right</span>
+                    <span class="var-value" id="varRight">6</span>
+                </div>
+                <div class="var-box" style="background: #fff3e0;">
+                    <span class="var-label">Target</span>
+                    <span class="var-value" id="varTarget" style="color: #ff9800;">0</span>
+                </div>
+            </div>
+
+            <div style="margin-top: 20px;">
+                <h4 style="margin-bottom: 10px;">📊 Rotated Sorted Array</h4>
+                <svg id="arrayViz" width="100%" height="180"></svg>
+            </div>
+
+            <div class="info-box" style="margin-top: 20px;">
+                <h4>🔑 Decision Logic</h4>
+                <div id="decisionBox" style="font-family: monospace; white-space: pre-wrap;">
+Step by step logic will appear here...
+                </div>
+            </div>
+        </div>
+
+        <div class="code-section">
+            <h3>💻 Python Solution</h3>
+            <div class="code-block">
+                <pre><span class="keyword">def</span> <span class="function">search</span>(nums, target):
+    left, right = <span class="number">0</span>, <span class="function">len</span>(nums) - <span class="number">1</span>
+    
+    <span class="keyword">while</span> left <= right:
+        mid = (left + right) // <span class="number">2</span>
+        
+        <span class="keyword">if</span> nums[mid] == target:
+            <span class="keyword">return</span> mid
+        
+        <span class="comment"># Check if left half is sorted</span>
+        <span class="keyword">if</span> nums[left] <= nums[mid]:
+            <span class="comment"># Target in left half?</span>
+            <span class="keyword">if</span> nums[left] <= target < nums[mid]:
+                right = mid - <span class="number">1</span>
+            <span class="keyword">else</span>:
+                left = mid + <span class="number">1</span>
+        <span class="comment"># Right half is sorted</span>
+        <span class="keyword">else</span>:
+            <span class="comment"># Target in right half?</span>
+            <span class="keyword">if</span> nums[mid] < target <= nums[right]:
+                left = mid + <span class="number">1</span>
+            <span class="keyword">else</span>:
+                right = mid - <span class="number">1</span>
+    
+    <span class="keyword">return</span> -<span class="number">1</span></pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const originalNums = [4, 5, 6, 7, 0, 1, 2];
+        let nums = [...originalNums];
+        let target = 0;
+        let left = 0;
+        let right = nums.length - 1;
+        let mid = -1;
+        let found = false;
+        let done = false;
+        let isRunning = false;
+
+        const svg = d3.select("#arrayViz");
+
+        function setTarget() {
+            target = parseInt(document.getElementById('targetInput').value);
+            reset();
+        }
+
+        function drawArray() {
+            svg.selectAll("*").remove();
+
+            const container = svg.node().parentElement;
+            const width = container.clientWidth;
+            const height = 180;
+            svg.attr("viewBox", `0 0 ${width} ${height}`);
+
+            const barWidth = Math.min(80, (width - 60) / nums.length);
+            const barGap = 5;
+            const startX = (width - (barWidth + barGap) * nums.length) / 2;
+
+            const maxVal = Math.max(...nums);
+            const minVal = Math.min(...nums);
+            const barMaxHeight = 100;
+
+            const g = svg.append("g");
+
+            // Draw bars
+            nums.forEach((val, i) => {
+                const barHeight = ((val - minVal + 1) / (maxVal - minVal + 1)) * barMaxHeight + 20;
+                const x = startX + i * (barWidth + barGap);
+                const y = 120 - barHeight;
+
+                let fillColor = '#90caf9';
+                let strokeColor = '#64b5f6';
+
+                if (done && found && i === mid) {
+                    fillColor = '#4caf50';
+                    strokeColor = '#388e3c';
+                } else if (i === mid) {
+                    fillColor = '#ff9800';
+                    strokeColor = '#f57c00';
+                } else if (i >= left && i <= right) {
+                    fillColor = '#667eea';
+                    strokeColor = '#5a6fd6';
+                } else {
+                    fillColor = '#e0e0e0';
+                    strokeColor = '#bdbdbd';
+                }
+
+                // Bar
+                g.append("rect")
+                    .attr("x", x)
+                    .attr("y", y)
+                    .attr("width", barWidth)
+                    .attr("height", barHeight)
+                    .attr("fill", fillColor)
+                    .attr("stroke", strokeColor)
+                    .attr("stroke-width", 2)
+                    .attr("rx", 4);
+
+                // Value
+                g.append("text")
+                    .attr("x", x + barWidth / 2)
+                    .attr("y", y + barHeight / 2 + 5)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "16px")
+                    .attr("font-weight", "bold")
+                    .attr("fill", i >= left && i <= right || i === mid ? "white" : "#666")
+                    .text(val);
+
+                // Index
+                g.append("text")
+                    .attr("x", x + barWidth / 2)
+                    .attr("y", 140)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "12px")
+                    .attr("fill", "#666")
+                    .text(i);
+
+                // Pointer labels
+                if (i === left && i === right && i === mid) {
+                    g.append("text")
+                        .attr("x", x + barWidth / 2)
+                        .attr("y", 160)
+                        .attr("text-anchor", "middle")
+                        .attr("font-size", "11px")
+                        .attr("fill", "#f44336")
+                        .text("L,M,R");
+                } else if (i === left && i === mid) {
+                    g.append("text")
+                        .attr("x", x + barWidth / 2)
+                        .attr("y", 160)
+                        .attr("text-anchor", "middle")
+                        .attr("font-size", "11px")
+                        .attr("fill", "#667eea")
+                        .text("L,M");
+                } else if (i === right && i === mid) {
+                    g.append("text")
+                        .attr("x", x + barWidth / 2)
+                        .attr("y", 160)
+                        .attr("text-anchor", "middle")
+                        .attr("font-size", "11px")
+                        .attr("fill", "#4caf50")
+                        .text("M,R");
+                } else if (i === left) {
+                    g.append("text")
+                        .attr("x", x + barWidth / 2)
+                        .attr("y", 160)
+                        .attr("text-anchor", "middle")
+                        .attr("font-size", "11px")
+                        .attr("fill", "#667eea")
+                        .text("L");
+                } else if (i === right) {
+                    g.append("text")
+                        .attr("x", x + barWidth / 2)
+                        .attr("y", 160)
+                        .attr("text-anchor", "middle")
+                        .attr("font-size", "11px")
+                        .attr("fill", "#4caf50")
+                        .text("R");
+                } else if (i === mid) {
+                    g.append("text")
+                        .attr("x", x + barWidth / 2)
+                        .attr("y", 160)
+                        .attr("text-anchor", "middle")
+                        .attr("font-size", "11px")
+                        .attr("fill", "#ff9800")
+                        .text("M");
+                }
+            });
+
+            // Target indicator
+            g.append("text")
+                .attr("x", width / 2)
+                .attr("y", 20)
+                .attr("text-anchor", "middle")
+                .attr("font-size", "14px")
+                .attr("fill", "#ff9800")
+                .text(`🎯 Looking for: ${target}`);
+        }
+
+        function updateVariables() {
+            document.getElementById('varLeft').textContent = left;
+            document.getElementById('varMid').textContent = mid >= 0 ? mid : '-';
+            document.getElementById('varRight').textContent = right;
+            document.getElementById('varTarget').textContent = target;
+        }
+
+        function step() {
+            if (done) {
+                document.getElementById('statusMessage').textContent = 
+                    found ? `Found target ${target} at index ${mid}!` : `Target ${target} not found`;
+                return;
+            }
+
+            if (left > right) {
+                done = true;
+                document.getElementById('statusMessage').textContent = `Target ${target} not found in array`;
+                document.getElementById('decisionBox').textContent = `left > right → Search complete, target not found`;
+                return;
+            }
+
+            mid = Math.floor((left + right) / 2);
+            
+            if (nums[mid] === target) {
+                found = true;
+                done = true;
+                document.getElementById('statusMessage').textContent = `Found! Target ${target} is at index ${mid}`;
+                document.getElementById('decisionBox').textContent = 
+                    `nums[${mid}] = ${nums[mid]} == target (${target})\n✅ Found at index ${mid}!`;
+            } else {
+                let decision = `mid = ${mid}, nums[mid] = ${nums[mid]}\n\n`;
+                
+                // Check which half is sorted
+                if (nums[left] <= nums[mid]) {
+                    decision += `Left half sorted: nums[${left}]=${nums[left]} ≤ nums[${mid}]=${nums[mid]}\n`;
+                    
+                    if (nums[left] <= target && target < nums[mid]) {
+                        decision += `Target ${target} in range [${nums[left]}, ${nums[mid]})?\n`;
+                        decision += `YES → Search left half (right = mid - 1 = ${mid - 1})`;
+                        right = mid - 1;
+                    } else {
+                        decision += `Target ${target} in range [${nums[left]}, ${nums[mid]})?\n`;
+                        decision += `NO → Search right half (left = mid + 1 = ${mid + 1})`;
+                        left = mid + 1;
+                    }
+                } else {
+                    decision += `Right half sorted: nums[${mid}]=${nums[mid]} > nums[${left}]=${nums[left]}\n`;
+                    
+                    if (nums[mid] < target && target <= nums[right]) {
+                        decision += `Target ${target} in range (${nums[mid]}, ${nums[right]}]?\n`;
+                        decision += `YES → Search right half (left = mid + 1 = ${mid + 1})`;
+                        left = mid + 1;
+                    } else {
+                        decision += `Target ${target} in range (${nums[mid]}, ${nums[right]}]?\n`;
+                        decision += `NO → Search left half (right = mid - 1 = ${mid - 1})`;
+                        right = mid - 1;
+                    }
+                }
+                
+                document.getElementById('decisionBox').textContent = decision;
+                document.getElementById('statusMessage').textContent = 
+                    `Checking mid=${mid} (value=${nums[mid]}). See logic below.`;
+            }
+
+            updateVariables();
+            drawArray();
+        }
+
+        function autoRun() {
+            if (isRunning) return;
+            isRunning = true;
+
+            const interval = setInterval(() => {
+                if (done) {
+                    clearInterval(interval);
+                    isRunning = false;
+                    return;
+                }
+                step();
+            }, 1500);
+        }
+
+        function reset() {
+            nums = [...originalNums];
+            left = 0;
+            right = nums.length - 1;
+            mid = -1;
+            found = false;
+            done = false;
+            isRunning = false;
+
+            document.getElementById('statusMessage').textContent = 
+                'Click Step to perform binary search on rotated array';
+            document.getElementById('decisionBox').textContent = 
+                'Step by step logic will appear here...';
+            
+            updateVariables();
+            drawArray();
+        }
+
+        reset();
+        window.addEventListener('resize', drawArray);
+    </script>
+</body>
+</html>

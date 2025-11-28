@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LC 70: Climbing Stairs - Algorithm Visualization</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="problem-info">
+            <h1><span class="problem-number">#70</span> Climbing Stairs</h1>
+            <p>You are climbing a staircase with n steps. Each time you can climb 1 or 2 steps. How many distinct ways can you reach the top?</p>
+            <div class="problem-meta">
+                <span class="meta-tag">📈 Dynamic Programming</span>
+                <span class="meta-tag">🔢 Fibonacci</span>
+                <span class="meta-tag">⏱️ O(n)</span>
+                <span class="meta-tag">💾 O(n) or O(1)</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <code>python/0070_climbing_stairs/0070_climbing_stairs.py</code>
+            </div>
+            </div>
+
+        <div class="explanation-panel">
+            <h4>🧠 How It Works (Layman's Terms)</h4>
+            <p>This is actually the <strong>Fibonacci sequence</strong> in disguise! Think about it:</p>
+            <ul>
+                <li><strong>To reach step n:</strong> You either came from step n-1 (took 1 step) OR step n-2 (took 2 steps)</li>
+                <li><strong>Total ways to step n:</strong> ways(n-1) + ways(n-2)</li>
+                <li><strong>Base cases:</strong> 1 step → 1 way, 2 steps → 2 ways</li>
+                <li><strong>Pattern:</strong> 1, 2, 3, 5, 8, 13... (Fibonacci!)</li>
+            </ul>
+        </div>
+
+
+        <div class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+            
+            <div class="controls">
+                <button class="btn btn-primary" id="stepBtn" onclick="step()">Step</button>
+                <button class="btn btn-success" id="autoBtn" onclick="toggleAuto()">Auto Run</button>
+                <button class="btn btn-warning" onclick="reset()">Reset</button>
+            </div>
+
+            <div class="info-box secondary" style="margin-bottom: 20px;">
+                🎯 Goal: Climb <strong>n = 5</strong> stairs
+            </div>
+
+            <div class="status-message" id="statusMessage">
+                Click "Step" or "Auto Run" to start visualization
+            </div>
+
+            <div class="array-section">
+                <div class="array-label">📊 DP Array (dp[i] = ways to reach step i):</div>
+                <div class="array-container" id="dpContainer"></div>
+            </div>
+
+            <div class="array-section">
+                <div class="array-label">🪜 Staircase Visualization:</div>
+                <div id="stairsContainer" style="display: flex; align-items: flex-end; gap: 5px; padding: 20px; background: #f5f5f5; border-radius: 12px;"></div>
+            </div>
+
+            <div class="explanation-panel" style="margin-top: 20px;">
+                <h4>📝 Formula: dp[i] = dp[i-1] + dp[i-2]</h4>
+                <div id="formulaDisplay" style="font-size: 1.2em; padding: 10px;">
+                    Waiting to start...
+                </div>
+            </div>
+        </div>
+        <div class="code-section">
+            <h3>💻 Python Solution</h3>
+            <div class="code-block">
+                <pre><span class="keyword">def</span> <span class="function">climb_stairs</span>(self, n: <span class="class-name">int</span>) -> int:
+    <span class="keyword">if</span> n <= <span class="number">2</span>:
+        <span class="keyword">return</span> n
+    
+    dp = [<span class="number">0</span>] * (n + <span class="number">1</span>)
+    dp[<span class="number">1</span>] = <span class="number">1</span>
+    dp[<span class="number">2</span>] = <span class="number">2</span>
+    
+    <span class="keyword">for</span> i <span class="keyword">in</span> <span class="function">range</span>(<span class="number">3</span>, n + <span class="number">1</span>):
+        dp[i] = dp[i - <span class="number">1</span>] + dp[i - <span class="number">2</span>]
+    
+    <span class="keyword">return</span> dp[n]</pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const n = 5;
+        let dp = new Array(n + 1).fill(0);
+        let currentStep = 0;
+        let autoInterval = null;
+
+        function init() {
+            renderDP();
+            renderStairs();
+        }
+
+        function renderDP() {
+            const container = document.getElementById('dpContainer');
+            container.innerHTML = '';
+            
+            for (let i = 0; i <= n; i++) {
+                const box = document.createElement('div');
+                box.className = 'array-box';
+                box.id = `dp-${i}`;
+                box.innerHTML = `${dp[i]}<span class="index-label">dp[${i}]</span>`;
+                
+                if (i < currentStep) {
+                    box.style.background = '#c8e6c9';
+                    box.style.borderColor = '#4caf50';
+                }
+                if (i === currentStep) {
+                    box.classList.add('highlight');
+                }
+                
+                container.appendChild(box);
+            }
+        }
+
+        function renderStairs() {
+            const container = document.getElementById('stairsContainer');
+            container.innerHTML = '';
+            
+            for (let i = 1; i <= n; i++) {
+                const stair = document.createElement('div');
+                stair.style.cssText = `
+                    width: 60px;
+                    height: ${30 + i * 20}px;
+                    background: ${i <= currentStep ? '#667eea' : '#e0e0e0'};
+                    display: flex;
+                    flex-direction: column;
+                    justify-content: flex-start;
+                    align-items: center;
+                    padding-top: 5px;
+                    color: ${i <= currentStep ? 'white' : '#666'};
+                    font-weight: bold;
+                    border-radius: 5px 5px 0 0;
+                    transition: all 0.3s ease;
+                `;
+                stair.innerHTML = `
+                    <div style="font-size: 0.8em;">Step ${i}</div>
+                    <div style="font-size: 1.2em;">${dp[i] || '?'}</div>
+                    <div style="font-size: 0.7em;">ways
+
+        </div>
+                `;
+                container.appendChild(stair);
+            }
+        }
+
+        function step() {
+            if (currentStep > n) {
+                document.getElementById('statusMessage').className = 'status-message success';
+                document.getElementById('statusMessage').textContent = 
+                    `✅ Done! There are ${dp[n]} distinct ways to climb ${n} stairs.`;
+                document.getElementById('stepBtn').disabled = true;
+                stopAuto();
+                return;
+            }
+
+            if (currentStep === 0) {
+                dp[0] = 0;
+                document.getElementById('statusMessage').textContent = 
+                    `dp[0] = 0 (0 ways to reach step 0, it's the ground)`;
+                document.getElementById('formulaDisplay').textContent = 'dp[0] = 0 (base case - ground level)';
+            } else if (currentStep === 1) {
+                dp[1] = 1;
+                document.getElementById('statusMessage').textContent = 
+                    `dp[1] = 1 (only one way to reach step 1: take 1 step)`;
+                document.getElementById('formulaDisplay').textContent = 'dp[1] = 1 (base case)';
+            } else if (currentStep === 2) {
+                dp[2] = 2;
+                document.getElementById('statusMessage').textContent = 
+                    `dp[2] = 2 (two ways: 1+1 or 2)`;
+                document.getElementById('formulaDisplay').textContent = 'dp[2] = 2 (base case: [1,1] or [2])';
+            } else {
+                dp[currentStep] = dp[currentStep - 1] + dp[currentStep - 2];
+                document.getElementById('statusMessage').textContent = 
+                    `dp[${currentStep}] = dp[${currentStep - 1}] + dp[${currentStep - 2}] = ${dp[currentStep - 1]} + ${dp[currentStep - 2]} = ${dp[currentStep]}`;
+                document.getElementById('formulaDisplay').innerHTML = 
+                    `dp[${currentStep}] = dp[${currentStep - 1}] + dp[${currentStep - 2}]<br>` +
+                    `dp[${currentStep}] = ${dp[currentStep - 1]} + ${dp[currentStep - 2]} = <strong>${dp[currentStep]}</strong>`;
+            }
+
+            currentStep++;
+            renderDP();
+            renderStairs();
+        }
+
+        function toggleAuto() {
+            if (autoInterval) {
+                stopAuto();
+            } else {
+                document.getElementById('autoBtn').textContent = 'Pause';
+                autoInterval = setInterval(() => {
+                    if (currentStep > n) {
+                        step();
+                        stopAuto();
+                    } else {
+                        step();
+                    }
+                }, 1000);
+            }
+        }
+
+        function stopAuto() {
+            if (autoInterval) {
+                clearInterval(autoInterval);
+                autoInterval = null;
+            }
+            document.getElementById('autoBtn').textContent = 'Auto Run';
+        }
+
+        function reset() {
+            stopAuto();
+            dp = new Array(n + 1).fill(0);
+            currentStep = 0;
+            document.getElementById('stepBtn').disabled = false;
+            document.getElementById('statusMessage').className = 'status-message';
+            document.getElementById('statusMessage').textContent = 'Click "Step" or "Auto Run" to start visualization';
+            document.getElementById('formulaDisplay').textContent = 'Waiting to start...';
+            init();
+        }
+
+        init();
+    </script>
+</body>
+</html>

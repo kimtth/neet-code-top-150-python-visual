@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Number of Connected Components - LeetCode 323</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="problem-info">
+            <h1><span class="problem-number">#0323</span> Number of Connected Components</h1>
+            <p><strong>Problem:</strong> Given n nodes and edges, find the number of connected components in an undirected graph.</p>
+            <p><strong>Pattern:</strong> Union-Find - Count number of unique parents after all unions</p>
+            <div class="problem-meta">
+                <span class="meta-tag">🔗 Graph</span>
+                <span class="meta-tag">⏱️ O(n)</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <code>python/0323_number_of_connected_components_in_an_undirected_graph/0323_number_of_connected_components_in_an_undirected_graph.py</code>
+            </div>
+
+        </div>
+
+        <div class="explanation-panel">
+            <h4>🧠 How It Works (Layman's Terms)</h4>
+            <p>This algorithm solves the problem <strong>step by step</strong>:</p>
+            <ul>
+                <li><strong>Understand:</strong> Parse the input data</li>
+                <li><strong>Process:</strong> Apply the core logic</li>
+                <li><strong>Optimize:</strong> Use efficient data structures</li>
+                <li><strong>Return:</strong> Output the computed result</li>
+            </ul>
+        </div>
+
+
+        <div class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+
+            <div class="visualization">
+            <svg id="mainSvg"></svg>
+        </div>
+
+        <div class="controls">
+            <button id="stepBtn">Step</button>
+            <button id="autoBtn">Auto Run</button>
+            <button id="resetBtn">Reset</button>
+            <div class="speed-control">
+                <label for="speed">Speed:</label>
+                <input type="range" id="speed" min="100" max="2000" value="800">
+            </div>
+        </div>
+
+        <div class="status" id="status">Click "Step" to count connected components</div>
+
+        <div class="variables">
+            <div class="var-item">
+                <span class="var-label">Current Edge:</span>
+                <span id="edgeDisplay">-</span>
+            </div>
+            <div class="var-item">
+                <span class="var-label">Parent Array:</span>
+                <span id="parentDisplay">[0, 1, 2, 3, 4]</span>
+            </div>
+            <div class="var-item">
+                <span class="var-label">Components:</span>
+                <span id="componentDisplay">5</span>
+            </div>
+        </div>
+
+        </div>
+
+        <div class="code-section">
+            <h3>💻 Python Solution</h3>
+            <div class="code-block">
+                <pre><span class="keyword">def</span> <span class="function">countComponents</span>(n, edges):
+    <span class="string">"""
+    Union-Find with path compression.
+    Time: O(E * α(N)), Space: O(N)
+    """</span>
+    parent = <span class="function">list</span>(<span class="function">range</span>(n))
+    rank = [<span class="number">1</span>] * n
+    
+    <span class="keyword">def</span> <span class="function">find</span>(x):
+        <span class="keyword">if</span> parent[x] != x:
+            parent[x] = <span class="function">find</span>(parent[x])  <span class="comment"># Path compression</span>
+        <span class="keyword">return</span> parent[x]
+    
+    <span class="keyword">def</span> <span class="function">union</span>(x, y):
+        px, py = <span class="function">find</span>(x), <span class="function">find</span>(y)
+        <span class="keyword">if</span> px == py:
+            <span class="keyword">return</span> <span class="number">0</span>  <span class="comment"># Already connected</span>
+        <span class="keyword">if</span> rank[px] < rank[py]:
+            px, py = py, px
+        parent[py] = px
+        rank[px] += rank[py]
+        <span class="keyword">return</span> <span class="number">1</span>  <span class="comment"># Merged two components</span>
+    
+    components = n
+    <span class="keyword">for</span> x, y <span class="keyword">in</span> edges:
+        components -= <span class="function">union</span>(x, y)
+    
+    <span class="keyword">return</span> components</pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const n = 5;
+        const edges = [[0, 1], [1, 2], [3, 4]];
+        // Result: 2 components {0,1,2} and {3,4}
+
+        let parent = [];
+        let rank = [];
+        let edgeIndex = 0;
+        let components = n;
+        let nodeColors = {};
+        let autoRunning = false;
+        let autoTimer = null;
+
+        const width = 700;
+        const height = 380;
+        const svg = d3.select("#mainSvg")
+            .attr("width", width)
+            .attr("height", height);
+
+        const positions = [
+            {x: 150, y: 120},  // Node 0
+            {x: 280, y: 80},   // Node 1
+            {x: 410, y: 120},  // Node 2
+            {x: 500, y: 250},  // Node 3
+            {x: 630, y: 210}   // Node 4
+        ];
+
+        const colorPalette = ["#e3f2fd", "#c8e6c9", "#fff3e0", "#f3e5f5", "#ffcdd2"];
+        const strokePalette = ["#1976d2", "#4caf50", "#ff9800", "#7b1fa2", "#e53935"];
+
+        function init() {
+            parent = Array.from({length: n}, (_, i) => i);
+            rank = new Array(n).fill(1);
+            edgeIndex = 0;
+            components = n;
+            
+            for (let i = 0; i < n; i++) {
+                nodeColors[i] = i;
+            }
+        }
+
+        function find(x) {
+            if (parent[x] !== x) {
+                parent[x] = find(parent[x]);
+            }
+            return parent[x];
+        }
+
+        function union(x, y) {
+            const px = find(x);
+            const py = find(y);
+            
+            if (px === py) return false;
+            
+            if (rank[px] < rank[py]) {
+                parent[px] = py;
+                // Update colors
+                for (let i = 0; i < n; i++) {
+                    if (find(i) === py) nodeColors[i] = py;
+                }
+            } else {
+                parent[py] = px;
+                for (let i = 0; i < n; i++) {
+                    if (find(i) === px) nodeColors[i] = px;
+                }
+                if (rank[px] === rank[py]) rank[px]++;
+            }
+            
+            return true;
+        }
+
+        function draw() {
+            svg.selectAll("*").remove();
+
+            svg.append("text")
+                .attr("x", width / 2).attr("y", 25)
+                .attr("text-anchor", "middle")
+                .attr("font-weight", "bold")
+                .text("Union-Find: Counting Connected Components");
+
+            // Draw all edges
+            edges.forEach(([u, v], i) => {
+                const from = positions[u];
+                const to = positions[v];
+                
+                const processed = i < edgeIndex;
+                
+                svg.append("line")
+                    .attr("x1", from.x).attr("y1", from.y)
+                    .attr("x2", to.x).attr("y2", to.y)
+                    .attr("stroke", processed ? "#4caf50" : "#ddd")
+                    .attr("stroke-width", processed ? 3 : 2)
+                    .attr("stroke-dasharray", processed ? "none" : "5,5");
+            });
+
+            // Draw nodes
+            for (let i = 0; i < n; i++) {
+                const pos = positions[i];
+                const colorIdx = nodeColors[i] % colorPalette.length;
+
+                svg.append("circle")
+                    .attr("cx", pos.x).attr("cy", pos.y).attr("r", 28)
+                    .attr("fill", colorPalette[colorIdx])
+                    .attr("stroke", strokePalette[colorIdx])
+                    .attr("stroke-width", 2);
+
+                svg.append("text")
+                    .attr("x", pos.x).attr("y", pos.y + 6)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "18px")
+                    .attr("font-weight", "bold")
+                    .text(i);
+
+                // Parent label
+                svg.append("text")
+                    .attr("x", pos.x).attr("y", pos.y + 45)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "11px")
+                    .attr("fill", "#666")
+                    .text(`p[${i}]=${parent[i]}`);
+            }
+
+            // Component count box
+            svg.append("rect")
+                .attr("x", width / 2 - 80).attr("y", height - 80)
+                .attr("width", 160).attr("height", 45)
+                .attr("rx", 10)
+                .attr("fill", "#e8eaf6").attr("stroke", "#3f51b5");
+
+            svg.append("text")
+                .attr("x", width / 2).attr("y", height - 50)
+                .attr("text-anchor", "middle")
+                .attr("font-size", "18px")
+                .attr("font-weight", "bold")
+                .text(`Components: ${components}`);
+
+            // Edge list
+            svg.append("text")
+                .attr("x", 30).attr("y", 280)
+                .attr("font-weight", "bold")
+                .text("Edges:");
+
+            edges.forEach(([u, v], i) => {
+                const processed = i < edgeIndex;
+                const isCurrent = i === edgeIndex - 1;
+                
+                svg.append("rect")
+                    .attr("x", 30).attr("y", 290 + i * 28)
+                    .attr("width", 70).attr("height", 24)
+                    .attr("rx", 4)
+                    .attr("fill", processed ? "#c8e6c9" : "#f5f5f5")
+                    .attr("stroke", isCurrent ? "#ff9800" : "#ddd")
+                    .attr("stroke-width", isCurrent ? 2 : 1);
+
+                svg.append("text")
+                    .attr("x", 65).attr("y", 307 + i * 28)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "12px")
+                    .text(`(${u}, ${v})`);
+            });
+        }
+
+        function step() {
+            if (edgeIndex >= edges.length) {
+                document.getElementById("status").textContent = 
+                    `Done! Found ${components} connected component${components !== 1 ? 's' : ''}`;
+                draw();
+                return false;
+            }
+
+            const [u, v] = edges[edgeIndex];
+            document.getElementById("edgeDisplay").textContent = `(${u}, ${v})`;
+
+            const merged = union(u, v);
+            
+            if (merged) {
+                components--;
+                document.getElementById("status").textContent = 
+                    `Union(${u}, ${v}): Merged! Components = ${components}`;
+            } else {
+                document.getElementById("status").textContent = 
+                    `Union(${u}, ${v}): Already connected. Components = ${components}`;
+            }
+
+            edgeIndex++;
+            
+            document.getElementById("parentDisplay").textContent = 
+                `[${parent.join(', ')}]`;
+            document.getElementById("componentDisplay").textContent = components;
+
+            draw();
+            return edgeIndex < edges.length;
+        }
+
+        function reset() {
+            init();
+            autoRunning = false;
+            if (autoTimer) clearInterval(autoTimer);
+            
+            document.getElementById("edgeDisplay").textContent = "-";
+            document.getElementById("parentDisplay").textContent = 
+                `[${parent.join(', ')}]`;
+            document.getElementById("componentDisplay").textContent = n;
+            document.getElementById("status").textContent = 
+                'Click "Step" to count connected components';
+            document.getElementById("autoBtn").textContent = "Auto Run";
+            
+            draw();
+        }
+
+        function autoRun() {
+            if (autoRunning) {
+                autoRunning = false;
+                clearInterval(autoTimer);
+                document.getElementById("autoBtn").textContent = "Auto Run";
+            } else {
+                autoRunning = true;
+                document.getElementById("autoBtn").textContent = "Pause";
+                const speed = 2100 - document.getElementById("speed").value;
+                autoTimer = setInterval(() => {
+                    if (!step()) {
+                        autoRunning = false;
+                        clearInterval(autoTimer);
+                        document.getElementById("autoBtn").textContent = "Auto Run";
+                    }
+                }, speed);
+            }
+        }
+
+        document.getElementById("stepBtn").addEventListener("click", step);
+        document.getElementById("autoBtn").addEventListener("click", autoRun);
+        document.getElementById("resetBtn").addEventListener("click", reset);
+
+        init();
+        draw();
+    </script>
+</body>
+</html>

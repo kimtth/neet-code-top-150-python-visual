@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LC 55: Jump Game - Algorithm Visualization</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="problem-info">
+            <h1><span class="problem-number">#55</span> Jump Game</h1>
+            <p>Given an array where each element represents your maximum jump length at that position, determine if you can reach the last index starting from index 0.</p>
+            <div class="problem-meta">
+                <span class="meta-tag">🎯 Greedy</span>
+                <span class="meta-tag">📊 Array</span>
+                <span class="meta-tag">⏱️ O(n)</span>
+                <span class="meta-tag">💾 O(1)</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <code>python/0055_jump_game/0055_jump_game.py</code>
+            </div>
+            </div>
+
+        <div class="explanation-panel">
+            <h4>🧠 How It Works (Layman's Terms)</h4>
+            <p>Instead of asking "can I reach the end?", we ask <strong>"can I reach a known good position?"</strong></p>
+            <ul>
+                <li><strong>Start:</strong> The goal is the last index (we know it's reachable from itself)</li>
+                <li><strong>Go backwards:</strong> For each position, check if we can jump to the goal</li>
+                <li><strong>If yes:</strong> Move the goal to this position (it's now a "good" position too)</li>
+                <li><strong>Final check:</strong> Did the goal move all the way to index 0?</li>
+            </ul>
+        </div>
+
+
+        <div class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+            
+            <div class="controls">
+                <select id="exampleSelect" style="padding: 8px; border-radius: 5px; border: 2px solid #ddd;">
+                    <option value="0">[2,3,1,1,4] - Can reach</option>
+                    <option value="1">[3,2,1,0,4] - Cannot reach</option>
+                    <option value="2">[2,0,0] - Can reach</option>
+                    <option value="3">[1,1,1,0] - Can reach</option>
+                </select>
+                <button class="btn btn-primary" onclick="loadExample()">Load</button>
+                <button class="btn btn-primary" onclick="step()">Step</button>
+                <button class="btn btn-success" onclick="autoRun()">Auto Run</button>
+                <button class="btn" style="background: #607d8b; color: white;" onclick="reset()">Reset</button>
+            </div>
+
+            <div class="status-message" id="statusMessage">
+                Click Step to check positions from right to left
+            </div>
+
+            <div class="variable-display" id="variables">
+                <div class="var-box">
+                    <span class="var-label">Current i</span>
+                    <span class="var-value" id="varI">-</span>
+                </div>
+                <div class="var-box">
+                    <span class="var-label">nums[i]</span>
+                    <span class="var-value" id="varJump">-</span>
+                </div>
+                <div class="var-box">
+                    <span class="var-label">i + nums[i]</span>
+                    <span class="var-value" id="varReach">-</span>
+                </div>
+                <div class="var-box" style="background: #e8f5e9;">
+                    <span class="var-label">Goal</span>
+                    <span class="var-value" id="varGoal" style="color: #4caf50;">-</span>
+                </div>
+            </div>
+
+            <div style="margin-top: 20px;">
+                <h4 style="margin-bottom: 10px;">📊 Jump Array</h4>
+                <svg id="arrayViz" width="100%" height="220"></svg>
+            </div>
+
+            <div id="resultContainer" style="margin-top: 20px; padding: 20px; background: #f5f5f5; border-radius: 12px; text-align: center; font-size: 1.3em; font-weight: bold;">
+                -
+            </div>
+        </div>
+
+        <div class="code-section">
+            <h3>💻 Python Solution (Greedy - Backward)</h3>
+            <div class="code-block">
+                <pre><span class="keyword">def</span> <span class="function">can_jump</span>(nums):
+    goal = <span class="function">len</span>(nums) - <span class="number">1</span>
+    
+    <span class="keyword">for</span> i <span class="keyword">in</span> <span class="function">range</span>(<span class="function">len</span>(nums) - <span class="number">2</span>, -<span class="number">1</span>, -<span class="number">1</span>):
+        <span class="comment"># Can we reach the goal from position i?</span>
+        <span class="keyword">if</span> i + nums[i] >= goal:
+            goal = i  <span class="comment"># Move goal closer</span>
+    
+    <span class="keyword">return</span> goal == <span class="number">0</span>  <span class="comment"># Can we start from index 0?</span></pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const examples = [
+            [2, 3, 1, 1, 4],
+            [3, 2, 1, 0, 4],
+            [2, 0, 0],
+            [1, 1, 1, 0]
+        ];
+
+        let nums = [...examples[0]];
+        let goal = nums.length - 1;
+        let i = nums.length - 2;
+        let done = false;
+        let isRunning = false;
+
+        function loadExample() {
+            const idx = parseInt(document.getElementById('exampleSelect').value);
+            nums = [...examples[idx]];
+            reset();
+        }
+
+        function drawArray() {
+            const svg = d3.select("#arrayViz");
+            svg.selectAll("*").remove();
+
+            const container = svg.node().parentElement;
+            const width = container.clientWidth;
+            const height = 220;
+            svg.attr("viewBox", `0 0 ${width} ${height}`);
+
+            const barWidth = Math.min(80, (width - 60) / nums.length);
+            const barGap = 10;
+            const startX = (width - (barWidth + barGap) * nums.length) / 2;
+            const maxVal = Math.max(...nums, 1);
+            const barMaxHeight = 120;
+
+            const g = svg.append("g");
+
+            // Draw bars
+            nums.forEach((val, idx) => {
+                const barHeight = (val / maxVal) * barMaxHeight + 20;
+                const x = startX + idx * (barWidth + barGap);
+                const y = 140 - barHeight;
+
+                let fillColor = '#e0e0e0';
+                let strokeColor = '#bdbdbd';
+                let label = '';
+
+                if (idx === goal) {
+                    fillColor = '#4caf50';
+                    strokeColor = '#388e3c';
+                    label = '🎯 GOAL';
+                } else if (idx === i && !done) {
+                    fillColor = '#ff9800';
+                    strokeColor = '#f57c00';
+                    label = '👀 checking';
+                } else if (idx < goal && idx > i) {
+                    fillColor = '#ffcdd2';
+                    strokeColor = '#ef9a9a';
+                } else if (idx < i || (done && goal === 0)) {
+                    fillColor = '#c8e6c9';
+                    strokeColor = '#a5d6a7';
+                }
+
+                // Bar
+                g.append("rect")
+                    .attr("x", x)
+                    .attr("y", y)
+                    .attr("width", barWidth)
+                    .attr("height", barHeight)
+                    .attr("fill", fillColor)
+                    .attr("stroke", strokeColor)
+                    .attr("stroke-width", 2)
+                    .attr("rx", 4);
+
+                // Jump value
+                g.append("text")
+                    .attr("x", x + barWidth / 2)
+                    .attr("y", y + barHeight / 2 + 8)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "20px")
+                    .attr("font-weight", "bold")
+                    .attr("fill", idx === goal || idx === i ? "white" : "#333")
+                    .text(val);
+
+                // Index
+                g.append("text")
+                    .attr("x", x + barWidth / 2)
+                    .attr("y", 160)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "12px")
+                    .attr("fill", "#666")
+                    .text(`[${idx}]`);
+
+                // Label
+                if (label) {
+                    g.append("text")
+                        .attr("x", x + barWidth / 2)
+                        .attr("y", 180)
+                        .attr("text-anchor", "middle")
+                        .attr("font-size", "11px")
+                        .attr("fill", idx === goal ? "#4caf50" : "#ff9800")
+                        .text(label);
+                }
+
+                // Draw jump arc if current position
+                if (idx === i && !done) {
+                    const reach = Math.min(idx + val, nums.length - 1);
+                    if (val > 0) {
+                        const fromX = x + barWidth / 2;
+                        const toX = startX + reach * (barWidth + barGap) + barWidth / 2;
+                        const arcHeight = 30 + (reach - idx) * 10;
+
+                        g.append("path")
+                            .attr("d", `M${fromX},${y - 10} Q${(fromX + toX) / 2},${y - arcHeight} ${toX},${140 - ((nums[reach] / maxVal) * barMaxHeight + 20) - 10}`)
+                            .attr("fill", "none")
+                            .attr("stroke", reach >= goal ? "#4caf50" : "#ff9800")
+                            .attr("stroke-width", 2)
+                            .attr("stroke-dasharray", "5,5")
+                            .attr("marker-end", "url(#arrowhead)");
+                    }
+                }
+            });
+
+            // Arrow marker
+            svg.append("defs").append("marker")
+                .attr("id", "arrowhead")
+                .attr("viewBox", "0 -5 10 10")
+                .attr("refX", 5)
+                .attr("refY", 0)
+                .attr("markerWidth", 6)
+                .attr("markerHeight", 6)
+                .attr("orient", "auto")
+                .append("path")
+                .attr("d", "M0,-5L10,0L0,5")
+                .attr("fill", "#ff9800");
+        }
+
+        function updateVariables() {
+            document.getElementById('varI').textContent = i >= 0 ? i : '-';
+            document.getElementById('varJump').textContent = i >= 0 ? nums[i] : '-';
+            document.getElementById('varReach').textContent = i >= 0 ? i + nums[i] : '-';
+            document.getElementById('varGoal').textContent = goal;
+        }
+
+        function step() {
+            if (done) {
+                return;
+            }
+
+            if (i < 0) {
+                done = true;
+                const canReach = goal === 0;
+                document.getElementById('resultContainer').innerHTML = canReach ?
+                    '<span style="color: #4caf50;">✅ Can reach the end!</span>' :
+                    '<span style="color: #f44336;">❌ Cannot reach the end</span>';
+                document.getElementById('statusMessage').textContent = canReach ?
+                    'Success! Goal moved to index 0, so we can reach the end.' :
+                    `Failed! Goal stuck at index ${goal}, cannot reach it from index 0.`;
+                return;
+            }
+
+            const reach = i + nums[i];
+
+            if (reach >= goal) {
+                document.getElementById('statusMessage').textContent = 
+                    `From index ${i}, can jump ${nums[i]} to reach ${reach} ≥ goal(${goal}). Move goal to ${i}!`;
+                goal = i;
+            } else {
+                document.getElementById('statusMessage').textContent = 
+                    `From index ${i}, can only reach ${reach} < goal(${goal}). Cannot update goal.`;
+            }
+
+            i--;
+            updateVariables();
+            drawArray();
+
+            if (i < 0) {
+                setTimeout(step, 500);
+            }
+        }
+
+        function autoRun() {
+            if (isRunning) return;
+            isRunning = true;
+
+            const interval = setInterval(() => {
+                if (done) {
+                    clearInterval(interval);
+                    isRunning = false;
+                    return;
+                }
+                step();
+            }, 1000);
+        }
+
+        function reset() {
+            goal = nums.length - 1;
+            i = nums.length - 2;
+            done = false;
+            isRunning = false;
+
+            document.getElementById('statusMessage').textContent = 
+                `Array: [${nums.join(', ')}]. Click Step to work backwards from goal.`;
+            document.getElementById('resultContainer').textContent = '-';
+            
+            updateVariables();
+            drawArray();
+        }
+
+        reset();
+        window.addEventListener('resize', drawArray);
+    </script>
+</body>
+</html>

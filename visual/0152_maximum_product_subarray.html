@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>152 - Maximum Product Subarray</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="problem-info">
+            <h1><span class="problem-number">#152</span> Maximum Product Subarray</h1>
+            <p>
+                Find the contiguous subarray that has the largest product.
+                Track both max and min because a negative times negative becomes positive.
+            </p>
+            <div class="problem-meta">
+                <span class="meta-tag">📊 Array</span>
+                <span class="meta-tag">⏱️ O(n)</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <code>python/0152_maximum_product_subarray/0152_maximum_product_subarray.py</code>
+            </div>
+
+            <h3>Example:</h3>
+            <pre>
+nums = [2, 3, -2, 4]
+Output: 6 (subarray [2, 3])
+            </pre>
+        </div>
+
+        <div class="explanation-panel">
+            <h4>🧠 How It Works (Layman's Terms)</h4>
+            <p>This algorithm solves the problem <strong>step by step</strong>:</p>
+            <ul>
+                <li><strong>Understand:</strong> Parse the input data</li>
+                <li><strong>Process:</strong> Apply the core logic</li>
+                <li><strong>Optimize:</strong> Use efficient data structures</li>
+                <li><strong>Return:</strong> Output the computed result</li>
+            </ul>
+        </div>
+
+
+        <section class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+            <div class="controls">
+                <button id="stepBtn" class="btn">Step</button>
+                <button id="autoBtn" class="btn btn-success">Auto Run</button>
+                <button id="resetBtn" class="btn btn-danger">Reset</button>
+            </div>
+            <div class="status" id="status">Track max and min products at each position</div>
+            <svg id="visualization"></svg>
+        </section>
+
+        <section class="code-section">
+            <h3>💻 Python Solution</h3>
+            <div class="code-block">
+                <pre><span class="keyword">def</span> <span class="function">maxProduct</span>(nums):
+    min_so_far = max_so_far = result = nums[<span class="number">0</span>]
+    
+    <span class="keyword">for</span> i <span class="keyword">in</span> <span class="function">range</span>(<span class="number">1</span>, <span class="function">len</span>(nums)):
+        curr = nums[i]
+        temp = <span class="function">max</span>(curr, max_so_far * curr, min_so_far * curr)
+        min_so_far = <span class="function">min</span>(curr, min_so_far * curr, max_so_far * curr)
+        max_so_far = temp
+        result = <span class="function">max</span>(result, max_so_far)
+    
+    <span class="keyword">return</span> result</pre>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        const width = 900;
+        const height = 550;
+
+        const svg = d3.select("#visualization")
+            .attr("width", width)
+            .attr("height", height);
+
+        const nums = [2, 3, -2, 4];
+        let currentIdx = 0;
+        let maxSoFar = nums[0];
+        let minSoFar = nums[0];
+        let result = nums[0];
+        let history = [];
+        let isRunning = false;
+
+        function reset() {
+            currentIdx = 0;
+            maxSoFar = nums[0];
+            minSoFar = nums[0];
+            result = nums[0];
+            history = [{ idx: 0, max: nums[0], min: nums[0], result: nums[0] }];
+            isRunning = false;
+            document.getElementById("autoBtn").textContent = "Auto Run";
+            document.getElementById("status").textContent = "Track max and min products at each position";
+            render();
+        }
+
+        function render() {
+            svg.selectAll("*").remove();
+
+            const boxSize = 100;
+            const startX = 150;
+            const startY = 60;
+
+            // Title
+            svg.append("text")
+                .attr("x", 50)
+                .attr("y", 35)
+                .attr("font-size", "16px")
+                .attr("font-weight", "bold")
+                .attr("fill", "#1e293b")
+                .text("Array nums[]:");
+
+            // Draw array
+            nums.forEach((num, idx) => {
+                const x = startX + idx * (boxSize + 15);
+                const y = startY;
+                const isCurrent = idx === currentIdx;
+                const isProcessed = idx < currentIdx;
+
+                svg.append("rect")
+                    .attr("x", x)
+                    .attr("y", y)
+                    .attr("width", boxSize)
+                    .attr("height", 60)
+                    .attr("rx", 8)
+                    .attr("fill", () => {
+                        if (isCurrent) return "#fef3c7";
+                        if (isProcessed) return "#d1fae5";
+                        return "#f8fafc";
+                    })
+                    .attr("stroke", () => {
+                        if (isCurrent) return "#f59e0b";
+                        if (isProcessed) return "#10b981";
+                        return "#94a3b8";
+                    })
+                    .attr("stroke-width", isCurrent ? 3 : 2);
+
+                svg.append("text")
+                    .attr("x", x + boxSize / 2)
+                    .attr("y", y - 10)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "12px")
+                    .attr("fill", "#64748b")
+                    .text(`i=${idx}`);
+
+                svg.append("text")
+                    .attr("x", x + boxSize / 2)
+                    .attr("y", y + 38)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "24px")
+                    .attr("font-weight", "bold")
+                    .attr("fill", num < 0 ? "#ef4444" : "#1e293b")
+                    .text(num);
+            });
+
+            // State variables
+            const stateY = 180;
+            const stateBoxWidth = 120;
+
+            // Max so far
+            svg.append("rect")
+                .attr("x", 150)
+                .attr("y", stateY)
+                .attr("width", stateBoxWidth)
+                .attr("height", 70)
+                .attr("rx", 8)
+                .attr("fill", "#dbeafe")
+                .attr("stroke", "#3b82f6")
+                .attr("stroke-width", 2);
+
+            svg.append("text")
+                .attr("x", 150 + stateBoxWidth / 2)
+                .attr("y", stateY + 25)
+                .attr("text-anchor", "middle")
+                .attr("font-size", "12px")
+                .attr("fill", "#3b82f6")
+                .text("max_so_far");
+
+            svg.append("text")
+                .attr("x", 150 + stateBoxWidth / 2)
+                .attr("y", stateY + 50)
+                .attr("text-anchor", "middle")
+                .attr("font-size", "24px")
+                .attr("font-weight", "bold")
+                .attr("fill", "#1e293b")
+                .text(maxSoFar);
+
+            // Min so far
+            svg.append("rect")
+                .attr("x", 300)
+                .attr("y", stateY)
+                .attr("width", stateBoxWidth)
+                .attr("height", 70)
+                .attr("rx", 8)
+                .attr("fill", "#fee2e2")
+                .attr("stroke", "#ef4444")
+                .attr("stroke-width", 2);
+
+            svg.append("text")
+                .attr("x", 300 + stateBoxWidth / 2)
+                .attr("y", stateY + 25)
+                .attr("text-anchor", "middle")
+                .attr("font-size", "12px")
+                .attr("fill", "#ef4444")
+                .text("min_so_far");
+
+            svg.append("text")
+                .attr("x", 300 + stateBoxWidth / 2)
+                .attr("y", stateY + 50)
+                .attr("text-anchor", "middle")
+                .attr("font-size", "24px")
+                .attr("font-weight", "bold")
+                .attr("fill", "#1e293b")
+                .text(minSoFar);
+
+            // Result
+            svg.append("rect")
+                .attr("x", 450)
+                .attr("y", stateY)
+                .attr("width", stateBoxWidth)
+                .attr("height", 70)
+                .attr("rx", 8)
+                .attr("fill", "#d1fae5")
+                .attr("stroke", "#10b981")
+                .attr("stroke-width", 2);
+
+            svg.append("text")
+                .attr("x", 450 + stateBoxWidth / 2)
+                .attr("y", stateY + 25)
+                .attr("text-anchor", "middle")
+                .attr("font-size", "12px")
+                .attr("fill", "#10b981")
+                .text("result (max)");
+
+            svg.append("text")
+                .attr("x", 450 + stateBoxWidth / 2)
+                .attr("y", stateY + 50)
+                .attr("text-anchor", "middle")
+                .attr("font-size", "24px")
+                .attr("font-weight", "bold")
+                .attr("fill", "#1e293b")
+                .text(result);
+
+            // History graph
+            const graphY = 310;
+            const graphWidth = 700;
+            const graphHeight = 150;
+
+            svg.append("text")
+                .attr("x", 100)
+                .attr("y", graphY)
+                .attr("font-size", "14px")
+                .attr("font-weight", "bold")
+                .attr("fill", "#1e293b")
+                .text("Product History:");
+
+            // Graph background
+            svg.append("rect")
+                .attr("x", 100)
+                .attr("y", graphY + 10)
+                .attr("width", graphWidth)
+                .attr("height", graphHeight)
+                .attr("fill", "#f8fafc")
+                .attr("stroke", "#e2e8f0");
+
+            // Zero line
+            const zeroY = graphY + 10 + graphHeight / 2;
+            svg.append("line")
+                .attr("x1", 100)
+                .attr("y1", zeroY)
+                .attr("x2", 100 + graphWidth)
+                .attr("y2", zeroY)
+                .attr("stroke", "#94a3b8")
+                .attr("stroke-dasharray", "4,4");
+
+            svg.append("text")
+                .attr("x", 95)
+                .attr("y", zeroY + 4)
+                .attr("text-anchor", "end")
+                .attr("font-size", "10px")
+                .attr("fill", "#64748b")
+                .text("0");
+
+            if (history.length > 0) {
+                const maxVal = Math.max(...history.map(h => Math.max(Math.abs(h.max), Math.abs(h.min), Math.abs(h.result))));
+                const scale = maxVal > 0 ? (graphHeight / 2 - 10) / maxVal : 1;
+                const stepWidth = graphWidth / nums.length;
+
+                // Draw lines
+                const lineMax = d3.line()
+                    .x((d, i) => 100 + i * stepWidth + stepWidth / 2)
+                    .y(d => zeroY - d.max * scale);
+
+                const lineMin = d3.line()
+                    .x((d, i) => 100 + i * stepWidth + stepWidth / 2)
+                    .y(d => zeroY - d.min * scale);
+
+                const lineResult = d3.line()
+                    .x((d, i) => 100 + i * stepWidth + stepWidth / 2)
+                    .y(d => zeroY - d.result * scale);
+
+                svg.append("path")
+                    .attr("d", lineMax(history))
+                    .attr("fill", "none")
+                    .attr("stroke", "#3b82f6")
+                    .attr("stroke-width", 2);
+
+                svg.append("path")
+                    .attr("d", lineMin(history))
+                    .attr("fill", "none")
+                    .attr("stroke", "#ef4444")
+                    .attr("stroke-width", 2);
+
+                svg.append("path")
+                    .attr("d", lineResult(history))
+                    .attr("fill", "none")
+                    .attr("stroke", "#10b981")
+                    .attr("stroke-width", 3);
+
+                // Draw points
+                history.forEach((h, i) => {
+                    const x = 100 + i * stepWidth + stepWidth / 2;
+                    
+                    svg.append("circle")
+                        .attr("cx", x)
+                        .attr("cy", zeroY - h.max * scale)
+                        .attr("r", 5)
+                        .attr("fill", "#3b82f6");
+
+                    svg.append("circle")
+                        .attr("cx", x)
+                        .attr("cy", zeroY - h.min * scale)
+                        .attr("r", 5)
+                        .attr("fill", "#ef4444");
+
+                    svg.append("circle")
+                        .attr("cx", x)
+                        .attr("cy", zeroY - h.result * scale)
+                        .attr("r", 6)
+                        .attr("fill", "#10b981");
+                });
+            }
+
+            // Legend
+            const legend = svg.append("g").attr("transform", `translate(100, ${height - 40})`);
+
+            legend.append("line").attr("x1", 0).attr("y1", 0).attr("x2", 25).attr("y2", 0).attr("stroke", "#3b82f6").attr("stroke-width", 2);
+            legend.append("text").attr("x", 30).attr("y", 5).attr("font-size", "12px").text("max_so_far");
+
+            legend.append("line").attr("x1", 130).attr("y1", 0).attr("x2", 155).attr("y2", 0).attr("stroke", "#ef4444").attr("stroke-width", 2);
+            legend.append("text").attr("x", 160).attr("y", 5).attr("font-size", "12px").text("min_so_far");
+
+            legend.append("line").attr("x1", 260).attr("y1", 0).attr("x2", 285).attr("y2", 0).attr("stroke", "#10b981").attr("stroke-width", 3);
+            legend.append("text").attr("x", 290).attr("y", 5).attr("font-size", "12px").text("result");
+
+            svg.append("text")
+                .attr("x", 500)
+                .attr("y", height - 35)
+                .attr("font-size", "12px")
+                .attr("fill", "#64748b")
+                .text("Key: Track min because (-) × (-) = (+)");
+        }
+
+        function step() {
+            if (currentIdx >= nums.length - 1) {
+                document.getElementById("status").textContent = `Done! Maximum product: ${result}`;
+                return;
+            }
+
+            currentIdx++;
+            const curr = nums[currentIdx];
+            
+            const candidates = [curr, maxSoFar * curr, minSoFar * curr];
+            const newMax = Math.max(...candidates);
+            const newMin = Math.min(...candidates);
+
+            const oldMax = maxSoFar;
+            const oldMin = minSoFar;
+            
+            minSoFar = newMin;
+            maxSoFar = newMax;
+            result = Math.max(result, maxSoFar);
+
+            history.push({ idx: currentIdx, max: maxSoFar, min: minSoFar, result: result });
+
+            document.getElementById("status").textContent = 
+                `i=${currentIdx}: curr=${curr}, max=${oldMax}×${curr}=${oldMax*curr}, min=${oldMin}×${curr}=${oldMin*curr} → maxSoFar=${maxSoFar}, minSoFar=${minSoFar}`;
+
+            render();
+        }
+
+        async function autoRun() {
+            if (isRunning) {
+                isRunning = false;
+                document.getElementById("autoBtn").textContent = "Auto Run";
+                return;
+            }
+
+            isRunning = true;
+            document.getElementById("autoBtn").textContent = "Pause";
+
+            while (currentIdx < nums.length - 1 && isRunning) {
+                step();
+                await new Promise(r => setTimeout(r, 1200));
+            }
+
+            isRunning = false;
+            document.getElementById("autoBtn").textContent = "Auto Run";
+        }
+
+        document.getElementById("stepBtn").addEventListener("click", step);
+        document.getElementById("autoBtn").addEventListener("click", autoRun);
+        document.getElementById("resetBtn").addEventListener("click", reset);
+
+        reset();
+    </script>
+</body>
+</html>

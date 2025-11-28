@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Integer to Roman - LeetCode 12</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="problem-info">
+            <h1><span class="problem-number">#12</span> Integer to Roman</h1>
+            <p>Convert an integer to a Roman numeral.</p>
+            <div class="problem-meta">
+                <span class="meta-tag">Math</span>
+                <span class="meta-tag">String</span>
+                <span class="meta-tag">Medium</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <code>python/0012_integer_to_roman/0012_integer_to_roman.py</code>
+            </div>
+
+        </div>
+
+        <div class="explanation-panel">
+            <h4>🧠 How It Works (Layman's Terms)</h4>
+            <p>This algorithm solves the problem <strong>step by step</strong>:</p>
+            <ul>
+                <li><strong>Understand:</strong> Parse the input data</li>
+                <li><strong>Process:</strong> Apply the core logic</li>
+                <li><strong>Optimize:</strong> Use efficient data structures</li>
+                <li><strong>Return:</strong> Output the computed result</li>
+            </ul>
+        </div>
+
+
+        <div class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+            <div class="controls">
+                <button id="stepBtn">Step</button>
+                <button id="autoBtn">Auto Run</button>
+                <button id="resetBtn">Reset</button>
+                <label style="margin-left:20px">Number: </label>
+                <input type="number" id="numInput" value="1994" min="1" max="3999" style="width:80px">
+            </div>
+            <svg id="mainSvg" width="800" height="420"></svg>
+            <div class="status-message" id="status">Click "Step" to convert to Roman numeral</div>
+        </div>
+
+        <div class="code-section">
+            <h3>💻 Python Solution</h3>
+            <div class="code-block">
+                <pre><span class="keyword">def</span> <span class="function">intToRoman</span>(num: <span class="class-name">int</span>) -> str:
+    values = [<span class="number">1000</span>, <span class="number">900</span>, <span class="number">500</span>, <span class="number">400</span>, <span class="number">100</span>, <span class="number">90</span>, <span class="number">50</span>, <span class="number">40</span>, <span class="number">10</span>, <span class="number">9</span>, <span class="number">5</span>, <span class="number">4</span>, <span class="number">1</span>]
+    symbols = [<span class="string">"M"</span>, <span class="string">"CM"</span>, <span class="string">"D"</span>, <span class="string">"CD"</span>, <span class="string">"C"</span>, <span class="string">"XC"</span>, <span class="string">"L"</span>, <span class="string">"XL"</span>, <span class="string">"X"</span>, <span class="string">"IX"</span>, <span class="string">"V"</span>, <span class="string">"IV"</span>, <span class="string">"I"</span>]
+    
+    result = <span class="string">""</span>
+    <span class="keyword">for</span> i, val <span class="keyword">in</span> <span class="function">enumerate</span>(values):
+        <span class="keyword">while</span> num >= val:
+            result += symbols[i]
+            num -= val
+    
+    <span class="keyword">return</span> result</pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const values = [1000, 900, 500, 400, 100, 90, 50, 40, 10, 9, 5, 4, 1];
+        const symbols = ["M", "CM", "D", "CD", "C", "XC", "L", "XL", "X", "IX", "V", "IV", "I"];
+        
+        let num = 1994;
+        let remaining;
+        let result = "";
+        let currentIndex = 0;
+        let phase = 'checking';
+        
+        const width = 800, height = 420;
+        const svg = d3.select("#mainSvg");
+        let autoTimer = null;
+        let autoRunning = false;
+
+        function draw() {
+            svg.selectAll("*").remove();
+
+            // Title
+            svg.append("text")
+                .attr("x", width / 2).attr("y", 30)
+                .attr("text-anchor", "middle")
+                .attr("font-weight", "bold")
+                .text(`Converting ${num} to Roman Numerals`);
+
+            // Value-Symbol table
+            const tableX = 50, tableY = 60;
+            const cellW = 55, cellH = 35;
+
+            svg.append("text")
+                .attr("x", tableX).attr("y", tableY - 5)
+                .attr("font-size", "12px")
+                .attr("fill", "#666")
+                .text("Value → Symbol mapping:");
+
+            values.forEach((val, i) => {
+                const x = tableX + (i % 7) * cellW;
+                const y = tableY + Math.floor(i / 7) * (cellH + 5);
+                const isCurrent = i === currentIndex;
+
+                svg.append("rect")
+                    .attr("x", x).attr("y", y)
+                    .attr("width", cellW - 3).attr("height", cellH)
+                    .attr("rx", 4)
+                    .attr("fill", isCurrent ? "#fef3c7" : (i < currentIndex ? "#e0e0e0" : "#e3f2fd"))
+                    .attr("stroke", isCurrent ? "#f59e0b" : "#1976d2")
+                    .attr("stroke-width", isCurrent ? 2 : 1);
+
+                svg.append("text")
+                    .attr("x", x + (cellW - 3) / 2).attr("y", y + 15)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "11px")
+                    .attr("fill", "#666")
+                    .text(val);
+
+                svg.append("text")
+                    .attr("x", x + (cellW - 3) / 2).attr("y", y + 28)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "12px")
+                    .attr("font-weight", "bold")
+                    .text(symbols[i]);
+            });
+
+            // Current state
+            const stateY = 180;
+            
+            // Remaining value
+            svg.append("rect")
+                .attr("x", 50).attr("y", stateY)
+                .attr("width", 180).attr("height", 60)
+                .attr("rx", 10)
+                .attr("fill", "#fff3e0").attr("stroke", "#ff9800");
+
+            svg.append("text")
+                .attr("x", 140).attr("y", stateY + 20)
+                .attr("text-anchor", "middle")
+                .attr("font-size", "12px")
+                .text("Remaining");
+
+            svg.append("text")
+                .attr("x", 140).attr("y", stateY + 45)
+                .attr("text-anchor", "middle")
+                .attr("font-size", "24px")
+                .attr("font-weight", "bold")
+                .text(remaining);
+
+            // Result so far
+            svg.append("rect")
+                .attr("x", 250).attr("y", stateY)
+                .attr("width", 500).attr("height", 60)
+                .attr("rx", 10)
+                .attr("fill", "#e8f5e9").attr("stroke", "#4caf50");
+
+            svg.append("text")
+                .attr("x", 500).attr("y", stateY + 20)
+                .attr("text-anchor", "middle")
+                .attr("font-size", "12px")
+                .text("Result");
+
+            svg.append("text")
+                .attr("x", 500).attr("y", stateY + 48)
+                .attr("text-anchor", "middle")
+                .attr("font-size", "28px")
+                .attr("font-weight", "bold")
+                .attr("fill", "#2e7d32")
+                .text(result || "(empty)");
+
+            // Calculation display
+            if (currentIndex < values.length && remaining >= values[currentIndex]) {
+                const calcY = 280;
+                svg.append("rect")
+                    .attr("x", 200).attr("y", calcY)
+                    .attr("width", 400).attr("height", 50)
+                    .attr("rx", 8)
+                    .attr("fill", "#e3f2fd").attr("stroke", "#1976d2");
+
+                svg.append("text")
+                    .attr("x", 400).attr("y", calcY + 32)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "16px")
+                    .text(`${remaining} ≥ ${values[currentIndex]} → Add "${symbols[currentIndex]}", subtract ${values[currentIndex]}`);
+            }
+
+            // Final result
+            if (phase === 'done') {
+                svg.append("rect")
+                    .attr("x", width / 2 - 150).attr("y", 350)
+                    .attr("width", 300).attr("height", 55)
+                    .attr("rx", 12)
+                    .attr("fill", "#d1fae5").attr("stroke", "#10b981")
+                    .attr("stroke-width", 2);
+
+                svg.append("text")
+                    .attr("x", width / 2).attr("y", 385)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "24px")
+                    .attr("font-weight", "bold")
+                    .attr("fill", "#10b981")
+                    .text(`${num} = ${result}`);
+            }
+        }
+
+        function step() {
+            if (phase === 'done') return false;
+
+            if (currentIndex >= values.length || remaining === 0) {
+                phase = 'done';
+                document.getElementById("status").textContent = `Done! ${num} = ${result}`;
+                draw();
+                return false;
+            }
+
+            if (remaining >= values[currentIndex]) {
+                result += symbols[currentIndex];
+                remaining -= values[currentIndex];
+                document.getElementById("status").textContent = 
+                    `${remaining + values[currentIndex]} ≥ ${values[currentIndex]}: Added "${symbols[currentIndex]}", remaining = ${remaining}`;
+            } else {
+                currentIndex++;
+                document.getElementById("status").textContent = 
+                    `${remaining} < ${values[currentIndex - 1]}: Moving to next symbol`;
+            }
+
+            draw();
+            return currentIndex < values.length && remaining > 0;
+        }
+
+        function reset() {
+            num = parseInt(document.getElementById("numInput").value) || 1994;
+            remaining = num;
+            result = "";
+            currentIndex = 0;
+            phase = 'checking';
+            if (autoTimer) clearInterval(autoTimer);
+            autoRunning = false;
+            document.getElementById("autoBtn").textContent = "Auto Run";
+            document.getElementById("status").textContent = 'Click "Step" to convert to Roman numeral';
+            draw();
+        }
+
+        function autoRun() {
+            if (autoRunning) {
+                clearInterval(autoTimer);
+                autoRunning = false;
+                document.getElementById("autoBtn").textContent = "Auto Run";
+            } else {
+                autoRunning = true;
+                document.getElementById("autoBtn").textContent = "Pause";
+                autoTimer = setInterval(() => {
+                    if (!step()) {
+                        clearInterval(autoTimer);
+                        autoRunning = false;
+                        document.getElementById("autoBtn").textContent = "Auto Run";
+                    }
+                }, 600);
+            }
+        }
+
+        document.getElementById("stepBtn").addEventListener("click", step);
+        document.getElementById("autoBtn").addEventListener("click", autoRun);
+        document.getElementById("resetBtn").addEventListener("click", reset);
+        document.getElementById("numInput").addEventListener("change", reset);
+
+        reset();
+    </script>
+</body>
+</html>

@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>309 - Best Time to Buy and Sell Stock with Cooldown</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        #chartArea { width: 100%; height: 250px; }
+        .state-machine { display: flex; justify-content: center; gap: 40px; margin: 20px 0; flex-wrap: wrap; align-items: center; }
+        .state { padding: 20px 30px; border-radius: 12px; text-align: center; transition: all 0.3s ease; min-width: 120px; color: white; }
+        .state.hold { background: linear-gradient(135deg, #6366f1, #8b5cf6); }
+        .state.sold { background: linear-gradient(135deg, #22c55e, #16a34a); }
+        .state.rest { background: linear-gradient(135deg, #f59e0b, #d97706); }
+        .state.active { box-shadow: 0 0 20px currentColor; transform: scale(1.1); }
+        .state .name { font-weight: bold; margin-bottom: 5px; }
+        .state .value { font-size: 1.5rem; }
+        .arrow { font-size: 2rem; color: #6366f1; }
+        #dpTable { display: flex; justify-content: center; overflow-x: auto; padding: 10px; }
+        table { border-collapse: collapse; }
+        th, td { min-width: 60px; height: 40px; text-align: center; border: 1px solid #e2e8f0; font-size: 0.85rem; }
+        th { background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; }
+        td { transition: all 0.3s ease; color: #334155; }
+        td.current { box-shadow: inset 0 0 10px #f59e0b; border: 2px solid #f59e0b; }
+        td.hold { background: rgba(99, 102, 241, 0.2); }
+        td.sold { background: rgba(34, 197, 94, 0.2); }
+        td.rest { background: rgba(245, 158, 11, 0.2); }
+        .result { font-size: 1.5rem; text-align: center; padding: 20px; border-radius: 8px; margin-top: 15px; background: rgba(34, 197, 94, 0.2); border: 2px solid #22c55e; color: #166534; }
+        .prices-row { display: flex; justify-content: center; gap: 5px; margin: 15px 0; flex-wrap: wrap; }
+        .price-box { width: 50px; height: 60px; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 8px; background: #f1f5f9; transition: all 0.3s ease; color: #334155; }
+        .price-box.current { background: #f59e0b; color: white; }
+        .price-box .day { font-size: 0.7rem; opacity: 0.7; }
+        .price-box .val { font-size: 1.2rem; font-weight: bold; }
+        .info-box { background: #f1f5f9; border-radius: 8px; padding: 15px; margin-bottom: 15px; font-size: 0.9rem; line-height: 1.6; color: #475569; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <section class="problem-info">
+            <h1><span class="problem-number">#309</span> Best Time to Buy and Sell Stock with Cooldown</h1>
+            <p>Find the maximum profit you can achieve. After you sell your stock, you cannot buy stock on the next day (i.e., cooldown one day).</p>
+            <div class="problem-meta">
+                <span class="meta-tag">Medium</span>
+                <span class="meta-tag">Dynamic Programming</span>
+                <span class="meta-tag">State Machine</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <code>python/0309_best_time_to_buy_and_sell_stock_with_cooldown/0309_best_time_to_buy_and_sell_stock_with_cooldown.py</code>
+            </div>
+
+        </section>
+
+        <div class="explanation-panel">
+            <h4>🧠 How It Works (Layman's Terms)</h4>
+            <p>Dynamic Programming <strong>breaks big problems into smaller ones</strong>:</p>
+            <ul>
+                <li><strong>Subproblems:</strong> Solve smaller versions first</li>
+                <li><strong>Memoization:</strong> Cache results to avoid recalculation</li>
+                <li><strong>Build up:</strong> Combine small solutions for final answer</li>
+                <li><strong>State:</strong> Define what each position represents</li>
+            </ul>
+        </div>
+
+
+        <section class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+            <div class="controls">
+                <button id="stepBtn" onclick="step()">Step</button>
+                <button id="autoBtn" onclick="toggleAuto()">▶ Auto Run</button>
+                <button onclick="reset()">Reset</button>
+            </div>
+        </section>
+
+        <section class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+            <div class="info-box">
+                After selling, you must wait one day before buying again (cooldown).
+                Three states: <strong>Hold</strong> (own stock), <strong>Sold</strong> (just sold), <strong>Rest</strong> (no stock, can buy).
+            </div>
+            <div class="prices-row" id="pricesRow"></div>
+            <svg id="chartArea"></svg>
+        </section>
+
+        <section class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+            <div class="state-machine" id="stateMachine">
+                <div class="state rest" id="stateRest">
+                    <div class="name">REST</div>
+                    <div class="value" id="restVal">0</div>
+                </div>
+                <div class="arrow">→</div>
+                <div class="state hold" id="stateHold">
+                    <div class="name">HOLD</div>
+                    <div class="value" id="holdVal">-∞</div>
+                </div>
+                <div class="arrow">→</div>
+                <div class="state sold" id="stateSold">
+                    <div class="name">SOLD</div>
+                    <div class="value" id="soldVal">0</div>
+                </div>
+            </div>
+        </section>
+
+        <section class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+            <div id="dpTable"></div>
+            <div class="status-message" id="stepDisplay">Ready to start</div>
+            <div id="resultArea"></div>
+        </section>
+
+        <section class="code-section">
+            <h3>💻 Python Solution</h3>
+            <div class="code-block">
+                <pre><span class="keyword">def</span> <span class="function">maxProfit</span>(prices: <span class="class-name">List</span>[int]) -> int:
+    <span class="keyword">if</span> <span class="keyword">not</span> prices:
+        <span class="keyword">return</span> <span class="number">0</span>
+    
+    n = <span class="function">len</span>(prices)
+    
+    <span class="comment"># Three states:</span>
+    <span class="comment"># hold[i] = max profit on day i if we hold a stock</span>
+    <span class="comment"># sold[i] = max profit on day i if we just sold</span>
+    <span class="comment"># rest[i] = max profit on day i if we're in cooldown/rest</span>
+    
+    hold = -prices[<span class="number">0</span>]  <span class="comment"># Buy on day 0</span>
+    sold = <span class="number">0</span>           <span class="comment"># Can't sell on day 0</span>
+    rest = <span class="number">0</span>           <span class="comment"># Do nothing on day 0</span>
+    
+    <span class="keyword">for</span> i <span class="keyword">in</span> <span class="function">range</span>(<span class="number">1</span>, n):
+        prev_hold = hold
+        prev_sold = sold
+        prev_rest = rest
+        
+        <span class="comment"># Hold: keep holding OR buy after rest</span>
+        hold = <span class="function">max</span>(prev_hold, prev_rest - prices[i])
+        
+        <span class="comment"># Sold: sell what we were holding</span>
+        sold = prev_hold + prices[i]
+        
+        <span class="comment"># Rest: was resting OR just finished cooldown</span>
+        rest = <span class="function">max</span>(prev_rest, prev_sold)
+    
+    <span class="comment"># Max profit: either just sold or resting (not holding)</span>
+    <span class="keyword">return</span> <span class="function">max</span>(sold, rest)</pre>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        const prices = [1, 2, 3, 0, 2];
+        let dp = { hold: [], sold: [], rest: [] };
+        let stepIndex = 0;
+        let autoInterval = null;
+
+        function reset() {
+            dp = { hold: [], sold: [], rest: [] };
+            stepIndex = 0;
+            
+            if (autoInterval) {
+                clearInterval(autoInterval);
+                autoInterval = null;
+                document.getElementById('autoBtn').textContent = '▶ Auto Run';
+            }
+            render();
+        }
+
+        function step() {
+            if (stepIndex > prices.length) return;
+            
+            if (stepIndex === 0) {
+                dp.hold[0] = -prices[0];
+                dp.sold[0] = 0;
+                dp.rest[0] = 0;
+            } else {
+                const i = stepIndex;
+                const prevHold = dp.hold[i-1];
+                const prevSold = dp.sold[i-1];
+                const prevRest = dp.rest[i-1];
+                
+                dp.hold[i] = Math.max(prevHold, prevRest - prices[i]);
+                dp.sold[i] = prevHold + prices[i];
+                dp.rest[i] = Math.max(prevRest, prevSold);
+            }
+            
+            stepIndex++;
+            render();
+        }
+
+        function toggleAuto() {
+            if (autoInterval) {
+                clearInterval(autoInterval);
+                autoInterval = null;
+                document.getElementById('autoBtn').textContent = '▶ Auto Run';
+            } else {
+                autoInterval = setInterval(() => {
+                    if (stepIndex > prices.length) {
+                        clearInterval(autoInterval);
+                        autoInterval = null;
+                        document.getElementById('autoBtn').textContent = '▶ Auto Run';
+                    } else {
+                        step();
+                    }
+                }, 1000);
+                document.getElementById('autoBtn').textContent = '⏸ Pause';
+            }
+        }
+
+        function render() {
+            let pricesHtml = '';
+            prices.forEach((p, i) => {
+                const isCurrent = i === stepIndex - 1;
+                pricesHtml += `<div class="price-box ${isCurrent ? 'current' : ''}">
+                    <div class="day">Day ${i}</div>
+                    <div class="val">$${p}</div>
+                </div>`;
+            });
+            document.getElementById('pricesRow').innerHTML = pricesHtml;
+            
+            const svg = d3.select('#chartArea');
+            svg.selectAll('*').remove();
+            
+            const width = svg.node().getBoundingClientRect().width;
+            const height = 200;
+            const margin = { top: 20, right: 30, bottom: 30, left: 40 };
+            
+            const x = d3.scaleLinear()
+                .domain([0, prices.length - 1])
+                .range([margin.left, width - margin.right]);
+            
+            const y = d3.scaleLinear()
+                .domain([0, Math.max(...prices) + 1])
+                .range([height - margin.bottom, margin.top]);
+            
+            const line = d3.line().x((d, i) => x(i)).y(d => y(d));
+            
+            svg.append('path')
+                .datum(prices)
+                .attr('fill', 'none')
+                .attr('stroke', '#6366f1')
+                .attr('stroke-width', 3)
+                .attr('d', line);
+            
+            svg.selectAll('circle')
+                .data(prices)
+                .join('circle')
+                .attr('cx', (d, i) => x(i))
+                .attr('cy', d => y(d))
+                .attr('r', (d, i) => i === stepIndex - 1 ? 10 : 6)
+                .attr('fill', (d, i) => i < stepIndex ? '#6366f1' : '#94a3b8')
+                .attr('stroke', '#fff')
+                .attr('stroke-width', 2);
+            
+            svg.append('g')
+                .attr('transform', `translate(0,${height - margin.bottom})`)
+                .call(d3.axisBottom(x).ticks(prices.length))
+                .selectAll('text').attr('fill', '#64748b');
+            
+            svg.append('g')
+                .attr('transform', `translate(${margin.left},0)`)
+                .call(d3.axisLeft(y))
+                .selectAll('text').attr('fill', '#64748b');
+            
+            const curIdx = stepIndex - 1;
+            document.querySelectorAll('.state').forEach(s => s.classList.remove('active'));
+            
+            if (curIdx >= 0) {
+                document.getElementById('holdVal').textContent = dp.hold[curIdx];
+                document.getElementById('soldVal').textContent = dp.sold[curIdx];
+                document.getElementById('restVal').textContent = dp.rest[curIdx];
+                
+                const maxVal = Math.max(dp.hold[curIdx], dp.sold[curIdx], dp.rest[curIdx]);
+                if (dp.sold[curIdx] === maxVal) document.getElementById('stateSold').classList.add('active');
+                else if (dp.rest[curIdx] === maxVal) document.getElementById('stateRest').classList.add('active');
+                else document.getElementById('stateHold').classList.add('active');
+            }
+            
+            let tableHtml = '<table><tr><th>Day</th>';
+            for (let i = 0; i < prices.length; i++) tableHtml += `<th>${i}</th>`;
+            tableHtml += '</tr>';
+            
+            tableHtml += '<tr><th>Price</th>';
+            for (let i = 0; i < prices.length; i++) tableHtml += `<td>$${prices[i]}</td>`;
+            tableHtml += '</tr>';
+            
+            ['hold', 'sold', 'rest'].forEach(state => {
+                tableHtml += `<tr><th>${state.charAt(0).toUpperCase() + state.slice(1)}</th>`;
+                for (let i = 0; i < prices.length; i++) {
+                    const isCurrent = i === curIdx;
+                    const val = dp[state][i] !== undefined ? dp[state][i] : '-';
+                    tableHtml += `<td class="${isCurrent ? 'current ' : ''}${state}">${val}</td>`;
+                }
+                tableHtml += '</tr>';
+            });
+            tableHtml += '</table>';
+            document.getElementById('dpTable').innerHTML = tableHtml;
+            
+            const stepDisplay = document.getElementById('stepDisplay');
+            if (stepIndex === 0) {
+                stepDisplay.textContent = 'Ready to start. Click Step to begin.';
+            } else if (stepIndex === 1) {
+                stepDisplay.textContent = `Day 0: Buy stock at $${prices[0]}. Hold=${dp.hold[0]}, Sold=0, Rest=0`;
+            } else if (stepIndex <= prices.length) {
+                const i = stepIndex - 1;
+                stepDisplay.textContent = 
+                    `Day ${i}: Price=$${prices[i]}. Hold=max(${dp.hold[i-1]}, ${dp.rest[i-1]}-${prices[i]})=${dp.hold[i]}, ` +
+                    `Sold=${dp.hold[i-1]}+${prices[i]}=${dp.sold[i]}, Rest=max(${dp.rest[i-1]}, ${dp.sold[i-1]})=${dp.rest[i]}`;
+            } else {
+                const maxProfit = Math.max(dp.sold[prices.length-1], dp.rest[prices.length-1]);
+                stepDisplay.textContent = `Complete! Max profit = max(Sold, Rest) = ${maxProfit}`;
+            }
+            stepDisplay.className = 'status-message';
+            
+            if (stepIndex > prices.length) {
+                const maxProfit = Math.max(dp.sold[prices.length-1], dp.rest[prices.length-1]);
+                document.getElementById('resultArea').innerHTML = `
+                    <div class="result">
+                        💰 Maximum Profit: <strong>$${maxProfit}</strong>
+                    </div>`;
+            } else {
+                document.getElementById('resultArea').innerHTML = '';
+            }
+        }
+
+        reset();
+    </script>
+</body>
+</html>

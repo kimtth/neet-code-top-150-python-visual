@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>297 - Serialize and Deserialize Binary Tree</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="problem-info">
+            <h1><span class="problem-number">#297</span> Serialize and Deserialize Binary Tree</h1>
+            <p>
+                Design an algorithm to serialize a binary tree to a string, and deserialize 
+                that string back to the original tree structure. Uses preorder traversal.
+            </p>
+            <div class="problem-meta">
+                <span class="meta-tag">🌳 Tree</span>
+                <span class="meta-tag">⏱️ O(n)</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <code>python/0297_serialize_and_deserialize_binary_tree/0297_serialize_and_deserialize_binary_tree.py</code>
+            </div>
+
+        </div>
+
+        <div class="explanation-panel">
+            <h4>🧠 How It Works (Layman's Terms)</h4>
+            <p>Tree traversal is like <strong>exploring a family tree</strong>:</p>
+            <ul>
+                <li><strong>Root:</strong> Start at the top node</li>
+                <li><strong>Recurse:</strong> Visit left and right children</li>
+                <li><strong>Base case:</strong> Stop at null/leaf nodes</li>
+                <li><strong>Combine:</strong> Build answer from subtree results</li>
+            </ul>
+        </div>
+
+
+        <section class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+            <div class="controls">
+                <button id="serializeBtn" class="btn">Serialize</button>
+                <button id="deserializeBtn" class="btn btn-success">Deserialize</button>
+                <button id="resetBtn" class="btn btn-danger">Reset</button>
+            </div>
+            <div class="status" id="status">Click Serialize to convert tree to string</div>
+            <svg id="visualization"></svg>
+        </section>
+
+        <section class="code-section">
+            <h3>💻 Python Solution</h3>
+            <div class="code-block">
+                <pre><span class="keyword">class</span> Codec:
+    <span class="keyword">def</span> <span class="function">serialize</span>(self, root):
+        result = []
+        <span class="keyword">def</span> <span class="function">dfs</span>(node):
+            <span class="keyword">if</span> <span class="keyword">not</span> node:
+                result.<span class="function">append</span>(<span class="string">"None"</span>)
+                <span class="keyword">return</span>
+            result.<span class="function">append</span>(<span class="function">str</span>(node.val))
+            <span class="function">dfs</span>(node.left)
+            <span class="function">dfs</span>(node.right)
+        <span class="function">dfs</span>(root)
+        <span class="keyword">return</span> <span class="string">","</span>.<span class="function">join</span>(result)
+
+    <span class="keyword">def</span> <span class="function">deserialize</span>(self, data):
+        values = <span class="function">iter</span>(data.<span class="function">split</span>(<span class="string">","</span>))
+        <span class="keyword">def</span> <span class="function">dfs</span>():
+            val = <span class="function">next</span>(values)
+            <span class="keyword">if</span> val == <span class="string">"None"</span>:
+                <span class="keyword">return</span> <span class="keyword">None</span>
+            node = <span class="function">TreeNode</span>(<span class="function">int</span>(val))
+            node.left = <span class="function">dfs</span>()
+            node.right = <span class="function">dfs</span>()
+            <span class="keyword">return</span> node
+        <span class="keyword">return</span> <span class="function">dfs</span>()</pre>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        const width = 900;
+        const height = 600;
+
+        const svg = d3.select("#visualization")
+            .attr("width", width)
+            .attr("height", height);
+
+        // Sample tree
+        const originalTree = {
+            val: 1,
+            left: { val: 2, left: null, right: null },
+            right: {
+                val: 3,
+                left: { val: 4, left: null, right: null },
+                right: { val: 5, left: null, right: null }
+            }
+        };
+
+        let mode = "tree";
+        let serializedStr = "";
+        let currentNode = null;
+        let traversalOrder = [];
+        let traversalIdx = 0;
+        let deserializedTree = null;
+
+        function reset() {
+            mode = "tree";
+            serializedStr = "";
+            currentNode = null;
+            traversalOrder = [];
+            traversalIdx = 0;
+            deserializedTree = null;
+            document.getElementById("status").textContent = "Click Serialize to convert tree to string";
+            render();
+        }
+
+        function getTreeNodes(node, x, y, level, side) {
+            if (!node) return [];
+            
+            const spacing = 180 / (level + 1);
+            const nodes = [{
+                val: node.val,
+                x: x,
+                y: y,
+                left: node.left,
+                right: node.right
+            }];
+
+            if (node.left) {
+                nodes.push(...getTreeNodes(node.left, x - spacing, y + 70, level + 1, 'left'));
+            }
+            if (node.right) {
+                nodes.push(...getTreeNodes(node.right, x + spacing, y + 70, level + 1, 'right'));
+            }
+
+            return nodes;
+        }
+
+        function preorderTraversal(node, result = []) {
+            if (!node) {
+                result.push("None");
+                return result;
+            }
+            result.push(String(node.val));
+            preorderTraversal(node.left, result);
+            preorderTraversal(node.right, result);
+            return result;
+        }
+
+        function render() {
+            svg.selectAll("*").remove();
+
+            if (mode === "tree" || mode === "serializing") {
+                drawTree(originalTree, 250, 100, "Original Tree");
+            }
+
+            if (mode === "serialized" || mode === "deserializing") {
+                drawSerializedString();
+            }
+
+            if (mode === "deserialized") {
+                drawTree(deserializedTree, 650, 100, "Reconstructed Tree");
+                drawSerializedString();
+            }
+        }
+
+        function drawTree(tree, startX, startY, title) {
+            svg.append("text")
+                .attr("x", startX)
+                .attr("y", startY - 30)
+                .attr("text-anchor", "middle")
+                .attr("font-size", "16px")
+                .attr("font-weight", "bold")
+                .attr("fill", "#1e293b")
+                .text(title);
+
+            const nodes = getTreeNodes(tree, startX, startY, 0);
+            
+            // Draw edges
+            function drawEdges(node, x, y, level) {
+                if (!node) return;
+                const spacing = 180 / (level + 1);
+                
+                if (node.left) {
+                    svg.append("line")
+                        .attr("x1", x)
+                        .attr("y1", y)
+                        .attr("x2", x - spacing)
+                        .attr("y2", y + 70)
+                        .attr("stroke", "#94a3b8")
+                        .attr("stroke-width", 2);
+                    drawEdges(node.left, x - spacing, y + 70, level + 1);
+                }
+                if (node.right) {
+                    svg.append("line")
+                        .attr("x1", x)
+                        .attr("y1", y)
+                        .attr("x2", x + spacing)
+                        .attr("y2", y + 70)
+                        .attr("stroke", "#94a3b8")
+                        .attr("stroke-width", 2);
+                    drawEdges(node.right, x + spacing, y + 70, level + 1);
+                }
+            }
+            drawEdges(tree, startX, startY, 0);
+
+            // Draw nodes
+            nodes.forEach(node => {
+                const isHighlighted = currentNode && currentNode.val === node.val;
+                
+                svg.append("circle")
+                    .attr("cx", node.x)
+                    .attr("cy", node.y)
+                    .attr("r", 25)
+                    .attr("fill", isHighlighted ? "#fef3c7" : "#dbeafe")
+                    .attr("stroke", isHighlighted ? "#f59e0b" : "#3b82f6")
+                    .attr("stroke-width", isHighlighted ? 3 : 2);
+
+                svg.append("text")
+                    .attr("x", node.x)
+                    .attr("y", node.y + 6)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "16px")
+                    .attr("font-weight", "bold")
+                    .attr("fill", "#1e293b")
+                    .text(node.val);
+            });
+        }
+
+        function drawSerializedString() {
+            const y = 400;
+            const values = serializedStr.split(",");
+
+            svg.append("text")
+                .attr("x", 50)
+                .attr("y", y - 20)
+                .attr("font-size", "14px")
+                .attr("font-weight", "bold")
+                .attr("fill", "#1e293b")
+                .text("Serialized String (Preorder Traversal):");
+
+            values.forEach((val, idx) => {
+                const x = 60 + idx * 70;
+                const isNull = val === "None";
+                const isActive = idx === traversalIdx && mode === "deserializing";
+
+                svg.append("rect")
+                    .attr("x", x)
+                    .attr("y", y)
+                    .attr("width", 60)
+                    .attr("height", 35)
+                    .attr("rx", 6)
+                    .attr("fill", () => {
+                        if (isActive) return "#fef3c7";
+                        if (isNull) return "#f1f5f9";
+                        return "#d1fae5";
+                    })
+                    .attr("stroke", () => {
+                        if (isActive) return "#f59e0b";
+                        if (isNull) return "#94a3b8";
+                        return "#10b981";
+                    })
+                    .attr("stroke-width", isActive ? 2 : 1);
+
+                svg.append("text")
+                    .attr("x", x + 30)
+                    .attr("y", y + 23)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", isNull ? "11px" : "14px")
+                    .attr("font-weight", "bold")
+                    .attr("fill", isNull ? "#64748b" : "#1e293b")
+                    .text(val);
+
+                svg.append("text")
+                    .attr("x", x + 30)
+                    .attr("y", y + 55)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "10px")
+                    .attr("fill", "#94a3b8")
+                    .text(idx);
+            });
+
+            // Explanation
+            svg.append("text")
+                .attr("x", 50)
+                .attr("y", y + 90)
+                .attr("font-size", "12px")
+                .attr("fill", "#64748b")
+                .text("Preorder: Visit node → process left subtree → process right subtree");
+
+            svg.append("text")
+                .attr("x", 50)
+                .attr("y", y + 110)
+                .attr("font-size", "12px")
+                .attr("fill", "#64748b")
+                .text("None markers indicate null children, essential for reconstruction");
+        }
+
+        function serialize() {
+            traversalOrder = preorderTraversal(originalTree);
+            serializedStr = traversalOrder.join(",");
+            mode = "serialized";
+            document.getElementById("status").textContent = 
+                `Serialized: "${serializedStr}" (${traversalOrder.length} values)`;
+            render();
+        }
+
+        function deserialize() {
+            if (!serializedStr) {
+                serialize();
+            }
+            
+            // Reconstruct tree from serialized string
+            const values = serializedStr.split(",");
+            let idx = 0;
+
+            function buildTree() {
+                if (idx >= values.length) return null;
+                const val = values[idx++];
+                if (val === "None") return null;
+                
+                return {
+                    val: parseInt(val),
+                    left: buildTree(),
+                    right: buildTree()
+                };
+            }
+
+            deserializedTree = buildTree();
+            mode = "deserialized";
+            document.getElementById("status").textContent = 
+                "✓ Deserialized! Tree reconstructed from string.";
+            render();
+        }
+
+        document.getElementById("serializeBtn").addEventListener("click", serialize);
+        document.getElementById("deserializeBtn").addEventListener("click", deserialize);
+        document.getElementById("resetBtn").addEventListener("click", reset);
+
+        reset();
+    </script>
+</body>
+</html>

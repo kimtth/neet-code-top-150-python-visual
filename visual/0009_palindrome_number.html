@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Palindrome Number - LeetCode 9</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="problem-info">
+            <h1><span class="problem-number">#9</span> Palindrome Number</h1>
+            <p>Determine whether an integer is a palindrome (reads the same backward as forward).</p>
+            <div class="problem-meta">
+                <span class="meta-tag">Math</span>
+                <span class="meta-tag">Easy</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <code>python/0009_palindrome_number/0009_palindrome_number.py</code>
+            </div>
+
+        </div>
+
+        <div class="explanation-panel">
+            <h4>🧠 How It Works (Layman's Terms)</h4>
+            <p>This algorithm solves the problem <strong>step by step</strong>:</p>
+            <ul>
+                <li><strong>Understand:</strong> Parse the input data</li>
+                <li><strong>Process:</strong> Apply the core logic</li>
+                <li><strong>Optimize:</strong> Use efficient data structures</li>
+                <li><strong>Return:</strong> Output the computed result</li>
+            </ul>
+        </div>
+
+
+        <div class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+            <div class="controls">
+                <button id="stepBtn">Step</button>
+                <button id="autoBtn">Auto Run</button>
+                <button id="resetBtn">Reset</button>
+                <label style="margin-left:20px">Number: </label>
+                <input type="number" id="numInput" value="12321" style="width:80px">
+            </div>
+            <svg id="mainSvg" width="800" height="380"></svg>
+            <div class="status-message" id="status">Click "Step" to check if number is palindrome</div>
+        </div>
+
+        <div class="code-section">
+            <h3>💻 Python Solution</h3>
+            <div class="code-block">
+                <pre><span class="keyword">def</span> <span class="function">isPalindrome</span>(x: <span class="class-name">int</span>) -> bool:
+    <span class="comment"># Negative numbers are not palindromes</span>
+    <span class="keyword">if</span> x < <span class="number">0</span>:
+        <span class="keyword">return</span> <span class="keyword">False</span>
+    
+    <span class="comment"># Numbers ending in 0 (except 0 itself)</span>
+    <span class="keyword">if</span> x % <span class="number">10</span> == <span class="number">0</span> <span class="keyword">and</span> x != <span class="number">0</span>:
+        <span class="keyword">return</span> <span class="keyword">False</span>
+    
+    <span class="comment"># Reverse the second half</span>
+    reversed_half = <span class="number">0</span>
+    <span class="keyword">while</span> x > reversed_half:
+        reversed_half = reversed_half * <span class="number">10</span> + x % <span class="number">10</span>
+        x //= <span class="number">10</span>
+    
+    <span class="comment"># Compare (handle odd length)</span>
+    <span class="keyword">return</span> x == reversed_half <span class="keyword">or</span> x == reversed_half // <span class="number">10</span></pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let num = 12321;
+        const width = 800, height = 380;
+        const svg = d3.select("#mainSvg");
+
+        let x, reversedHalf;
+        let phase = 'init';
+        let steps = [];
+        let autoTimer = null;
+        let autoRunning = false;
+
+        function draw() {
+            svg.selectAll("*").remove();
+
+            const originalStr = num.toString();
+            const xStr = x.toString();
+            const revStr = reversedHalf.toString();
+            const cellWidth = 50, startY = 80;
+
+            // Title
+            svg.append("text")
+                .attr("x", width / 2).attr("y", 30)
+                .attr("text-anchor", "middle")
+                .attr("font-weight", "bold")
+                .text(`Is ${num} a palindrome?`);
+
+            // Original number
+            svg.append("text")
+                .attr("x", 50).attr("y", startY - 10)
+                .attr("font-size", "14px")
+                .attr("fill", "#666")
+                .text("Original:");
+
+            const startX1 = 150;
+            for (let i = 0; i < originalStr.length; i++) {
+                svg.append("rect")
+                    .attr("x", startX1 + i * cellWidth).attr("y", startY)
+                    .attr("width", cellWidth - 5).attr("height", 45)
+                    .attr("rx", 6)
+                    .attr("fill", "#e3f2fd").attr("stroke", "#1976d2");
+
+                svg.append("text")
+                    .attr("x", startX1 + i * cellWidth + (cellWidth - 5) / 2)
+                    .attr("y", startY + 30)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "22px")
+                    .attr("font-weight", "bold")
+                    .text(originalStr[i]);
+            }
+
+            // Current x value
+            const row2Y = startY + 80;
+            svg.append("text")
+                .attr("x", 50).attr("y", row2Y - 10)
+                .attr("font-size", "14px")
+                .attr("fill", "#666")
+                .text("x (first half):");
+
+            for (let i = 0; i < xStr.length; i++) {
+                svg.append("rect")
+                    .attr("x", startX1 + i * cellWidth).attr("y", row2Y)
+                    .attr("width", cellWidth - 5).attr("height", 45)
+                    .attr("rx", 6)
+                    .attr("fill", "#fff3e0").attr("stroke", "#ff9800");
+
+                svg.append("text")
+                    .attr("x", startX1 + i * cellWidth + (cellWidth - 5) / 2)
+                    .attr("y", row2Y + 30)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "22px")
+                    .attr("font-weight", "bold")
+                    .text(xStr[i]);
+            }
+
+            // Reversed half
+            const row3Y = row2Y + 80;
+            svg.append("text")
+                .attr("x", 50).attr("y", row3Y - 10)
+                .attr("font-size", "14px")
+                .attr("fill", "#666")
+                .text("reversed_half:");
+
+            for (let i = 0; i < revStr.length; i++) {
+                svg.append("rect")
+                    .attr("x", startX1 + i * cellWidth).attr("y", row3Y)
+                    .attr("width", cellWidth - 5).attr("height", 45)
+                    .attr("rx", 6)
+                    .attr("fill", "#e8f5e9").attr("stroke", "#4caf50");
+
+                svg.append("text")
+                    .attr("x", startX1 + i * cellWidth + (cellWidth - 5) / 2)
+                    .attr("y", row3Y + 30)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "22px")
+                    .attr("font-weight", "bold")
+                    .text(revStr[i]);
+            }
+
+            // Comparison arrows
+            if (phase === 'compare' || phase === 'done') {
+                const arrowY = row2Y + 50;
+                svg.append("text")
+                    .attr("x", startX1 + Math.max(xStr.length, revStr.length) * cellWidth + 30)
+                    .attr("y", arrowY)
+                    .attr("font-size", "24px")
+                    .text("⟷");
+            }
+
+            // Result
+            if (phase === 'done') {
+                const isPalin = x === reversedHalf || x === Math.floor(reversedHalf / 10);
+                
+                svg.append("rect")
+                    .attr("x", width / 2 - 100).attr("y", 320)
+                    .attr("width", 200).attr("height", 45)
+                    .attr("rx", 10)
+                    .attr("fill", isPalin ? "#d1fae5" : "#fee2e2")
+                    .attr("stroke", isPalin ? "#10b981" : "#ef4444");
+
+                svg.append("text")
+                    .attr("x", width / 2).attr("y", 350)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "20px")
+                    .attr("font-weight", "bold")
+                    .attr("fill", isPalin ? "#10b981" : "#ef4444")
+                    .text(isPalin ? "✓ Palindrome!" : "✗ Not Palindrome");
+            }
+
+            // Algorithm step
+            svg.append("rect")
+                .attr("x", 500).attr("y", 80)
+                .attr("width", 250).attr("height", 150)
+                .attr("rx", 10)
+                .attr("fill", "#f5f5f5").attr("stroke", "#ddd");
+
+            svg.append("text")
+                .attr("x", 625).attr("y", 105)
+                .attr("text-anchor", "middle")
+                .attr("font-weight", "bold")
+                .text("Algorithm");
+
+            const stepTexts = [
+                "1. Reverse second half",
+                "2. Compare halves",
+                "3. Handle odd length"
+            ];
+            stepTexts.forEach((t, i) => {
+                svg.append("text")
+                    .attr("x", 515).attr("y", 130 + i * 25)
+                    .attr("font-size", "12px")
+                    .attr("fill", "#666")
+                    .text(t);
+            });
+        }
+
+        function step() {
+            if (phase === 'done') return false;
+
+            if (phase === 'init') {
+                if (num < 0 || (num % 10 === 0 && num !== 0)) {
+                    phase = 'done';
+                    document.getElementById("status").textContent = 
+                        num < 0 ? "Negative numbers are not palindromes" : "Numbers ending in 0 are not palindromes";
+                } else {
+                    phase = 'reverse';
+                    document.getElementById("status").textContent = 
+                        `Starting: x=${x}, reversed_half=${reversedHalf}`;
+                }
+            } else if (phase === 'reverse') {
+                if (x > reversedHalf) {
+                    const digit = x % 10;
+                    reversedHalf = reversedHalf * 10 + digit;
+                    x = Math.floor(x / 10);
+                    document.getElementById("status").textContent = 
+                        `Extracted ${digit}: x=${x}, reversed_half=${reversedHalf}`;
+                } else {
+                    phase = 'compare';
+                    document.getElementById("status").textContent = 
+                        `Comparing: x=${x}, reversed_half=${reversedHalf}`;
+                }
+            } else if (phase === 'compare') {
+                phase = 'done';
+                const isPalin = x === reversedHalf || x === Math.floor(reversedHalf / 10);
+                document.getElementById("status").textContent = 
+                    isPalin ? `${num} IS a palindrome!` : `${num} is NOT a palindrome`;
+            }
+
+            draw();
+            return phase !== 'done';
+        }
+
+        function reset() {
+            num = parseInt(document.getElementById("numInput").value) || 12321;
+            x = num;
+            reversedHalf = 0;
+            phase = 'init';
+            if (autoTimer) clearInterval(autoTimer);
+            autoRunning = false;
+            document.getElementById("autoBtn").textContent = "Auto Run";
+            document.getElementById("status").textContent = 'Click "Step" to check if number is palindrome';
+            draw();
+        }
+
+        function autoRun() {
+            if (autoRunning) {
+                clearInterval(autoTimer);
+                autoRunning = false;
+                document.getElementById("autoBtn").textContent = "Auto Run";
+            } else {
+                autoRunning = true;
+                document.getElementById("autoBtn").textContent = "Pause";
+                autoTimer = setInterval(() => {
+                    if (!step()) {
+                        clearInterval(autoTimer);
+                        autoRunning = false;
+                        document.getElementById("autoBtn").textContent = "Auto Run";
+                    }
+                }, 800);
+            }
+        }
+
+        document.getElementById("stepBtn").addEventListener("click", step);
+        document.getElementById("autoBtn").addEventListener("click", autoRun);
+        document.getElementById("resetBtn").addEventListener("click", reset);
+        document.getElementById("numInput").addEventListener("change", reset);
+
+        reset();
+    </script>
+</body>
+</html>

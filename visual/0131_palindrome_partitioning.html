@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>131 - Palindrome Partitioning</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="problem-info">
+            <h1><span class="problem-number">#131</span> Palindrome Partitioning</h1>
+            <p>
+                Partition a string such that every substring is a palindrome.
+                Uses backtracking to try all possible partition points.
+            </p>
+            <div class="problem-meta">
+                <span class="meta-tag">🔤 String</span>
+                <span class="meta-tag">🔄 Backtracking</span>
+                <span class="meta-tag">⏱️ O(n)</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <code>python/0131_palindrome_partitioning/0131_palindrome_partitioning.py</code>
+            </div>
+
+        </div>
+
+        <div class="explanation-panel">
+            <h4>🧠 How It Works (Layman's Terms)</h4>
+            <p>This algorithm solves the problem <strong>step by step</strong>:</p>
+            <ul>
+                <li><strong>Understand:</strong> Parse the input data</li>
+                <li><strong>Process:</strong> Apply the core logic</li>
+                <li><strong>Optimize:</strong> Use efficient data structures</li>
+                <li><strong>Return:</strong> Output the computed result</li>
+            </ul>
+        </div>
+
+
+        <section class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+            <div class="controls">
+                <button id="autoRunBtn" class="btn">▶ Auto Run</button>
+                <button id="stepBtn" class="btn btn-success">Step</button>
+                <button id="resetBtn" class="btn btn-danger">Reset</button>
+            </div>
+            <div class="status" id="status">Click Auto Run to partition "aab"</div>
+            <svg id="visualization"></svg>
+        </section>
+
+        <section class="code-section">
+            <h3>💻 Python Solution</h3>
+            <div class="code-block">
+                <pre><span class="keyword">def</span> <span class="function">partition</span>(s):
+    result = []
+    
+    <span class="keyword">def</span> <span class="function">is_palindrome</span>(start, end):
+        <span class="keyword">while</span> start < end:
+            <span class="keyword">if</span> s[start] != s[end]:
+                <span class="keyword">return</span> <span class="keyword">False</span>
+            start += <span class="number">1</span>
+            end -= <span class="number">1</span>
+        <span class="keyword">return</span> <span class="keyword">True</span>
+    
+    <span class="keyword">def</span> <span class="function">backtrack</span>(start, current):
+        <span class="keyword">if</span> start == <span class="function">len</span>(s):
+            result.<span class="function">append</span>(current[:])
+            <span class="keyword">return</span>
+        
+        <span class="keyword">for</span> end <span class="keyword">in</span> <span class="function">range</span>(start, <span class="function">len</span>(s)):
+            <span class="keyword">if</span> <span class="function">is_palindrome</span>(start, end):
+                current.<span class="function">append</span>(s[start:<span class="class-name">end</span>+<span class="number">1</span>])
+                <span class="function">backtrack</span>(end + <span class="number">1</span>, current)
+                current.<span class="function">pop</span>()
+    
+    <span class="function">backtrack</span>(<span class="number">0</span>, [])
+    <span class="keyword">return</span> result</pre>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        const width = 900;
+        const height = 600;
+
+        const svg = d3.select("#visualization")
+            .attr("width", width)
+            .attr("height", height);
+
+        const s = "aab";
+        let result = [];
+        let currentPath = [];
+        let callStack = [];
+        let treeNodes = [];
+        let treeEdges = [];
+        let animationTimer = null;
+
+        function isPalindrome(str, start, end) {
+            while (start < end) {
+                if (str[start] !== str[end]) return false;
+                start++;
+                end--;
+            }
+            return true;
+        }
+
+        function reset() {
+            result = [];
+            currentPath = [];
+            treeNodes = [];
+            treeEdges = [];
+            
+            // Root node
+            treeNodes.push({
+                id: 0,
+                start: 0,
+                partition: [],
+                depth: 0
+            });
+            
+            // Initialize stack
+            callStack = [{ start: 0, partition: [], depth: 0, parentIdx: 0 }];
+            
+            if (animationTimer) clearInterval(animationTimer);
+            document.getElementById("status").textContent = `Finding all palindrome partitions of "${s}"`;
+            render();
+        }
+
+        function render() {
+            svg.selectAll("*").remove();
+
+            // Draw input string
+            drawInput();
+
+            // Draw tree
+            drawTree();
+
+            // Draw results
+            drawResults();
+        }
+
+        function drawInput() {
+            svg.append("text")
+                .attr("x", 30)
+                .attr("y", 30)
+                .attr("font-size", "14px")
+                .attr("font-weight", "bold")
+                .attr("fill", "#1e293b")
+                .text(`Input String: "${s}"`);
+
+            // Draw string with current partition
+            const startX = 30;
+            const startY = 55;
+            const charWidth = 40;
+
+            s.split('').forEach((ch, idx) => {
+                svg.append("rect")
+                    .attr("x", startX + idx * charWidth)
+                    .attr("y", startY)
+                    .attr("width", charWidth - 2)
+                    .attr("height", 35)
+                    .attr("rx", 5)
+                    .attr("fill", "#dbeafe")
+                    .attr("stroke", "#3b82f6")
+                    .attr("stroke-width", 2);
+
+                svg.append("text")
+                    .attr("x", startX + idx * charWidth + charWidth / 2 - 1)
+                    .attr("y", startY + 24)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "18px")
+                    .attr("font-weight", "bold")
+                    .attr("fill", "#1e293b")
+                    .text(ch);
+
+                svg.append("text")
+                    .attr("x", startX + idx * charWidth + charWidth / 2 - 1)
+                    .attr("y", startY + 50)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "10px")
+                    .attr("fill", "#64748b")
+                    .text(idx);
+            });
+
+            // Current partition
+            svg.append("text")
+                .attr("x", 200)
+                .attr("y", 30)
+                .attr("font-size", "14px")
+                .attr("font-weight", "bold")
+                .attr("fill", "#1e293b")
+                .text(`Current: [${currentPath.map(p => `"${p}"`).join(', ')}]`);
+        }
+
+        function drawTree() {
+            const startX = 450;
+            const startY = 130;
+            const levelHeight = 60;
+
+            // Calculate positions
+            const levels = {};
+            treeNodes.forEach(node => {
+                if (!levels[node.depth]) levels[node.depth] = [];
+                levels[node.depth].push(node);
+            });
+
+            Object.entries(levels).forEach(([depth, nodes]) => {
+                const d = parseInt(depth);
+                const y = startY + d * levelHeight;
+                const spacing = Math.min(120, 600 / Math.max(nodes.length, 1));
+                const levelStartX = startX - ((nodes.length - 1) * spacing) / 2;
+                
+                nodes.forEach((node, idx) => {
+                    node.x = levelStartX + idx * spacing;
+                    node.y = y;
+                });
+            });
+
+            // Draw edges
+            treeEdges.forEach(edge => {
+                const from = treeNodes[edge.from];
+                const to = treeNodes[edge.to];
+                if (!from || !to) return;
+
+                svg.append("line")
+                    .attr("x1", from.x)
+                    .attr("y1", from.y + 15)
+                    .attr("x2", to.x)
+                    .attr("y2", to.y - 15)
+                    .attr("stroke", edge.isPalindrome ? "#10b981" : "#fca5a5")
+                    .attr("stroke-width", 2)
+                    .attr("stroke-dasharray", edge.isPalindrome ? "none" : "5,5");
+
+                // Edge label
+                const midX = (from.x + to.x) / 2;
+                const midY = (from.y + 15 + to.y - 15) / 2;
+
+                svg.append("rect")
+                    .attr("x", midX - 20)
+                    .attr("y", midY - 10)
+                    .attr("width", 40)
+                    .attr("height", 20)
+                    .attr("rx", 4)
+                    .attr("fill", edge.isPalindrome ? "#d1fae5" : "#fee2e2");
+
+                svg.append("text")
+                    .attr("x", midX)
+                    .attr("y", midY + 5)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "11px")
+                    .attr("font-weight", "bold")
+                    .attr("fill", edge.isPalindrome ? "#10b981" : "#ef4444")
+                    .text(`"${edge.substring}"`);
+            });
+
+            // Draw nodes
+            treeNodes.forEach((node, idx) => {
+                const isCurrent = JSON.stringify(node.partition) === JSON.stringify(currentPath);
+                const isResult = node.start === s.length && node.partition.length > 0;
+
+                svg.append("circle")
+                    .attr("cx", node.x)
+                    .attr("cy", node.y)
+                    .attr("r", 18)
+                    .attr("fill", () => {
+                        if (isResult) return "#bbf7d0";
+                        if (isCurrent) return "#fef3c7";
+                        return "#f8fafc";
+                    })
+                    .attr("stroke", () => {
+                        if (isResult) return "#10b981";
+                        if (isCurrent) return "#f59e0b";
+                        return "#94a3b8";
+                    })
+                    .attr("stroke-width", isCurrent || isResult ? 3 : 2);
+
+                svg.append("text")
+                    .attr("x", node.x)
+                    .attr("y", node.y + 5)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "12px")
+                    .attr("fill", "#1e293b")
+                    .text(node.start);
+            });
+        }
+
+        function drawResults() {
+            const startX = 30;
+            const startY = 450;
+
+            svg.append("text")
+                .attr("x", startX)
+                .attr("y", startY)
+                .attr("font-size", "14px")
+                .attr("font-weight", "bold")
+                .attr("fill", "#1e293b")
+                .text(`Valid Partitions (${result.length}):`);
+
+            result.forEach((partition, idx) => {
+                const x = startX + (idx % 3) * 250;
+                const y = startY + 25 + Math.floor(idx / 3) * 40;
+                const label = `[${partition.map(p => `"${p}"`).join(', ')}]`;
+
+                svg.append("rect")
+                    .attr("x", x)
+                    .attr("y", y)
+                    .attr("width", 240)
+                    .attr("height", 32)
+                    .attr("rx", 6)
+                    .attr("fill", "#d1fae5")
+                    .attr("stroke", "#10b981")
+                    .attr("stroke-width", 2);
+
+                svg.append("text")
+                    .attr("x", x + 120)
+                    .attr("y", y + 21)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "12px")
+                    .attr("fill", "#1e293b")
+                    .text(label);
+            });
+
+            // Explanation
+            svg.append("text")
+                .attr("x", startX)
+                .attr("y", 560)
+                .attr("font-size", "12px")
+                .attr("fill", "#64748b")
+                .text("• Node value = start index. Green edges = palindrome substrings.");
+        }
+
+        function step() {
+            if (callStack.length === 0) {
+                document.getElementById("status").textContent = 
+                    `✓ Complete! Found ${result.length} palindrome partitions`;
+                return;
+            }
+
+            const { start, partition, depth, parentIdx } = callStack.pop();
+            currentPath = [...partition];
+
+            // Reached end of string - valid partition found
+            if (start === s.length) {
+                result.push([...partition]);
+                document.getElementById("status").textContent = 
+                    `✓ Found valid partition: [${partition.map(p => `"${p}"`).join(', ')}]`;
+                render();
+                return;
+            }
+
+            // Try all possible end positions
+            for (let end = s.length - 1; end >= start; end--) {
+                const substring = s.substring(start, end + 1);
+                const isPalin = isPalindrome(s, start, end);
+
+                // Add node to tree
+                const nodeIdx = treeNodes.length;
+                treeNodes.push({
+                    id: nodeIdx,
+                    start: end + 1,
+                    partition: [...partition, substring],
+                    depth: depth + 1
+                });
+
+                treeEdges.push({
+                    from: parentIdx,
+                    to: nodeIdx,
+                    substring: substring,
+                    isPalindrome: isPalin
+                });
+
+                if (isPalin) {
+                    callStack.push({
+                        start: end + 1,
+                        partition: [...partition, substring],
+                        depth: depth + 1,
+                        parentIdx: nodeIdx
+                    });
+                }
+            }
+
+            document.getElementById("status").textContent = 
+                `At index ${start}, trying partitions from "${s.substring(start)}"`;
+            render();
+        }
+
+        function autoRun() {
+            if (animationTimer) {
+                clearInterval(animationTimer);
+                animationTimer = null;
+                document.getElementById("autoRunBtn").textContent = "▶ Auto Run";
+                return;
+            }
+
+            document.getElementById("autoRunBtn").textContent = "⏸ Pause";
+            animationTimer = setInterval(() => {
+                if (callStack.length === 0) {
+                    clearInterval(animationTimer);
+                    animationTimer = null;
+                    document.getElementById("autoRunBtn").textContent = "▶ Auto Run";
+                    return;
+                }
+                step();
+            }, 700);
+        }
+
+        document.getElementById("autoRunBtn").addEventListener("click", autoRun);
+        document.getElementById("stepBtn").addEventListener("click", step);
+        document.getElementById("resetBtn").addEventListener("click", reset);
+
+        reset();
+    </script>
+</body>
+</html>

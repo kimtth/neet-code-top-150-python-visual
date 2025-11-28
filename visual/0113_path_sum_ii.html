@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LC 113: Path Sum II - Algorithm Visualization</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="problem-info">
+            <h1><span class="problem-number">#113</span> Path Sum II</h1>
+            <p>Given a binary tree and a target sum, find ALL root-to-leaf paths where node values sum to target.</p>
+            <div class="problem-meta">
+                <span class="meta-tag">🌳 Tree</span>
+                <span class="meta-tag">🔄 Backtracking</span>
+                <span class="meta-tag">⏱️ O(n²)</span>
+                <span class="meta-tag">💾 O(n)</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <code>python/0113_path_sum_ii/0113_path_sum_ii.py</code>
+            </div>
+            </div>
+
+        <div class="explanation-panel">
+            <h4>🧠 How It Works (Layman's Terms)</h4>
+            <p>Use <strong>DFS with Backtracking</strong> to find all valid paths:</p>
+            <ul>
+                <li><strong>Explore:</strong> Add current node to path, subtract from target</li>
+                <li><strong>Collect:</strong> If at leaf and sum matches, save path copy</li>
+                <li><strong>Backtrack:</strong> Remove node from path, try other branches</li>
+                <li><strong>Continue:</strong> Don't stop early, find ALL paths</li>
+            </ul>
+        </div>
+
+
+        <div class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+            
+            <div class="controls">
+                <button class="btn btn-primary" id="startBtn" onclick="start()">▶ Start DFS</button>
+                <button class="btn" onclick="stepForward()">Step →</button>
+                <button class="btn btn-warning" onclick="reset()">Reset</button>
+                <label style="margin-left: 15px;">Target Sum: </label>
+                <input type="number" id="targetInput" value="22" style="width: 80px; padding: 8px; border-radius: 5px; border: 2px solid #ddd;" onchange="reset()">
+            </div>
+
+            <div class="status-message" id="statusMessage">
+                Click Start to find ALL paths with target sum
+            </div>
+
+            <div style="display: flex; gap: 20px; flex-wrap: wrap; margin-top: 20px;">
+                <div style="flex: 2; min-width: 400px;">
+                    <svg id="treeViz" width="100%" height="320"></svg>
+                </div>
+                <div style="flex: 1; min-width: 220px;">
+                    <h4>📍 Current Path</h4>
+                    <div id="pathDisplay" style="padding: 12px; background: #fff3e0; border-radius: 12px; margin-bottom: 12px; min-height: 35px; font-size: 0.9em;"></div>
+                    
+                    <h4>➕ Path Sum / Target</h4>
+                    <div id="sumDisplay" style="padding: 15px; background: #e3f2fd; border-radius: 12px; margin-bottom: 12px; font-size: 1.3em; text-align: center; font-weight: bold;"></div>
+                    
+                    <h4>✅ Found Paths</h4>
+                    <div id="foundPaths" style="padding: 12px; background: #e8f5e9; border-radius: 12px; min-height: 80px; max-height: 150px; overflow-y: auto;"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="code-section">
+            <h3>💻 Python Solution (Backtracking)</h3>
+            <div class="code-block">
+                <pre><span class="keyword">def</span> <span class="function">pathSum</span>(root, targetSum):
+    result = []
+    
+    <span class="keyword">def</span> <span class="function">dfs</span>(node, path, remaining):
+        <span class="keyword">if not</span> node:
+            <span class="keyword">return</span>
+        
+        path.<span class="function">append</span>(node.val)
+        
+        <span class="comment"># Leaf node with matching sum</span>
+        <span class="keyword">if not</span> node.left <span class="keyword">and not</span> node.right:
+            <span class="keyword">if</span> remaining == node.val:
+                result.<span class="function">append</span>(path[:])  <span class="comment"># Copy path</span>
+        
+        <span class="comment"># Continue DFS</span>
+        <span class="function">dfs</span>(node.left, path, remaining - node.val)
+        <span class="function">dfs</span>(node.right, path, remaining - node.val)
+        
+        path.<span class="function">pop</span>()  <span class="comment"># Backtrack</span>
+    
+    <span class="function">dfs</span>(root, [], targetSum)
+    <span class="keyword">return</span> result</pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const tree = {
+            val: 5, id: 1, x: 250, y: 35,
+            left: {
+                val: 4, id: 2, x: 130, y: 100,
+                left: {
+                    val: 11, id: 4, x: 70, y: 165,
+                    left: { val: 7, id: 8, x: 40, y: 230, left: null, right: null },
+                    right: { val: 2, id: 9, x: 100, y: 230, left: null, right: null }
+                },
+                right: null
+            },
+            right: {
+                val: 8, id: 3, x: 370, y: 100,
+                left: { val: 13, id: 6, x: 310, y: 165, left: null, right: null },
+                right: {
+                    val: 4, id: 7, x: 430, y: 165,
+                    left: { val: 5, id: 10, x: 400, y: 230, left: null, right: null },
+                    right: { val: 1, id: 11, x: 460, y: 230, left: null, right: null }
+                }
+            }
+        };
+
+        let targetSum = 22;
+        let currentPath = [];
+        let currentSum = 0;
+        let foundPaths = [];
+        let highlightedPath = [];
+        let isRunning = false;
+        let stepIndex = 0;
+        let steps = [];
+
+        function flattenTree(node, arr = []) {
+            if (!node) return arr;
+            arr.push(node);
+            flattenTree(node.left, arr);
+            flattenTree(node.right, arr);
+            return arr;
+        }
+
+        function precomputeSteps() {
+            steps = [];
+            const allFoundPaths = [];
+            
+            function dfs(node, path, sum) {
+                if (!node) return;
+                
+                const newPath = [...path, node.val];
+                const newSum = sum + node.val;
+                
+                steps.push({
+                    type: 'visit',
+                    nodeId: node.id,
+                    path: newPath,
+                    sum: newSum,
+                    foundPaths: [...allFoundPaths],
+                    message: `Visit ${node.val}, path = [${newPath.join(', ')}], sum = ${newSum}`
+                });
+
+                const isLeaf = !node.left && !node.right;
+                
+                if (isLeaf) {
+                    if (newSum === targetSum) {
+                        allFoundPaths.push([...newPath]);
+                        steps.push({
+                            type: 'found',
+                            path: newPath,
+                            sum: newSum,
+                            foundPaths: [...allFoundPaths],
+                            message: `🎯 Found path! [${newPath.join(' → ')}] = ${targetSum}`
+                        });
+                    } else {
+                        steps.push({
+                            type: 'leaf_miss',
+                            path: newPath,
+                            sum: newSum,
+                            foundPaths: [...allFoundPaths],
+                            message: `Leaf: ${newSum} ≠ ${targetSum}`
+                        });
+                    }
+                }
+
+                dfs(node.left, newPath, newSum);
+                dfs(node.right, newPath, newSum);
+
+                if (!isLeaf) {
+                    steps.push({
+                        type: 'backtrack',
+                        path: path,
+                        sum: sum,
+                        foundPaths: [...allFoundPaths],
+                        message: `Backtrack from ${node.val}`
+                    });
+                }
+            }
+
+            dfs(tree, [], 0);
+            
+            steps.push({
+                type: 'done',
+                path: [],
+                sum: 0,
+                foundPaths: [...allFoundPaths],
+                message: `Done! Found ${allFoundPaths.length} path(s)`
+            });
+        }
+
+        function render() {
+            const svg = d3.select("#treeViz");
+            svg.selectAll("*").remove();
+
+            const container = svg.node().parentElement;
+            const width = container.clientWidth;
+            const height = 320;
+            svg.attr("viewBox", `0 0 ${width} ${height}`);
+
+            const nodes = flattenTree(tree);
+            const g = svg.append("g").attr("transform", `translate(${(width - 500) / 2}, 0)`);
+
+            // Draw edges
+            function drawEdges(node) {
+                if (!node) return;
+                if (node.left) {
+                    g.append("line")
+                        .attr("x1", node.x).attr("y1", node.y)
+                        .attr("x2", node.left.x).attr("y2", node.left.y)
+                        .attr("stroke", "#ccc").attr("stroke-width", 2);
+                    drawEdges(node.left);
+                }
+                if (node.right) {
+                    g.append("line")
+                        .attr("x1", node.x).attr("y1", node.y)
+                        .attr("x2", node.right.x).attr("y2", node.right.y)
+                        .attr("stroke", "#ccc").attr("stroke-width", 2);
+                    drawEdges(node.right);
+                }
+            }
+            drawEdges(tree);
+
+            // Draw nodes
+            nodes.forEach(node => {
+                const onPath = currentPath.includes(node.val);
+                const onHighlight = highlightedPath.includes(node.val);
+                const isLeaf = !node.left && !node.right;
+                
+                let fill = "#667eea";
+                if (onPath) fill = "#ff9800";
+                if (onHighlight) fill = "#4caf50";
+
+                g.append("circle")
+                    .attr("cx", node.x).attr("cy", node.y).attr("r", 20)
+                    .attr("fill", fill)
+                    .attr("stroke", isLeaf ? "#e91e63" : "#5a6fd6")
+                    .attr("stroke-width", isLeaf ? 3 : 2);
+
+                g.append("text")
+                    .attr("x", node.x).attr("y", node.y + 5)
+                    .attr("text-anchor", "middle")
+                    .attr("fill", "white").attr("font-weight", "bold").attr("font-size", "13px")
+                    .text(node.val);
+            });
+
+            updateDisplays();
+        }
+
+        function updateDisplays() {
+            const pathContainer = document.getElementById('pathDisplay');
+            pathContainer.innerHTML = currentPath.length > 0 
+                ? currentPath.map(v => `<span style="background: #ffcc80; padding: 3px 8px; margin: 1px; border-radius: 10px; display: inline-block; font-size: 0.85em;">${v}</span>`).join('→')
+                : '<span style="color: #999;">(empty)</span>';
+            
+            const sumEl = document.getElementById('sumDisplay');
+            sumEl.innerHTML = `<span style="color: ${currentSum === targetSum ? '#4caf50' : '#2196f3'}">${currentSum}</span> / <span style="color: #9c27b0">${targetSum}</span>`;
+
+            const foundEl = document.getElementById('foundPaths');
+            if (foundPaths.length === 0) {
+                foundEl.innerHTML = '<span style="color: #999;">No paths found yet...</span>';
+            } else {
+                foundEl.innerHTML = foundPaths.map((path, i) => 
+                    `<div style="background: #c8e6c9; padding: 6px 10px; margin: 4px 0; border-radius: 8px; font-size: 0.85em;">
+                        <strong>#${i+1}:</strong> [${path.join(' → ')}]
+                    </div>`
+                ).join('');
+            }
+        }
+
+        function stepForward() {
+            if (stepIndex >= steps.length) return;
+            
+            const step = steps[stepIndex];
+            currentPath = step.path || [];
+            currentSum = step.sum || 0;
+            foundPaths = step.foundPaths || [];
+            
+            if (step.type === 'found') {
+                highlightedPath = [...step.path];
+            } else {
+                highlightedPath = [];
+            }
+            
+            if (step.type === 'done') {
+                isRunning = false;
+                document.getElementById('startBtn').textContent = '▶ Start DFS';
+            }
+            
+            document.getElementById('statusMessage').textContent = step.message;
+            stepIndex++;
+            render();
+        }
+
+        async function start() {
+            if (isRunning) {
+                isRunning = false;
+                document.getElementById('startBtn').textContent = '▶ Start DFS';
+                return;
+            }
+            
+            isRunning = true;
+            document.getElementById('startBtn').textContent = '⏸ Pause';
+            
+            while (stepIndex < steps.length && isRunning) {
+                stepForward();
+                await new Promise(r => setTimeout(r, 500));
+            }
+        }
+
+        function reset() {
+            targetSum = parseInt(document.getElementById('targetInput').value) || 22;
+            
+            isRunning = false;
+            stepIndex = 0;
+            currentPath = [];
+            currentSum = 0;
+            foundPaths = [];
+            highlightedPath = [];
+            
+            document.getElementById('statusMessage').textContent = 'Click Start to find ALL paths with target sum';
+            document.getElementById('startBtn').textContent = '▶ Start DFS';
+            
+            precomputeSteps();
+            render();
+        }
+
+        reset();
+        window.addEventListener('resize', render);
+    </script>
+</body>
+</html>

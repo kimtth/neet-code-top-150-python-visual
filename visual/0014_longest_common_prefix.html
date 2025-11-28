@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Longest Common Prefix - LeetCode 14</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="problem-info">
+            <h1><span class="problem-number">#14</span> Longest Common Prefix</h1>
+            <p>Find the longest common prefix string amongst an array of strings.</p>
+            <div class="problem-meta">
+                <span class="meta-tag">String</span>
+                <span class="meta-tag">Easy</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <code>python/0014_longest_common_prefix/0014_longest_common_prefix.py</code>
+            </div>
+
+        </div>
+
+        <div class="explanation-panel">
+            <h4>🧠 How It Works (Layman's Terms)</h4>
+            <p>Dynamic Programming <strong>breaks big problems into smaller ones</strong>:</p>
+            <ul>
+                <li><strong>Subproblems:</strong> Solve smaller versions first</li>
+                <li><strong>Memoization:</strong> Cache results to avoid recalculation</li>
+                <li><strong>Build up:</strong> Combine small solutions for final answer</li>
+                <li><strong>State:</strong> Define what each position represents</li>
+            </ul>
+        </div>
+
+
+        <div class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+            <div class="controls">
+                <button id="stepBtn">Step</button>
+                <button id="autoBtn">Auto Run</button>
+                <button id="resetBtn">Reset</button>
+            </div>
+            <svg id="mainSvg" width="800" height="350"></svg>
+            <div class="status-message" id="status">Click "Step" to find longest common prefix</div>
+        </div>
+
+        <div class="code-section">
+            <h3>💻 Python Solution</h3>
+            <div class="code-block">
+                <pre><span class="keyword">def</span> <span class="function">longestCommonPrefix</span>(strs: <span class="class-name">List</span>[str]) -> str:
+    <span class="keyword">if</span> <span class="keyword">not</span> strs:
+        <span class="keyword">return</span> <span class="string">""</span>
+    
+    <span class="comment"># Vertical scanning</span>
+    <span class="keyword">for</span> i <span class="keyword">in</span> <span class="function">range</span>(<span class="function">len</span>(strs[<span class="number">0</span>])):
+        char = strs[<span class="number">0</span>][i]
+        <span class="keyword">for</span> j <span class="keyword">in</span> <span class="function">range</span>(<span class="number">1</span>, <span class="function">len</span>(strs)):
+            <span class="keyword">if</span> i >= <span class="function">len</span>(strs[j]) <span class="keyword">or</span> strs[j][i] != char:
+                <span class="keyword">return</span> strs[<span class="number">0</span>][:<span class="class-name">i</span>]
+    
+    <span class="keyword">return</span> strs[<span class="number">0</span>]</pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const strs = ["flower", "flow", "flight"];
+        const width = 800, height = 350;
+        const svg = d3.select("#mainSvg");
+
+        let charIndex = 0;
+        let strIndex = 0;
+        let prefix = "";
+        let phase = 'comparing';
+        let mismatch = false;
+        
+        let autoTimer = null;
+        let autoRunning = false;
+
+        function draw() {
+            svg.selectAll("*").remove();
+
+            const cellWidth = 45, cellHeight = 50;
+            const startX = 120, startY = 70;
+
+            // Title
+            svg.append("text")
+                .attr("x", width / 2).attr("y", 30)
+                .attr("text-anchor", "middle")
+                .attr("font-weight", "bold")
+                .text(`Finding Longest Common Prefix in [${strs.map(s => `"${s}"`).join(", ")}]`);
+
+            // Draw strings
+            strs.forEach((str, sIdx) => {
+                svg.append("text")
+                    .attr("x", 30).attr("y", startY + sIdx * cellHeight + 30)
+                    .attr("font-size", "14px")
+                    .attr("fill", "#666")
+                    .text(`strs[${sIdx}]:`);
+
+                for (let cIdx = 0; cIdx < str.length; cIdx++) {
+                    const x = startX + cIdx * cellWidth;
+                    const y = startY + sIdx * cellHeight;
+                    
+                    let fill = "#f8fafc", stroke = "#94a3b8";
+                    
+                    if (cIdx < charIndex) {
+                        fill = "#d1fae5"; stroke = "#10b981";
+                    } else if (cIdx === charIndex) {
+                        if (sIdx === strIndex) {
+                            fill = "#fef3c7"; stroke = "#f59e0b";
+                        } else if (sIdx < strIndex) {
+                            fill = "#d1fae5"; stroke = "#10b981";
+                        }
+                        if (mismatch && sIdx === strIndex) {
+                            fill = "#fee2e2"; stroke = "#ef4444";
+                        }
+                    }
+
+                    svg.append("rect")
+                        .attr("x", x).attr("y", y)
+                        .attr("width", cellWidth - 5).attr("height", cellHeight - 5)
+                        .attr("rx", 6)
+                        .attr("fill", fill).attr("stroke", stroke)
+                        .attr("stroke-width", cIdx === charIndex && sIdx === strIndex ? 3 : 2);
+
+                    svg.append("text")
+                        .attr("x", x + (cellWidth - 5) / 2)
+                        .attr("y", y + (cellHeight - 5) / 2 + 6)
+                        .attr("text-anchor", "middle")
+                        .attr("font-size", "20px")
+                        .attr("font-weight", "bold")
+                        .text(str[cIdx]);
+                }
+            });
+
+            // Column indicator
+            if (charIndex < strs[0].length && !mismatch) {
+                svg.append("text")
+                    .attr("x", startX + charIndex * cellWidth + (cellWidth - 5) / 2)
+                    .attr("y", startY - 15)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "12px")
+                    .attr("fill", "#f59e0b")
+                    .text(`▼ Column ${charIndex}`);
+            }
+
+            // Current prefix
+            const prefixY = startY + strs.length * cellHeight + 30;
+            
+            svg.append("rect")
+                .attr("x", 120).attr("y", prefixY)
+                .attr("width", 300).attr("height", 50)
+                .attr("rx", 10)
+                .attr("fill", "#e8f5e9").attr("stroke", "#4caf50");
+
+            svg.append("text")
+                .attr("x", 270).attr("y", prefixY + 20)
+                .attr("text-anchor", "middle")
+                .attr("font-size", "12px")
+                .text("Current Prefix:");
+
+            svg.append("text")
+                .attr("x", 270).attr("y", prefixY + 40)
+                .attr("text-anchor", "middle")
+                .attr("font-size", "20px")
+                .attr("font-weight", "bold")
+                .attr("fill", "#2e7d32")
+                .text(prefix ? `"${prefix}"` : '""');
+
+            // Final result
+            if (phase === 'done') {
+                svg.append("rect")
+                    .attr("x", 450).attr("y", prefixY)
+                    .attr("width", 250).attr("height", 50)
+                    .attr("rx", 10)
+                    .attr("fill", "#d1fae5").attr("stroke", "#10b981")
+                    .attr("stroke-width", 2);
+
+                svg.append("text")
+                    .attr("x", 575).attr("y", prefixY + 32)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "18px")
+                    .attr("font-weight", "bold")
+                    .attr("fill", "#10b981")
+                    .text(`Result: "${prefix}"`);
+            }
+
+            // Legend
+            const legendY = 290;
+            const legend = [
+                { color: "#d1fae5", label: "Matched" },
+                { color: "#fef3c7", label: "Comparing" },
+                { color: "#fee2e2", label: "Mismatch" }
+            ];
+
+            legend.forEach((item, i) => {
+                svg.append("rect")
+                    .attr("x", 500 + i * 100).attr("y", legendY)
+                    .attr("width", 15).attr("height", 15)
+                    .attr("fill", item.color)
+                    .attr("stroke", "#999");
+
+                svg.append("text")
+                    .attr("x", 520 + i * 100).attr("y", legendY + 12)
+                    .attr("font-size", "11px")
+                    .text(item.label);
+            });
+        }
+
+        function step() {
+            if (phase === 'done') return false;
+
+            // Check if we've gone through all characters
+            if (charIndex >= strs[0].length) {
+                phase = 'done';
+                document.getElementById("status").textContent = 
+                    `Done! Longest common prefix: "${prefix}"`;
+                draw();
+                return false;
+            }
+
+            const targetChar = strs[0][charIndex];
+
+            if (strIndex === 0) {
+                document.getElementById("status").textContent = 
+                    `Checking column ${charIndex}: comparing '${targetChar}'`;
+                strIndex = 1;
+            } else {
+                // Check if current string has this character
+                if (charIndex >= strs[strIndex].length || strs[strIndex][charIndex] !== targetChar) {
+                    mismatch = true;
+                    phase = 'done';
+                    document.getElementById("status").textContent = 
+                        charIndex >= strs[strIndex].length 
+                            ? `String "${strs[strIndex]}" is too short. Done!`
+                            : `Mismatch: '${strs[strIndex][charIndex]}' ≠ '${targetChar}'. Done!`;
+                    draw();
+                    return false;
+                }
+
+                document.getElementById("status").textContent = 
+                    `'${strs[strIndex][charIndex]}' matches '${targetChar}'`;
+
+                strIndex++;
+
+                // All strings matched at this position
+                if (strIndex >= strs.length) {
+                    prefix += targetChar;
+                    charIndex++;
+                    strIndex = 0;
+                    document.getElementById("status").textContent = 
+                        `All matched! Prefix is now "${prefix}"`;
+                }
+            }
+
+            draw();
+            return phase !== 'done';
+        }
+
+        function reset() {
+            charIndex = 0;
+            strIndex = 0;
+            prefix = "";
+            phase = 'comparing';
+            mismatch = false;
+            if (autoTimer) clearInterval(autoTimer);
+            autoRunning = false;
+            document.getElementById("autoBtn").textContent = "Auto Run";
+            document.getElementById("status").textContent = 'Click "Step" to find longest common prefix';
+            draw();
+        }
+
+        function autoRun() {
+            if (autoRunning) {
+                clearInterval(autoTimer);
+                autoRunning = false;
+                document.getElementById("autoBtn").textContent = "Auto Run";
+            } else {
+                autoRunning = true;
+                document.getElementById("autoBtn").textContent = "Pause";
+                autoTimer = setInterval(() => {
+                    if (!step()) {
+                        clearInterval(autoTimer);
+                        autoRunning = false;
+                        document.getElementById("autoBtn").textContent = "Auto Run";
+                    }
+                }, 600);
+            }
+        }
+
+        document.getElementById("stepBtn").addEventListener("click", step);
+        document.getElementById("autoBtn").addEventListener("click", autoRun);
+        document.getElementById("resetBtn").addEventListener("click", reset);
+
+        reset();
+    </script>
+</body>
+</html>

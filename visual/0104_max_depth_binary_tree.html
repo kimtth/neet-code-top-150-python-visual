@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Maximum Depth of Binary Tree - Algorithm Visualization</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    </div>
+
+    <div class="container">
+        <div class="problem-info">
+            <h1><span class="problem-number">#0104</span> Maximum Depth of Binary Tree</h1>
+            <p>
+                Given the root of a binary tree, return its <strong>maximum depth</strong>.
+                The maximum depth is the number of nodes along the longest path from the root to a leaf.
+            </p>
+            <p><strong>Example:</strong> [3,9,20,null,null,15,7] → Output: 3</p>
+            <p><strong>Approach:</strong> Recursive DFS: depth = 1 + max(left_depth, right_depth)</p>
+            <p><strong>Time Complexity:</strong> O(n) | <strong>Space Complexity:</strong> O(h)</p>
+            <div class="problem-meta">
+                <span class="meta-tag">🌳 Tree</span>
+                <span class="meta-tag">⏱️ O(n)</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <code>python/0104_maximum_depth_of_binary_tree/0104_maximum_depth_of_binary_tree.py</code>
+            </div>
+
+        </div>
+
+        <div class="explanation-panel">
+            <h4>🧠 How It Works (Layman's Terms)</h4>
+            <p>Tree traversal is like <strong>exploring a family tree</strong>:</p>
+            <ul>
+                <li><strong>Root:</strong> Start at the top node</li>
+                <li><strong>Recurse:</strong> Visit left and right children</li>
+                <li><strong>Base case:</strong> Stop at null/leaf nodes</li>
+                <li><strong>Combine:</strong> Build answer from subtree results</li>
+            </ul>
+        </div>
+
+
+        <div class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+            <div class="controls">
+                <button id="stepBtn" class="btn">Step</button>
+                <button id="autoBtn" class="btn">Auto Run</button>
+                <button id="resetBtn" class="btn btn-secondary">Reset</button>
+                <div class="speed-control">
+                    <label for="speedSlider">Speed:</label>
+                    <input type="range" id="speedSlider" min="1" max="10" value="5">
+                </div>
+            </div>
+            <svg id="visualization" width="900" height="500"></svg>
+            <div class="variables-display">
+                <div id="varDisplay"></div>
+            </div>
+            <div class="status-message" id="statusMessage">Press "Step" or "Auto Run" to begin</div>
+        </div>
+
+        <div class="code-section">
+            <h3>💻 Python Solution</h3>
+            <div class="code-block">
+                <pre><span class="keyword">def</span> <span class="function">max_depth</span>(self, root: <span class="class-name">TreeNode</span>) -> int:
+    <span class="keyword">if</span> <span class="keyword">not</span> root:
+        <span class="keyword">return</span> <span class="number">0</span>
+    
+    <span class="comment"># Maximum depth = 1 + max of left/right subtree depths</span>
+    <span class="keyword">return</span> <span class="number">1</span> + <span class="function">max</span>(
+        self.<span class="function">max_depth</span>(root.left),
+        self.<span class="function">max_depth</span>(root.right)
+    )</pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Tree structure: [3,9,20,null,null,15,7]
+        const tree = {
+            val: 3,
+            depth: 1,
+            left: { val: 9, depth: 2, left: null, right: null },
+            right: {
+                val: 20,
+                depth: 2,
+                left: { val: 15, depth: 3, left: null, right: null },
+                right: { val: 7, depth: 3, left: null, right: null }
+            }
+        };
+        
+        // State
+        let step = 0;
+        let autoRunning = false;
+        let autoInterval = null;
+        
+        // Generate steps
+        const steps = [];
+        
+        function generateSteps() {
+            steps.length = 0;
+            
+            steps.push({
+                type: 'init',
+                current: null,
+                visited: [],
+                depths: {},
+                callStack: [],
+                message: 'Find maximum depth of tree [3,9,20,null,null,15,7]'
+            });
+            
+            steps.push({
+                type: 'visit',
+                current: 3,
+                visited: [3],
+                depths: {},
+                callStack: ['max_depth(3)'],
+                message: 'Start at root (3). Call max_depth recursively on children.'
+            });
+            
+            steps.push({
+                type: 'visit',
+                current: 9,
+                visited: [3, 9],
+                depths: {},
+                callStack: ['max_depth(3)', 'max_depth(9)'],
+                message: 'Visit left child (9). Node 9 has no children.'
+            });
+            
+            steps.push({
+                type: 'return',
+                current: 9,
+                visited: [3, 9],
+                depths: { 9: 1 },
+                callStack: ['max_depth(3)'],
+                returnValue: 1,
+                message: 'Node 9 is a leaf. Return depth 1.'
+            });
+            
+            steps.push({
+                type: 'visit',
+                current: 20,
+                visited: [3, 9, 20],
+                depths: { 9: 1 },
+                callStack: ['max_depth(3)', 'max_depth(20)'],
+                message: 'Visit right child (20). Has children 15 and 7.'
+            });
+            
+            steps.push({
+                type: 'visit',
+                current: 15,
+                visited: [3, 9, 20, 15],
+                depths: { 9: 1 },
+                callStack: ['max_depth(3)', 'max_depth(20)', 'max_depth(15)'],
+                message: 'Visit left child of 20: node 15. No children.'
+            });
+            
+            steps.push({
+                type: 'return',
+                current: 15,
+                visited: [3, 9, 20, 15],
+                depths: { 9: 1, 15: 1 },
+                callStack: ['max_depth(3)', 'max_depth(20)'],
+                returnValue: 1,
+                message: 'Node 15 is a leaf. Return depth 1.'
+            });
+            
+            steps.push({
+                type: 'visit',
+                current: 7,
+                visited: [3, 9, 20, 15, 7],
+                depths: { 9: 1, 15: 1 },
+                callStack: ['max_depth(3)', 'max_depth(20)', 'max_depth(7)'],
+                message: 'Visit right child of 20: node 7. No children.'
+            });
+            
+            steps.push({
+                type: 'return',
+                current: 7,
+                visited: [3, 9, 20, 15, 7],
+                depths: { 9: 1, 15: 1, 7: 1 },
+                callStack: ['max_depth(3)', 'max_depth(20)'],
+                returnValue: 1,
+                message: 'Node 7 is a leaf. Return depth 1.'
+            });
+            
+            steps.push({
+                type: 'calculate',
+                current: 20,
+                visited: [3, 9, 20, 15, 7],
+                depths: { 9: 1, 15: 1, 7: 1 },
+                callStack: ['max_depth(3)', 'max_depth(20)'],
+                calculation: '1 + max(1, 1) = 2',
+                message: 'At node 20: depth = 1 + max(left=1, right=1) = 2'
+            });
+            
+            steps.push({
+                type: 'return',
+                current: 20,
+                visited: [3, 9, 20, 15, 7],
+                depths: { 9: 1, 15: 1, 7: 1, 20: 2 },
+                callStack: ['max_depth(3)'],
+                returnValue: 2,
+                message: 'Node 20 returns depth 2.'
+            });
+            
+            steps.push({
+                type: 'calculate',
+                current: 3,
+                visited: [3, 9, 20, 15, 7],
+                depths: { 9: 1, 15: 1, 7: 1, 20: 2 },
+                callStack: ['max_depth(3)'],
+                calculation: '1 + max(1, 2) = 3',
+                message: 'At node 3: depth = 1 + max(left=1, right=2) = 3'
+            });
+            
+            steps.push({
+                type: 'done',
+                current: 3,
+                visited: [3, 9, 20, 15, 7],
+                depths: { 9: 1, 15: 1, 7: 1, 20: 2, 3: 3 },
+                callStack: [],
+                message: 'Done! Maximum depth = 3 (path: 3 → 20 → 15 or 3 → 20 → 7)'
+            });
+        }
+        
+        // SVG setup
+        const svg = d3.select("#visualization");
+        const width = 900;
+        const height = 500;
+        
+        // Node positions
+        const positions = {
+            3: { x: 300, y: 80 },
+            9: { x: 180, y: 180 },
+            20: { x: 420, y: 180 },
+            15: { x: 340, y: 280 },
+            7: { x: 500, y: 280 }
+        };
+        
+        function draw(currentStep) {
+            svg.selectAll("*").remove();
+            
+            const data = currentStep || steps[0];
+            
+            // Draw tree label
+            svg.append("text")
+                .attr("x", 300)
+                .attr("y", 30)
+                .attr("text-anchor", "middle")
+                .attr("class", "label")
+                .text("Binary Tree");
+            
+            // Draw edges
+            const edges = [
+                [3, 9], [3, 20], [20, 15], [20, 7]
+            ];
+            
+            edges.forEach(([from, to]) => {
+                svg.append("line")
+                    .attr("x1", positions[from].x)
+                    .attr("y1", positions[from].y + 20)
+                    .attr("x2", positions[to].x)
+                    .attr("y2", positions[to].y - 20)
+                    .attr("stroke", "#d1d5db")
+                    .attr("stroke-width", 2);
+            });
+            
+            // Draw nodes
+            [3, 9, 20, 15, 7].forEach(val => {
+                const pos = positions[val];
+                
+                let fill = "#667eea";
+                let stroke = "none";
+                let strokeWidth = 0;
+                
+                if (data.current === val) {
+                    fill = "#f59e0b";
+                    stroke = "#d97706";
+                    strokeWidth = 3;
+                } else if (data.visited && data.visited.includes(val)) {
+                    if (data.depths && data.depths[val] !== undefined) {
+                        fill = "#4ade80";
+                    } else {
+                        fill = "#06b6d4";
+                    }
+                }
+                
+                svg.append("circle")
+                    .attr("cx", pos.x)
+                    .attr("cy", pos.y)
+                    .attr("r", 25)
+                    .attr("fill", fill)
+                    .attr("stroke", stroke)
+                    .attr("stroke-width", strokeWidth);
+                
+                svg.append("text")
+                    .attr("x", pos.x)
+                    .attr("y", pos.y + 6)
+                    .attr("text-anchor", "middle")
+                    .attr("fill", "white")
+                    .attr("font-weight", "bold")
+                    .attr("font-size", "18px")
+                    .text(val);
+                
+                // Show depth annotation
+                if (data.depths && data.depths[val] !== undefined) {
+                    svg.append("text")
+                        .attr("x", pos.x + 35)
+                        .attr("y", pos.y + 6)
+                        .attr("fill", "#16a34a")
+                        .attr("font-weight", "bold")
+                        .attr("font-size", "14px")
+                        .text(`d=${data.depths[val]}`);
+                }
+            });
+            
+            // Draw depth levels
+            svg.append("text")
+                .attr("x", 80)
+                .attr("y", positions[3].y + 6)
+                .attr("fill", "#9ca3af")
+                .text("Level 1");
+            
+            svg.append("text")
+                .attr("x", 80)
+                .attr("y", positions[9].y + 6)
+                .attr("fill", "#9ca3af")
+                .text("Level 2");
+            
+            svg.append("text")
+                .attr("x", 80)
+                .attr("y", positions[15].y + 6)
+                .attr("fill", "#9ca3af")
+                .text("Level 3");
+            
+            // Draw call stack
+            svg.append("text")
+                .attr("x", 650)
+                .attr("y", 50)
+                .attr("class", "label")
+                .text("Call Stack:");
+            
+            if (data.callStack && data.callStack.length > 0) {
+                data.callStack.forEach((call, i) => {
+                    const y = 80 + i * 30;
+                    
+                    svg.append("rect")
+                        .attr("x", 620)
+                        .attr("y", y - 18)
+                        .attr("width", 180)
+                        .attr("height", 25)
+                        .attr("rx", 4)
+                        .attr("fill", i === data.callStack.length - 1 ? "#fef3c7" : "#f3f4f6")
+                        .attr("stroke", i === data.callStack.length - 1 ? "#f59e0b" : "#d1d5db");
+                    
+                    svg.append("text")
+                        .attr("x", 710)
+                        .attr("y", y)
+                        .attr("text-anchor", "middle")
+                        .attr("fill", "#4b5563")
+                        .attr("font-family", "monospace")
+                        .attr("font-size", "12px")
+                        .text(call);
+                });
+            } else {
+                svg.append("text")
+                    .attr("x", 710)
+                    .attr("y", 80)
+                    .attr("text-anchor", "middle")
+                    .attr("fill", "#9ca3af")
+                    .text("(empty)");
+            }
+            
+            // Show return value
+            if (data.returnValue !== undefined) {
+                svg.append("rect")
+                    .attr("x", 620)
+                    .attr("y", 220)
+                    .attr("width", 180)
+                    .attr("height", 40)
+                    .attr("rx", 8)
+                    .attr("fill", "#dcfce7")
+                    .attr("stroke", "#4ade80")
+                    .attr("stroke-width", 2);
+                
+                svg.append("text")
+                    .attr("x", 710)
+                    .attr("y", 245)
+                    .attr("text-anchor", "middle")
+                    .attr("fill", "#16a34a")
+                    .attr("font-weight", "bold")
+                    .text(`Return: ${data.returnValue}`);
+            }
+            
+            // Show calculation
+            if (data.calculation) {
+                svg.append("rect")
+                    .attr("x", 620)
+                    .attr("y", 280)
+                    .attr("width", 180)
+                    .attr("height", 40)
+                    .attr("rx", 8)
+                    .attr("fill", "#fef3c7")
+                    .attr("stroke", "#f59e0b")
+                    .attr("stroke-width", 2);
+                
+                svg.append("text")
+                    .attr("x", 710)
+                    .attr("y", 305)
+                    .attr("text-anchor", "middle")
+                    .attr("fill", "#d97706")
+                    .attr("font-weight", "bold")
+                    .attr("font-size", "12px")
+                    .text(data.calculation);
+            }
+            
+            // Legend
+            const legendY = 400;
+            
+            svg.append("circle").attr("cx", 100).attr("cy", legendY).attr("r", 12).attr("fill", "#667eea");
+            svg.append("text").attr("x", 120).attr("y", legendY + 5).attr("fill", "#4b5563").text("Unvisited");
+            
+            svg.append("circle").attr("cx", 230).attr("cy", legendY).attr("r", 12).attr("fill", "#f59e0b");
+            svg.append("text").attr("x", 250).attr("y", legendY + 5).attr("fill", "#4b5563").text("Current");
+            
+            svg.append("circle").attr("cx", 350).attr("cy", legendY).attr("r", 12).attr("fill", "#06b6d4");
+            svg.append("text").attr("x", 370).attr("y", legendY + 5).attr("fill", "#4b5563").text("Visiting");
+            
+            svg.append("circle").attr("cx", 470).attr("cy", legendY).attr("r", 12).attr("fill", "#4ade80");
+            svg.append("text").attr("x", 490).attr("y", legendY + 5).attr("fill", "#4b5563").text("Completed");
+            
+            // Update status
+            document.getElementById("statusMessage").textContent = data.message;
+            
+            // Update variables
+            const depthsStr = Object.entries(data.depths || {}).map(([k, v]) => `${k}:${v}`).join(', ');
+            document.getElementById("varDisplay").innerHTML = `
+                <span class="var-item">Current: ${data.current || 'None'}</span>
+                <span class="var-item">Stack Depth: ${data.callStack ? data.callStack.length : 0}</span>
+                <span class="var-item">Node Depths: {${depthsStr}}</span>
+            `;
+        }
+        
+        function doStep() {
+            if (step >= steps.length) {
+                stopAuto();
+                return;
+            }
+            draw(steps[step]);
+            step++;
+        }
+        
+        function stopAuto() {
+            autoRunning = false;
+            if (autoInterval) {
+                clearInterval(autoInterval);
+                autoInterval = null;
+            }
+            document.getElementById("autoBtn").textContent = "Auto Run";
+        }
+        
+        function toggleAuto() {
+            if (autoRunning) {
+                stopAuto();
+            } else {
+                autoRunning = true;
+                document.getElementById("autoBtn").textContent = "Pause";
+                const speed = 11 - document.getElementById("speedSlider").value;
+                autoInterval = setInterval(() => {
+                    if (step >= steps.length) {
+                        stopAuto();
+                        return;
+                    }
+                    doStep();
+                }, speed * 200);
+            }
+        }
+        
+        function reset() {
+            stopAuto();
+            step = 0;
+            draw(steps[0]);
+        }
+        
+        // Initialize
+        generateSteps();
+        draw(steps[0]);
+        
+        // Event listeners
+        document.getElementById("stepBtn").addEventListener("click", doStep);
+        document.getElementById("autoBtn").addEventListener("click", toggleAuto);
+        document.getElementById("resetBtn").addEventListener("click", reset);
+    </script>
+</body>
+</html>

@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>First Missing Positive - LeetCode 41</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="problem-info">
+            <h1><span class="problem-number">#41</span> First Missing Positive</h1>
+            <p>Find the smallest missing positive integer in O(n) time and O(1) space.</p>
+            <div class="problem-meta">
+                <span class="meta-tag">Array</span>
+                <span class="meta-tag">Hash Table</span>
+                <span class="meta-tag">Hard</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <code>python/0041_first_missing_positive/0041_first_missing_positive.py</code>
+            </div>
+
+        </div>
+
+        <div class="explanation-panel">
+            <h4>🧠 How It Works (Layman's Terms)</h4>
+            <p>This algorithm solves the problem <strong>step by step</strong>:</p>
+            <ul>
+                <li><strong>Understand:</strong> Parse the input data</li>
+                <li><strong>Process:</strong> Apply the core logic</li>
+                <li><strong>Optimize:</strong> Use efficient data structures</li>
+                <li><strong>Return:</strong> Output the computed result</li>
+            </ul>
+        </div>
+
+
+        <div class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+            <div class="controls">
+                <button id="stepBtn">Step</button>
+                <button id="autoBtn">Auto Run</button>
+                <button id="resetBtn">Reset</button>
+            </div>
+            <svg id="mainSvg" width="800" height="380"></svg>
+            <div class="status-message" id="status">Click "Step" to find first missing positive</div>
+        </div>
+
+        <div class="code-section">
+            <h3>Python Solution (Cyclic Sort)</h3>
+            <div class="code-block">
+                <pre><span class="keyword">def</span> <span class="function">firstMissingPositive</span>(nums):
+    n = <span class="function">len</span>(nums)
+    i = <span class="number">0</span>
+    
+    <span class="comment"># Place each number in its correct position</span>
+    <span class="comment"># nums[i] should be at index nums[i] - 1</span>
+    <span class="keyword">while</span> i < n:
+        correct = nums[i] - <span class="number">1</span>
+        <span class="keyword">if</span> <span class="number">0</span> < nums[i] <= n <span class="keyword">and</span> nums[i] != nums[correct]:
+            nums[i], nums[correct] = nums[correct], nums[i]
+        <span class="keyword">else</span>:
+            i += <span class="number">1</span>
+    
+    <span class="comment"># Find first position where nums[i] != i + 1</span>
+    <span class="keyword">for</span> i <span class="keyword">in</span> <span class="function">range</span>(n):
+        <span class="keyword">if</span> nums[i] != i + <span class="number">1</span>:
+            <span class="keyword">return</span> i + <span class="number">1</span>
+    
+    <span class="keyword">return</span> n + <span class="number">1</span></pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const originalNums = [3, 4, -1, 1];
+        let nums = [...originalNums];
+        
+        let phase = 'cyclic_sort';
+        let i = 0;
+        let result = null;
+        
+        const width = 800, height = 380;
+        const svg = d3.select("#mainSvg");
+        let autoTimer = null;
+        let autoRunning = false;
+
+        function draw() {
+            svg.selectAll("*").remove();
+
+            const cellWidth = 80, startX = 150, startY = 80;
+            const n = nums.length;
+
+            // Title
+            svg.append("text")
+                .attr("x", width / 2).attr("y", 30)
+                .attr("text-anchor", "middle")
+                .attr("font-weight", "bold")
+                .text(`Finding First Missing Positive in [${originalNums.join(", ")}]`);
+
+            // Expected positions header
+            svg.append("text")
+                .attr("x", 50).attr("y", startY + 20)
+                .attr("font-size", "12px")
+                .attr("fill", "#666")
+                .text("Expected:");
+
+            for (let idx = 0; idx < n; idx++) {
+                const x = startX + idx * cellWidth;
+                svg.append("text")
+                    .attr("x", x + (cellWidth - 5) / 2)
+                    .attr("y", startY + 20)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "14px")
+                    .attr("fill", "#999")
+                    .text(idx + 1);
+            }
+
+            // Draw array
+            svg.append("text")
+                .attr("x", 50).attr("y", startY + 65)
+                .attr("font-size", "12px")
+                .attr("fill", "#666")
+                .text("Array:");
+
+            nums.forEach((num, idx) => {
+                const x = startX + idx * cellWidth;
+                let fill = "#e3f2fd", stroke = "#1976d2";
+
+                // Check if in correct position
+                const isCorrect = num === idx + 1;
+                
+                if (phase === 'cyclic_sort' && idx === i) {
+                    fill = "#fef3c7"; stroke = "#f59e0b";
+                } else if (phase === 'cyclic_sort' && num > 0 && num <= n && idx === num - 1) {
+                    fill = "#e8f5e9"; stroke = "#4caf50";
+                } else if (phase === 'find_missing' && idx === i) {
+                    fill = "#fce4ec"; stroke = "#e91e63";
+                } else if (isCorrect) {
+                    fill = "#c8e6c9"; stroke = "#66bb6a";
+                } else if (num <= 0 || num > n) {
+                    fill = "#ffccbc"; stroke = "#ff7043";
+                }
+
+                svg.append("rect")
+                    .attr("x", x).attr("y", startY + 40)
+                    .attr("width", cellWidth - 5).attr("height", 55)
+                    .attr("rx", 8)
+                    .attr("fill", fill).attr("stroke", stroke)
+                    .attr("stroke-width", 2);
+
+                svg.append("text")
+                    .attr("x", x + (cellWidth - 5) / 2)
+                    .attr("y", startY + 75)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "22px")
+                    .attr("font-weight", "bold")
+                    .text(num);
+
+                // Index
+                svg.append("text")
+                    .attr("x", x + (cellWidth - 5) / 2)
+                    .attr("y", startY + 110)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "11px")
+                    .attr("fill", "#666")
+                    .text(`[${idx}]`);
+            });
+
+            // Current pointer
+            if (i < n && phase !== 'done') {
+                svg.append("text")
+                    .attr("x", startX + i * cellWidth + (cellWidth - 5) / 2)
+                    .attr("y", startY + 25)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "12px")
+                    .attr("fill", "#f59e0b")
+                    .text("▼ i");
+            }
+
+            // Phase indicator
+            const phaseY = 220;
+            const phases = [
+                { name: "Cyclic Sort", active: phase === 'cyclic_sort' },
+                { name: "Find Missing", active: phase === 'find_missing' }
+            ];
+
+            phases.forEach((p, idx) => {
+                svg.append("rect")
+                    .attr("x", 150 + idx * 200).attr("y", phaseY)
+                    .attr("width", 150).attr("height", 40)
+                    .attr("rx", 8)
+                    .attr("fill", p.active ? "#e8f5e9" : "#f5f5f5")
+                    .attr("stroke", p.active ? "#4caf50" : "#ddd");
+
+                svg.append("text")
+                    .attr("x", 225 + idx * 200).attr("y", phaseY + 26)
+                    .attr("text-anchor", "middle")
+                    .attr("font-weight", p.active ? "bold" : "normal")
+                    .text(p.name);
+            });
+
+            // Legend
+            const legendY = 280;
+            const legend = [
+                { color: "#c8e6c9", text: "Correct position" },
+                { color: "#ffccbc", text: "Invalid (≤0 or >n)" },
+                { color: "#fef3c7", text: "Current" }
+            ];
+
+            legend.forEach((item, idx) => {
+                svg.append("rect")
+                    .attr("x", 100 + idx * 200).attr("y", legendY)
+                    .attr("width", 18).attr("height", 18)
+                    .attr("fill", item.color).attr("stroke", "#999");
+
+                svg.append("text")
+                    .attr("x", 125 + idx * 200).attr("y", legendY + 14)
+                    .attr("font-size", "12px")
+                    .text(item.text);
+            });
+
+            // Result
+            if (phase === 'done' && result !== null) {
+                svg.append("rect")
+                    .attr("x", width / 2 - 120).attr("y", 320)
+                    .attr("width", 240).attr("height", 45)
+                    .attr("rx", 10)
+                    .attr("fill", "#d1fae5").attr("stroke", "#10b981")
+                    .attr("stroke-width", 2);
+
+                svg.append("text")
+                    .attr("x", width / 2).attr("y", 350)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "20px")
+                    .attr("font-weight", "bold")
+                    .attr("fill", "#10b981")
+                    .text(`First Missing Positive: ${result}`);
+            }
+        }
+
+        function step() {
+            if (phase === 'done') return false;
+
+            const n = nums.length;
+
+            if (phase === 'cyclic_sort') {
+                if (i >= n) {
+                    phase = 'find_missing';
+                    i = 0;
+                    document.getElementById("status").textContent = 
+                        "Cyclic sort complete. Now finding first missing...";
+                } else {
+                    const num = nums[i];
+                    const correct = num - 1;
+
+                    if (num > 0 && num <= n && nums[i] !== nums[correct]) {
+                        // Swap
+                        [nums[i], nums[correct]] = [nums[correct], nums[i]];
+                        document.getElementById("status").textContent = 
+                            `Swapped ${num} to its correct position [${correct}]`;
+                    } else {
+                        document.getElementById("status").textContent = 
+                            num <= 0 || num > n 
+                                ? `${num} is out of range [1, ${n}], skip`
+                                : `${num} is already in correct position, move on`;
+                        i++;
+                    }
+                }
+            } else if (phase === 'find_missing') {
+                if (i >= n) {
+                    result = n + 1;
+                    phase = 'done';
+                    document.getElementById("status").textContent = 
+                        `All positions filled correctly. Answer is ${result}`;
+                } else if (nums[i] !== i + 1) {
+                    result = i + 1;
+                    phase = 'done';
+                    document.getElementById("status").textContent = 
+                        `Position ${i} should have ${i + 1} but has ${nums[i]}. Answer is ${result}`;
+                } else {
+                    document.getElementById("status").textContent = 
+                        `Position ${i} has correct value ${nums[i]}, continue...`;
+                    i++;
+                }
+            }
+
+            draw();
+            return phase !== 'done';
+        }
+
+        function reset() {
+            nums = [...originalNums];
+            phase = 'cyclic_sort';
+            i = 0;
+            result = null;
+            if (autoTimer) clearInterval(autoTimer);
+            autoRunning = false;
+            document.getElementById("autoBtn").textContent = "Auto Run";
+            document.getElementById("status").textContent = 'Click "Step" to find first missing positive';
+            draw();
+        }
+
+        function autoRun() {
+            if (autoRunning) {
+                clearInterval(autoTimer);
+                autoRunning = false;
+                document.getElementById("autoBtn").textContent = "Auto Run";
+            } else {
+                autoRunning = true;
+                document.getElementById("autoBtn").textContent = "Pause";
+                autoTimer = setInterval(() => {
+                    if (!step()) {
+                        clearInterval(autoTimer);
+                        autoRunning = false;
+                        document.getElementById("autoBtn").textContent = "Auto Run";
+                    }
+                }, 700);
+            }
+        }
+
+        document.getElementById("stepBtn").addEventListener("click", step);
+        document.getElementById("autoBtn").addEventListener("click", autoRun);
+        document.getElementById("resetBtn").addEventListener("click", reset);
+
+        reset();
+    </script>
+</body>
+</html>

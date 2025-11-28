@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LC 200: Number of Islands - Algorithm Visualization</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="problem-info">
+            <h1><span class="problem-number">#200</span> Number of Islands</h1>
+            <p>Given a 2D grid of '1's (land) and '0's (water), count the number of islands. An island is formed by connecting adjacent lands horizontally or vertically.</p>
+            <div class="problem-meta">
+                <span class="meta-tag">📊 Graph</span>
+                <span class="meta-tag">🔍 DFS/BFS</span>
+                <span class="meta-tag">📦 Matrix</span>
+                <span class="meta-tag">⏱️ O(m×n)</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <code>python/0200_number_of_islands/0200_number_of_islands.py</code>
+            </div>
+            </div>
+
+        <div class="explanation-panel">
+            <h4>🧠 How It Works (Layman's Terms)</h4>
+            <p>Imagine you're flying over an ocean with scattered islands:</p>
+            <ul>
+                <li><strong>Scan the map:</strong> Go through each cell from top-left to bottom-right</li>
+                <li><strong>Found land?:</strong> This is a new island! Increment counter</li>
+                <li><strong>Explore:</strong> Use DFS to visit all connected land cells (mark them as visited)</li>
+                <li><strong>Why mark visited?:</strong> So we don't count the same island twice</li>
+                <li><strong>Result:</strong> Number of times we found "new land" = number of islands</li>
+            </ul>
+        </div>
+
+
+        <div class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+            
+            <div class="controls">
+                <button class="btn btn-primary" id="stepBtn" onclick="step()">Step</button>
+                <button class="btn btn-success" id="autoBtn" onclick="toggleAuto()">Auto Run</button>
+                <button class="btn btn-warning" onclick="reset()">Reset</button>
+            </div>
+
+            <div class="status-message" id="statusMessage">
+                Click "Step" or "Auto Run" to start visualization
+            </div>
+
+            <div class="variable-display">
+                <div class="variable-box">
+                    <div class="variable-name">Current Cell</div>
+                    <div class="variable-value" id="currentCell">-</div>
+                </div>
+                <div class="variable-box">
+                    <div class="variable-name">Island Count</div>
+                    <div class="variable-value" id="islandCount" style="color: #4caf50;">0</div>
+                </div>
+                <div class="variable-box">
+                    <div class="variable-name">Phase</div>
+                    <div class="variable-value" id="phaseVal">Scanning</div>
+                </div>
+            </div>
+
+            <div class="array-section">
+                <div class="array-label">🗺️ Grid (Green = Land, Blue = Water, Gray = Visited):</div>
+                <div id="gridContainer" class="matrix-container"></div>
+            </div>
+
+            <div style="margin-top: 20px; display: flex; gap: 20px; flex-wrap: wrap;">
+                <div><span style="display: inline-block; width: 20px; height: 20px; background: #a5d6a7; border: 1px solid #66bb6a;"></span> Land (unvisited)</div>
+                <div><span style="display: inline-block; width: 20px; height: 20px; background: #bbdefb; border: 1px solid #64b5f6;"></span> Water</div>
+                <div><span style="display: inline-block; width: 20px; height: 20px; background: #9e9e9e; border: 1px solid #757575;"></span> Visited</div>
+                <div><span style="display: inline-block; width: 20px; height: 20px; background: #ffcc80; border: 2px solid #ff9800;"></span> Current</div>
+            </div>
+        </div>
+
+        <div class="code-section">
+            <h3>💻 Python Solution (DFS)</h3>
+            <div class="code-block">
+                <pre><span class="keyword">def</span> <span class="function">num_islands</span>(self, grid: List[List[<span class="class-name">str</span>]]) -> <span class="class-name">int</span>:
+    <span class="keyword">if not</span> grid: <span class="keyword">return</span> <span class="number">0</span>
+    
+    island_count = <span class="number">0</span>
+    <span class="keyword">for</span> i <span class="keyword">in</span> <span class="function">range</span>(<span class="function">len</span>(grid)):
+        <span class="keyword">for</span> j <span class="keyword">in</span> <span class="function">range</span>(<span class="function">len</span>(grid[<span class="number">0</span>])):
+            <span class="keyword">if</span> grid[i][j] == <span class="string">'1'</span>:
+                island_count += <span class="number">1</span>
+                self.<span class="function">dfs</span>(i, j, grid)  <span class="comment"># Mark entire island</span>
+    <span class="keyword">return</span> island_count
+
+<span class="keyword">def</span> <span class="function">dfs</span>(self, row, col, grid):
+    <span class="keyword">if</span> row < <span class="number">0</span> <span class="keyword">or</span> col < <span class="number">0</span> <span class="keyword">or</span> row >= <span class="function">len</span>(grid) <span class="keyword">or</span> col >= <span class="function">len</span>(grid[<span class="number">0</span>]):
+        <span class="keyword">return</span>
+    <span class="keyword">if</span> grid[row][col] == <span class="string">'0'</span>: <span class="keyword">return</span>
+    
+    grid[row][col] = <span class="string">'0'</span>  <span class="comment"># Mark as visited</span>
+    self.<span class="function">dfs</span>(row + <span class="number">1</span>, col, grid)  <span class="comment"># Down</span>
+    self.<span class="function">dfs</span>(row - <span class="number">1</span>, col, grid)  <span class="comment"># Up</span>
+    self.<span class="function">dfs</span>(row, col + <span class="number">1</span>, grid)  <span class="comment"># Right</span>
+    self.<span class="function">dfs</span>(row, col - <span class="number">1</span>, grid)  <span class="comment"># Left</span></pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const originalGrid = [
+            ['1', '1', '0', '0', '0'],
+            ['1', '1', '0', '0', '0'],
+            ['0', '0', '1', '0', '0'],
+            ['0', '0', '0', '1', '1']
+        ];
+        
+        let grid = JSON.parse(JSON.stringify(originalGrid));
+        let visited = grid.map(row => row.map(() => false));
+        let islandCount = 0;
+        let scanRow = 0, scanCol = 0;
+        let dfsStack = [];
+        let phase = 'scan'; // 'scan' or 'dfs'
+        let currentIslandColor = 0;
+        let autoInterval = null;
+
+        const islandColors = ['#ef9a9a', '#ce93d8', '#90caf9', '#80cbc4', '#fff59d'];
+
+        function init() {
+            renderGrid();
+        }
+
+        function renderGrid() {
+            const container = document.getElementById('gridContainer');
+            container.innerHTML = '';
+            
+            for (let i = 0; i < grid.length; i++) {
+                const rowDiv = document.createElement('div');
+                rowDiv.className = 'matrix-row';
+                
+                for (let j = 0; j < grid[0].length; j++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'matrix-cell';
+                    cell.id = `cell-${i}-${j}`;
+                    
+                    if (visited[i][j]) {
+                        // Visited land - show with island color
+                        cell.style.background = '#9e9e9e';
+                        cell.style.borderColor = '#757575';
+                        cell.textContent = '✓';
+                        cell.style.color = 'white';
+                    } else if (grid[i][j] === '1') {
+                        cell.classList.add('land');
+                        cell.textContent = '1';
+                    } else {
+                        cell.classList.add('water');
+                        cell.textContent = '0';
+                    }
+                    
+                    // Highlight current cell
+                    if (phase === 'scan' && i === scanRow && j === scanCol) {
+                        cell.style.background = '#ffcc80';
+                        cell.style.borderColor = '#ff9800';
+                        cell.style.borderWidth = '2px';
+                    }
+                    
+                    // Highlight DFS stack
+                    if (phase === 'dfs' && dfsStack.some(([r, c]) => r === i && c === j)) {
+                        cell.style.background = '#ffcc80';
+                        cell.style.borderColor = '#ff9800';
+                        cell.style.borderWidth = '2px';
+                    }
+                    
+                    rowDiv.appendChild(cell);
+                }
+                container.appendChild(rowDiv);
+            }
+        }
+
+        function step() {
+            if (phase === 'scan') {
+                // Scanning phase
+                if (scanRow >= grid.length) {
+                    // Done!
+                    document.getElementById('statusMessage').className = 'status-message success';
+                    document.getElementById('statusMessage').textContent = 
+                        `✅ Done! Found ${islandCount} island(s).`;
+                    document.getElementById('stepBtn').disabled = true;
+                    stopAuto();
+                    return;
+                }
+
+                document.getElementById('currentCell').textContent = `(${scanRow}, ${scanCol})`;
+                
+                if (grid[scanRow][scanCol] === '1' && !visited[scanRow][scanCol]) {
+                    // Found new island!
+                    islandCount++;
+                    document.getElementById('islandCount').textContent = islandCount;
+                    document.getElementById('statusMessage').textContent = 
+                        `🏝️ Found new land at (${scanRow}, ${scanCol})! Island #${islandCount}. Starting DFS...`;
+                    
+                    phase = 'dfs';
+                    dfsStack = [[scanRow, scanCol]];
+                    document.getElementById('phaseVal').textContent = 'DFS';
+                } else {
+                    const cellType = grid[scanRow][scanCol] === '0' ? 'water' : 'visited';
+                    document.getElementById('statusMessage').textContent = 
+                        `Scanning (${scanRow}, ${scanCol}): ${cellType}. Moving on...`;
+                    
+                    // Move to next cell
+                    scanCol++;
+                    if (scanCol >= grid[0].length) {
+                        scanCol = 0;
+                        scanRow++;
+                    }
+                }
+            } else if (phase === 'dfs') {
+                // DFS phase
+                if (dfsStack.length === 0) {
+                    // DFS complete, resume scanning
+                    phase = 'scan';
+                    document.getElementById('phaseVal').textContent = 'Scanning';
+                    document.getElementById('statusMessage').textContent = 
+                        `Island #${islandCount} fully explored. Resuming scan...`;
+                    
+                    // Move to next cell
+                    scanCol++;
+                    if (scanCol >= grid[0].length) {
+                        scanCol = 0;
+                        scanRow++;
+                    }
+                    renderGrid();
+                    return;
+                }
+
+                const [row, col] = dfsStack.pop();
+                
+                // Check bounds and if already visited or water
+                if (row < 0 || col < 0 || row >= grid.length || col >= grid[0].length ||
+                    visited[row][col] || grid[row][col] === '0') {
+                    document.getElementById('statusMessage').textContent = 
+                        `(${row}, ${col}): Out of bounds, water, or visited. Skip.`;
+                    renderGrid();
+                    return;
+                }
+
+                // Mark as visited
+                visited[row][col] = true;
+                document.getElementById('currentCell').textContent = `(${row}, ${col})`;
+                document.getElementById('statusMessage').textContent = 
+                    `Visiting (${row}, ${col}), marking as visited. Adding neighbors to stack...`;
+
+                // Add neighbors to stack (up, down, left, right)
+                dfsStack.push([row - 1, col]); // up
+                dfsStack.push([row + 1, col]); // down
+                dfsStack.push([row, col - 1]); // left
+                dfsStack.push([row, col + 1]); // right
+            }
+
+            renderGrid();
+        }
+
+        function toggleAuto() {
+            if (autoInterval) {
+                stopAuto();
+            } else {
+                document.getElementById('autoBtn').textContent = 'Pause';
+                autoInterval = setInterval(() => {
+                    if (scanRow >= grid.length && phase === 'scan') {
+                        step();
+                        stopAuto();
+                    } else {
+                        step();
+                    }
+                }, 400);
+            }
+        }
+
+        function stopAuto() {
+            if (autoInterval) {
+                clearInterval(autoInterval);
+                autoInterval = null;
+            }
+            document.getElementById('autoBtn').textContent = 'Auto Run';
+        }
+
+        function reset() {
+            stopAuto();
+            grid = JSON.parse(JSON.stringify(originalGrid));
+            visited = grid.map(row => row.map(() => false));
+            islandCount = 0;
+            scanRow = 0;
+            scanCol = 0;
+            dfsStack = [];
+            phase = 'scan';
+            document.getElementById('stepBtn').disabled = false;
+            document.getElementById('statusMessage').className = 'status-message';
+            document.getElementById('statusMessage').textContent = 'Click "Step" or "Auto Run" to start visualization';
+            document.getElementById('currentCell').textContent = '-';
+            document.getElementById('islandCount').textContent = '0';
+            document.getElementById('phaseVal').textContent = 'Scanning';
+            init();
+        }
+
+        init();
+    </script>
+</body>
+</html>

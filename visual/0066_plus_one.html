@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>066 - Plus One</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="problem-info">
+            <h1><span class="problem-number">#066</span> Plus One</h1>
+            <p>
+                Given a large integer represented as an integer array digits, increment one to the integer.
+                Handle carry propagation when digit is 9. May need to prepend 1 for cases like 999 + 1 = 1000.
+            </p>
+            <div class="problem-meta">
+                <span class="meta-tag">🔢 Math</span>
+                <span class="meta-tag">⏱️ O(n)</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <code>python/0066_plus_one/0066_plus_one.py</code>
+            </div>
+
+        </div>
+
+        <div class="explanation-panel">
+            <h4>🧠 How It Works (Layman's Terms)</h4>
+            <p>This algorithm solves the problem <strong>step by step</strong>:</p>
+            <ul>
+                <li><strong>Understand:</strong> Parse the input data</li>
+                <li><strong>Process:</strong> Apply the core logic</li>
+                <li><strong>Optimize:</strong> Use efficient data structures</li>
+                <li><strong>Return:</strong> Output the computed result</li>
+            </ul>
+        </div>
+
+
+        <section class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+            <div class="controls">
+                <button id="autoRunBtn" class="btn">▶ Auto Run</button>
+                <button id="stepBtn" class="btn btn-success">Step</button>
+                <button id="resetBtn" class="btn btn-danger">Reset</button>
+                <select id="exampleSelect" style="margin-left: 15px; padding: 8px;">
+                    <option value="129">Example: [1, 2, 9]</option>
+                    <option value="999">Example: [9, 9, 9]</option>
+                    <option value="123">Example: [1, 2, 3]</option>
+                </select>
+            </div>
+            <div class="status" id="status">Add 1 to the number</div>
+            <svg id="visualization"></svg>
+        </section>
+
+        <section class="code-section">
+            <h3>💻 Python Solution</h3>
+            <div class="code-block">
+                <pre><span class="keyword">def</span> <span class="function">plusOne</span>(digits):
+    <span class="keyword">for</span> i <span class="keyword">in</span> <span class="function">range</span>(<span class="function">len</span>(digits) - <span class="number">1</span>, <span class="number">-1</span>, <span class="number">-1</span>):
+        <span class="keyword">if</span> digits[i] < <span class="number">9</span>:
+            digits[i] += <span class="number">1</span>
+            <span class="keyword">return</span> digits
+        digits[i] = <span class="number">0</span>
+    
+    <span class="comment"># All digits were 9</span>
+    <span class="keyword">return</span> [<span class="number">1</span>] + digits</pre>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        const width = 900;
+        const height = 450;
+
+        const svg = d3.select("#visualization")
+            .attr("width", width)
+            .attr("height", height);
+
+        let originalDigits = [1, 2, 9];
+        let digits;
+        let currentIdx;
+        let phase = "init";
+        let animationTimer = null;
+        let carry = 1;
+
+        document.getElementById("exampleSelect").addEventListener("change", (e) => {
+            originalDigits = e.target.value.split('').map(Number);
+            reset();
+        });
+
+        function reset() {
+            digits = [...originalDigits];
+            currentIdx = digits.length - 1;
+            phase = "init";
+            carry = 1;
+            
+            if (animationTimer) clearInterval(animationTimer);
+            animationTimer = null;
+            document.getElementById("autoRunBtn").textContent = "▶ Auto Run";
+            document.getElementById("status").textContent = `Add 1 to [${originalDigits.join(', ')}]`;
+            render();
+        }
+
+        function render() {
+            svg.selectAll("*").remove();
+
+            const cellWidth = 70;
+            const startX = 100;
+            const arrayY = 100;
+
+            // Title
+            svg.append("text")
+                .attr("x", 30)
+                .attr("y", 40)
+                .attr("font-size", "14px")
+                .attr("font-weight", "bold")
+                .attr("fill", "#1e293b")
+                .text(`Plus One: [${originalDigits.join(', ')}] + 1`);
+
+            // Draw current digits
+            svg.append("text")
+                .attr("x", 30)
+                .attr("y", arrayY + 30)
+                .attr("font-size", "13px")
+                .attr("fill", "#64748b")
+                .text("digits:");
+
+            digits.forEach((digit, idx) => {
+                const x = startX + idx * cellWidth;
+                const isCurrent = idx === currentIdx && phase !== "done";
+                const isModified = idx > currentIdx || (idx === currentIdx && phase === "done");
+
+                svg.append("rect")
+                    .attr("x", x)
+                    .attr("y", arrayY)
+                    .attr("width", cellWidth - 10)
+                    .attr("height", 55)
+                    .attr("rx", 8)
+                    .attr("fill", () => {
+                        if (isCurrent) return "#fef3c7";
+                        if (isModified) return "#d1fae5";
+                        return "#f8fafc";
+                    })
+                    .attr("stroke", () => {
+                        if (isCurrent) return "#f59e0b";
+                        if (isModified) return "#10b981";
+                        return "#94a3b8";
+                    })
+                    .attr("stroke-width", isCurrent ? 3 : 2);
+
+                svg.append("text")
+                    .attr("x", x + (cellWidth - 10) / 2)
+                    .attr("y", arrayY + 38)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "24px")
+                    .attr("font-weight", "bold")
+                    .attr("fill", "#1e293b")
+                    .text(digit);
+
+                // Index label
+                svg.append("text")
+                    .attr("x", x + (cellWidth - 10) / 2)
+                    .attr("y", arrayY + 75)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "11px")
+                    .attr("fill", "#64748b")
+                    .text(`[${idx}]`);
+
+                // Current pointer
+                if (isCurrent) {
+                    svg.append("text")
+                        .attr("x", x + (cellWidth - 10) / 2)
+                        .attr("y", arrayY - 15)
+                        .attr("text-anchor", "middle")
+                        .attr("font-size", "12px")
+                        .attr("font-weight", "bold")
+                        .attr("fill", "#f59e0b")
+                        .text("▼ checking");
+                }
+            });
+
+            // Carry indicator
+            if (carry && phase !== "done") {
+                svg.append("rect")
+                    .attr("x", startX + digits.length * cellWidth + 20)
+                    .attr("y", arrayY)
+                    .attr("width", 80)
+                    .attr("height", 55)
+                    .attr("rx", 8)
+                    .attr("fill", "#fce7f3")
+                    .attr("stroke", "#ec4899");
+
+                svg.append("text")
+                    .attr("x", startX + digits.length * cellWidth + 60)
+                    .attr("y", arrayY + 25)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "12px")
+                    .attr("fill", "#ec4899")
+                    .text("carry");
+
+                svg.append("text")
+                    .attr("x", startX + digits.length * cellWidth + 60)
+                    .attr("y", arrayY + 45)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "20px")
+                    .attr("font-weight", "bold")
+                    .attr("fill", "#1e293b")
+                    .text("+1");
+            }
+
+            // Algorithm explanation
+            const algoY = 230;
+            svg.append("text")
+                .attr("x", 30)
+                .attr("y", algoY)
+                .attr("font-size", "13px")
+                .attr("font-weight", "bold")
+                .attr("fill", "#1e293b")
+                .text("Algorithm:");
+
+            const steps = [
+                "1. Start from rightmost digit",
+                "2. If digit < 9: add 1 and return",
+                "3. If digit = 9: set to 0, carry to left",
+                "4. If all 9s: prepend 1 (e.g., 999 → 1000)"
+            ];
+
+            steps.forEach((step, i) => {
+                svg.append("text")
+                    .attr("x", 30)
+                    .attr("y", algoY + 25 + i * 22)
+                    .attr("font-size", "12px")
+                    .attr("fill", "#64748b")
+                    .text(step);
+            });
+
+            // Result
+            if (phase === "done") {
+                svg.append("rect")
+                    .attr("x", 30)
+                    .attr("y", 360)
+                    .attr("width", 450)
+                    .attr("height", 55)
+                    .attr("rx", 10)
+                    .attr("fill", "#d1fae5")
+                    .attr("stroke", "#10b981")
+                    .attr("stroke-width", 2);
+
+                svg.append("text")
+                    .attr("x", 255)
+                    .attr("y", 395)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "18px")
+                    .attr("font-weight", "bold")
+                    .attr("fill", "#10b981")
+                    .text(`✓ [${originalDigits.join(', ')}] + 1 = [${digits.join(', ')}]`);
+            }
+        }
+
+        function step() {
+            if (phase === "done") return;
+
+            if (currentIdx < 0) {
+                // Need to prepend 1
+                digits.unshift(1);
+                phase = "done";
+                document.getElementById("status").textContent = 
+                    `All digits were 9! Prepending 1: [${digits.join(', ')}]`;
+                render();
+                return;
+            }
+
+            if (digits[currentIdx] < 9) {
+                digits[currentIdx]++;
+                carry = 0;
+                phase = "done";
+                document.getElementById("status").textContent = 
+                    `✓ digits[${currentIdx}] = ${digits[currentIdx]-1} + 1 = ${digits[currentIdx]}. Done!`;
+            } else {
+                digits[currentIdx] = 0;
+                document.getElementById("status").textContent = 
+                    `digits[${currentIdx}] = 9, set to 0, carry to left`;
+                currentIdx--;
+            }
+
+            render();
+        }
+
+        function autoRun() {
+            if (animationTimer) {
+                clearInterval(animationTimer);
+                animationTimer = null;
+                document.getElementById("autoRunBtn").textContent = "▶ Auto Run";
+                return;
+            }
+
+            document.getElementById("autoRunBtn").textContent = "⏸ Pause";
+            animationTimer = setInterval(() => {
+                if (phase === "done") {
+                    clearInterval(animationTimer);
+                    animationTimer = null;
+                    document.getElementById("autoRunBtn").textContent = "▶ Auto Run";
+                    return;
+                }
+                step();
+            }, 1000);
+        }
+
+        document.getElementById("autoRunBtn").addEventListener("click", autoRun);
+        document.getElementById("stepBtn").addEventListener("click", step);
+        document.getElementById("resetBtn").addEventListener("click", reset);
+
+        reset();
+    </script>
+</body>
+</html>

@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Counting Bits - LeetCode 338</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="problem-info">
+            <h1><span class="problem-number">#0338</span> Counting Bits</h1>
+            <p><strong>Problem:</strong> Given an integer n, return an array ans of length n + 1 such that for each i (0 ≤ i ≤ n), ans[i] is the number of 1's in the binary representation of i.</p>
+            <p><strong>Pattern:</strong> Dynamic Programming with Bit Manipulation - dp[i] = dp[i >> 1] + (i & 1)</p>
+            <div class="problem-meta">
+                <span class="meta-tag">💻 Bit</span>
+                <span class="meta-tag">⏱️ O(n)</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <code>python/0338_counting_bits/0338_counting_bits.py</code>
+            </div>
+
+        </div>
+
+        <div class="explanation-panel">
+            <h4>🧠 How It Works (Layman's Terms)</h4>
+            <p>Bit manipulation works with <strong>binary representations</strong>:</p>
+            <ul>
+                <li><strong>AND (&):</strong> Both bits must be 1</li>
+                <li><strong>OR (|):</strong> At least one bit is 1</li>
+                <li><strong>XOR (^):</strong> Bits must be different</li>
+                <li><strong>Shift:</strong> Move bits left/right</li>
+            </ul>
+        </div>
+
+
+        <div class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+
+            <div class="visualization">
+            <svg id="mainSvg"></svg>
+        </div>
+
+        <div class="controls">
+            <button id="stepBtn">Step</button>
+            <button id="autoBtn">Auto Run</button>
+            <button id="resetBtn">Reset</button>
+            <div class="speed-control">
+                <label for="speed">Speed:</label>
+                <input type="range" id="speed" min="100" max="2000" value="600">
+            </div>
+        </div>
+
+        <div class="status" id="status">Click "Step" to count bits for each number</div>
+
+        <div class="variables">
+            <div class="var-item">
+                <span class="var-label">Current Number:</span>
+                <span id="currentNum">-</span>
+            </div>
+            <div class="var-item">
+                <span class="var-label">Binary:</span>
+                <span id="binaryDisplay" class="mono">-</span>
+            </div>
+            <div class="var-item">
+                <span class="var-label">Formula:</span>
+                <span id="formulaDisplay">dp[i] = dp[i >> 1] + (i & 1)</span>
+            </div>
+        </div>
+
+        </div>
+
+        <div class="code-section">
+            <h3>💻 Python Solution</h3>
+            <div class="code-block">
+                <pre><span class="keyword">def</span> <span class="function">countBits</span>(n):
+    <span class="string">"""
+    Use DP: number of 1s in i equals
+    number of 1s in i//2 plus the last bit.
+    Time: O(n), Space: O(n)
+    """</span>
+    dp = [<span class="number">0</span>] * (n + <span class="number">1</span>)
+    
+    <span class="keyword">for</span> i <span class="keyword">in</span> <span class="function">range</span>(<span class="number">1</span>, n + <span class="number">1</span>):
+        <span class="comment"># dp[i >> 1] = bits in i//2</span>
+        <span class="comment"># (i & 1) = last bit (0 or 1)</span>
+        dp[i] = dp[i >> <span class="number">1</span>] + (i & <span class="number">1</span>)
+    
+    <span class="keyword">return</span> dp</pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const n = 8;
+        const dp = new Array(n + 1).fill(0);
+        let currentIndex = 0;
+        let autoRunning = false;
+        let autoTimer = null;
+
+        const width = 900;
+        const height = 400;
+        const svg = d3.select("#mainSvg")
+            .attr("width", width)
+            .attr("height", height);
+
+        function toBinary(num, bits = 4) {
+            return num.toString(2).padStart(bits, '0');
+        }
+
+        function draw() {
+            svg.selectAll("*").remove();
+
+            svg.append("text")
+                .attr("x", width / 2)
+                .attr("y", 25)
+                .attr("text-anchor", "middle")
+                .attr("font-weight", "bold")
+                .text(`Counting Bits from 0 to ${n}`);
+
+            // Headers
+            const headers = ["i", "Binary", "i >> 1", "dp[i>>1]", "i & 1", "dp[i]"];
+            const colWidths = [50, 80, 60, 70, 60, 60];
+            let xPos = 80;
+
+            headers.forEach((h, idx) => {
+                svg.append("text")
+                    .attr("x", xPos + colWidths[idx] / 2)
+                    .attr("y", 60)
+                    .attr("text-anchor", "middle")
+                    .attr("font-weight", "bold")
+                    .attr("fill", "#333")
+                    .text(h);
+                xPos += colWidths[idx];
+            });
+
+            // Draw grid
+            for (let i = 0; i <= n; i++) {
+                const y = 80 + i * 35;
+                const isProcessed = i < currentIndex;
+                const isCurrent = i === currentIndex;
+
+                // Row background
+                svg.append("rect")
+                    .attr("x", 70)
+                    .attr("y", y - 15)
+                    .attr("width", 400)
+                    .attr("height", 30)
+                    .attr("rx", 4)
+                    .attr("fill", isCurrent ? "#fff3e0" : isProcessed ? "#e8f5e9" : "#f5f5f5")
+                    .attr("stroke", isCurrent ? "#f57c00" : isProcessed ? "#4caf50" : "#ddd")
+                    .attr("stroke-width", isCurrent ? 2 : 1);
+
+                xPos = 80;
+                const rowData = [
+                    i.toString(),
+                    toBinary(i),
+                    (i >> 1).toString(),
+                    isProcessed || isCurrent ? dp[i >> 1].toString() : "-",
+                    (i & 1).toString(),
+                    isProcessed ? dp[i].toString() : (isCurrent && currentIndex > 0 ? "?" : "-")
+                ];
+
+                rowData.forEach((val, idx) => {
+                    svg.append("text")
+                        .attr("x", xPos + colWidths[idx] / 2)
+                        .attr("y", y)
+                        .attr("text-anchor", "middle")
+                        .attr("font-family", idx === 1 ? "monospace" : "inherit")
+                        .attr("fill", isCurrent && idx === 5 ? "#f57c00" : "#333")
+                        .attr("font-weight", idx === 5 ? "bold" : "normal")
+                        .text(val);
+                    xPos += colWidths[idx];
+                });
+            }
+
+            // Binary visualization on right
+            const vizX = 550;
+            svg.append("text")
+                .attr("x", vizX + 120)
+                .attr("y", 60)
+                .attr("text-anchor", "middle")
+                .attr("font-weight", "bold")
+                .text("Visual Pattern");
+
+            for (let i = 0; i <= n; i++) {
+                const y = 80 + i * 35;
+                const bits = toBinary(i);
+                
+                bits.split('').forEach((bit, bitIdx) => {
+                    svg.append("rect")
+                        .attr("x", vizX + bitIdx * 30)
+                        .attr("y", y - 12)
+                        .attr("width", 25)
+                        .attr("height", 25)
+                        .attr("rx", 4)
+                        .attr("fill", bit === '1' ? "#4caf50" : "#e0e0e0")
+                        .attr("stroke", bit === '1' ? "#2e7d32" : "#bdbdbd");
+                    
+                    svg.append("text")
+                        .attr("x", vizX + bitIdx * 30 + 12.5)
+                        .attr("y", y + 2)
+                        .attr("text-anchor", "middle")
+                        .attr("fill", bit === '1' ? "white" : "#666")
+                        .attr("font-weight", "bold")
+                        .text(bit);
+                });
+
+                // Count
+                svg.append("text")
+                    .attr("x", vizX + 140)
+                    .attr("y", y + 2)
+                    .attr("text-anchor", "start")
+                    .attr("fill", i < currentIndex ? "#4caf50" : "#999")
+                    .text(`= ${dp[i]} ones`);
+            }
+
+            // Result array
+            svg.append("text")
+                .attr("x", width / 2)
+                .attr("y", height - 20)
+                .attr("text-anchor", "middle")
+                .attr("font-size", "14px")
+                .text(`Result: [${dp.slice(0, currentIndex).join(", ")}${currentIndex <= n ? "..." : ""}]`);
+        }
+
+        function step() {
+            if (currentIndex > n) return false;
+
+            if (currentIndex === 0) {
+                dp[0] = 0;
+            } else {
+                dp[currentIndex] = dp[currentIndex >> 1] + (currentIndex & 1);
+            }
+
+            document.getElementById("currentNum").textContent = currentIndex;
+            document.getElementById("binaryDisplay").textContent = toBinary(currentIndex);
+            
+            const shifted = currentIndex >> 1;
+            const lastBit = currentIndex & 1;
+            document.getElementById("formulaDisplay").textContent = 
+                `dp[${currentIndex}] = dp[${shifted}] + ${lastBit} = ${dp[shifted]} + ${lastBit} = ${dp[currentIndex]}`;
+
+            currentIndex++;
+            draw();
+
+            if (currentIndex > n) {
+                document.getElementById("status").textContent = 
+                    `Complete! Result: [${dp.join(", ")}]`;
+                return false;
+            } else {
+                document.getElementById("status").textContent = 
+                    `Computed dp[${currentIndex - 1}] = ${dp[currentIndex - 1]}`;
+                return true;
+            }
+        }
+
+        function reset() {
+            currentIndex = 0;
+            dp.fill(0);
+            autoRunning = false;
+            if (autoTimer) clearInterval(autoTimer);
+            
+            document.getElementById("currentNum").textContent = "-";
+            document.getElementById("binaryDisplay").textContent = "-";
+            document.getElementById("formulaDisplay").textContent = "dp[i] = dp[i >> 1] + (i & 1)";
+            document.getElementById("status").textContent = 'Click "Step" to count bits for each number';
+            document.getElementById("autoBtn").textContent = "Auto Run";
+            
+            draw();
+        }
+
+        function autoRun() {
+            if (autoRunning) {
+                autoRunning = false;
+                clearInterval(autoTimer);
+                document.getElementById("autoBtn").textContent = "Auto Run";
+            } else {
+                autoRunning = true;
+                document.getElementById("autoBtn").textContent = "Pause";
+                const speed = 2100 - document.getElementById("speed").value;
+                autoTimer = setInterval(() => {
+                    if (!step()) {
+                        autoRunning = false;
+                        clearInterval(autoTimer);
+                        document.getElementById("autoBtn").textContent = "Auto Run";
+                    }
+                }, speed);
+            }
+        }
+
+        document.getElementById("stepBtn").addEventListener("click", step);
+        document.getElementById("autoBtn").addEventListener("click", autoRun);
+        document.getElementById("resetBtn").addEventListener("click", reset);
+
+        draw();
+    </script>
+
+    <style>
+        .mono { font-family: 'Consolas', monospace; }
+    </style>
+</body>
+</html>

@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LC 359: Logger Rate Limiter - Algorithm Visualization</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="problem-info">
+            <h1><span class="problem-number">#359</span> Logger Rate Limiter</h1>
+            <p>Design a logger that returns true if the message should be printed (hasn't been printed in last 10 seconds).</p>
+            <div class="problem-meta">
+                <span class="meta-tag">🔧 Design</span>
+                <span class="meta-tag">📊 Hash Map</span>
+                <span class="meta-tag">⏱️ O(1)</span>
+                <span class="meta-tag">💾 O(n)</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <code>python/0359_logger_rate_limiter/0359_logger_rate_limiter.py</code>
+            </div>
+            </div>
+
+        <div class="explanation-panel">
+            <h4>🧠 How It Works (Layman's Terms)</h4>
+            <p>Use a <strong>HashMap</strong> to store message → last printed time:</p>
+            <ul>
+                <li><strong>Check:</strong> If message not in map, or time diff ≥ 10 → print</li>
+                <li><strong>Update:</strong> Store current timestamp for the message</li>
+                <li><strong>Return:</strong> True if printed, False if rate-limited</li>
+            </ul>
+        </div>
+
+
+        <div class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+            
+            <div class="controls">
+                <input type="number" id="timestampInput" placeholder="Timestamp" style="padding: 8px; width: 100px; border-radius: 5px; border: 2px solid #ddd;">
+                <input type="text" id="messageInput" placeholder="Message" style="padding: 8px; width: 150px; border-radius: 5px; border: 2px solid #ddd;">
+                <button class="btn btn-primary" onclick="shouldPrintMessage()">Log Message</button>
+                <button class="btn btn-warning" onclick="reset()">Reset</button>
+            </div>
+
+            <div class="status-message" id="statusMessage">
+                Enter a timestamp and message to test the logger
+            </div>
+
+            <div style="display: flex; gap: 30px; flex-wrap: wrap; margin-top: 20px;">
+                <div style="flex: 1; min-width: 300px;">
+                    <h4>🗺️ Message → Last Timestamp</h4>
+                    <div id="hashMapDisplay" style="padding: 15px; background: #e3f2fd; border-radius: 12px; min-height: 100px;"></div>
+                </div>
+                <div style="flex: 1; min-width: 300px;">
+                    <h4>📜 Log History</h4>
+                    <div id="historyDisplay" style="padding: 15px; background: #f5f5f5; border-radius: 12px; max-height: 300px; overflow-y: auto;"></div>
+                </div>
+            </div>
+
+            <div style="margin-top: 20px; padding: 20px; background: #fff3e0; border-radius: 12px;">
+                <h4 style="margin-bottom: 15px;">🧪 Quick Test Scenarios</h4>
+                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                    <button class="btn" onclick="runScenario(1, 'foo')" style="background: #4caf50; color: white;">1: "foo"</button>
+                    <button class="btn" onclick="runScenario(2, 'bar')" style="background: #2196f3; color: white;">2: "bar"</button>
+                    <button class="btn" onclick="runScenario(3, 'foo')" style="background: #ff9800; color: white;">3: "foo"</button>
+                    <button class="btn" onclick="runScenario(8, 'bar')" style="background: #9c27b0; color: white;">8: "bar"</button>
+                    <button class="btn" onclick="runScenario(10, 'foo')" style="background: #e91e63; color: white;">10: "foo"</button>
+                    <button class="btn" onclick="runScenario(11, 'foo')" style="background: #00bcd4; color: white;">11: "foo"</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="code-section">
+            <h3>💻 Python Solution</h3>
+            <div class="code-block">
+                <pre><span class="keyword">class</span> <span class="function">Logger</span>:
+    <span class="keyword">def</span> <span class="function">__init__</span>(self):
+        self.msg_to_time = {}  <span class="comment"># message → last printed timestamp</span>
+    
+    <span class="keyword">def</span> <span class="function">shouldPrintMessage</span>(self, timestamp, message):
+        <span class="keyword">if</span> message <span class="keyword">not in</span> self.msg_to_time:
+            <span class="comment"># First time seeing this message</span>
+            self.msg_to_time[message] = timestamp
+            <span class="keyword">return</span> <span class="keyword">True</span>
+        
+        last_time = self.msg_to_time[message]
+        <span class="keyword">if</span> timestamp - last_time >= <span class="number">10</span>:
+            <span class="comment"># 10+ seconds passed, can print</span>
+            self.msg_to_time[message] = timestamp
+            <span class="keyword">return</span> <span class="keyword">True</span>
+        
+        <span class="comment"># Rate limited</span>
+        <span class="keyword">return</span> <span class="keyword">False</span></pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let msgToTime = {};
+        let history = [];
+
+        function shouldPrint(timestamp, message) {
+            if (!(message in msgToTime)) {
+                msgToTime[message] = timestamp;
+                return { result: true, reason: 'First occurrence' };
+            }
+            
+            const lastTime = msgToTime[message];
+            const diff = timestamp - lastTime;
+            
+            if (diff >= 10) {
+                msgToTime[message] = timestamp;
+                return { result: true, reason: `${diff} seconds passed (≥ 10)` };
+            }
+            
+            return { result: false, reason: `Only ${diff} seconds (< 10)` };
+        }
+
+        function render() {
+            // Render hash map
+            const mapContainer = document.getElementById('hashMapDisplay');
+            const entries = Object.entries(msgToTime);
+            if (entries.length === 0) {
+                mapContainer.innerHTML = '<span style="color: #999;">(empty)</span>';
+            } else {
+                mapContainer.innerHTML = entries.map(([msg, time]) => 
+                    `<div style="display: flex; justify-content: space-between; padding: 10px; margin: 5px 0; background: white; border-radius: 8px; border-left: 4px solid #2196f3;">
+                        <span style="font-weight: bold;">"${msg}"</span>
+                        <span style="color: #666;">→ t=${time}</span>
+                    </div>`
+                ).join('');
+            }
+
+            // Render history
+            const historyContainer = document.getElementById('historyDisplay');
+            if (history.length === 0) {
+                historyContainer.innerHTML = '<span style="color: #999;">Log history will appear here...</span>';
+            } else {
+                historyContainer.innerHTML = history.map((h, i) => 
+                    `<div style="padding: 8px 12px; margin: 4px 0; background: ${h.result ? '#e8f5e9' : '#ffebee'}; border-radius: 8px; border-left: 4px solid ${h.result ? '#4caf50' : '#f44336'};">
+                        <strong>shouldPrint(${h.timestamp}, "${h.message}")</strong><br>
+                        <span style="font-size: 0.9em; color: #666;">${h.reason} → <strong>${h.result ? 'TRUE ✓' : 'FALSE ✗'}</strong></span>
+                    </div>`
+                ).join('');
+                historyContainer.scrollTop = historyContainer.scrollHeight;
+            }
+        }
+
+        function shouldPrintMessage() {
+            const timestamp = parseInt(document.getElementById('timestampInput').value);
+            const message = document.getElementById('messageInput').value.trim();
+            
+            if (isNaN(timestamp) || !message) {
+                document.getElementById('statusMessage').textContent = 'Please enter both timestamp and message';
+                return;
+            }
+
+            const { result, reason } = shouldPrint(timestamp, message);
+            
+            history.push({ timestamp, message, result, reason });
+            
+            document.getElementById('statusMessage').textContent = 
+                result 
+                    ? `✅ Printed "${message}" at t=${timestamp}` 
+                    : `❌ Rate limited "${message}" at t=${timestamp}`;
+            
+            document.getElementById('timestampInput').value = '';
+            document.getElementById('messageInput').value = '';
+            render();
+        }
+
+        function runScenario(timestamp, message) {
+            const { result, reason } = shouldPrint(timestamp, message);
+            history.push({ timestamp, message, result, reason });
+            
+            document.getElementById('statusMessage').textContent = 
+                `shouldPrint(${timestamp}, "${message}") → ${result ? 'TRUE ✓' : 'FALSE ✗'}`;
+            
+            render();
+        }
+
+        function reset() {
+            msgToTime = {};
+            history = [];
+            document.getElementById('statusMessage').textContent = 'Enter a timestamp and message to test the logger';
+            document.getElementById('timestampInput').value = '';
+            document.getElementById('messageInput').value = '';
+            render();
+        }
+
+        document.getElementById('messageInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') shouldPrintMessage();
+        });
+
+        reset();
+    </script>
+</body>
+</html>

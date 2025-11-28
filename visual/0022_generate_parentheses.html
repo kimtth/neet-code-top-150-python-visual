@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LC 22: Generate Parentheses - Algorithm Visualization</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="problem-info">
+            <h1><span class="problem-number">#22</span> Generate Parentheses</h1>
+            <p>Given n pairs of parentheses, write a function to generate all combinations of well-formed parentheses.</p>
+            <div class="problem-meta">
+                <span class="meta-tag">🔄 Backtracking</span>
+                <span class="meta-tag">🔤 String</span>
+                <span class="meta-tag">⏱️ O(4^n / √n)</span>
+                <span class="meta-tag">💾 O(n)</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <code>python/0022_generate_parentheses/0022_generate_parentheses.py</code>
+            </div>
+            </div>
+
+        <div class="explanation-panel">
+            <h4>🧠 How It Works (Layman's Terms)</h4>
+            <p>Backtracking builds strings by making choices at each step:</p>
+            <ul>
+                <li><strong>Two rules:</strong> (1) Can add '(' if we have pairs left, (2) Can add ')' only if there's an unmatched '('</li>
+                <li><strong>Tree exploration:</strong> Each node makes choices, invalid paths are pruned automatically</li>
+                <li><strong>Base case:</strong> When string length = 2n, we have a valid combination</li>
+                <li><strong>Key insight:</strong> close_count < open_count ensures we never have more ')' than '('</li>
+            </ul>
+        </div>
+
+
+        <div class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+            
+            <div class="controls">
+                <label>n = </label>
+                <select id="nValue" style="padding: 8px; border-radius: 5px; border: 2px solid #ddd;">
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3" selected>3</option>
+                </select>
+                <button class="btn btn-primary" onclick="step()">Step</button>
+                <button class="btn btn-success" onclick="autoRun()">Auto Run</button>
+                <button class="btn" style="background: #607d8b; color: white;" onclick="reset()">Reset</button>
+            </div>
+
+            <div class="status-message" id="statusMessage">
+                Click Step to explore the backtracking tree
+            </div>
+
+            <div style="display: flex; gap: 30px; flex-wrap: wrap; margin-top: 20px;">
+                <div style="flex: 2; min-width: 400px;">
+                    <h4 style="margin-bottom: 10px;">🌳 Decision Tree</h4>
+                    <svg id="treeViz" width="100%" height="400"></svg>
+                </div>
+                <div style="flex: 1; min-width: 200px;">
+                    <h4 style="margin-bottom: 10px;">✅ Valid Combinations</h4>
+                    <div id="resultsContainer" style="padding: 15px; background: #f5f5f5; border-radius: 12px; min-height: 200px;">
+                        <span style="color: #999;">None yet...</span>
+                    </div>
+                    
+                    <h4 style="margin-top: 20px; margin-bottom: 10px;">📊 Current State</h4>
+                    <div id="stateContainer" style="padding: 15px; background: #e3f2fd; border-radius: 12px;">
+                        <div>Current: <strong id="currentStr">""</strong></div>
+                        <div>Open: <strong id="openCount">0</strong></div>
+                        <div>Close: <strong id="closeCount">0</strong></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="code-section">
+            <h3>💻 Python Solution</h3>
+            <div class="code-block">
+                <pre><span class="keyword">def</span> <span class="function">generate_parenthesis</span>(n):
+    results = []
+    
+    <span class="keyword">def</span> <span class="function">backtrack</span>(current, open_count, close_count):
+        <span class="keyword">if</span> <span class="function">len</span>(current) == n * <span class="number">2</span>:
+            results.<span class="function">append</span>(current)
+            <span class="keyword">return</span>
+        
+        <span class="comment"># Can add '(' if we haven't used all</span>
+        <span class="keyword">if</span> open_count < n:
+            <span class="function">backtrack</span>(current + <span class="string">'('</span>, open_count + <span class="number">1</span>, close_count)
+        
+        <span class="comment"># Can add ')' only if we have unmatched '('</span>
+        <span class="keyword">if</span> close_count < open_count:
+            <span class="function">backtrack</span>(current + <span class="string">')'</span>, open_count, close_count + <span class="number">1</span>)
+    
+    <span class="function">backtrack</span>(<span class="string">''</span>, <span class="number">0</span>, <span class="number">0</span>)
+    <span class="keyword">return</span> results</pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let n = 3;
+        let treeData = null;
+        let nodeQueue = [];
+        let results = [];
+        let currentNode = null;
+        let isRunning = false;
+        let processedNodes = new Set();
+
+        class TreeNode {
+            constructor(str, open, close, parent = null, action = '') {
+                this.str = str;
+                this.open = open;
+                this.close = close;
+                this.parent = parent;
+                this.action = action;
+                this.children = [];
+                this.id = `${str}_${open}_${close}`;
+                this.visited = false;
+                this.isValid = str.length === n * 2;
+            }
+        }
+
+        function buildFullTree() {
+            const root = new TreeNode('', 0, 0, null, 'start');
+            buildTreeRecursive(root);
+            return root;
+        }
+
+        function buildTreeRecursive(node) {
+            if (node.str.length === n * 2) return;
+            
+            if (node.open < n) {
+                const leftChild = new TreeNode(
+                    node.str + '(',
+                    node.open + 1,
+                    node.close,
+                    node,
+                    'add ('
+                );
+                node.children.push(leftChild);
+                buildTreeRecursive(leftChild);
+            }
+            
+            if (node.close < node.open) {
+                const rightChild = new TreeNode(
+                    node.str + ')',
+                    node.open,
+                    node.close + 1,
+                    node,
+                    'add )'
+                );
+                node.children.push(rightChild);
+                buildTreeRecursive(rightChild);
+            }
+        }
+
+        function drawTree() {
+            const svg = d3.select("#treeViz");
+            svg.selectAll("*").remove();
+
+            const container = svg.node().parentElement;
+            const width = container.clientWidth;
+            const height = 400;
+            svg.attr("viewBox", `0 0 ${width} ${height}`);
+
+            const g = svg.append("g").attr("transform", "translate(40, 30)");
+
+            const treeLayout = d3.tree().size([width - 80, height - 80]);
+            const hierarchy = d3.hierarchy(treeData);
+            const treeNodes = treeLayout(hierarchy);
+
+            // Draw links
+            g.selectAll(".link")
+                .data(treeNodes.links())
+                .enter()
+                .append("path")
+                .attr("class", "link")
+                .attr("d", d3.linkVertical()
+                    .x(d => d.x)
+                    .y(d => d.y))
+                .attr("fill", "none")
+                .attr("stroke", d => {
+                    if (!d.target.data.visited) return "#e0e0e0";
+                    return d.target.data.action === 'add (' ? "#667eea" : "#4caf50";
+                })
+                .attr("stroke-width", d => d.target.data.visited ? 3 : 1);
+
+            // Draw nodes
+            const nodes = g.selectAll(".node")
+                .data(treeNodes.descendants())
+                .enter()
+                .append("g")
+                .attr("class", "node")
+                .attr("transform", d => `translate(${d.x}, ${d.y})`);
+
+            nodes.append("circle")
+                .attr("r", d => d.data.isValid ? 18 : 15)
+                .attr("fill", d => {
+                    if (d.data === currentNode) return "#ff9800";
+                    if (d.data.isValid && d.data.visited) return "#4caf50";
+                    if (d.data.visited) return "#667eea";
+                    return "#e0e0e0";
+                })
+                .attr("stroke", d => d.data === currentNode ? "#f57c00" : "none")
+                .attr("stroke-width", 3);
+
+            nodes.append("text")
+                .attr("dy", 4)
+                .attr("text-anchor", "middle")
+                .attr("font-size", d => d.data.isValid ? "10px" : "9px")
+                .attr("fill", d => d.data.visited || d.data === currentNode ? "white" : "#666")
+                .text(d => d.data.str || "ε");
+        }
+
+        function initQueue() {
+            nodeQueue = [treeData];
+        }
+
+        function step() {
+            if (nodeQueue.length === 0) {
+                document.getElementById('statusMessage').textContent = 
+                    `Done! Found ${results.length} valid combinations`;
+                return;
+            }
+
+            currentNode = nodeQueue.shift();
+            currentNode.visited = true;
+
+            document.getElementById('currentStr').textContent = `"${currentNode.str}"`;
+            document.getElementById('openCount').textContent = currentNode.open;
+            document.getElementById('closeCount').textContent = currentNode.close;
+
+            if (currentNode.isValid) {
+                results.push(currentNode.str);
+                document.getElementById('statusMessage').textContent = 
+                    `Found valid combination: "${currentNode.str}"!`;
+                renderResults();
+            } else {
+                let msg = `Exploring: "${currentNode.str}" (open: ${currentNode.open}, close: ${currentNode.close}). `;
+                
+                if (currentNode.open < n) {
+                    msg += "Can add '('. ";
+                    nodeQueue.push(currentNode.children.find(c => c.action === 'add ('));
+                }
+                if (currentNode.close < currentNode.open) {
+                    msg += "Can add ')'. ";
+                    nodeQueue.push(currentNode.children.find(c => c.action === 'add )'));
+                }
+                
+                document.getElementById('statusMessage').textContent = msg;
+            }
+
+            // Filter out undefined entries
+            nodeQueue = nodeQueue.filter(n => n !== undefined);
+            drawTree();
+        }
+
+        function autoRun() {
+            if (isRunning) return;
+            isRunning = true;
+
+            const interval = setInterval(() => {
+                if (nodeQueue.length === 0) {
+                    clearInterval(interval);
+                    isRunning = false;
+                    document.getElementById('statusMessage').textContent = 
+                        `Complete! Found ${results.length} valid combinations: [${results.map(r => `"${r}"`).join(', ')}]`;
+                    return;
+                }
+                step();
+            }, 500);
+        }
+
+        function renderResults() {
+            const container = document.getElementById('resultsContainer');
+            if (results.length === 0) {
+                container.innerHTML = '<span style="color: #999;">None yet...</span>';
+                return;
+            }
+            container.innerHTML = results.map((r, i) => `
+                <div style="padding: 8px 12px; margin: 5px 0; background: #e8f5e9; 
+                            border-radius: 6px; font-family: monospace; font-weight: bold;
+                            color: #2e7d32;">
+                    ${i + 1}. ${r}
+
+        </div>
+            `).join('');
+        }
+
+        function reset() {
+            n = parseInt(document.getElementById('nValue').value);
+            treeData = buildFullTree();
+            results = [];
+            currentNode = null;
+            isRunning = false;
+            initQueue();
+            
+            document.getElementById('statusMessage').textContent = 
+                `Click Step to explore backtracking with n=${n}`;
+            document.getElementById('currentStr').textContent = '""';
+            document.getElementById('openCount').textContent = '0';
+            document.getElementById('closeCount').textContent = '0';
+            
+            renderResults();
+            drawTree();
+        }
+
+        document.getElementById('nValue').addEventListener('change', reset);
+        reset();
+        window.addEventListener('resize', drawTree);
+    </script>
+</body>
+</html>

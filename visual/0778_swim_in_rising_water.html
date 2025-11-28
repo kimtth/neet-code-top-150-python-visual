@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>778 - Swim in Rising Water</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="problem-info">
+            <h1><span class="problem-number">#778</span> Swim in Rising Water</h1>
+            <p>
+                Find the minimum time to swim from top-left to bottom-right.
+                At time t, you can swim to adjacent squares with elevation ≤ t.
+                Uses Dijkstra/Min-Heap to find path with minimum maximum elevation.
+            </p>
+            <div class="problem-meta">
+                <span class="meta-tag">📝 Algorithm</span>
+                <span class="meta-tag">⏱️ O(n)</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <code>python/0778_swim_in_rising_water/0778_swim_in_rising_water.py</code>
+            </div>
+
+        </div>
+
+        <div class="explanation-panel">
+            <h4>🧠 How It Works (Layman's Terms)</h4>
+            <p>This algorithm solves the problem <strong>step by step</strong>:</p>
+            <ul>
+                <li><strong>Understand:</strong> Parse the input data</li>
+                <li><strong>Process:</strong> Apply the core logic</li>
+                <li><strong>Optimize:</strong> Use efficient data structures</li>
+                <li><strong>Return:</strong> Output the computed result</li>
+            </ul>
+        </div>
+
+
+        <section class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+            <div class="controls">
+                <button id="autoRunBtn" class="btn">▶ Auto Run</button>
+                <button id="stepBtn" class="btn btn-success">Step</button>
+                <button id="resetBtn" class="btn btn-danger">Reset</button>
+            </div>
+            <div class="status" id="status">Click Auto Run to find the minimum time to swim</div>
+            <svg id="visualization"></svg>
+        </section>
+
+        <section class="code-section">
+            <h3>💻 Python Solution</h3>
+            <div class="code-block">
+                <pre><span class="keyword">def</span> <span class="function">swimInWater</span>(grid):
+    n = <span class="function">len</span>(grid)
+    directions = [(<span class="number">0</span>, <span class="number">1</span>), (<span class="number">1</span>, <span class="number">0</span>), (<span class="number">0</span>, <span class="number">-1</span>), (<span class="number">-1</span>, <span class="number">0</span>)]
+    min_heap = [(grid[<span class="number">0</span>][<span class="number">0</span>], <span class="number">0</span>, <span class="number">0</span>)]  <span class="comment"># (height, row, col)</span>
+    visited = {(<span class="number">0</span>, <span class="number">0</span>)}
+    
+    <span class="keyword">while</span> min_heap:
+        height, row, col = heapq.<span class="function">heappop</span>(min_heap)
+        
+        <span class="keyword">if</span> row == n - <span class="number">1</span> <span class="keyword">and</span> col == n - <span class="number">1</span>:
+            <span class="keyword">return</span> height
+        
+        <span class="keyword">for</span> dr, dc <span class="keyword">in</span> directions:
+            nr, nc = row + dr, col + dc
+            <span class="keyword">if</span> <span class="number">0</span> <= nr < n <span class="keyword">and</span> <span class="number">0</span> <= nc < n <span class="keyword">and</span> (nr, nc) <span class="keyword">not</span> <span class="keyword">in</span> visited:
+                new_height = <span class="function">max</span>(height, grid[nr][nc])
+                heapq.<span class="function">heappush</span>(min_heap, (new_height, nr, nc))
+                visited.<span class="function">add</span>((nr, nc))
+    
+    <span class="keyword">return</span> <span class="number">-1</span></pre>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        const width = 900;
+        const height = 650;
+
+        const svg = d3.select("#visualization")
+            .attr("width", width)
+            .attr("height", height);
+
+        // Grid data
+        const grid = [
+            [0, 1, 2, 3, 4],
+            [24, 23, 22, 21, 5],
+            [12, 13, 14, 15, 16],
+            [11, 17, 18, 19, 20],
+            [10, 9, 8, 7, 6]
+        ];
+
+        const n = grid.length;
+        const cellSize = 60;
+        const offsetX = 60;
+        const offsetY = 80;
+        const directions = [[0, 1], [1, 0], [0, -1], [-1, 0]];
+
+        let visited = new Set();
+        let minHeap = [];
+        let currentCell = null;
+        let path = [];
+        let animationTimer = null;
+        let currentTime = 0;
+        let result = null;
+
+        function reset() {
+            visited = new Set(["0,0"]);
+            minHeap = [[grid[0][0], 0, 0]];
+            currentCell = [0, 0];
+            path = [[0, 0]];
+            currentTime = grid[0][0];
+            result = null;
+            if (animationTimer) clearInterval(animationTimer);
+            document.getElementById("status").textContent = "Click Auto Run to find the minimum time to swim";
+            render();
+        }
+
+        function heapPush(heap, item) {
+            heap.push(item);
+            let i = heap.length - 1;
+            while (i > 0) {
+                const parent = Math.floor((i - 1) / 2);
+                if (heap[parent][0] <= heap[i][0]) break;
+                [heap[parent], heap[i]] = [heap[i], heap[parent]];
+                i = parent;
+            }
+        }
+
+        function heapPop(heap) {
+            if (heap.length === 0) return null;
+            const result = heap[0];
+            const last = heap.pop();
+            if (heap.length > 0) {
+                heap[0] = last;
+                let i = 0;
+                while (true) {
+                    const left = 2 * i + 1;
+                    const right = 2 * i + 2;
+                    let smallest = i;
+                    if (left < heap.length && heap[left][0] < heap[smallest][0]) smallest = left;
+                    if (right < heap.length && heap[right][0] < heap[smallest][0]) smallest = right;
+                    if (smallest === i) break;
+                    [heap[i], heap[smallest]] = [heap[smallest], heap[i]];
+                    i = smallest;
+                }
+            }
+            return result;
+        }
+
+        function render() {
+            svg.selectAll("*").remove();
+
+            // Title
+            svg.append("text")
+                .attr("x", offsetX + (n * cellSize) / 2)
+                .attr("y", 40)
+                .attr("text-anchor", "middle")
+                .attr("font-size", "16px")
+                .attr("font-weight", "bold")
+                .attr("fill", "#1e293b")
+                .text(`Grid (Elevation Values) - Current Time: ${currentTime}`);
+
+            // Draw grid
+            for (let r = 0; r < n; r++) {
+                for (let c = 0; c < n; c++) {
+                    const x = offsetX + c * cellSize;
+                    const y = offsetY + r * cellSize;
+                    const key = `${r},${c}`;
+                    const isVisited = visited.has(key);
+                    const isCurrent = currentCell && currentCell[0] === r && currentCell[1] === c;
+                    const isStart = r === 0 && c === 0;
+                    const isEnd = r === n - 1 && c === n - 1;
+                    const inPath = path.some(p => p[0] === r && p[1] === c);
+                    const elevation = grid[r][c];
+                    const canSwim = elevation <= currentTime;
+
+                    // Water level gradient
+                    const waterLevel = Math.min(1, currentTime / 24);
+                    
+                    svg.append("rect")
+                        .attr("x", x)
+                        .attr("y", y)
+                        .attr("width", cellSize)
+                        .attr("height", cellSize)
+                        .attr("fill", () => {
+                            if (isCurrent) return "#fef3c7";
+                            if (result && inPath) return "#d1fae5";
+                            if (isVisited) return "#dbeafe";
+                            if (canSwim) return "#e0f2fe";
+                            return "#fef2f2";
+                        })
+                        .attr("stroke", () => {
+                            if (isCurrent) return "#f59e0b";
+                            if (isStart) return "#10b981";
+                            if (isEnd) return "#ec4899";
+                            return "#94a3b8";
+                        })
+                        .attr("stroke-width", (isCurrent || isStart || isEnd) ? 3 : 1);
+
+                    // Elevation value
+                    svg.append("text")
+                        .attr("x", x + cellSize / 2)
+                        .attr("y", y + cellSize / 2 + 6)
+                        .attr("text-anchor", "middle")
+                        .attr("font-size", "16px")
+                        .attr("font-weight", "bold")
+                        .attr("fill", canSwim ? "#0369a1" : "#dc2626")
+                        .text(elevation);
+
+                    // Start/End labels
+                    if (isStart) {
+                        svg.append("text")
+                            .attr("x", x + cellSize / 2)
+                            .attr("y", y + 12)
+                            .attr("text-anchor", "middle")
+                            .attr("font-size", "9px")
+                            .attr("fill", "#10b981")
+                            .text("START");
+                    }
+                    if (isEnd) {
+                        svg.append("text")
+                            .attr("x", x + cellSize / 2)
+                            .attr("y", y + 12)
+                            .attr("text-anchor", "middle")
+                            .attr("font-size", "9px")
+                            .attr("fill", "#ec4899")
+                            .text("END");
+                    }
+                }
+            }
+
+            // Draw path if found
+            if (path.length > 1) {
+                for (let i = 0; i < path.length - 1; i++) {
+                    const x1 = offsetX + path[i][1] * cellSize + cellSize / 2;
+                    const y1 = offsetY + path[i][0] * cellSize + cellSize / 2;
+                    const x2 = offsetX + path[i + 1][1] * cellSize + cellSize / 2;
+                    const y2 = offsetY + path[i + 1][0] * cellSize + cellSize / 2;
+
+                    svg.append("line")
+                        .attr("x1", x1)
+                        .attr("y1", y1)
+                        .attr("x2", x2)
+                        .attr("y2", y2)
+                        .attr("stroke", result ? "#10b981" : "#3b82f6")
+                        .attr("stroke-width", 3)
+                        .attr("stroke-dasharray", result ? "none" : "5,5");
+                }
+            }
+
+            // Draw min-heap
+            drawMinHeap();
+
+            // Draw legend
+            drawLegend();
+        }
+
+        function drawMinHeap() {
+            const x = 420;
+            const y = 80;
+
+            svg.append("text")
+                .attr("x", x)
+                .attr("y", y - 10)
+                .attr("font-size", "14px")
+                .attr("font-weight", "bold")
+                .attr("fill", "#1e293b")
+                .text("Min-Heap (Priority Queue):");
+
+            const sortedHeap = [...minHeap].sort((a, b) => a[0] - b[0]);
+            sortedHeap.slice(0, 8).forEach((item, idx) => {
+                const row = Math.floor(idx / 4);
+                const col = idx % 4;
+                const px = x + col * 110;
+                const py = y + row * 40 + 10;
+
+                svg.append("rect")
+                    .attr("x", px)
+                    .attr("y", py)
+                    .attr("width", 100)
+                    .attr("height", 32)
+                    .attr("rx", 4)
+                    .attr("fill", idx === 0 ? "#fef3c7" : "#f8fafc")
+                    .attr("stroke", idx === 0 ? "#f59e0b" : "#94a3b8");
+
+                svg.append("text")
+                    .attr("x", px + 50)
+                    .attr("y", py + 21)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "11px")
+                    .attr("font-weight", idx === 0 ? "bold" : "normal")
+                    .attr("fill", "#1e293b")
+                    .text(`t=${item[0]} (${item[1]},${item[2]})`);
+            });
+
+            if (minHeap.length > 8) {
+                svg.append("text")
+                    .attr("x", x)
+                    .attr("y", y + 100)
+                    .attr("font-size", "11px")
+                    .attr("fill", "#64748b")
+                    .text(`... and ${minHeap.length - 8} more`);
+            }
+        }
+
+        function drawLegend() {
+            const x = 420;
+            const y = 250;
+
+            const items = [
+                { color: "#e0f2fe", label: "Can swim (elevation ≤ time)", stroke: "#0284c7" },
+                { color: "#fef2f2", label: "Cannot swim yet", stroke: "#dc2626" },
+                { color: "#dbeafe", label: "Visited", stroke: "#3b82f6" },
+                { color: "#fef3c7", label: "Current cell", stroke: "#f59e0b" },
+                { color: "#d1fae5", label: "Final path", stroke: "#10b981" }
+            ];
+
+            svg.append("text")
+                .attr("x", x)
+                .attr("y", y - 10)
+                .attr("font-size", "14px")
+                .attr("font-weight", "bold")
+                .attr("fill", "#1e293b")
+                .text("Legend:");
+
+            items.forEach((item, i) => {
+                svg.append("rect")
+                    .attr("x", x)
+                    .attr("y", y + i * 28 + 5)
+                    .attr("width", 20)
+                    .attr("height", 20)
+                    .attr("fill", item.color)
+                    .attr("stroke", item.stroke);
+
+                svg.append("text")
+                    .attr("x", x + 30)
+                    .attr("y", y + i * 28 + 20)
+                    .attr("font-size", "11px")
+                    .attr("fill", "#1e293b")
+                    .text(item.label);
+            });
+        }
+
+        function step() {
+            if (result !== null) {
+                return;
+            }
+
+            if (minHeap.length === 0) {
+                document.getElementById("status").textContent = "No path found!";
+                return;
+            }
+
+            const [time, row, col] = heapPop(minHeap);
+            currentCell = [row, col];
+            currentTime = time;
+
+            // Update path (simplified - in reality would need parent tracking)
+            if (path.length === 0 || (Math.abs(path[path.length-1][0] - row) + Math.abs(path[path.length-1][1] - col)) <= 1) {
+                if (!path.some(p => p[0] === row && p[1] === col)) {
+                    path.push([row, col]);
+                }
+            }
+
+            // Check if reached destination
+            if (row === n - 1 && col === n - 1) {
+                result = time;
+                // Reconstruct optimal path
+                findOptimalPath();
+                document.getElementById("status").textContent = 
+                    `✓ Minimum time: ${time} (max elevation along path)`;
+                render();
+                return;
+            }
+
+            document.getElementById("status").textContent = 
+                `Exploring (${row},${col}) - Current time: ${time}`;
+
+            // Explore neighbors
+            for (const [dr, dc] of directions) {
+                const nr = row + dr;
+                const nc = col + dc;
+                const key = `${nr},${nc}`;
+
+                if (nr >= 0 && nr < n && nc >= 0 && nc < n && !visited.has(key)) {
+                    const newTime = Math.max(time, grid[nr][nc]);
+                    heapPush(minHeap, [newTime, nr, nc]);
+                    visited.add(key);
+                }
+            }
+
+            render();
+        }
+
+        function findOptimalPath() {
+            // BFS to find actual path
+            const parent = {};
+            const queue = [[0, 0]];
+            parent["0,0"] = null;
+            
+            while (queue.length > 0) {
+                const [r, c] = queue.shift();
+                if (r === n - 1 && c === n - 1) break;
+                
+                for (const [dr, dc] of directions) {
+                    const nr = r + dr;
+                    const nc = c + dc;
+                    const key = `${nr},${nc}`;
+                    
+                    if (nr >= 0 && nr < n && nc >= 0 && nc < n && 
+                        !(key in parent) && grid[nr][nc] <= result) {
+                        parent[key] = `${r},${c}`;
+                        queue.push([nr, nc]);
+                    }
+                }
+            }
+            
+            // Reconstruct path
+            path = [];
+            let key = `${n-1},${n-1}`;
+            while (key !== null) {
+                const [r, c] = key.split(",").map(Number);
+                path.unshift([r, c]);
+                key = parent[key];
+            }
+        }
+
+        function autoRun() {
+            if (animationTimer) {
+                clearInterval(animationTimer);
+                animationTimer = null;
+                document.getElementById("autoRunBtn").textContent = "▶ Auto Run";
+                return;
+            }
+
+            document.getElementById("autoRunBtn").textContent = "⏸ Pause";
+            animationTimer = setInterval(() => {
+                if (result !== null || minHeap.length === 0) {
+                    clearInterval(animationTimer);
+                    animationTimer = null;
+                    document.getElementById("autoRunBtn").textContent = "▶ Auto Run";
+                    return;
+                }
+                step();
+            }, 500);
+        }
+
+        document.getElementById("autoRunBtn").addEventListener("click", autoRun);
+        document.getElementById("stepBtn").addEventListener("click", step);
+        document.getElementById("resetBtn").addEventListener("click", reset);
+
+        reset();
+    </script>
+</body>
+</html>

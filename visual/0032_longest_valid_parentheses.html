@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Longest Valid Parentheses - LeetCode 32</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="problem-info">
+            <h1><span class="problem-number">#32</span> Longest Valid Parentheses</h1>
+            <p>Find the length of the longest valid (well-formed) parentheses substring.</p>
+            <div class="problem-meta">
+                <span class="meta-tag">String</span>
+                <span class="meta-tag">Stack</span>
+                <span class="meta-tag">Hard</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <code>python/0032_longest_valid_parentheses/0032_longest_valid_parentheses.py</code>
+            </div>
+
+        </div>
+
+        <div class="explanation-panel">
+            <h4>🧠 How It Works (Layman's Terms)</h4>
+            <p>A stack works like a <strong>pile of plates</strong> - last in, first out (LIFO):</p>
+            <ul>
+                <li><strong>Push:</strong> Add item to the top</li>
+                <li><strong>Pop:</strong> Remove and return the top item</li>
+                <li><strong>Peek:</strong> Look at top without removing</li>
+                <li><strong>Match pairs:</strong> Great for matching brackets, parentheses</li>
+            </ul>
+        </div>
+
+
+        <div class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+            <div class="controls">
+                <button id="stepBtn">Step</button>
+                <button id="autoBtn">Auto Run</button>
+                <button id="resetBtn">Reset</button>
+            </div>
+            <svg id="mainSvg" width="800" height="380"></svg>
+            <div class="status-message" id="status">Click "Step" to find longest valid parentheses</div>
+        </div>
+
+        <div class="code-section">
+            <h3>💻 Python Solution</h3>
+            <div class="code-block">
+                <pre><span class="keyword">def</span> <span class="function">longestValidParentheses</span>(s):
+    stack = [<span class="number">-1</span>]  <span class="comment"># Base index</span>
+    max_len = <span class="number">0</span>
+    
+    <span class="keyword">for</span> i, char <span class="keyword">in</span> <span class="function">enumerate</span>(s):
+        <span class="keyword">if</span> char == <span class="string">'('</span>:
+            stack.<span class="function">append</span>(i)
+        <span class="keyword">else</span>:
+            stack.<span class="function">pop</span>()
+            <span class="keyword">if</span> <span class="keyword">not</span> stack:
+                stack.<span class="function">append</span>(i)  <span class="comment"># New base</span>
+            <span class="keyword">else</span>:
+                max_len = <span class="function">max</span>(max_len, i - stack[<span class="number">-1</span>])
+    
+    <span class="keyword">return</span> max_len</pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const s = ")()())";
+        let stack = [-1];
+        let maxLen = 0;
+        let i = 0;
+        let validRanges = [];
+        
+        const width = 800, height = 380;
+        const svg = d3.select("#mainSvg");
+        let autoTimer = null, autoRunning = false;
+
+        function draw() {
+            svg.selectAll("*").remove();
+            const cellWidth = 50, startX = 150, startY = 80;
+
+            svg.append("text").attr("x", width/2).attr("y", 30)
+                .attr("text-anchor", "middle").attr("font-weight", "bold")
+                .text(`Finding Longest Valid Parentheses in "${s}"`);
+
+            // Draw string
+            for (let idx = 0; idx < s.length; idx++) {
+                const x = startX + idx * cellWidth;
+                let fill = "#e3f2fd", stroke = "#1976d2";
+                
+                if (idx === i) { fill = "#fef3c7"; stroke = "#f59e0b"; }
+                
+                // Check if in valid range
+                for (const range of validRanges) {
+                    if (idx >= range.start && idx <= range.end) {
+                        fill = "#d1fae5"; stroke = "#10b981";
+                    }
+                }
+
+                svg.append("rect").attr("x", x).attr("y", startY)
+                    .attr("width", cellWidth - 5).attr("height", 50)
+                    .attr("rx", 8).attr("fill", fill).attr("stroke", stroke)
+                    .attr("stroke-width", idx === i ? 3 : 2);
+
+                svg.append("text").attr("x", x + (cellWidth-5)/2).attr("y", startY + 33)
+                    .attr("text-anchor", "middle").attr("font-size", "24px")
+                    .attr("font-weight", "bold").text(s[idx]);
+
+                svg.append("text").attr("x", x + (cellWidth-5)/2).attr("y", startY + 65)
+                    .attr("text-anchor", "middle").attr("font-size", "11px")
+                    .attr("fill", "#666").text(idx);
+            }
+
+            // Stack visualization
+            svg.append("text").attr("x", 50).attr("y", 180).attr("font-weight", "bold").text("Stack:");
+            
+            stack.forEach((val, idx) => {
+                svg.append("rect").attr("x", 110 + idx * 45).attr("y", 160)
+                    .attr("width", 40).attr("height", 35).attr("rx", 5)
+                    .attr("fill", "#e8f5e9").attr("stroke", "#4caf50");
+                svg.append("text").attr("x", 130 + idx * 45).attr("y", 183)
+                    .attr("text-anchor", "middle").attr("font-weight", "bold").text(val);
+            });
+
+            // Max length
+            svg.append("rect").attr("x", 500).attr("y", 160)
+                .attr("width", 150).attr("height", 45).attr("rx", 10)
+                .attr("fill", "#e3f2fd").attr("stroke", "#1976d2");
+            svg.append("text").attr("x", 575).attr("y", 180)
+                .attr("text-anchor", "middle").attr("font-size", "12px").text("Max Length:");
+            svg.append("text").attr("x", 575).attr("y", 198)
+                .attr("text-anchor", "middle").attr("font-size", "20px")
+                .attr("font-weight", "bold").text(maxLen);
+
+            // Result
+            if (i >= s.length) {
+                svg.append("rect").attr("x", width/2 - 120).attr("y", 280)
+                    .attr("width", 240).attr("height", 50).attr("rx", 12)
+                    .attr("fill", "#d1fae5").attr("stroke", "#10b981").attr("stroke-width", 2);
+                svg.append("text").attr("x", width/2).attr("y", 312)
+                    .attr("text-anchor", "middle").attr("font-size", "20px")
+                    .attr("font-weight", "bold").attr("fill", "#10b981")
+                    .text(`Answer: ${maxLen}`);
+            }
+        }
+
+        function step() {
+            if (i >= s.length) return false;
+
+            const char = s[i];
+            if (char === '(') {
+                stack.push(i);
+                document.getElementById("status").textContent = `'(' at index ${i}: Push ${i} to stack`;
+            } else {
+                stack.pop();
+                if (stack.length === 0) {
+                    stack.push(i);
+                    document.getElementById("status").textContent = `')' at index ${i}: Stack empty, push ${i} as new base`;
+                } else {
+                    const len = i - stack[stack.length - 1];
+                    if (len > maxLen) {
+                        maxLen = len;
+                        validRanges.push({start: stack[stack.length-1] + 1, end: i});
+                    }
+                    document.getElementById("status").textContent = 
+                        `')' at index ${i}: Valid length = ${i} - ${stack[stack.length-1]} = ${len}. Max = ${maxLen}`;
+                }
+            }
+            i++;
+            draw();
+            return i < s.length;
+        }
+
+        function reset() {
+            stack = [-1]; maxLen = 0; i = 0; validRanges = [];
+            if (autoTimer) clearInterval(autoTimer);
+            autoRunning = false;
+            document.getElementById("autoBtn").textContent = "Auto Run";
+            document.getElementById("status").textContent = 'Click "Step" to find longest valid parentheses';
+            draw();
+        }
+
+        function autoRun() {
+            if (autoRunning) { clearInterval(autoTimer); autoRunning = false; document.getElementById("autoBtn").textContent = "Auto Run"; }
+            else {
+                autoRunning = true; document.getElementById("autoBtn").textContent = "Pause";
+                autoTimer = setInterval(() => { if (!step()) { clearInterval(autoTimer); autoRunning = false; document.getElementById("autoBtn").textContent = "Auto Run"; } }, 800);
+            }
+        }
+
+        document.getElementById("stepBtn").addEventListener("click", step);
+        document.getElementById("autoBtn").addEventListener("click", autoRun);
+        document.getElementById("resetBtn").addEventListener("click", reset);
+        reset();
+    </script>
+</body>
+</html>

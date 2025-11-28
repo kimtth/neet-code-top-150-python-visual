@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Missing Number - LeetCode 268</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="problem-info">
+            <h1><span class="problem-number">#0268</span> Missing Number</h1>
+            <p><strong>Problem:</strong> Given an array nums containing n distinct numbers in the range [0, n], return the only number in the range that is missing from the array.</p>
+            <p><strong>Pattern:</strong> Bit Manipulation / Math - XOR or sum formula approach</p>
+            <div class="problem-meta">
+                <span class="meta-tag">📊 Array</span>
+                <span class="meta-tag">💻 Bit</span>
+                <span class="meta-tag">⏱️ O(n)</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <code>python/0268_missing_number/0268_missing_number.py</code>
+            </div>
+
+        </div>
+
+        <div class="explanation-panel">
+            <h4>🧠 How It Works (Layman's Terms)</h4>
+            <p>This algorithm solves the problem <strong>step by step</strong>:</p>
+            <ul>
+                <li><strong>Understand:</strong> Parse the input data</li>
+                <li><strong>Process:</strong> Apply the core logic</li>
+                <li><strong>Optimize:</strong> Use efficient data structures</li>
+                <li><strong>Return:</strong> Output the computed result</li>
+            </ul>
+        </div>
+
+
+        <div class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+
+            <div class="visualization">
+            <svg id="mainSvg"></svg>
+        </div>
+
+        <div class="controls">
+            <button id="stepBtn">Step</button>
+            <button id="autoBtn">Auto Run</button>
+            <button id="resetBtn">Reset</button>
+            <div class="speed-control">
+                <label for="speed">Speed:</label>
+                <input type="range" id="speed" min="100" max="2000" value="800">
+            </div>
+        </div>
+
+        <div class="status" id="status">Click "Step" to find the missing number using XOR</div>
+
+        <div class="variables">
+            <div class="var-item">
+                <span class="var-label">XOR with indices:</span>
+                <span id="indexXor">0</span>
+            </div>
+            <div class="var-item">
+                <span class="var-label">XOR with values:</span>
+                <span id="valueXor">0</span>
+            </div>
+            <div class="var-item">
+                <span class="var-label">Missing Number:</span>
+                <span id="resultDisplay">-</span>
+            </div>
+        </div>
+
+        </div>
+
+        <div class="code-section">
+            <h3>💻 Python Solution</h3>
+            <div class="code-block">
+                <pre><span class="keyword">def</span> <span class="function">missingNumber</span>(nums):
+    <span class="string">"""
+    XOR all indices (0 to n) with all values.
+    Pairs cancel out, leaving the missing number.
+    Time: O(n), Space: O(1)
+    """</span>
+    n = <span class="function">len</span>(nums)
+    result = n  <span class="comment"># Start with n (last index)</span>
+    
+    <span class="keyword">for</span> i <span class="keyword">in</span> <span class="function">range</span>(n):
+        result ^= i ^ nums[i]
+    
+    <span class="keyword">return</span> result</pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const nums = [3, 0, 1];
+        const n = nums.length;
+        let phase = 0; // 0: init, 1-n: processing each index
+        let result = n;
+        let autoRunning = false;
+        let autoTimer = null;
+
+        const width = 800;
+        const height = 400;
+        const svg = d3.select("#mainSvg")
+            .attr("width", width)
+            .attr("height", height);
+
+        function drawVisualization() {
+            svg.selectAll("*").remove();
+
+            // Array section
+            svg.append("text")
+                .attr("x", width / 2)
+                .attr("y", 30)
+                .attr("text-anchor", "middle")
+                .attr("font-weight", "bold")
+                .text(`nums = [${nums.join(", ")}], n = ${n}`);
+
+            // Draw array
+            const cellWidth = 70;
+            const startX = (width - nums.length * cellWidth) / 2;
+
+            const cells = svg.selectAll(".array-cell")
+                .data(nums)
+                .enter()
+                .append("g")
+                .attr("transform", (d, i) => `translate(${startX + i * cellWidth}, 50)`);
+
+            cells.append("rect")
+                .attr("width", cellWidth - 4)
+                .attr("height", 50)
+                .attr("rx", 5)
+                .attr("class", "cell")
+                .attr("id", (d, i) => `cell-${i}`);
+
+            cells.append("text")
+                .attr("x", (cellWidth - 4) / 2)
+                .attr("y", 25)
+                .attr("dy", ".35em")
+                .attr("text-anchor", "middle")
+                .attr("class", "cell-text")
+                .text(d => d);
+
+            cells.append("text")
+                .attr("x", (cellWidth - 4) / 2)
+                .attr("y", 70)
+                .attr("text-anchor", "middle")
+                .attr("class", "index-label")
+                .text((d, i) => `i=${i}`);
+
+            // Expected range
+            svg.append("text")
+                .attr("x", width / 2)
+                .attr("y", 140)
+                .attr("text-anchor", "middle")
+                .attr("fill", "#666")
+                .text(`Expected range: [0, 1, 2, 3] but one is missing!`);
+
+            // XOR visualization
+            svg.append("text")
+                .attr("x", width / 2)
+                .attr("y", 180)
+                .attr("text-anchor", "middle")
+                .attr("font-weight", "bold")
+                .text("XOR Operation: result = n");
+
+            // Result box
+            svg.append("rect")
+                .attr("x", width / 2 - 80)
+                .attr("y", 320)
+                .attr("width", 160)
+                .attr("height", 50)
+                .attr("rx", 8)
+                .attr("id", "resultBox")
+                .attr("fill", "#e3f2fd")
+                .attr("stroke", "#1976d2")
+                .attr("stroke-width", 2);
+
+            svg.append("text")
+                .attr("x", width / 2)
+                .attr("y", 350)
+                .attr("text-anchor", "middle")
+                .attr("font-size", "20px")
+                .attr("font-weight", "bold")
+                .attr("id", "resultText")
+                .text(`result = ${result}`);
+
+            updateXORSteps();
+        }
+
+        function updateXORSteps() {
+            svg.selectAll(".xor-step").remove();
+
+            const stepGroup = svg.append("g")
+                .attr("class", "xor-step")
+                .attr("transform", `translate(${width/2 - 150}, 200)`);
+
+            stepGroup.append("text")
+                .attr("y", 0)
+                .attr("font-family", "monospace")
+                .text(`Start: result = ${n} (n)`);
+
+            for (let i = 0; i < phase && i < n; i++) {
+                stepGroup.append("text")
+                    .attr("y", 25 * (i + 1))
+                    .attr("font-family", "monospace")
+                    .attr("fill", i === phase - 1 ? "#f57c00" : "#333")
+                    .text(`XOR with i=${i}, nums[${i}]=${nums[i]}`);
+            }
+        }
+
+        function step() {
+            if (phase >= n) return false;
+
+            // XOR with current index and value
+            result ^= phase ^ nums[phase];
+            
+            document.getElementById("indexXor").textContent = 
+                Array.from({length: phase + 1}, (_, i) => i).join(" ⊕ ");
+            document.getElementById("valueXor").textContent = 
+                nums.slice(0, phase + 1).join(" ⊕ ");
+
+            // Highlight current cell
+            svg.selectAll(".cell").attr("class", "cell");
+            svg.select(`#cell-${phase}`).attr("class", "cell current");
+            
+            for (let i = 0; i < phase; i++) {
+                svg.select(`#cell-${i}`).attr("class", "cell processed");
+            }
+
+            svg.select("#resultText").text(`result = ${result}`);
+
+            phase++;
+            updateXORSteps();
+
+            if (phase >= n) {
+                document.getElementById("resultDisplay").textContent = result;
+                document.getElementById("status").textContent = 
+                    `Complete! The missing number is ${result}`;
+                svg.select("#resultBox")
+                    .attr("fill", "#c8e6c9")
+                    .attr("stroke", "#4caf50");
+                return false;
+            } else {
+                document.getElementById("status").textContent = 
+                    `Processing index ${phase - 1}: result = ${result}`;
+                return true;
+            }
+        }
+
+        function reset() {
+            phase = 0;
+            result = n;
+            autoRunning = false;
+            if (autoTimer) clearInterval(autoTimer);
+            
+            document.getElementById("indexXor").textContent = "0";
+            document.getElementById("valueXor").textContent = "0";
+            document.getElementById("resultDisplay").textContent = "-";
+            document.getElementById("status").textContent = 'Click "Step" to find the missing number using XOR';
+            document.getElementById("autoBtn").textContent = "Auto Run";
+            
+            drawVisualization();
+        }
+
+        function autoRun() {
+            if (autoRunning) {
+                autoRunning = false;
+                clearInterval(autoTimer);
+                document.getElementById("autoBtn").textContent = "Auto Run";
+            } else {
+                autoRunning = true;
+                document.getElementById("autoBtn").textContent = "Pause";
+                const speed = 2100 - document.getElementById("speed").value;
+                autoTimer = setInterval(() => {
+                    if (!step()) {
+                        autoRunning = false;
+                        clearInterval(autoTimer);
+                        document.getElementById("autoBtn").textContent = "Auto Run";
+                    }
+                }, speed);
+            }
+        }
+
+        document.getElementById("stepBtn").addEventListener("click", step);
+        document.getElementById("autoBtn").addEventListener("click", autoRun);
+        document.getElementById("resetBtn").addEventListener("click", reset);
+
+        drawVisualization();
+    </script>
+
+    <style>
+        .cell { fill: #e3f2fd; stroke: #1976d2; stroke-width: 2; }
+        .cell.current { fill: #fff3e0; stroke: #f57c00; stroke-width: 3; }
+        .cell.processed { fill: #e8f5e9; stroke: #4caf50; stroke-width: 2; }
+        .cell-text { font-size: 20px; font-weight: bold; fill: #333; }
+        .index-label { font-size: 12px; fill: #666; }
+    </style>
+</body>
+</html>

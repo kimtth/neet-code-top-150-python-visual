@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LC 1086: High Five - Algorithm Visualization</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="problem-info">
+            <h1><span class="problem-number">#1086</span> High Five</h1>
+            <p>Given a list of student scores (id, score), return the top 5 average for each student sorted by id.</p>
+            <div class="problem-meta">
+                <span class="meta-tag">🔺 Heap</span>
+                <span class="meta-tag">📊 Sorting</span>
+                <span class="meta-tag">⏱️ O(n log n)</span>
+                <span class="meta-tag">💾 O(n)</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <code>python/1086_high_five/1086_high_five.py</code>
+            </div>
+            </div>
+
+        <div class="explanation-panel">
+            <h4>🧠 How It Works (Layman's Terms)</h4>
+            <p>Group scores by student, keep top 5 for each:</p>
+            <ul>
+                <li><strong>Group:</strong> Use a dictionary to collect scores per student</li>
+                <li><strong>Sort/Heap:</strong> Keep only top 5 scores for each student</li>
+                <li><strong>Average:</strong> Calculate average of top 5 (integer division)</li>
+                <li><strong>Result:</strong> Return [[id, average]] sorted by id</li>
+            </ul>
+        </div>
+
+
+        <div class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+            
+            <div class="controls">
+                <button class="btn btn-primary" id="startBtn" onclick="start()">▶ Start</button>
+                <button class="btn" onclick="stepForward()">Step →</button>
+                <button class="btn btn-warning" onclick="reset()">Reset</button>
+            </div>
+
+            <div class="status-message" id="statusMessage">
+                Click Start to calculate top 5 averages
+            </div>
+
+            <div style="display: flex; gap: 20px; flex-wrap: wrap; margin-top: 20px;">
+                <div style="flex: 1; min-width: 300px;">
+                    <h4>📝 Input Scores</h4>
+                    <div id="inputDisplay" style="max-height: 200px; overflow-y: auto; padding: 10px; background: #f5f5f5; border-radius: 12px;"></div>
+                </div>
+                <div style="flex: 2; min-width: 400px;">
+                    <h4>👥 Grouped by Student</h4>
+                    <svg id="groupedViz" width="100%" height="250"></svg>
+                </div>
+            </div>
+
+            <div style="margin-top: 20px; padding: 20px; background: #e8f5e9; border-radius: 12px;">
+                <h4 style="margin: 0 0 15px 0; color: #2e7d32;">🏆 Results (Top 5 Average)</h4>
+                <div id="resultsDisplay" style="display: flex; gap: 15px; flex-wrap: wrap;"></div>
+            </div>
+        </div>
+
+        <div class="code-section">
+            <h3>💻 Python Solution</h3>
+            <div class="code-block">
+                <pre><span class="keyword">from</span> collections <span class="keyword">import</span> defaultdict
+<span class="keyword">import</span> heapq
+
+<span class="keyword">def</span> <span class="function">highFive</span>(items):
+    <span class="comment"># Group scores by student id</span>
+    scores = defaultdict(<span class="function">list</span>)
+    <span class="keyword">for</span> id, score <span class="keyword">in</span> items:
+        scores[id].<span class="function">append</span>(score)
+    
+    result = []
+    <span class="keyword">for</span> id <span class="keyword">in</span> <span class="function">sorted</span>(scores.keys()):
+        <span class="comment"># Get top 5 scores</span>
+        top5 = heapq.<span class="function">nlargest</span>(<span class="number">5</span>, scores[id])
+        avg = <span class="function">sum</span>(top5) // <span class="number">5</span>
+        result.<span class="function">append</span>([id, avg])
+    
+    <span class="keyword">return</span> result</pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Sample input: [[id, score], ...]
+        const items = [
+            [1, 91], [1, 92], [2, 93], [2, 97], [1, 60],
+            [2, 77], [1, 65], [1, 87], [1, 100], [2, 100],
+            [2, 76], [3, 88], [3, 92], [3, 78], [3, 85],
+            [3, 91], [3, 94]
+        ];
+
+        let stepIndex = 0;
+        let steps = [];
+        let isRunning = false;
+        let groupedScores = {};
+        let processedStudents = [];
+        let results = [];
+
+        function precomputeSteps() {
+            steps = [];
+            groupedScores = {};
+            
+            // Step 1: Show input
+            steps.push({
+                phase: 'input',
+                message: 'Input: List of [student_id, score] pairs',
+                grouped: {},
+                processed: [],
+                results: []
+            });
+
+            // Group scores
+            items.forEach(([id, score]) => {
+                if (!groupedScores[id]) groupedScores[id] = [];
+                groupedScores[id].push(score);
+            });
+
+            steps.push({
+                phase: 'grouped',
+                message: 'Grouped all scores by student ID',
+                grouped: JSON.parse(JSON.stringify(groupedScores)),
+                processed: [],
+                results: []
+            });
+
+            // Process each student
+            const sortedIds = Object.keys(groupedScores).map(Number).sort((a, b) => a - b);
+            let currentResults = [];
+            
+            sortedIds.forEach(id => {
+                const scores = groupedScores[id].sort((a, b) => b - a);
+                const top5 = scores.slice(0, 5);
+                const avg = Math.floor(top5.reduce((a, b) => a + b, 0) / 5);
+                
+                steps.push({
+                    phase: 'top5',
+                    message: `Student ${id}: Sorted scores = [${scores.join(', ')}], Top 5 = [${top5.join(', ')}]`,
+                    grouped: JSON.parse(JSON.stringify(groupedScores)),
+                    processed: [...currentResults.map(r => r[0]), id],
+                    currentStudent: id,
+                    top5: top5,
+                    results: [...currentResults]
+                });
+
+                currentResults.push([id, avg]);
+                
+                steps.push({
+                    phase: 'average',
+                    message: `Student ${id}: Average = sum(${top5.join(' + ')}) / 5 = ${avg}`,
+                    grouped: JSON.parse(JSON.stringify(groupedScores)),
+                    processed: currentResults.map(r => r[0]),
+                    currentStudent: id,
+                    results: [...currentResults]
+                });
+            });
+
+            steps.push({
+                phase: 'done',
+                message: `Done! Results: ${currentResults.map(r => `[${r[0]}, ${r[1]}]`).join(', ')}`,
+                grouped: JSON.parse(JSON.stringify(groupedScores)),
+                processed: currentResults.map(r => r[0]),
+                results: currentResults
+            });
+        }
+
+        function render() {
+            const step = stepIndex < steps.length ? steps[stepIndex] : steps[steps.length - 1];
+
+            // Input display
+            const inputContainer = document.getElementById('inputDisplay');
+            inputContainer.innerHTML = items.map(([id, score]) => 
+                `<span style="display: inline-block; margin: 2px; padding: 4px 8px; 
+                    background: hsl(${id * 100}, 70%, 85%); border-radius: 4px; font-size: 12px;">
+                    [${id}, ${score}]
+                </span>`
+            ).join('');
+
+            // Grouped visualization
+            const svg = d3.select("#groupedViz");
+            svg.selectAll("*").remove();
+
+            const container = svg.node().parentElement;
+            const width = container.clientWidth;
+            const height = 250;
+            svg.attr("viewBox", `0 0 ${width} ${height}`);
+
+            const grouped = step.grouped || {};
+            const studentIds = Object.keys(grouped).map(Number).sort((a, b) => a - b);
+            
+            if (studentIds.length > 0) {
+                const colWidth = Math.min(120, (width - 40) / studentIds.length);
+                
+                studentIds.forEach((id, idx) => {
+                    const x = 20 + idx * colWidth;
+                    const scores = grouped[id].slice().sort((a, b) => b - a);
+                    const isProcessed = (step.processed || []).includes(id);
+                    const isCurrent = step.currentStudent === id;
+                    const top5 = step.top5 && isCurrent ? step.top5 : null;
+
+                    // Student label
+                    svg.append("text")
+                        .attr("x", x + colWidth / 2 - 10).attr("y", 20)
+                        .attr("text-anchor", "middle")
+                        .attr("font-weight", "bold")
+                        .attr("fill", isCurrent ? '#ff9800' : '#333')
+                        .text(`Student ${id}`);
+
+                    // Scores
+                    scores.forEach((score, scoreIdx) => {
+                        const y = 35 + scoreIdx * 28;
+                        const isTop5 = top5 ? top5.includes(score) && scoreIdx < 5 : scoreIdx < 5;
+                        
+                        let fill = `hsl(${id * 100}, 70%, 75%)`;
+                        if (isCurrent && top5) {
+                            fill = scoreIdx < 5 ? '#4caf50' : '#e0e0e0';
+                        } else if (isProcessed && scoreIdx < 5) {
+                            fill = '#4caf50';
+                        }
+
+                        svg.append("rect")
+                            .attr("x", x).attr("y", y)
+                            .attr("width", colWidth - 20).attr("height", 24)
+                            .attr("fill", fill)
+                            .attr("stroke", isCurrent && scoreIdx < 5 ? '#2e7d32' : 'transparent')
+                            .attr("stroke-width", 2)
+                            .attr("rx", 4);
+
+                        svg.append("text")
+                            .attr("x", x + (colWidth - 20) / 2).attr("y", y + 16)
+                            .attr("text-anchor", "middle")
+                            .attr("fill", isProcessed || (isCurrent && scoreIdx < 5) ? 'white' : '#333')
+                            .attr("font-size", "13px")
+                            .attr("font-weight", scoreIdx < 5 ? "bold" : "normal")
+                            .text(score);
+                    });
+                });
+            }
+
+            // Results display
+            const resultsContainer = document.getElementById('resultsDisplay');
+            const results = step.results || [];
+            if (results.length === 0) {
+                resultsContainer.innerHTML = '<span style="color: #999;">Calculating...</span>';
+            } else {
+                resultsContainer.innerHTML = results.map(([id, avg]) => 
+                    `<div style="padding: 15px 25px; background: linear-gradient(135deg, hsl(${id * 100}, 70%, 60%), hsl(${id * 100}, 70%, 40%)); 
+                        color: white; border-radius: 12px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.2);">
+                        <div style="font-size: 14px; opacity: 0.9;">Student ${id}</div>
+                        <div style="font-size: 28px; font-weight: bold;">${avg}</div>
+                    </div>`
+                ).join('');
+            }
+
+            document.getElementById('statusMessage').textContent = step.message;
+        }
+
+        function stepForward() {
+            if (stepIndex < steps.length - 1) {
+                stepIndex++;
+                render();
+            }
+        }
+
+        async function start() {
+            if (isRunning) {
+                isRunning = false;
+                document.getElementById('startBtn').textContent = '▶ Start';
+                return;
+            }
+            
+            isRunning = true;
+            document.getElementById('startBtn').textContent = '⏸ Pause';
+            
+            while (stepIndex < steps.length - 1 && isRunning) {
+                stepForward();
+                await new Promise(r => setTimeout(r, 1000));
+            }
+            
+            isRunning = false;
+            document.getElementById('startBtn').textContent = '▶ Start';
+        }
+
+        function reset() {
+            isRunning = false;
+            stepIndex = 0;
+            document.getElementById('startBtn').textContent = '▶ Start';
+            precomputeSteps();
+            render();
+        }
+
+        reset();
+        window.addEventListener('resize', render);
+    </script>
+</body>
+</html>

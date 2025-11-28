@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LC 49: Group Anagrams - Algorithm Visualization</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="problem-info">
+            <h1><span class="problem-number">#49</span> Group Anagrams</h1>
+            <p>Given an array of strings, group the anagrams together. An anagram is a word formed by rearranging the letters of another word using all original letters exactly once.</p>
+            <div class="problem-meta">
+                <span class="meta-tag">📁 Array</span>
+                <span class="meta-tag">🔤 Hash Map</span>
+                <span class="meta-tag">📊 Sorting</span>
+                <span class="meta-tag">⏱️ O(n·k log k)</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <code>python/0049_group_anagrams/0049_group_anagrams.py</code>
+            </div>
+            </div>
+
+        <div class="explanation-panel">
+            <h4>🧠 How It Works (Layman's Terms)</h4>
+            <p>Imagine you have a bunch of word tiles. Words like "eat", "tea", and "ate" all use the same letters: e, a, and t. The trick is to <strong>sort the letters</strong> of each word alphabetically. When sorted, all anagrams become the same string!</p>
+            <ul>
+                <li><strong>eat → aet</strong> (sorted)</li>
+                <li><strong>tea → aet</strong> (sorted) - Same key!</li>
+                <li><strong>ate → aet</strong> (sorted) - Same key!</li>
+                <li><strong>bat → abt</strong> (sorted) - Different key</li>
+            </ul>
+            <p>We use the sorted string as a "bucket label" and group all words with the same label together.</p>
+        </div>
+
+
+        <div class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+            
+            <div class="controls">
+                <button class="btn btn-primary" id="stepBtn" onclick="step()">Step</button>
+                <button class="btn btn-success" id="autoBtn" onclick="toggleAuto()">Auto Run</button>
+                <button class="btn btn-warning" onclick="reset()">Reset</button>
+            </div>
+
+            <div class="status-message" id="statusMessage">
+                Click "Step" or "Auto Run" to start visualization
+            </div>
+
+            <div class="array-section">
+                <div class="array-label">📥 Input Strings:</div>
+                <div class="array-container" id="inputContainer"></div>
+            </div>
+
+            <div class="array-section">
+                <div class="array-label">🔑 Current Word Processing:</div>
+                <div id="processingDisplay" style="display: flex; align-items: center; gap: 20px; padding: 15px; background: #f5f5f5; border-radius: 10px; margin-bottom: 15px;">
+                    <div id="currentWord" style="font-size: 1.5em; font-weight: bold; color: #667eea;">-</div>
+                    <div style="font-size: 1.5em;">→</div>
+                    <div id="sortedWord" style="font-size: 1.5em; font-weight: bold; color: #4caf50;">-</div>
+                </div>
+            </div>
+
+            <div class="array-section">
+                <div class="array-label">📦 Anagram Groups (Hash Map):</div>
+                <div id="groupsContainer"></div>
+            </div>
+        </div>
+        <div class="code-section">
+            <h3>💻 Python Solution</h3>
+            <div class="code-block">
+                <pre><span class="keyword">def</span> <span class="function">group_anagrams</span>(self, strs: <span class="class-name">List</span>[str]) -> List[List[str]]:
+    anagram_map = <span class="function">defaultdict</span>(list)
+    
+    <span class="keyword">for</span> s <span class="keyword">in</span> strs:
+        <span class="comment"># Sort the string to use as a key</span>
+        sorted_s = <span class="string">''</span>.<span class="function">join</span>(<span class="function">sorted</span>(s))
+        anagram_map[sorted_s].<span class="function">append</span>(s)
+        
+    <span class="comment"># Return the values (groups of anagrams)</span>
+    <span class="keyword">return</span> <span class="function">list</span>(anagram_map.<span class="function">values</span>())</pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const inputStrings = ["eat", "tea", "tan", "ate", "nat", "bat"];
+        let anagramMap = {};
+        let currentIndex = 0;
+        let phase = 'init';
+        let autoInterval = null;
+
+        function init() {
+            renderInput();
+            renderGroups();
+            document.getElementById('currentWord').textContent = '-';
+            document.getElementById('sortedWord').textContent = '-';
+        }
+
+        function renderInput() {
+            const container = document.getElementById('inputContainer');
+            container.innerHTML = '';
+            inputStrings.forEach((str, idx) => {
+                const box = document.createElement('div');
+                box.className = 'array-box';
+                box.id = `input-${idx}`;
+                box.style.width = 'auto';
+                box.style.padding = '10px 20px';
+                box.innerHTML = `"${str}"`;
+                container.appendChild(box);
+            });
+        }
+
+        function renderGroups() {
+            const container = document.getElementById('groupsContainer');
+            container.innerHTML = '';
+            
+            const keys = Object.keys(anagramMap);
+            if (keys.length === 0) {
+                container.innerHTML = '<div style="color: #999; padding: 20px;">Empty - no groups yet
+
+        </div>';
+                return;
+            }
+
+            keys.forEach(key => {
+                const groupDiv = document.createElement('div');
+                groupDiv.style.cssText = 'display: flex; align-items: center; gap: 15px; margin-bottom: 15px; padding: 15px; background: #f5f5f5; border-radius: 10px;';
+                
+                const keyLabel = document.createElement('div');
+                keyLabel.style.cssText = 'font-weight: bold; color: #667eea; min-width: 60px;';
+                keyLabel.textContent = `"${key}":`;
+                groupDiv.appendChild(keyLabel);
+
+                const valuesDiv = document.createElement('div');
+                valuesDiv.style.cssText = 'display: flex; gap: 8px; flex-wrap: wrap;';
+                
+                anagramMap[key].forEach(word => {
+                    const wordBox = document.createElement('div');
+                    wordBox.className = 'array-box';
+                    wordBox.style.cssText = 'width: auto; padding: 8px 15px; background: #e8f5e9; border-color: #4caf50;';
+                    wordBox.textContent = `"${word}"`;
+                    valuesDiv.appendChild(wordBox);
+                });
+                
+                groupDiv.appendChild(valuesDiv);
+                container.appendChild(groupDiv);
+            });
+        }
+
+        function step() {
+            if (currentIndex >= inputStrings.length) {
+                phase = 'done';
+                document.getElementById('statusMessage').className = 'status-message success';
+                document.getElementById('statusMessage').textContent = `✅ Done! Found ${Object.keys(anagramMap).length} groups of anagrams.`;
+                document.getElementById('stepBtn').disabled = true;
+                stopAuto();
+                return;
+            }
+
+            // Clear previous highlights
+            document.querySelectorAll('.array-box').forEach(box => {
+                box.classList.remove('highlight', 'current');
+            });
+
+            const currentStr = inputStrings[currentIndex];
+            const sortedStr = currentStr.split('').sort().join('');
+
+            // Highlight current input
+            document.getElementById(`input-${currentIndex}`).classList.add('highlight');
+
+            // Show processing
+            document.getElementById('currentWord').textContent = `"${currentStr}"`;
+            document.getElementById('sortedWord').textContent = `"${sortedStr}"`;
+
+            // Add to map
+            if (!anagramMap[sortedStr]) {
+                anagramMap[sortedStr] = [];
+            }
+            anagramMap[sortedStr].push(currentStr);
+
+            // Update status
+            document.getElementById('statusMessage').textContent = 
+                `Processing "${currentStr}" → sorted key = "${sortedStr}" → Added to group "${sortedStr}"`;
+
+            renderGroups();
+            currentIndex++;
+        }
+
+        function toggleAuto() {
+            if (autoInterval) {
+                stopAuto();
+            } else {
+                document.getElementById('autoBtn').textContent = 'Pause';
+                autoInterval = setInterval(() => {
+                    if (currentIndex >= inputStrings.length) {
+                        step(); // Final step to show done
+                        stopAuto();
+                    } else {
+                        step();
+                    }
+                }, 1200);
+            }
+        }
+
+        function stopAuto() {
+            if (autoInterval) {
+                clearInterval(autoInterval);
+                autoInterval = null;
+            }
+            document.getElementById('autoBtn').textContent = 'Auto Run';
+        }
+
+        function reset() {
+            stopAuto();
+            currentIndex = 0;
+            anagramMap = {};
+            phase = 'init';
+            document.getElementById('stepBtn').disabled = false;
+            document.getElementById('statusMessage').className = 'status-message';
+            document.getElementById('statusMessage').textContent = 'Click "Step" or "Auto Run" to start visualization';
+            init();
+        }
+
+        init();
+    </script>
+</body>
+</html>

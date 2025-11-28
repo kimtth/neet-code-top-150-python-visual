@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>787 - Cheapest Flights Within K Stops</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="problem-info">
+            <h1><span class="problem-number">#787</span> Cheapest Flights Within K Stops</h1>
+            <p>
+                Find the cheapest price from source to destination with at most K stops.
+                Uses Bellman-Ford algorithm: relax all edges K+1 times.
+            </p>
+            <div class="problem-meta">
+                <span class="meta-tag">⛰️ Heap</span>
+                <span class="meta-tag">⏱️ O(n)</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <code>python/0787_cheapest_flights_within_k_stops/0787_cheapest_flights_within_k_stops.py</code>
+            </div>
+
+        </div>
+
+        <div class="explanation-panel">
+            <h4>🧠 How It Works (Layman's Terms)</h4>
+            <p>A heap is like a <strong>priority queue</strong> - always access the best element:</p>
+            <ul>
+                <li><strong>Min heap:</strong> Smallest element always on top</li>
+                <li><strong>Max heap:</strong> Largest element always on top</li>
+                <li><strong>Insert/Remove:</strong> O(log n) to maintain order</li>
+                <li><strong>Use case:</strong> Great for "top K" problems</li>
+            </ul>
+        </div>
+
+
+        <section class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+            <div class="controls">
+                <button id="autoRunBtn" class="btn">▶ Auto Run</button>
+                <button id="stepBtn" class="btn btn-success">Step</button>
+                <button id="resetBtn" class="btn btn-danger">Reset</button>
+            </div>
+            <div class="status" id="status">Click Auto Run to find cheapest path with at most K stops</div>
+            <svg id="visualization"></svg>
+        </section>
+
+        <section class="code-section">
+            <h3>💻 Python Solution</h3>
+            <div class="code-block">
+                <pre><span class="keyword">def</span> <span class="function">findCheapestPrice</span>(n, flights, src, dst, k):
+    <span class="comment"># Bellman-Ford: K+1 iterations</span>
+    costs = [<span class="function">float</span>(<span class="string">'inf'</span>)] * n
+    costs[src] = <span class="number">0</span>
+    
+    <span class="keyword">for</span> i <span class="keyword">in</span> <span class="function">range</span>(k + <span class="number">1</span>):
+        temp = costs.<span class="function">copy</span>()
+        <span class="keyword">for</span> u, v, cost <span class="keyword">in</span> flights:
+            <span class="keyword">if</span> costs[u] == <span class="function">float</span>(<span class="string">'inf'</span>):
+                <span class="keyword">continue</span>
+            <span class="keyword">if</span> temp[v] > costs[u] + cost:
+                temp[v] = costs[u] + cost
+        costs = temp
+    
+    <span class="keyword">return</span> costs[dst] <span class="keyword">if</span> costs[dst] != <span class="function">float</span>(<span class="string">'inf'</span>) <span class="keyword">else</span> <span class="number">-1</span></pre>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        const width = 900;
+        const height = 600;
+
+        const svg = d3.select("#visualization")
+            .attr("width", width)
+            .attr("height", height);
+
+        // Graph data
+        const n = 4;
+        const flights = [[0, 1, 100], [1, 2, 100], [2, 0, 100], [1, 3, 600], [2, 3, 200]];
+        const src = 0;
+        const dst = 3;
+        const k = 1;
+
+        // Node positions
+        const nodes = [
+            { id: 0, x: 150, y: 150, label: "City 0 (src)" },
+            { id: 1, x: 400, y: 100, label: "City 1" },
+            { id: 2, x: 400, y: 300, label: "City 2" },
+            { id: 3, x: 650, y: 200, label: "City 3 (dst)" }
+        ];
+
+        let costs = [];
+        let iteration = 0;
+        let currentEdge = null;
+        let animationTimer = null;
+        let edgeIdx = 0;
+
+        function reset() {
+            costs = new Array(n).fill(Infinity);
+            costs[src] = 0;
+            iteration = 0;
+            edgeIdx = 0;
+            currentEdge = null;
+            if (animationTimer) clearInterval(animationTimer);
+            document.getElementById("status").textContent = "Click Auto Run to find cheapest path with at most K stops";
+            render();
+        }
+
+        function render() {
+            svg.selectAll("*").remove();
+
+            // Arrow marker
+            svg.append("defs").append("marker")
+                .attr("id", "arrowhead")
+                .attr("viewBox", "0 0 10 10")
+                .attr("refX", 30)
+                .attr("refY", 5)
+                .attr("markerWidth", 6)
+                .attr("markerHeight", 6)
+                .attr("orient", "auto")
+                .append("path")
+                .attr("d", "M 0 0 L 10 5 L 0 10 z")
+                .attr("fill", "#64748b");
+
+            // Draw edges
+            flights.forEach((flight, idx) => {
+                const [u, v, cost] = flight;
+                const source = nodes[u];
+                const target = nodes[v];
+                const isActive = currentEdge && currentEdge[0] === u && currentEdge[1] === v;
+
+                // Calculate control point for curved edges
+                const dx = target.x - source.x;
+                const dy = target.y - source.y;
+                const cx = (source.x + target.x) / 2 - dy * 0.15;
+                const cy = (source.y + target.y) / 2 + dx * 0.15;
+
+                svg.append("path")
+                    .attr("d", `M ${source.x} ${source.y} Q ${cx} ${cy} ${target.x} ${target.y}`)
+                    .attr("fill", "none")
+                    .attr("stroke", isActive ? "#f59e0b" : "#94a3b8")
+                    .attr("stroke-width", isActive ? 3 : 2)
+                    .attr("marker-end", "url(#arrowhead)");
+
+                // Edge label
+                svg.append("rect")
+                    .attr("x", cx - 20)
+                    .attr("y", cy - 12)
+                    .attr("width", 40)
+                    .attr("height", 20)
+                    .attr("rx", 4)
+                    .attr("fill", isActive ? "#fef3c7" : "#fff")
+                    .attr("stroke", isActive ? "#f59e0b" : "#94a3b8");
+
+                svg.append("text")
+                    .attr("x", cx)
+                    .attr("y", cy + 4)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "12px")
+                    .attr("font-weight", "bold")
+                    .attr("fill", "#1e293b")
+                    .text(`$${cost}`);
+            });
+
+            // Draw nodes
+            nodes.forEach((node, idx) => {
+                const isSource = idx === src;
+                const isDest = idx === dst;
+                const cost = costs[idx];
+
+                svg.append("circle")
+                    .attr("cx", node.x)
+                    .attr("cy", node.y)
+                    .attr("r", 30)
+                    .attr("fill", () => {
+                        if (isSource) return "#d1fae5";
+                        if (isDest) return "#fce7f3";
+                        return "#dbeafe";
+                    })
+                    .attr("stroke", () => {
+                        if (isSource) return "#10b981";
+                        if (isDest) return "#ec4899";
+                        return "#3b82f6";
+                    })
+                    .attr("stroke-width", 3);
+
+                svg.append("text")
+                    .attr("x", node.x)
+                    .attr("y", node.y + 6)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "18px")
+                    .attr("font-weight", "bold")
+                    .attr("fill", "#1e293b")
+                    .text(idx);
+
+                // Cost label
+                svg.append("rect")
+                    .attr("x", node.x - 25)
+                    .attr("y", node.y + 40)
+                    .attr("width", 50)
+                    .attr("height", 22)
+                    .attr("rx", 4)
+                    .attr("fill", cost === Infinity ? "#f1f5f9" : "#ecfdf5")
+                    .attr("stroke", cost === Infinity ? "#94a3b8" : "#10b981");
+
+                svg.append("text")
+                    .attr("x", node.x)
+                    .attr("y", node.y + 55)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "12px")
+                    .attr("font-weight", "bold")
+                    .attr("fill", cost === Infinity ? "#64748b" : "#1e293b")
+                    .text(cost === Infinity ? "∞" : `$${cost}`);
+            });
+
+            // Iteration info
+            svg.append("text")
+                .attr("x", 50)
+                .attr("y", 420)
+                .attr("font-size", "16px")
+                .attr("font-weight", "bold")
+                .attr("fill", "#1e293b")
+                .text(`Bellman-Ford: Iteration ${iteration} of ${k + 1} (K+1 = ${k}+1)`);
+
+            // Costs array
+            drawCostsArray();
+
+            // Legend
+            drawLegend();
+        }
+
+        function drawCostsArray() {
+            const y = 470;
+            
+            svg.append("text")
+                .attr("x", 50)
+                .attr("y", y - 10)
+                .attr("font-size", "14px")
+                .attr("font-weight", "bold")
+                .attr("fill", "#1e293b")
+                .text("Costs Array:");
+
+            costs.forEach((cost, idx) => {
+                const x = 50 + idx * 100;
+                
+                svg.append("rect")
+                    .attr("x", x)
+                    .attr("y", y)
+                    .attr("width", 90)
+                    .attr("height", 35)
+                    .attr("rx", 4)
+                    .attr("fill", cost === Infinity ? "#f1f5f9" : "#d1fae5")
+                    .attr("stroke", cost === Infinity ? "#94a3b8" : "#10b981");
+
+                svg.append("text")
+                    .attr("x", x + 45)
+                    .attr("y", y + 23)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "14px")
+                    .attr("font-weight", "bold")
+                    .attr("fill", "#1e293b")
+                    .text(`[${idx}] = ${cost === Infinity ? "∞" : cost}`);
+            });
+        }
+
+        function drawLegend() {
+            const x = 550;
+            const y = 420;
+
+            svg.append("text")
+                .attr("x", x)
+                .attr("y", y)
+                .attr("font-size", "14px")
+                .attr("font-weight", "bold")
+                .attr("fill", "#1e293b")
+                .text("Parameters:");
+
+            svg.append("text")
+                .attr("x", x)
+                .attr("y", y + 25)
+                .attr("font-size", "12px")
+                .attr("fill", "#64748b")
+                .text(`Source: City ${src}`);
+
+            svg.append("text")
+                .attr("x", x)
+                .attr("y", y + 45)
+                .attr("font-size", "12px")
+                .attr("fill", "#64748b")
+                .text(`Destination: City ${dst}`);
+
+            svg.append("text")
+                .attr("x", x)
+                .attr("y", y + 65)
+                .attr("font-size", "12px")
+                .attr("fill", "#64748b")
+                .text(`Max Stops (K): ${k}`);
+
+            svg.append("text")
+                .attr("x", x)
+                .attr("y", y + 85)
+                .attr("font-size", "12px")
+                .attr("fill", "#64748b")
+                .text(`Edges to relax: ${flights.length}`);
+        }
+
+        function step() {
+            if (iteration > k) {
+                const result = costs[dst];
+                document.getElementById("status").textContent = 
+                    result === Infinity ? "No path found!" : `Cheapest price: $${result}`;
+                return;
+            }
+
+            if (edgeIdx >= flights.length) {
+                iteration++;
+                edgeIdx = 0;
+                currentEdge = null;
+                
+                if (iteration > k) {
+                    const result = costs[dst];
+                    document.getElementById("status").textContent = 
+                        result === Infinity ? "No path found!" : `✓ Cheapest price: $${result}`;
+                } else {
+                    document.getElementById("status").textContent = 
+                        `Starting iteration ${iteration}...`;
+                }
+                render();
+                return;
+            }
+
+            const [u, v, cost] = flights[edgeIdx];
+            currentEdge = [u, v];
+
+            const tempCosts = [...costs];
+            if (costs[u] !== Infinity && tempCosts[v] > costs[u] + cost) {
+                tempCosts[v] = costs[u] + cost;
+                document.getElementById("status").textContent = 
+                    `Edge (${u}→${v}): Update cost[${v}] = ${costs[u]} + ${cost} = ${tempCosts[v]}`;
+            } else if (costs[u] === Infinity) {
+                document.getElementById("status").textContent = 
+                    `Edge (${u}→${v}): Skip - source cost[${u}] is ∞`;
+            } else {
+                document.getElementById("status").textContent = 
+                    `Edge (${u}→${v}): No improvement - ${costs[v]} ≤ ${costs[u]} + ${cost}`;
+            }
+
+            costs = tempCosts;
+            edgeIdx++;
+            render();
+        }
+
+        function autoRun() {
+            if (animationTimer) {
+                clearInterval(animationTimer);
+                animationTimer = null;
+                document.getElementById("autoRunBtn").textContent = "▶ Auto Run";
+                return;
+            }
+
+            document.getElementById("autoRunBtn").textContent = "⏸ Pause";
+            animationTimer = setInterval(() => {
+                if (iteration > k) {
+                    clearInterval(animationTimer);
+                    animationTimer = null;
+                    document.getElementById("autoRunBtn").textContent = "▶ Auto Run";
+                    return;
+                }
+                step();
+            }, 700);
+        }
+
+        document.getElementById("autoRunBtn").addEventListener("click", autoRun);
+        document.getElementById("stepBtn").addEventListener("click", step);
+        document.getElementById("resetBtn").addEventListener("click", reset);
+
+        reset();
+    </script>
+</body>
+</html>

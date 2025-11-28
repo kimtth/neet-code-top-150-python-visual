@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LC 380: Insert Delete GetRandom O(1) - Algorithm Visualization</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="problem-info">
+            <h1><span class="problem-number">#380</span> Insert Delete GetRandom O(1)</h1>
+            <p>Design a data structure that supports insert, remove, and getRandom in average O(1) time.</p>
+            <div class="problem-meta">
+                <span class="meta-tag">🔧 Design</span>
+                <span class="meta-tag">📊 Hash Map</span>
+                <span class="meta-tag">⏱️ O(1) average</span>
+                <span class="meta-tag">💾 O(n)</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <code>python/0380_insert_delete_getrandom_o1/0380_insert_delete_getrandom_o1.py</code>
+            </div>
+            </div>
+
+        <div class="explanation-panel">
+            <h4>🧠 How It Works (Layman's Terms)</h4>
+            <p>Combine <strong>Array + HashMap</strong> for O(1) operations:</p>
+            <ul>
+                <li><strong>Array:</strong> Store values for O(1) random access</li>
+                <li><strong>HashMap:</strong> Map value → index for O(1) lookup</li>
+                <li><strong>Insert:</strong> Append to array, update map</li>
+                <li><strong>Remove:</strong> Swap with last element, pop, update map</li>
+                <li><strong>Random:</strong> Pick random index from array</li>
+            </ul>
+        </div>
+
+
+        <div class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+            
+            <div class="controls">
+                <input type="number" id="valueInput" placeholder="Enter value" style="padding: 8px; width: 120px; border-radius: 5px; border: 2px solid #ddd;">
+                <button class="btn btn-primary" onclick="insertValue()">Insert</button>
+                <button class="btn btn-warning" onclick="removeValue()">Remove</button>
+                <button class="btn" style="background: #9c27b0; color: white;" onclick="getRandom()">🎲 GetRandom</button>
+                <button class="btn" onclick="reset()">Reset</button>
+            </div>
+
+            <div class="status-message" id="statusMessage">
+                Enter a value and click Insert, Remove, or GetRandom
+            </div>
+
+            <div style="display: flex; gap: 30px; flex-wrap: wrap; margin-top: 20px;">
+                <div style="flex: 1; min-width: 300px;">
+                    <h4>📊 Array (for O(1) random)</h4>
+                    <div id="arrayDisplay" style="display: flex; flex-wrap: wrap; gap: 10px; padding: 20px; background: #e3f2fd; border-radius: 12px; min-height: 80px;"></div>
+                    <div style="margin-top: 10px; font-size: 0.9em; color: #666;">
+                        Indices: <span id="indexDisplay"></span>
+                    </div>
+                </div>
+                <div style="flex: 1; min-width: 250px;">
+                    <h4>🗺️ HashMap (value → index)</h4>
+                    <div id="mapDisplay" style="padding: 15px; background: #fff3e0; border-radius: 12px; min-height: 80px;"></div>
+                </div>
+            </div>
+
+            <div id="animationBox" style="margin-top: 20px; padding: 20px; background: #f5f5f5; border-radius: 12px; display: none;">
+                <h4 style="margin-bottom: 10px;">🔄 Operation Details</h4>
+                <div id="animationSteps" style="font-family: monospace;"></div>
+            </div>
+        </div>
+
+        <div class="code-section">
+            <h3>💻 Python Solution</h3>
+            <div class="code-block">
+                <pre><span class="keyword">import</span> random
+
+<span class="keyword">class</span> <span class="function">RandomizedSet</span>:
+    <span class="keyword">def</span> <span class="function">__init__</span>(self):
+        self.arr = []            <span class="comment"># Array for O(1) random</span>
+        self.val_to_idx = {}     <span class="comment"># HashMap: value → index</span>
+
+    <span class="keyword">def</span> <span class="function">insert</span>(self, val):
+        <span class="keyword">if</span> val <span class="keyword">in</span> self.val_to_idx:
+            <span class="keyword">return</span> <span class="keyword">False</span>
+        self.arr.<span class="function">append</span>(val)
+        self.val_to_idx[val] = <span class="function">len</span>(self.arr) - <span class="number">1</span>
+        <span class="keyword">return</span> <span class="keyword">True</span>
+
+    <span class="keyword">def</span> <span class="function">remove</span>(self, val):
+        <span class="keyword">if</span> val <span class="keyword">not in</span> self.val_to_idx:
+            <span class="keyword">return</span> <span class="keyword">False</span>
+        idx = self.val_to_idx[val]
+        last = self.arr[-<span class="number">1</span>]
+        <span class="comment"># Swap with last element</span>
+        self.arr[idx] = last
+        self.val_to_idx[last] = idx
+        <span class="comment"># Remove last element</span>
+        self.arr.<span class="function">pop</span>()
+        <span class="keyword">del</span> self.val_to_idx[val]
+        <span class="keyword">return</span> <span class="keyword">True</span>
+
+    <span class="keyword">def</span> <span class="function">getRandom</span>(self):
+        <span class="keyword">return</span> random.<span class="function">choice</span>(self.arr)</pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let arr = [];
+        let valToIdx = {};
+        let highlightedIdx = -1;
+        let highlightedVal = null;
+
+        function render() {
+            // Render array
+            const arrayContainer = document.getElementById('arrayDisplay');
+            if (arr.length === 0) {
+                arrayContainer.innerHTML = '<span style="color: #999;">(empty)</span>';
+                document.getElementById('indexDisplay').textContent = '';
+            } else {
+                arrayContainer.innerHTML = arr.map((val, i) => {
+                    let bg = '#667eea';
+                    if (i === highlightedIdx) bg = '#4caf50';
+                    if (val === highlightedVal) bg = '#ff9800';
+                    return `<div style="padding: 15px 20px; background: ${bg}; color: white; border-radius: 10px; font-weight: bold; font-size: 1.2em; transition: all 0.3s; text-align: center; min-width: 40px;">${val}</div>`;
+                }).join('');
+                document.getElementById('indexDisplay').textContent = arr.map((_, i) => i).join('  |  ');
+            }
+
+            // Render hashmap
+            const mapContainer = document.getElementById('mapDisplay');
+            const entries = Object.entries(valToIdx);
+            if (entries.length === 0) {
+                mapContainer.innerHTML = '<span style="color: #999;">(empty)</span>';
+            } else {
+                mapContainer.innerHTML = entries.map(([val, idx]) => {
+                    let bg = '#ffcc80';
+                    if (parseInt(val) === highlightedVal) bg = '#ff9800';
+                    return `<div style="display: inline-block; padding: 8px 15px; margin: 4px; background: ${bg}; border-radius: 8px; font-family: monospace;">
+                        ${val} → ${idx}
+                    </div>`;
+                }).join('');
+            }
+        }
+
+        function showAnimation(steps) {
+            const box = document.getElementById('animationBox');
+            box.style.display = 'block';
+            document.getElementById('animationSteps').innerHTML = steps.map((s, i) => 
+                `<div style="padding: 5px 0; ${i === steps.length - 1 ? 'color: #4caf50; font-weight: bold;' : ''}">${i + 1}. ${s}</div>`
+            ).join('');
+        }
+
+        function hideAnimation() {
+            document.getElementById('animationBox').style.display = 'none';
+        }
+
+        function insertValue() {
+            const input = document.getElementById('valueInput');
+            const val = parseInt(input.value);
+            if (isNaN(val)) {
+                document.getElementById('statusMessage').textContent = 'Please enter a valid number';
+                return;
+            }
+
+            highlightedIdx = -1;
+            highlightedVal = val;
+
+            if (val in valToIdx) {
+                document.getElementById('statusMessage').textContent = `❌ Insert(${val}): Already exists, return False`;
+                showAnimation([
+                    `Check if ${val} in HashMap: YES`,
+                    `Return False (duplicate)`
+                ]);
+            } else {
+                arr.push(val);
+                valToIdx[val] = arr.length - 1;
+                highlightedIdx = arr.length - 1;
+                document.getElementById('statusMessage').textContent = `✅ Insert(${val}): Added at index ${arr.length - 1}, return True`;
+                showAnimation([
+                    `Check if ${val} in HashMap: NO`,
+                    `Append ${val} to array`,
+                    `Add to HashMap: ${val} → ${arr.length - 1}`,
+                    `Return True`
+                ]);
+            }
+
+            input.value = '';
+            render();
+            setTimeout(() => { highlightedIdx = -1; highlightedVal = null; render(); }, 1500);
+        }
+
+        function removeValue() {
+            const input = document.getElementById('valueInput');
+            const val = parseInt(input.value);
+            if (isNaN(val)) {
+                document.getElementById('statusMessage').textContent = 'Please enter a valid number';
+                return;
+            }
+
+            highlightedIdx = -1;
+            highlightedVal = val;
+
+            if (!(val in valToIdx)) {
+                document.getElementById('statusMessage').textContent = `❌ Remove(${val}): Not found, return False`;
+                showAnimation([
+                    `Check if ${val} in HashMap: NO`,
+                    `Return False (not found)`
+                ]);
+            } else {
+                const idx = valToIdx[val];
+                const last = arr[arr.length - 1];
+                const steps = [
+                    `Find index of ${val}: ${idx}`,
+                    `Last element: ${last}`
+                ];
+
+                if (idx !== arr.length - 1) {
+                    arr[idx] = last;
+                    valToIdx[last] = idx;
+                    steps.push(`Swap: arr[${idx}] = ${last}`);
+                    steps.push(`Update HashMap: ${last} → ${idx}`);
+                }
+
+                arr.pop();
+                delete valToIdx[val];
+                steps.push(`Pop last element from array`);
+                steps.push(`Delete ${val} from HashMap`);
+                steps.push(`Return True`);
+
+                document.getElementById('statusMessage').textContent = `✅ Remove(${val}): Removed successfully, return True`;
+                showAnimation(steps);
+            }
+
+            input.value = '';
+            render();
+            setTimeout(() => { highlightedIdx = -1; highlightedVal = null; render(); }, 1500);
+        }
+
+        function getRandom() {
+            if (arr.length === 0) {
+                document.getElementById('statusMessage').textContent = '❌ GetRandom: Set is empty!';
+                hideAnimation();
+                return;
+            }
+
+            const randomIdx = Math.floor(Math.random() * arr.length);
+            const randomVal = arr[randomIdx];
+            highlightedIdx = randomIdx;
+            highlightedVal = randomVal;
+
+            document.getElementById('statusMessage').textContent = `🎲 GetRandom(): Picked index ${randomIdx}, value = ${randomVal}`;
+            showAnimation([
+                `Array length: ${arr.length}`,
+                `Random index: ${randomIdx}`,
+                `arr[${randomIdx}] = ${randomVal}`,
+                `Return ${randomVal}`
+            ]);
+
+            render();
+            setTimeout(() => { highlightedIdx = -1; highlightedVal = null; render(); }, 1500);
+        }
+
+        function reset() {
+            arr = [];
+            valToIdx = {};
+            highlightedIdx = -1;
+            highlightedVal = null;
+            document.getElementById('statusMessage').textContent = 'Enter a value and click Insert, Remove, or GetRandom';
+            document.getElementById('valueInput').value = '';
+            hideAnimation();
+            render();
+        }
+
+        document.getElementById('valueInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') insertValue();
+        });
+
+        reset();
+    </script>
+</body>
+</html>

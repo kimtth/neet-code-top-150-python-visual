@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>300 - Longest Increasing Subsequence</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="problem-info">
+            <h1><span class="problem-number">#300</span> Longest Increasing Subsequence</h1>
+            <p>
+                Given an integer array, return the length of the longest strictly increasing subsequence.
+                A subsequence can skip elements but must maintain relative order.
+            </p>
+            <div class="problem-meta">
+                <span class="meta-tag">🧮 DP</span>
+                <span class="meta-tag">⏱️ O(n)</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <code>python/0300_longest_increasing_subsequence/0300_longest_increasing_subsequence.py</code>
+            </div>
+
+            <h3>Example:</h3>
+            <pre>
+nums = [10, 9, 2, 5, 3, 7, 101, 18]
+Output: 4
+LIS: [2, 3, 7, 101] or [2, 5, 7, 101]
+            </pre>
+        </div>
+
+        <div class="explanation-panel">
+            <h4>🧠 How It Works (Layman's Terms)</h4>
+            <p>Dynamic Programming <strong>breaks big problems into smaller ones</strong>:</p>
+            <ul>
+                <li><strong>Subproblems:</strong> Solve smaller versions first</li>
+                <li><strong>Memoization:</strong> Cache results to avoid recalculation</li>
+                <li><strong>Build up:</strong> Combine small solutions for final answer</li>
+                <li><strong>State:</strong> Define what each position represents</li>
+            </ul>
+        </div>
+
+
+        <section class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+            <div class="controls">
+                <button id="stepBtn" class="btn">Step</button>
+                <button id="autoBtn" class="btn btn-success">Auto Run</button>
+                <button id="resetBtn" class="btn btn-danger">Reset</button>
+            </div>
+            <div class="status" id="status">Build DP array to find longest increasing subsequence</div>
+            <svg id="visualization"></svg>
+        </section>
+
+        <section class="code-section">
+            <h3>💻 Python Solution</h3>
+            <div class="code-block">
+                <pre><span class="keyword">def</span> <span class="function">lengthOfLIS</span>(nums):
+    dp = [<span class="number">1</span>] * <span class="function">len</span>(nums)
+    
+    <span class="keyword">for</span> i <span class="keyword">in</span> <span class="function">range</span>(<span class="number">1</span>, <span class="function">len</span>(nums)):
+        <span class="keyword">for</span> j <span class="keyword">in</span> <span class="function">range</span>(i):
+            <span class="keyword">if</span> nums[i] > nums[j]:
+                dp[i] = <span class="function">max</span>(dp[i], dp[j] + <span class="number">1</span>)
+    
+    <span class="keyword">return</span> <span class="function">max</span>(dp)</pre>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        const width = 900;
+        const height = 550;
+
+        const svg = d3.select("#visualization")
+            .attr("width", width)
+            .attr("height", height);
+
+        const nums = [10, 9, 2, 5, 3, 7, 101, 18];
+        let dp = [];
+        let currentI = 1;
+        let currentJ = 0;
+        let isRunning = false;
+        let phase = "init";
+        let comparing = false;
+        let bestLIS = [];
+
+        function reset() {
+            dp = new Array(nums.length).fill(1);
+            currentI = 1;
+            currentJ = 0;
+            isRunning = false;
+            phase = "init";
+            comparing = false;
+            bestLIS = [];
+            document.getElementById("autoBtn").textContent = "Auto Run";
+            document.getElementById("status").textContent = "Build DP array to find longest increasing subsequence";
+            render();
+        }
+
+        function render() {
+            svg.selectAll("*").remove();
+
+            const boxSize = 80;
+            const startX = 80;
+
+            // Title
+            svg.append("text")
+                .attr("x", startX)
+                .attr("y", 40)
+                .attr("font-size", "16px")
+                .attr("font-weight", "bold")
+                .attr("fill", "#1e293b")
+                .text("Array nums[]:");
+
+            // Draw nums array
+            nums.forEach((num, idx) => {
+                const x = startX + idx * (boxSize + 8);
+                const y = 60;
+                
+                const isCurrentI = idx === currentI;
+                const isCurrentJ = idx === currentJ && phase === "compare";
+                const isComparing = comparing && (isCurrentI || isCurrentJ);
+                const isInLIS = bestLIS.includes(idx);
+
+                svg.append("rect")
+                    .attr("x", x)
+                    .attr("y", y)
+                    .attr("width", boxSize)
+                    .attr("height", 60)
+                    .attr("rx", 8)
+                    .attr("fill", () => {
+                        if (isInLIS) return "#d1fae5";
+                        if (isCurrentI) return "#fef3c7";
+                        if (isCurrentJ) return "#dbeafe";
+                        return "#f8fafc";
+                    })
+                    .attr("stroke", () => {
+                        if (isInLIS) return "#10b981";
+                        if (isCurrentI) return "#f59e0b";
+                        if (isCurrentJ) return "#3b82f6";
+                        return "#94a3b8";
+                    })
+                    .attr("stroke-width", (isCurrentI || isCurrentJ || isInLIS) ? 3 : 2);
+
+                svg.append("text")
+                    .attr("x", x + boxSize / 2)
+                    .attr("y", y - 10)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "12px")
+                    .attr("fill", "#64748b")
+                    .text(`i=${idx}`);
+
+                svg.append("text")
+                    .attr("x", x + boxSize / 2)
+                    .attr("y", y + 38)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "24px")
+                    .attr("font-weight", "bold")
+                    .attr("fill", "#1e293b")
+                    .text(num);
+            });
+
+            // Draw DP array
+            svg.append("text")
+                .attr("x", startX)
+                .attr("y", 170)
+                .attr("font-size", "16px")
+                .attr("font-weight", "bold")
+                .attr("fill", "#1e293b")
+                .text("DP[] (LIS length ending at each index):");
+
+            dp.forEach((val, idx) => {
+                const x = startX + idx * (boxSize + 8);
+                const y = 190;
+                
+                const isCurrentI = idx === currentI;
+                const isInLIS = bestLIS.includes(idx);
+
+                svg.append("rect")
+                    .attr("x", x)
+                    .attr("y", y)
+                    .attr("width", boxSize)
+                    .attr("height", 60)
+                    .attr("rx", 8)
+                    .attr("fill", () => {
+                        if (isInLIS) return "#d1fae5";
+                        if (isCurrentI) return "#fef3c7";
+                        return "#f8fafc";
+                    })
+                    .attr("stroke", () => {
+                        if (isInLIS) return "#10b981";
+                        if (isCurrentI) return "#f59e0b";
+                        return "#94a3b8";
+                    })
+                    .attr("stroke-width", isCurrentI || isInLIS ? 3 : 2);
+
+                svg.append("text")
+                    .attr("x", x + boxSize / 2)
+                    .attr("y", y + 38)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "24px")
+                    .attr("font-weight", "bold")
+                    .attr("fill", "#1e293b")
+                    .text(val);
+            });
+
+            // Draw comparison arrow
+            if (phase === "compare" && currentJ < currentI) {
+                const x1 = startX + currentJ * (boxSize + 8) + boxSize / 2;
+                const x2 = startX + currentI * (boxSize + 8) + boxSize / 2;
+                const y = 145;
+
+                svg.append("path")
+                    .attr("d", `M ${x1} ${y} Q ${(x1 + x2) / 2} ${y - 30} ${x2} ${y}`)
+                    .attr("fill", "none")
+                    .attr("stroke", comparing ? "#10b981" : "#3b82f6")
+                    .attr("stroke-width", 2)
+                    .attr("marker-end", "url(#arrow)");
+
+                svg.append("text")
+                    .attr("x", (x1 + x2) / 2)
+                    .attr("y", y - 35)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "12px")
+                    .attr("fill", comparing ? "#10b981" : "#3b82f6")
+                    .text(comparing ? `${nums[currentJ]} < ${nums[currentI]} ✓` : `Compare j=${currentJ} to i=${currentI}`);
+            }
+
+            // Arrow marker
+            svg.append("defs").append("marker")
+                .attr("id", "arrow")
+                .attr("viewBox", "0 -5 10 10")
+                .attr("refX", 8)
+                .attr("refY", 0)
+                .attr("markerWidth", 6)
+                .attr("markerHeight", 6)
+                .attr("orient", "auto")
+                .append("path")
+                .attr("d", "M0,-5L10,0L0,5")
+                .attr("fill", "#3b82f6");
+
+            // Current state info
+            const infoY = 320;
+            svg.append("text")
+                .attr("x", startX)
+                .attr("y", infoY)
+                .attr("font-size", "14px")
+                .attr("fill", "#1e293b")
+                .text(`Current: i=${currentI}, j=${currentJ}`);
+
+            svg.append("text")
+                .attr("x", startX)
+                .attr("y", infoY + 25)
+                .attr("font-size", "14px")
+                .attr("fill", "#1e293b")
+                .text(`Max LIS Length: ${Math.max(...dp)}`);
+
+            // Explanation
+            svg.append("text")
+                .attr("x", startX)
+                .attr("y", infoY + 60)
+                .attr("font-size", "14px")
+                .attr("fill", "#64748b")
+                .text("For each i, check all j < i. If nums[j] < nums[i], we can extend the LIS.");
+
+            svg.append("text")
+                .attr("x", startX)
+                .attr("y", infoY + 85)
+                .attr("font-size", "14px")
+                .attr("fill", "#64748b")
+                .text("dp[i] = max(dp[i], dp[j] + 1) when nums[j] < nums[i]");
+
+            // Legend
+            const legend = svg.append("g").attr("transform", `translate(${startX}, ${height - 60})`);
+
+            legend.append("rect").attr("x", 0).attr("y", 0).attr("width", 20).attr("height", 20).attr("rx", 4).attr("fill", "#fef3c7").attr("stroke", "#f59e0b");
+            legend.append("text").attr("x", 28).attr("y", 15).attr("font-size", "12px").text("Current i");
+
+            legend.append("rect").attr("x", 120).attr("y", 0).attr("width", 20).attr("height", 20).attr("rx", 4).attr("fill", "#dbeafe").attr("stroke", "#3b82f6");
+            legend.append("text").attr("x", 148).attr("y", 15).attr("font-size", "12px").text("Current j");
+
+            legend.append("rect").attr("x", 240).attr("y", 0).attr("width", 20).attr("height", 20).attr("rx", 4).attr("fill", "#d1fae5").attr("stroke", "#10b981");
+            legend.append("text").attr("x", 268).attr("y", 15).attr("font-size", "12px").text("In LIS");
+        }
+
+        function findBestLIS() {
+            // Backtrack to find one LIS
+            const maxLen = Math.max(...dp);
+            const result = [];
+            let targetLen = maxLen;
+            
+            for (let i = nums.length - 1; i >= 0 && targetLen > 0; i--) {
+                if (dp[i] === targetLen) {
+                    if (result.length === 0 || nums[i] < nums[result[result.length - 1]]) {
+                        result.push(i);
+                        targetLen--;
+                    }
+                }
+            }
+            
+            return result.reverse();
+        }
+
+        function step() {
+            if (phase === "done") {
+                document.getElementById("status").textContent = `Complete! LIS length: ${Math.max(...dp)}`;
+                return;
+            }
+
+            if (phase === "init") {
+                phase = "compare";
+                document.getElementById("status").textContent = `Starting: i=1, checking all j < i`;
+                render();
+                return;
+            }
+
+            if (phase === "compare") {
+                if (currentJ < currentI) {
+                    if (nums[currentJ] < nums[currentI]) {
+                        comparing = true;
+                        const oldDp = dp[currentI];
+                        dp[currentI] = Math.max(dp[currentI], dp[currentJ] + 1);
+                        document.getElementById("status").textContent = 
+                            `nums[${currentJ}]=${nums[currentJ]} < nums[${currentI}]=${nums[currentI]}: dp[${currentI}] = max(${oldDp}, ${dp[currentJ]}+1) = ${dp[currentI]}`;
+                    } else {
+                        comparing = false;
+                        document.getElementById("status").textContent = 
+                            `nums[${currentJ}]=${nums[currentJ]} >= nums[${currentI}]=${nums[currentI]}: skip`;
+                    }
+                    render();
+                    currentJ++;
+                    return;
+                }
+
+                // Move to next i
+                currentI++;
+                currentJ = 0;
+                comparing = false;
+
+                if (currentI >= nums.length) {
+                    phase = "done";
+                    bestLIS = findBestLIS();
+                    document.getElementById("status").textContent = 
+                        `Complete! LIS length: ${Math.max(...dp)}, one LIS: [${bestLIS.map(i => nums[i]).join(", ")}]`;
+                } else {
+                    document.getElementById("status").textContent = `Moving to i=${currentI}`;
+                }
+                render();
+            }
+        }
+
+        async function autoRun() {
+            if (isRunning) {
+                isRunning = false;
+                document.getElementById("autoBtn").textContent = "Auto Run";
+                return;
+            }
+
+            isRunning = true;
+            document.getElementById("autoBtn").textContent = "Pause";
+
+            while (phase !== "done" && isRunning) {
+                step();
+                await new Promise(r => setTimeout(r, 400));
+            }
+
+            isRunning = false;
+            document.getElementById("autoBtn").textContent = "Auto Run";
+        }
+
+        document.getElementById("stepBtn").addEventListener("click", step);
+        document.getElementById("autoBtn").addEventListener("click", autoRun);
+        document.getElementById("resetBtn").addEventListener("click", reset);
+
+        reset();
+    </script>
+</body>
+</html>

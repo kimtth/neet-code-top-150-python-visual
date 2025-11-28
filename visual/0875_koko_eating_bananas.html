@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Koko Eating Bananas - LeetCode 875</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="problem-info">
+            <h1><span class="problem-number">#875</span> Koko Eating Bananas 🍌</h1>
+            <p>Koko wants to eat all bananas before guards return. Find the minimum eating speed. Binary search on the answer!</p>
+            <div class="problem-meta">
+                <span class="meta-tag">🔍 Binary Search</span>
+                <span class="meta-tag">🔢 Array</span>
+                <span class="meta-tag">⏱️ O(n log m)</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <a href="../python/0875_koko_eating_bananas/0875_koko_eating_bananas.py">0875_koko_eating_bananas.py</a>
+            </div>
+            </div>
+
+        <div class="explanation-panel">
+            <h4>💡 How It Works (Layman's Terms)</h4>
+            <ul>
+                <li><strong>Problem:</strong> Koko needs to eat all bananas before guards return in h hours</li>
+                <li><strong>Each hour:</strong> She picks one pile and eats k bananas (or all if less than k)</li>
+                <li><strong>Goal:</strong> Find minimum speed k that lets her finish in time</li>
+                <li><strong>Binary search on speed:</strong> Speed can be 1 to max(piles)</li>
+                <li><strong>For each pile:</strong> Hours = ceil(pile / speed)</li>
+                <li><strong>If total hours ≤ h:</strong> Speed is fast enough, try slower</li>
+                <li><strong>If total hours > h:</strong> Too slow, need faster speed</li>
+            </ul>
+        </div>
+
+
+        <div class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+            
+            <div class="controls">
+                <button class="btn btn-primary" id="stepBtn" onclick="step()">Step</button>
+                <button class="btn btn-success" id="autoBtn" onclick="toggleAuto()">Auto Run</button>
+                <button class="btn btn-warning" onclick="reset()">Reset</button>
+            </div>
+
+            <div class="info-box">
+                ⏰ Guards return in h = 8 hours
+            </div>
+
+            <div class="status-message" id="statusMessage">
+                Click "Step" or "Auto Run" to find Koko's minimum eating speed
+            </div>
+
+            <div class="variable-display">
+                <div class="variable-box">
+                    <div class="variable-name">Speed Range</div>
+                    <div class="variable-value" id="rangeVal">1 - 11</div>
+                </div>
+                <div class="variable-box">
+                    <div class="variable-name">Test Speed (k)</div>
+                    <div class="variable-value" id="speedVal">-</div>
+                </div>
+                <div class="variable-box">
+                    <div class="variable-name">Hours Needed</div>
+                    <div class="variable-value" id="hoursVal">-</div>
+                </div>
+                <div class="variable-box">
+                    <div class="variable-name">Can Finish?</div>
+                    <div class="variable-value" id="canFinishVal">-</div>
+                </div>
+            </div>
+
+            <div class="array-section">
+                <div class="array-label">Banana Piles:</div>
+                <div class="array-container" id="pilesContainer"></div>
+            </div>
+
+            <div class="array-section">
+                <div class="array-label">Hours per pile at current speed:</div>
+                <div class="array-container" id="hoursContainer"></div>
+            </div>
+
+            <div class="info-box" id="resultBox" style="display: none;"></div>
+        </div>
+
+        <div class="code-section">
+            <h3>💻 Python Solution</h3>
+            <div class="code-block">
+                <pre><span class="keyword">def</span> <span class="function">minEatingSpeed</span>(self, piles: List[<span class="class-name">int</span>], h: <span class="class-name">int</span>) -> <span class="class-name">int</span>:
+    left, right = <span class="number">1</span>, <span class="function">max</span>(piles)
+    
+    <span class="keyword">while</span> left < right:
+        mid = (left + right) // <span class="number">2</span>
+        
+        <span class="comment"># Calculate hours needed at speed mid</span>
+        hours = <span class="function">sum</span>(math.<span class="function">ceil</span>(pile / mid) <span class="keyword">for</span> pile <span class="keyword">in</span> piles)
+        
+        <span class="keyword">if</span> hours <= h:
+            right = mid  <span class="comment"># Can try slower speed</span>
+        <span class="keyword">else</span>:
+            left = mid + <span class="number">1</span>  <span class="comment"># Need faster speed</span>
+    
+    <span class="keyword">return</span> left</pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const piles = [3, 6, 7, 11];
+        const h = 8;
+        
+        let left = 1;
+        let right = Math.max(...piles);
+        let currentSpeed = -1;
+        let phase = 'init';
+        let autoInterval = null;
+
+        function init() {
+            left = 1;
+            right = Math.max(...piles);
+            currentSpeed = -1;
+            renderPiles();
+            document.getElementById('hoursContainer').innerHTML = '<span style="color: #999;">Select a speed to calculate...</span>';
+            document.getElementById('rangeVal').textContent = `${left} - ${right}`;
+            document.getElementById('speedVal').textContent = '-';
+            document.getElementById('hoursVal').textContent = '-';
+            document.getElementById('canFinishVal').textContent = '-';
+            document.getElementById('resultBox').style.display = 'none';
+        }
+
+        function renderPiles() {
+            const container = document.getElementById('pilesContainer');
+            container.innerHTML = '';
+            
+            piles.forEach((pile, idx) => {
+                const box = document.createElement('div');
+                box.className = 'array-box';
+                box.style.background = '#fff8e1';
+                box.style.borderColor = '#ffc107';
+                box.innerHTML = `🍌 ${pile}<span class="index-label">pile ${idx + 1}</span>`;
+                container.appendChild(box);
+            });
+        }
+
+        function calculateHours(speed) {
+            return piles.map(pile => Math.ceil(pile / speed));
+        }
+
+        function renderHours(speed) {
+            const container = document.getElementById('hoursContainer');
+            container.innerHTML = '';
+            
+            const hoursPerPile = calculateHours(speed);
+            hoursPerPile.forEach((hours, idx) => {
+                const box = document.createElement('div');
+                box.className = 'array-box';
+                box.style.background = '#e3f2fd';
+                box.style.borderColor = '#2196f3';
+                box.innerHTML = `${hours}h<span class="index-label">⌈${piles[idx]}/${speed}⌉</span>`;
+                container.appendChild(box);
+            });
+
+            // Total
+            const total = hoursPerPile.reduce((a, b) => a + b, 0);
+            const totalBox = document.createElement('div');
+            totalBox.className = 'array-box';
+            totalBox.style.background = total <= h ? '#e8f5e9' : '#ffebee';
+            totalBox.style.borderColor = total <= h ? '#4caf50' : '#f44336';
+            totalBox.style.fontWeight = 'bold';
+            totalBox.innerHTML = `= ${total}h<span class="index-label">total</span>`;
+            container.appendChild(totalBox);
+        }
+
+        function step() {
+            if (phase === 'init') {
+                phase = 'searching';
+                document.getElementById('statusMessage').textContent = 
+                    'Binary search for minimum speed between 1 and max(piles)...';
+            }
+
+            if (phase === 'searching') {
+                if (left >= right) {
+                    phase = 'done';
+                    document.getElementById('resultBox').style.display = 'block';
+                    document.getElementById('resultBox').className = 'info-box secondary';
+                    document.getElementById('resultBox').textContent = `✅ Minimum speed: ${left} bananas/hour`;
+                    document.getElementById('statusMessage').textContent = 
+                        `Found! Koko needs to eat at least ${left} bananas per hour to finish in ${h} hours.`;
+                    document.getElementById('stepBtn').disabled = true;
+                    stopAuto();
+                    return;
+                }
+
+                currentSpeed = Math.floor((left + right) / 2);
+                const hoursNeeded = calculateHours(currentSpeed).reduce((a, b) => a + b, 0);
+                const canFinish = hoursNeeded <= h;
+
+                document.getElementById('rangeVal').textContent = `${left} - ${right}`;
+                document.getElementById('speedVal').textContent = currentSpeed;
+                document.getElementById('hoursVal').textContent = `${hoursNeeded} / ${h}`;
+                document.getElementById('canFinishVal').textContent = canFinish ? '✅ Yes' : '❌ No';
+                document.getElementById('canFinishVal').style.color = canFinish ? '#4caf50' : '#f44336';
+
+                renderHours(currentSpeed);
+
+                if (canFinish) {
+                    document.getElementById('statusMessage').textContent = 
+                        `Speed ${currentSpeed}: ${hoursNeeded} hours ≤ ${h} hours ✓ Try slower! right = ${currentSpeed}`;
+                    right = currentSpeed;
+                } else {
+                    document.getElementById('statusMessage').textContent = 
+                        `Speed ${currentSpeed}: ${hoursNeeded} hours > ${h} hours ✗ Too slow! left = ${currentSpeed + 1}`;
+                    left = currentSpeed + 1;
+                }
+            }
+        }
+
+        function toggleAuto() {
+            if (autoInterval) {
+                stopAuto();
+            } else {
+                document.getElementById('autoBtn').textContent = 'Pause';
+                autoInterval = setInterval(() => {
+                    if (phase === 'done') {
+                        stopAuto();
+                    } else {
+                        step();
+                    }
+                }, 1500);
+            }
+        }
+
+        function stopAuto() {
+            if (autoInterval) {
+                clearInterval(autoInterval);
+                autoInterval = null;
+            }
+            document.getElementById('autoBtn').textContent = 'Auto Run';
+        }
+
+        function reset() {
+            stopAuto();
+            phase = 'init';
+            document.getElementById('stepBtn').disabled = false;
+            document.getElementById('statusMessage').textContent = 
+                'Click "Step" or "Auto Run" to find Koko\'s minimum eating speed';
+            init();
+        }
+
+        init();
+    </script>
+</body>
+</html>

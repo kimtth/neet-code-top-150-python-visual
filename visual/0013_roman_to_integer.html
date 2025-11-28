@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Roman to Integer - LeetCode 13</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="problem-info">
+            <h1><span class="problem-number">#13</span> Roman to Integer</h1>
+            <p>Convert a Roman numeral to an integer.</p>
+            <div class="problem-meta">
+                <span class="meta-tag">Math</span>
+                <span class="meta-tag">String</span>
+                <span class="meta-tag">Easy</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <code>python/0013_roman_to_integer/0013_roman_to_integer.py</code>
+            </div>
+
+        </div>
+
+        <div class="explanation-panel">
+            <h4>🧠 How It Works (Layman's Terms)</h4>
+            <p>This algorithm solves the problem <strong>step by step</strong>:</p>
+            <ul>
+                <li><strong>Understand:</strong> Parse the input data</li>
+                <li><strong>Process:</strong> Apply the core logic</li>
+                <li><strong>Optimize:</strong> Use efficient data structures</li>
+                <li><strong>Return:</strong> Output the computed result</li>
+            </ul>
+        </div>
+
+
+        <div class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+            <div class="controls">
+                <button id="stepBtn">Step</button>
+                <button id="autoBtn">Auto Run</button>
+                <button id="resetBtn">Reset</button>
+            </div>
+            <svg id="mainSvg" width="800" height="380"></svg>
+            <div class="status-message" id="status">Click "Step" to convert Roman to integer</div>
+        </div>
+
+        <div class="code-section">
+            <h3>💻 Python Solution</h3>
+            <div class="code-block">
+                <pre><span class="keyword">def</span> <span class="function">romanToInt</span>(s: <span class="class-name">str</span>) -> int:
+    values = {<span class="string">'I'</span>: <span class="number">1</span>, <span class="string">'V'</span>: <span class="number">5</span>, <span class="string">'X'</span>: <span class="number">10</span>, <span class="string">'L'</span>: <span class="number">50</span>, 
+              <span class="string">'C'</span>: <span class="number">100</span>, <span class="string">'D'</span>: <span class="number">500</span>, <span class="string">'M'</span>: <span class="number">1000</span>}
+    
+    total = <span class="number">0</span>
+    prev_value = <span class="number">0</span>
+    
+    <span class="comment"># Process right to left</span>
+    <span class="keyword">for</span> char <span class="keyword">in</span> <span class="function">reversed</span>(s):
+        curr = values[char]
+        <span class="keyword">if</span> curr >= prev_value:
+            total += curr
+        <span class="keyword">else</span>:
+            total -= curr  <span class="comment"># Subtraction case</span>
+        prev_value = curr
+    
+    <span class="keyword">return</span> total</pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const romanValues = {'I': 1, 'V': 5, 'X': 10, 'L': 50, 'C': 100, 'D': 500, 'M': 1000};
+        const testCases = ["MCMXCIV", "III", "LVIII", "IX"];
+        
+        let s = "MCMXCIV";
+        let i;
+        let total = 0;
+        let prevValue = 0;
+        let phase = 'processing';
+        
+        const width = 800, height = 380;
+        const svg = d3.select("#mainSvg");
+        let autoTimer = null;
+        let autoRunning = false;
+
+        function draw() {
+            svg.selectAll("*").remove();
+
+            const cellWidth = 60, startX = 100, startY = 80;
+
+            // Title
+            svg.append("text")
+                .attr("x", width / 2).attr("y", 30)
+                .attr("text-anchor", "middle")
+                .attr("font-weight", "bold")
+                .text(`Converting "${s}" to Integer (Right to Left)`);
+
+            // Draw Roman characters
+            for (let idx = 0; idx < s.length; idx++) {
+                const x = startX + idx * cellWidth;
+                const isProcessed = idx > i;
+                const isCurrent = idx === i;
+
+                svg.append("rect")
+                    .attr("x", x).attr("y", startY)
+                    .attr("width", cellWidth - 5).attr("height", 55)
+                    .attr("rx", 8)
+                    .attr("fill", isCurrent ? "#fef3c7" : (isProcessed ? "#d1fae5" : "#e3f2fd"))
+                    .attr("stroke", isCurrent ? "#f59e0b" : (isProcessed ? "#10b981" : "#1976d2"))
+                    .attr("stroke-width", isCurrent ? 3 : 2);
+
+                svg.append("text")
+                    .attr("x", x + (cellWidth - 5) / 2)
+                    .attr("y", startY + 30)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "26px")
+                    .attr("font-weight", "bold")
+                    .text(s[idx]);
+
+                svg.append("text")
+                    .attr("x", x + (cellWidth - 5) / 2)
+                    .attr("y", startY + 48)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "12px")
+                    .attr("fill", "#666")
+                    .text(romanValues[s[idx]]);
+            }
+
+            // Direction arrow
+            svg.append("text")
+                .attr("x", startX + s.length * cellWidth + 20)
+                .attr("y", startY + 30)
+                .attr("font-size", "24px")
+                .text("←");
+
+            svg.append("text")
+                .attr("x", startX + s.length * cellWidth + 50)
+                .attr("y", startY + 35)
+                .attr("font-size", "12px")
+                .attr("fill", "#666")
+                .text("Direction");
+
+            // Variables display
+            const varsY = 180;
+            const vars = [
+                { name: "Current Value", value: i >= 0 ? romanValues[s[i]] : "-" },
+                { name: "Previous Value", value: prevValue },
+                { name: "Total", value: total }
+            ];
+
+            vars.forEach((v, idx) => {
+                const x = 100 + idx * 200;
+                
+                svg.append("rect")
+                    .attr("x", x).attr("y", varsY)
+                    .attr("width", 160).attr("height", 60)
+                    .attr("rx", 10)
+                    .attr("fill", idx === 2 ? "#e8f5e9" : "#f5f5f5")
+                    .attr("stroke", idx === 2 ? "#4caf50" : "#ddd");
+
+                svg.append("text")
+                    .attr("x", x + 80).attr("y", varsY + 22)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "12px")
+                    .attr("fill", "#666")
+                    .text(v.name);
+
+                svg.append("text")
+                    .attr("x", x + 80).attr("y", varsY + 48)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "22px")
+                    .attr("font-weight", "bold")
+                    .text(v.value);
+            });
+
+            // Logic explanation
+            if (i >= 0 && phase === 'processing') {
+                const curr = romanValues[s[i]];
+                const logicY = 280;
+                const isSubtraction = curr < prevValue;
+
+                svg.append("rect")
+                    .attr("x", 150).attr("y", logicY)
+                    .attr("width", 500).attr("height", 45)
+                    .attr("rx", 8)
+                    .attr("fill", isSubtraction ? "#fee2e2" : "#d1fae5")
+                    .attr("stroke", isSubtraction ? "#ef4444" : "#10b981");
+
+                svg.append("text")
+                    .attr("x", 400).attr("y", logicY + 28)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "14px")
+                    .text(isSubtraction 
+                        ? `${curr} < ${prevValue}: SUBTRACT → total = ${total} - ${curr}`
+                        : `${curr} ≥ ${prevValue}: ADD → total = ${total} + ${curr}`);
+            }
+
+            // Final result
+            if (phase === 'done') {
+                svg.append("rect")
+                    .attr("x", width / 2 - 120).attr("y", 310)
+                    .attr("width", 240).attr("height", 55)
+                    .attr("rx", 12)
+                    .attr("fill", "#d1fae5").attr("stroke", "#10b981")
+                    .attr("stroke-width", 2);
+
+                svg.append("text")
+                    .attr("x", width / 2).attr("y", 345)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "24px")
+                    .attr("font-weight", "bold")
+                    .attr("fill", "#10b981")
+                    .text(`${s} = ${total}`);
+            }
+        }
+
+        function step() {
+            if (phase === 'done') return false;
+
+            if (i < 0) {
+                phase = 'done';
+                document.getElementById("status").textContent = `Done! ${s} = ${total}`;
+                draw();
+                return false;
+            }
+
+            const curr = romanValues[s[i]];
+            
+            if (curr >= prevValue) {
+                total += curr;
+                document.getElementById("status").textContent = 
+                    `'${s[i]}' (${curr}) ≥ prev (${prevValue}): Add ${curr}. Total = ${total}`;
+            } else {
+                total -= curr;
+                document.getElementById("status").textContent = 
+                    `'${s[i]}' (${curr}) < prev (${prevValue}): Subtract ${curr}. Total = ${total}`;
+            }
+
+            prevValue = curr;
+            i--;
+
+            draw();
+            return i >= 0;
+        }
+
+        function reset() {
+            i = s.length - 1;
+            total = 0;
+            prevValue = 0;
+            phase = 'processing';
+            if (autoTimer) clearInterval(autoTimer);
+            autoRunning = false;
+            document.getElementById("autoBtn").textContent = "Auto Run";
+            document.getElementById("status").textContent = 'Click "Step" to convert Roman to integer';
+            draw();
+        }
+
+        function autoRun() {
+            if (autoRunning) {
+                clearInterval(autoTimer);
+                autoRunning = false;
+                document.getElementById("autoBtn").textContent = "Auto Run";
+            } else {
+                autoRunning = true;
+                document.getElementById("autoBtn").textContent = "Pause";
+                autoTimer = setInterval(() => {
+                    if (!step()) {
+                        clearInterval(autoTimer);
+                        autoRunning = false;
+                        document.getElementById("autoBtn").textContent = "Auto Run";
+                    }
+                }, 800);
+            }
+        }
+
+        document.getElementById("stepBtn").addEventListener("click", step);
+        document.getElementById("autoBtn").addEventListener("click", autoRun);
+        document.getElementById("resetBtn").addEventListener("click", reset);
+
+        reset();
+    </script>
+</body>
+</html>

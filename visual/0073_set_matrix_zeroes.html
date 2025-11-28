@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Set Matrix Zeroes - LeetCode 73</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="problem-info">
+            <h1><span class="problem-number">#0073</span> Set Matrix Zeroes</h1>
+            <p><strong>Problem:</strong> Given an m x n integer matrix, if an element is 0, set its entire row and column to 0's.</p>
+            <p><strong>Pattern:</strong> Use first row/column as markers - O(1) space solution</p>
+            <div class="problem-meta">
+                <span class="meta-tag">🔲 Matrix</span>
+                <span class="meta-tag">⏱️ O(m×n)</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <code>python/0073_set_matrix_zeroes/0073_set_matrix_zeroes.py</code>
+            </div>
+
+        </div>
+
+        <div class="explanation-panel">
+            <h4>🧠 How It Works (Layman's Terms)</h4>
+            <p>Matrix problems work with <strong>2D grids</strong>:</p>
+            <ul>
+                <li><strong>Row/Col:</strong> Access elements by [row][col]</li>
+                <li><strong>Traverse:</strong> Iterate in various patterns</li>
+                <li><strong>In-place:</strong> Often modify without extra space</li>
+                <li><strong>Boundaries:</strong> Watch for edge cases</li>
+            </ul>
+        </div>
+
+
+        <div class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+
+            <div class="visualization">
+            <svg id="mainSvg"></svg>
+        </div>
+
+        <div class="controls">
+            <button id="stepBtn">Step</button>
+            <button id="autoBtn">Auto Run</button>
+            <button id="resetBtn">Reset</button>
+            <div class="speed-control">
+                <label for="speed">Speed:</label>
+                <input type="range" id="speed" min="100" max="2000" value="700">
+            </div>
+        </div>
+
+        <div class="status" id="status">Click "Step" to set matrix zeroes in-place</div>
+
+        <div class="variables">
+            <div class="var-item">
+                <span class="var-label">Phase:</span>
+                <span id="phaseDisplay">1. Mark zeros in first row/col</span>
+            </div>
+            <div class="var-item">
+                <span class="var-label">First Row Zero:</span>
+                <span id="rowZeroDisplay">false</span>
+            </div>
+            <div class="var-item">
+                <span class="var-label">First Col Zero:</span>
+                <span id="colZeroDisplay">false</span>
+            </div>
+        </div>
+
+        </div>
+
+        <div class="code-section">
+            <h3>💻 Python Solution</h3>
+            <div class="code-block">
+                <pre><span class="keyword">def</span> <span class="function">setZeroes</span>(matrix):
+    <span class="string">"""
+    Use first row/col as markers.
+    Time: O(m*n), Space: O(1)
+    """</span>
+    m, n = <span class="function">len</span>(matrix), <span class="function">len</span>(matrix[<span class="number">0</span>])
+    firstRowZero = <span class="function">any</span>(matrix[<span class="number">0</span>][j] == <span class="number">0</span> <span class="keyword">for</span> j <span class="keyword">in</span> <span class="function">range</span>(n))
+    firstColZero = <span class="function">any</span>(matrix[i][<span class="number">0</span>] == <span class="number">0</span> <span class="keyword">for</span> i <span class="keyword">in</span> <span class="function">range</span>(m))
+    
+    <span class="comment"># Mark zeros in first row/col</span>
+    <span class="keyword">for</span> i <span class="keyword">in</span> <span class="function">range</span>(<span class="number">1</span>, m):
+        <span class="keyword">for</span> j <span class="keyword">in</span> <span class="function">range</span>(<span class="number">1</span>, n):
+            <span class="keyword">if</span> matrix[i][j] == <span class="number">0</span>:
+                matrix[i][<span class="number">0</span>] = <span class="number">0</span>
+                matrix[<span class="number">0</span>][j] = <span class="number">0</span>
+    
+    <span class="comment"># Set zeros based on markers</span>
+    <span class="keyword">for</span> i <span class="keyword">in</span> <span class="function">range</span>(<span class="number">1</span>, m):
+        <span class="keyword">for</span> j <span class="keyword">in</span> <span class="function">range</span>(<span class="number">1</span>, n):
+            <span class="keyword">if</span> matrix[i][<span class="number">0</span>] == <span class="number">0</span> <span class="keyword">or</span> matrix[<span class="number">0</span>][j] == <span class="number">0</span>:
+                matrix[i][j] = <span class="number">0</span>
+    
+    <span class="comment"># Handle first row/col</span>
+    <span class="keyword">if</span> firstRowZero:
+        <span class="keyword">for</span> j <span class="keyword">in</span> <span class="function">range</span>(n): <span class="class-name">matrix</span>[<span class="number">0</span>][j] = <span class="number">0</span>
+    <span class="keyword">if</span> firstColZero:
+        <span class="keyword">for</span> i <span class="keyword">in</span> <span class="function">range</span>(m): <span class="class-name">matrix</span>[i][<span class="number">0</span>] = <span class="number">0</span></pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const originalMatrix = [
+            [1, 1, 1],
+            [1, 0, 1],
+            [1, 1, 1]
+        ];
+        
+        let matrix = JSON.parse(JSON.stringify(originalMatrix));
+        const m = matrix.length;
+        const n = matrix[0].length;
+        
+        let phase = 1; // 1: check first row/col, 2: mark, 3: set zeros, 4: handle first row/col
+        let stepIndex = 0;
+        let firstRowZero = false;
+        let firstColZero = false;
+        let autoRunning = false;
+        let autoTimer = null;
+
+        const width = 800;
+        const height = 380;
+        const svg = d3.select("#mainSvg")
+            .attr("width", width)
+            .attr("height", height);
+
+        const cellSize = 55;
+
+        function draw(highlights = []) {
+            svg.selectAll("*").remove();
+
+            // Original
+            svg.append("text")
+                .attr("x", 120)
+                .attr("y", 30)
+                .attr("text-anchor", "middle")
+                .attr("font-weight", "bold")
+                .text("Original");
+
+            drawMatrix(originalMatrix, 50, 50, [], true);
+
+            // Arrow
+            svg.append("text")
+                .attr("x", width / 2)
+                .attr("y", 150)
+                .attr("text-anchor", "middle")
+                .attr("font-size", "30px")
+                .text("→");
+
+            // Current
+            svg.append("text")
+                .attr("x", width - 120)
+                .attr("y", 30)
+                .attr("text-anchor", "middle")
+                .attr("font-weight", "bold")
+                .text("Processing");
+
+            drawMatrix(matrix, width - 50 - n * cellSize, 50, highlights, false);
+
+            // Phase indicator
+            const phaseY = 280;
+            const phases = [
+                "1. Check first row/col",
+                "2. Mark zeros",
+                "3. Set zeros from markers",
+                "4. Handle first row/col"
+            ];
+
+            phases.forEach((p, idx) => {
+                svg.append("rect")
+                    .attr("x", 50 + idx * 175)
+                    .attr("y", phaseY)
+                    .attr("width", 165)
+                    .attr("height", 35)
+                    .attr("rx", 5)
+                    .attr("fill", phase === idx + 1 ? "#4caf50" : "#e0e0e0")
+                    .attr("stroke", phase === idx + 1 ? "#2e7d32" : "#bdbdbd");
+
+                svg.append("text")
+                    .attr("x", 50 + idx * 175 + 82)
+                    .attr("y", phaseY + 22)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "11px")
+                    .attr("fill", phase === idx + 1 ? "white" : "#666")
+                    .text(p);
+            });
+
+            // Legend for markers
+            svg.append("text")
+                .attr("x", 50)
+                .attr("y", phaseY + 60)
+                .attr("font-size", "12px")
+                .attr("fill", "#666")
+                .text("🟡 Marker in first row/col | 🔴 Will be set to 0 | 🟢 Processed");
+        }
+
+        function drawMatrix(mat, x, y, highlights, isOriginal) {
+            for (let i = 0; i < m; i++) {
+                for (let j = 0; j < n; j++) {
+                    const cellX = x + j * cellSize;
+                    const cellY = y + i * cellSize;
+                    const isHighlight = highlights.some(h => h[0] === i && h[1] === j);
+                    const isMarker = !isOriginal && (i === 0 || j === 0) && mat[i][j] === 0;
+                    const isZero = mat[i][j] === 0;
+
+                    let fill = "#f5f5f5";
+                    let stroke = "#bdbdbd";
+
+                    if (!isOriginal) {
+                        if (isHighlight) {
+                            fill = "#ffeb3b";
+                            stroke = "#f57c00";
+                        } else if (isMarker) {
+                            fill = "#fff3e0";
+                            stroke = "#ff9800";
+                        } else if (isZero && !isOriginal) {
+                            fill = "#ffcdd2";
+                            stroke = "#e53935";
+                        } else if (mat[i][j] !== originalMatrix[i][j]) {
+                            fill = "#c8e6c9";
+                            stroke = "#4caf50";
+                        }
+                    } else if (isZero) {
+                        fill = "#ffcdd2";
+                        stroke = "#e53935";
+                    }
+
+                    svg.append("rect")
+                        .attr("x", cellX)
+                        .attr("y", cellY)
+                        .attr("width", cellSize - 4)
+                        .attr("height", cellSize - 4)
+                        .attr("rx", 5)
+                        .attr("fill", fill)
+                        .attr("stroke", stroke)
+                        .attr("stroke-width", isHighlight ? 3 : 2);
+
+                    svg.append("text")
+                        .attr("x", cellX + (cellSize - 4) / 2)
+                        .attr("y", cellY + (cellSize - 4) / 2 + 5)
+                        .attr("text-anchor", "middle")
+                        .attr("font-size", "18px")
+                        .attr("font-weight", "bold")
+                        .text(mat[i][j]);
+                }
+            }
+        }
+
+        function step() {
+            switch (phase) {
+                case 1: // Check first row/col for zeros
+                    if (stepIndex < n) {
+                        if (matrix[0][stepIndex] === 0) firstRowZero = true;
+                        draw([[0, stepIndex]]);
+                        document.getElementById("status").textContent = 
+                            `Checking first row [0][${stepIndex}] = ${matrix[0][stepIndex]}`;
+                        stepIndex++;
+                    } else if (stepIndex < n + m) {
+                        const i = stepIndex - n;
+                        if (matrix[i][0] === 0) firstColZero = true;
+                        draw([[i, 0]]);
+                        document.getElementById("status").textContent = 
+                            `Checking first col [${i}][0] = ${matrix[i][0]}`;
+                        stepIndex++;
+                    }
+                    
+                    if (stepIndex >= n + m) {
+                        phase = 2;
+                        stepIndex = 0;
+                        document.getElementById("phaseDisplay").textContent = "2. Mark zeros";
+                    }
+                    document.getElementById("rowZeroDisplay").textContent = firstRowZero.toString();
+                    document.getElementById("colZeroDisplay").textContent = firstColZero.toString();
+                    return true;
+
+                case 2: // Mark zeros in first row/col
+                    const total = (m - 1) * (n - 1);
+                    if (stepIndex < total) {
+                        const i = Math.floor(stepIndex / (n - 1)) + 1;
+                        const j = (stepIndex % (n - 1)) + 1;
+                        
+                        if (matrix[i][j] === 0) {
+                            matrix[i][0] = 0;
+                            matrix[0][j] = 0;
+                            document.getElementById("status").textContent = 
+                                `Found 0 at [${i}][${j}]: marked [${i}][0] and [0][${j}]`;
+                        } else {
+                            document.getElementById("status").textContent = 
+                                `Checking [${i}][${j}] = ${matrix[i][j]}`;
+                        }
+                        draw([[i, j]]);
+                        stepIndex++;
+                    }
+                    
+                    if (stepIndex >= total) {
+                        phase = 3;
+                        stepIndex = 0;
+                        document.getElementById("phaseDisplay").textContent = "3. Set zeros from markers";
+                    }
+                    return true;
+
+                case 3: // Set zeros based on markers
+                    const total3 = (m - 1) * (n - 1);
+                    if (stepIndex < total3) {
+                        const i = Math.floor(stepIndex / (n - 1)) + 1;
+                        const j = (stepIndex % (n - 1)) + 1;
+                        
+                        if (matrix[i][0] === 0 || matrix[0][j] === 0) {
+                            matrix[i][j] = 0;
+                            document.getElementById("status").textContent = 
+                                `Setting [${i}][${j}] = 0 (marker found)`;
+                        }
+                        draw([[i, j]]);
+                        stepIndex++;
+                    }
+                    
+                    if (stepIndex >= total3) {
+                        phase = 4;
+                        stepIndex = 0;
+                        document.getElementById("phaseDisplay").textContent = "4. Handle first row/col";
+                    }
+                    return true;
+
+                case 4: // Handle first row/col
+                    if (firstRowZero && stepIndex < n) {
+                        matrix[0][stepIndex] = 0;
+                        draw([[0, stepIndex]]);
+                        document.getElementById("status").textContent = 
+                            `Setting first row [0][${stepIndex}] = 0`;
+                        stepIndex++;
+                        return true;
+                    } else if (firstColZero && stepIndex < n + m) {
+                        const i = stepIndex - n;
+                        if (i < m) {
+                            matrix[i][0] = 0;
+                            draw([[i, 0]]);
+                            document.getElementById("status").textContent = 
+                                `Setting first col [${i}][0] = 0`;
+                            stepIndex++;
+                            return true;
+                        }
+                    }
+                    
+                    document.getElementById("status").textContent = "Complete! Matrix zeroes set.";
+                    draw();
+                    return false;
+            }
+            return false;
+        }
+
+        function reset() {
+            matrix = JSON.parse(JSON.stringify(originalMatrix));
+            phase = 1;
+            stepIndex = 0;
+            firstRowZero = false;
+            firstColZero = false;
+            autoRunning = false;
+            if (autoTimer) clearInterval(autoTimer);
+            
+            document.getElementById("phaseDisplay").textContent = "1. Check first row/col";
+            document.getElementById("rowZeroDisplay").textContent = "false";
+            document.getElementById("colZeroDisplay").textContent = "false";
+            document.getElementById("status").textContent = 'Click "Step" to set matrix zeroes in-place';
+            document.getElementById("autoBtn").textContent = "Auto Run";
+            
+            draw();
+        }
+
+        function autoRun() {
+            if (autoRunning) {
+                autoRunning = false;
+                clearInterval(autoTimer);
+                document.getElementById("autoBtn").textContent = "Auto Run";
+            } else {
+                autoRunning = true;
+                document.getElementById("autoBtn").textContent = "Pause";
+                const speed = 2100 - document.getElementById("speed").value;
+                autoTimer = setInterval(() => {
+                    if (!step()) {
+                        autoRunning = false;
+                        clearInterval(autoTimer);
+                        document.getElementById("autoBtn").textContent = "Auto Run";
+                    }
+                }, speed);
+            }
+        }
+
+        document.getElementById("stepBtn").addEventListener("click", step);
+        document.getElementById("autoBtn").addEventListener("click", autoRun);
+        document.getElementById("resetBtn").addEventListener("click", reset);
+
+        draw();
+    </script>
+</body>
+</html>

@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>269 - Alien Dictionary</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="problem-info">
+            <h1><span class="problem-number">#269</span> Alien Dictionary</h1>
+            <p>
+                Given a sorted list of words in an alien language, determine the character order.
+                Build a directed graph from character precedence, then use topological sort.
+            </p>
+            <div class="problem-meta">
+                <span class="meta-tag">🔗 Graph</span>
+                <span class="meta-tag">⏱️ O(n)</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <code>python/0269_alien_dictionary/0269_alien_dictionary.py</code>
+            </div>
+
+        </div>
+
+        <div class="explanation-panel">
+            <h4>🧠 How It Works (Layman's Terms)</h4>
+            <p>Graph problems are like <strong>exploring a maze</strong>:</p>
+            <ul>
+                <li><strong>Nodes:</strong> Points or locations</li>
+                <li><strong>Edges:</strong> Connections between nodes</li>
+                <li><strong>Traverse:</strong> Use DFS or BFS to explore</li>
+                <li><strong>Track visited:</strong> Avoid infinite loops</li>
+            </ul>
+        </div>
+
+
+        <section class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+            <div class="controls">
+                <button id="autoRunBtn" class="btn">▶ Auto Run</button>
+                <button id="stepBtn" class="btn btn-success">Step</button>
+                <button id="resetBtn" class="btn btn-danger">Reset</button>
+            </div>
+            <div class="status" id="status">Click Auto Run to determine alien character order</div>
+            <svg id="visualization"></svg>
+        </section>
+
+        <section class="code-section">
+            <h3>💻 Python Solution</h3>
+            <div class="code-block">
+                <pre><span class="keyword">def</span> <span class="function">alienOrder</span>(words):
+    <span class="comment"># Build graph from word comparisons</span>
+    graph = <span class="function">defaultdict</span>(set)
+    in_degree = {c: <span class="number">0</span> <span class="keyword">for</span> word <span class="keyword">in</span> words <span class="keyword">for</span> c <span class="keyword">in</span> word}
+    
+    <span class="keyword">for</span> i <span class="keyword">in</span> <span class="function">range</span>(<span class="function">len</span>(words) - <span class="number">1</span>):
+        w1, w2 = words[i], words[i + <span class="number">1</span>]
+        <span class="comment"># Invalid case: prefix is longer</span>
+        <span class="keyword">if</span> <span class="function">len</span>(w1) > <span class="function">len</span>(w2) <span class="keyword">and</span> w1.<span class="function">startswith</span>(w2):
+            <span class="keyword">return</span> <span class="string">""</span>
+        <span class="comment"># Find first differing char</span>
+        <span class="keyword">for</span> j <span class="keyword">in</span> <span class="function">range</span>(<span class="function">min</span>(<span class="function">len</span>(w1), <span class="function">len</span>(w2))):
+            <span class="keyword">if</span> w1[j] != w2[j]:
+                <span class="keyword">if</span> w2[j] <span class="keyword">not</span> <span class="keyword">in</span> graph[w1[j]]:
+                    graph[w1[j]].<span class="function">add</span>(w2[j])
+                    in_degree[w2[j]] += <span class="number">1</span>
+                <span class="keyword">break</span>
+    
+    <span class="comment"># BFS topological sort</span>
+    queue = <span class="function">deque</span>([c <span class="keyword">for</span> c <span class="keyword">in</span> in_degree <span class="keyword">if</span> in_degree[c] == <span class="number">0</span>])
+    result = []
+    <span class="keyword">while</span> queue:
+        c = queue.<span class="function">popleft</span>()
+        result.<span class="function">append</span>(c)
+        <span class="keyword">for</span> next_c <span class="keyword">in</span> graph[c]:
+            in_degree[next_c] -= <span class="number">1</span>
+            <span class="keyword">if</span> in_degree[next_c] == <span class="number">0</span>:
+                queue.<span class="function">append</span>(next_c)
+    
+    <span class="keyword">return</span> <span class="string">""</span>.<span class="function">join</span>(result) <span class="keyword">if</span> <span class="function">len</span>(result) == <span class="function">len</span>(in_degree) <span class="keyword">else</span> <span class="string">""</span></pre>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        const width = 900;
+        const height = 650;
+
+        const svg = d3.select("#visualization")
+            .attr("width", width)
+            .attr("height", height);
+
+        // Example words
+        const words = ["wrt", "wrf", "er", "ett", "rftt"];
+
+        let graph = {};
+        let inDegree = {};
+        let queue = [];
+        let result = [];
+        let currentComparison = null;
+        let highlightEdge = null;
+        let animationTimer = null;
+        let steps = [];
+        let stepIdx = 0;
+        let phase = "build"; // "build" or "sort"
+
+        function reset() {
+            graph = {};
+            inDegree = {};
+            queue = [];
+            result = [];
+            currentComparison = null;
+            highlightEdge = null;
+            phase = "build";
+            steps = [];
+            stepIdx = 0;
+
+            // Initialize in-degree for all characters
+            for (const word of words) {
+                for (const c of word) {
+                    if (!(c in inDegree)) {
+                        inDegree[c] = 0;
+                        graph[c] = new Set();
+                    }
+                }
+            }
+
+            // Generate steps
+            generateSteps();
+
+            if (animationTimer) clearInterval(animationTimer);
+            document.getElementById("status").textContent = "Click Auto Run to determine alien character order";
+            render();
+        }
+
+        function generateSteps() {
+            // Build graph steps
+            for (let i = 0; i < words.length - 1; i++) {
+                const w1 = words[i];
+                const w2 = words[i + 1];
+                
+                steps.push({ type: "compare", w1, w2, idx1: i, idx2: i + 1 });
+
+                for (let j = 0; j < Math.min(w1.length, w2.length); j++) {
+                    if (w1[j] !== w2[j]) {
+                        steps.push({ type: "edge", from: w1[j], to: w2[j], w1, w2, pos: j });
+                        break;
+                    }
+                }
+            }
+
+            // Topological sort steps
+            steps.push({ type: "start_sort" });
+        }
+
+        function render() {
+            svg.selectAll("*").remove();
+
+            // Draw words list
+            drawWords();
+
+            // Draw graph
+            drawGraph();
+
+            // Draw result
+            drawResult();
+
+            // Draw in-degree table
+            drawInDegree();
+        }
+
+        function drawWords() {
+            svg.append("text")
+                .attr("x", 50)
+                .attr("y", 40)
+                .attr("font-size", "14px")
+                .attr("font-weight", "bold")
+                .attr("fill", "#1e293b")
+                .text("Sorted Words (Alien Dictionary):");
+
+            words.forEach((word, idx) => {
+                const isActive = currentComparison && 
+                    (idx === currentComparison[0] || idx === currentComparison[1]);
+                
+                svg.append("rect")
+                    .attr("x", 50 + idx * 90)
+                    .attr("y", 55)
+                    .attr("width", 80)
+                    .attr("height", 35)
+                    .attr("rx", 4)
+                    .attr("fill", isActive ? "#fef3c7" : "#f8fafc")
+                    .attr("stroke", isActive ? "#f59e0b" : "#94a3b8");
+
+                svg.append("text")
+                    .attr("x", 50 + idx * 90 + 40)
+                    .attr("y", 78)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "14px")
+                    .attr("font-weight", "bold")
+                    .attr("fill", "#1e293b")
+                    .text(word);
+
+                svg.append("text")
+                    .attr("x", 50 + idx * 90 + 40)
+                    .attr("y", 105)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "10px")
+                    .attr("fill", "#64748b")
+                    .text(`[${idx}]`);
+            });
+        }
+
+        function drawGraph() {
+            const chars = Object.keys(inDegree);
+            const charPositions = {};
+            const centerX = 350;
+            const centerY = 320;
+            const radius = 120;
+
+            // Position characters in a circle
+            chars.forEach((c, idx) => {
+                const angle = (idx / chars.length) * 2 * Math.PI - Math.PI / 2;
+                charPositions[c] = {
+                    x: centerX + radius * Math.cos(angle),
+                    y: centerY + radius * Math.sin(angle)
+                };
+            });
+
+            svg.append("text")
+                .attr("x", centerX)
+                .attr("y", 150)
+                .attr("text-anchor", "middle")
+                .attr("font-size", "14px")
+                .attr("font-weight", "bold")
+                .attr("fill", "#1e293b")
+                .text("Character Precedence Graph");
+
+            // Arrow marker
+            svg.append("defs").append("marker")
+                .attr("id", "arrowhead")
+                .attr("viewBox", "0 0 10 10")
+                .attr("refX", 28)
+                .attr("refY", 5)
+                .attr("markerWidth", 5)
+                .attr("markerHeight", 5)
+                .attr("orient", "auto")
+                .append("path")
+                .attr("d", "M 0 0 L 10 5 L 0 10 z")
+                .attr("fill", "#3b82f6");
+
+            svg.append("defs").append("marker")
+                .attr("id", "arrowhead-highlight")
+                .attr("viewBox", "0 0 10 10")
+                .attr("refX", 28)
+                .attr("refY", 5)
+                .attr("markerWidth", 5)
+                .attr("markerHeight", 5)
+                .attr("orient", "auto")
+                .append("path")
+                .attr("d", "M 0 0 L 10 5 L 0 10 z")
+                .attr("fill", "#f59e0b");
+
+            // Draw edges
+            for (const from in graph) {
+                for (const to of graph[from]) {
+                    if (charPositions[from] && charPositions[to]) {
+                        const isHighlight = highlightEdge && 
+                            highlightEdge[0] === from && highlightEdge[1] === to;
+                        
+                        const x1 = charPositions[from].x;
+                        const y1 = charPositions[from].y;
+                        const x2 = charPositions[to].x;
+                        const y2 = charPositions[to].y;
+
+                        // Calculate control point for curve
+                        const dx = x2 - x1;
+                        const dy = y2 - y1;
+                        const cx = (x1 + x2) / 2 - dy * 0.2;
+                        const cy = (y1 + y2) / 2 + dx * 0.2;
+
+                        svg.append("path")
+                            .attr("d", `M ${x1} ${y1} Q ${cx} ${cy} ${x2} ${y2}`)
+                            .attr("fill", "none")
+                            .attr("stroke", isHighlight ? "#f59e0b" : "#3b82f6")
+                            .attr("stroke-width", isHighlight ? 3 : 2)
+                            .attr("marker-end", isHighlight ? "url(#arrowhead-highlight)" : "url(#arrowhead)");
+                    }
+                }
+            }
+
+            // Draw nodes
+            chars.forEach(c => {
+                const pos = charPositions[c];
+                const isInResult = result.includes(c);
+                const isInQueue = queue.includes(c);
+
+                svg.append("circle")
+                    .attr("cx", pos.x)
+                    .attr("cy", pos.y)
+                    .attr("r", 22)
+                    .attr("fill", () => {
+                        if (isInResult) return "#d1fae5";
+                        if (isInQueue) return "#fef3c7";
+                        return "#dbeafe";
+                    })
+                    .attr("stroke", () => {
+                        if (isInResult) return "#10b981";
+                        if (isInQueue) return "#f59e0b";
+                        return "#3b82f6";
+                    })
+                    .attr("stroke-width", 2);
+
+                svg.append("text")
+                    .attr("x", pos.x)
+                    .attr("y", pos.y + 6)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "18px")
+                    .attr("font-weight", "bold")
+                    .attr("fill", "#1e293b")
+                    .text(c);
+            });
+        }
+
+        function drawInDegree() {
+            const x = 580;
+            const y = 180;
+
+            svg.append("text")
+                .attr("x", x)
+                .attr("y", y - 10)
+                .attr("font-size", "14px")
+                .attr("font-weight", "bold")
+                .attr("fill", "#1e293b")
+                .text("In-Degree:");
+
+            Object.entries(inDegree).forEach(([c, deg], idx) => {
+                svg.append("rect")
+                    .attr("x", x + (idx % 3) * 90)
+                    .attr("y", y + Math.floor(idx / 3) * 35)
+                    .attr("width", 80)
+                    .attr("height", 28)
+                    .attr("rx", 4)
+                    .attr("fill", deg === 0 ? "#d1fae5" : "#f8fafc")
+                    .attr("stroke", deg === 0 ? "#10b981" : "#94a3b8");
+
+                svg.append("text")
+                    .attr("x", x + (idx % 3) * 90 + 40)
+                    .attr("y", y + Math.floor(idx / 3) * 35 + 18)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "12px")
+                    .attr("font-weight", "bold")
+                    .attr("fill", "#1e293b")
+                    .text(`${c}: ${deg}`);
+            });
+
+            // Queue
+            svg.append("text")
+                .attr("x", x)
+                .attr("y", y + 100)
+                .attr("font-size", "14px")
+                .attr("font-weight", "bold")
+                .attr("fill", "#1e293b")
+                .text("Queue:");
+
+            svg.append("text")
+                .attr("x", x)
+                .attr("y", y + 125)
+                .attr("font-size", "14px")
+                .attr("fill", queue.length > 0 ? "#1e293b" : "#64748b")
+                .text(queue.length > 0 ? `[${queue.join(", ")}]` : "(empty)");
+        }
+
+        function drawResult() {
+            const y = 520;
+
+            svg.append("text")
+                .attr("x", 50)
+                .attr("y", y)
+                .attr("font-size", "14px")
+                .attr("font-weight", "bold")
+                .attr("fill", "#1e293b")
+                .text("Result (Topological Order):");
+
+            if (result.length === 0) {
+                svg.append("text")
+                    .attr("x", 50)
+                    .attr("y", y + 30)
+                    .attr("font-size", "14px")
+                    .attr("fill", "#64748b")
+                    .text("(building graph...)");
+            } else {
+                result.forEach((c, idx) => {
+                    svg.append("rect")
+                        .attr("x", 50 + idx * 50)
+                        .attr("y", y + 15)
+                        .attr("width", 40)
+                        .attr("height", 35)
+                        .attr("rx", 4)
+                        .attr("fill", "#d1fae5")
+                        .attr("stroke", "#10b981");
+
+                    svg.append("text")
+                        .attr("x", 50 + idx * 50 + 20)
+                        .attr("y", y + 38)
+                        .attr("text-anchor", "middle")
+                        .attr("font-size", "16px")
+                        .attr("font-weight", "bold")
+                        .attr("fill", "#1e293b")
+                        .text(c);
+                });
+
+                if (result.length === Object.keys(inDegree).length) {
+                    svg.append("text")
+                        .attr("x", 50)
+                        .attr("y", y + 70)
+                        .attr("font-size", "14px")
+                        .attr("font-weight", "bold")
+                        .attr("fill", "#10b981")
+                        .text(`✓ Alien alphabet: "${result.join("")}"`);
+                }
+            }
+        }
+
+        function step() {
+            if (stepIdx >= steps.length) {
+                // Do topological sort
+                if (queue.length > 0) {
+                    const c = queue.shift();
+                    result.push(c);
+                    
+                    for (const next of graph[c]) {
+                        inDegree[next]--;
+                        if (inDegree[next] === 0) {
+                            queue.push(next);
+                        }
+                    }
+                    
+                    document.getElementById("status").textContent = 
+                        `Pop '${c}' from queue, add to result. Update neighbors.`;
+                } else if (result.length === Object.keys(inDegree).length) {
+                    document.getElementById("status").textContent = 
+                        `✓ Complete! Alien alphabet: "${result.join("")}"`;
+                }
+                render();
+                return;
+            }
+
+            const s = steps[stepIdx++];
+
+            switch (s.type) {
+                case "compare":
+                    currentComparison = [s.idx1, s.idx2];
+                    highlightEdge = null;
+                    document.getElementById("status").textContent = 
+                        `Comparing "${s.w1}" and "${s.w2}"`;
+                    break;
+                case "edge":
+                    if (!graph[s.from].has(s.to)) {
+                        graph[s.from].add(s.to);
+                        inDegree[s.to]++;
+                    }
+                    highlightEdge = [s.from, s.to];
+                    document.getElementById("status").textContent = 
+                        `Found: '${s.from}' < '${s.to}' (first difference at position ${s.pos})`;
+                    break;
+                case "start_sort":
+                    phase = "sort";
+                    currentComparison = null;
+                    highlightEdge = null;
+                    queue = Object.keys(inDegree).filter(c => inDegree[c] === 0);
+                    document.getElementById("status").textContent = 
+                        `Graph complete! Starting topological sort. Queue: [${queue.join(", ")}]`;
+                    break;
+            }
+
+            render();
+        }
+
+        function autoRun() {
+            if (animationTimer) {
+                clearInterval(animationTimer);
+                animationTimer = null;
+                document.getElementById("autoRunBtn").textContent = "▶ Auto Run";
+                return;
+            }
+
+            document.getElementById("autoRunBtn").textContent = "⏸ Pause";
+            animationTimer = setInterval(() => {
+                if (stepIdx >= steps.length && queue.length === 0) {
+                    clearInterval(animationTimer);
+                    animationTimer = null;
+                    document.getElementById("autoRunBtn").textContent = "▶ Auto Run";
+                    return;
+                }
+                step();
+            }, 800);
+        }
+
+        document.getElementById("autoRunBtn").addEventListener("click", autoRun);
+        document.getElementById("stepBtn").addEventListener("click", step);
+        document.getElementById("resetBtn").addEventListener("click", reset);
+
+        reset();
+    </script>
+</body>
+</html>

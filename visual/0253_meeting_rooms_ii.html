@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meeting Rooms II - LeetCode 253</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="problem-info">
+            <h1><span class="problem-number">#0253</span> Meeting Rooms II</h1>
+            <p><strong>Problem:</strong> Find the minimum number of conference rooms required to hold all meetings.</p>
+            <p><strong>Pattern:</strong> Two Pointers on Sorted Events - Track concurrent meetings using start/end times</p>
+            <div class="problem-meta">
+                <span class="meta-tag">📏 Intervals</span>
+                <span class="meta-tag">⏱️ O(n log n)</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <code>python/0253_meeting_rooms_2/0253_meeting_rooms_2.py</code>
+            </div>
+
+        </div>
+
+        <div class="explanation-panel">
+            <h4>🧠 How It Works (Layman's Terms)</h4>
+            <p>Interval problems deal with <strong>ranges and overlaps</strong>:</p>
+            <ul>
+                <li><strong>Sort:</strong> Usually sort by start time</li>
+                <li><strong>Merge:</strong> Combine overlapping intervals</li>
+                <li><strong>Compare:</strong> Check if intervals overlap</li>
+                <li><strong>Track:</strong> Maintain current merged interval</li>
+            </ul>
+        </div>
+
+
+        <div class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+
+            <div class="visualization">
+            <svg id="mainSvg"></svg>
+        </div>
+
+        <div class="controls">
+            <button id="stepBtn">Step</button>
+            <button id="autoBtn">Auto Run</button>
+            <button id="resetBtn">Reset</button>
+            <div class="speed-control">
+                <label for="speed">Speed:</label>
+                <input type="range" id="speed" min="100" max="2000" value="800">
+            </div>
+        </div>
+
+        <div class="status" id="status">Click "Step" to find minimum rooms needed</div>
+
+        <div class="variables">
+            <div class="var-item">
+                <span class="var-label">Current Rooms:</span>
+                <span id="roomsDisplay">0</span>
+            </div>
+            <div class="var-item">
+                <span class="var-label">Max Rooms Needed:</span>
+                <span id="maxDisplay">0</span>
+            </div>
+        </div>
+
+        </div>
+
+        <div class="code-section">
+            <h3>💻 Python Solution</h3>
+            <div class="code-block">
+                <pre><span class="keyword">def</span> <span class="function">minMeetingRooms</span>(intervals):
+    <span class="string">"""
+    Two pointers on sorted start/end times.
+    Time: O(n log n), Space: O(n)
+    """</span>
+    starts = <span class="function">sorted</span>([i[<span class="number">0</span>] <span class="keyword">for</span> i <span class="keyword">in</span> intervals])
+    ends = <span class="function">sorted</span>([i[<span class="number">1</span>] <span class="keyword">for</span> i <span class="keyword">in</span> intervals])
+    
+    rooms = <span class="number">0</span>
+    max_rooms = <span class="number">0</span>
+    s, e = <span class="number">0</span>, <span class="number">0</span>
+    
+    <span class="keyword">while</span> s < <span class="function">len</span>(starts):
+        <span class="keyword">if</span> starts[s] < ends[e]:
+            <span class="comment"># New meeting starts before one ends</span>
+            rooms += <span class="number">1</span>
+            max_rooms = <span class="function">max</span>(max_rooms, rooms)
+            s += <span class="number">1</span>
+        <span class="keyword">else</span>:
+            <span class="comment"># A meeting ended</span>
+            rooms -= <span class="number">1</span>
+            e += <span class="number">1</span>
+    
+    <span class="keyword">return</span> max_rooms</pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Intervals: [[0,30], [5,10], [15,20]]
+        const intervals = [[0, 30], [5, 10], [15, 20]];
+        
+        let starts = [];
+        let ends = [];
+        let s = 0, e = 0;
+        let rooms = 0, maxRooms = 0;
+        let phase = 'init'; // 'init' | 'process' | 'done'
+        let events = []; // For visualization
+        let autoRunning = false;
+        let autoTimer = null;
+
+        const width = 700;
+        const height = 400;
+        const svg = d3.select("#mainSvg")
+            .attr("width", width)
+            .attr("height", height);
+
+        const colors = ["#e3f2fd", "#c8e6c9", "#fff3e0"];
+        const strokes = ["#1976d2", "#4caf50", "#ff9800"];
+
+        function draw() {
+            svg.selectAll("*").remove();
+
+            svg.append("text")
+                .attr("x", width / 2).attr("y", 25)
+                .attr("text-anchor", "middle")
+                .attr("font-weight", "bold")
+                .text("Meeting Rooms II: Find Minimum Rooms");
+
+            // Timeline
+            const timelineY = 130;
+            const timelineStart = 80;
+            const timelineEnd = width - 80;
+            const maxTime = 35;
+            const scale = (timelineEnd - timelineStart) / maxTime;
+
+            svg.append("line")
+                .attr("x1", timelineStart).attr("y1", timelineY)
+                .attr("x2", timelineEnd).attr("y2", timelineY)
+                .attr("stroke", "#333").attr("stroke-width", 2);
+
+            // Time labels
+            for (let t = 0; t <= maxTime; t += 5) {
+                const x = timelineStart + t * scale;
+                svg.append("line")
+                    .attr("x1", x).attr("y1", timelineY - 5)
+                    .attr("x2", x).attr("y2", timelineY + 5)
+                    .attr("stroke", "#333");
+                svg.append("text")
+                    .attr("x", x).attr("y", timelineY + 18)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "10px")
+                    .text(t);
+            }
+
+            // Draw intervals
+            intervals.forEach((interval, i) => {
+                const [start, end] = interval;
+                const x1 = timelineStart + start * scale;
+                const x2 = timelineStart + end * scale;
+                const y = 55 + i * 24;
+
+                svg.append("rect")
+                    .attr("x", x1).attr("y", y)
+                    .attr("width", x2 - x1).attr("height", 20)
+                    .attr("rx", 4)
+                    .attr("fill", colors[i % colors.length])
+                    .attr("stroke", strokes[i % strokes.length])
+                    .attr("stroke-width", 2);
+
+                svg.append("text")
+                    .attr("x", (x1 + x2) / 2).attr("y", y + 14)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "11px")
+                    .text(`[${start},${end}]`);
+            });
+
+            // Starts array
+            svg.append("text")
+                .attr("x", 50).attr("y", 180)
+                .attr("font-weight", "bold")
+                .attr("font-size", "12px")
+                .text("Starts:");
+
+            starts.forEach((t, i) => {
+                const isCurrent = i === s && phase === 'process';
+                svg.append("rect")
+                    .attr("x", 100 + i * 45).attr("y", 165)
+                    .attr("width", 40).attr("height", 25)
+                    .attr("rx", 4)
+                    .attr("fill", i < s ? "#e0e0e0" : isCurrent ? "#ffeb3b" : "#e3f2fd")
+                    .attr("stroke", isCurrent ? "#f57c00" : "#1976d2");
+                svg.append("text")
+                    .attr("x", 120 + i * 45).attr("y", 182)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "14px")
+                    .attr("font-weight", isCurrent ? "bold" : "normal")
+                    .text(t);
+            });
+
+            if (phase === 'process') {
+                svg.append("text")
+                    .attr("x", 120 + s * 45).attr("y", 160)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "10px")
+                    .attr("fill", "#f57c00")
+                    .text("s");
+            }
+
+            // Ends array
+            svg.append("text")
+                .attr("x", 50).attr("y", 225)
+                .attr("font-weight", "bold")
+                .attr("font-size", "12px")
+                .text("Ends:");
+
+            ends.forEach((t, i) => {
+                const isCurrent = i === e && phase === 'process';
+                svg.append("rect")
+                    .attr("x", 100 + i * 45).attr("y", 210)
+                    .attr("width", 40).attr("height", 25)
+                    .attr("rx", 4)
+                    .attr("fill", i < e ? "#e0e0e0" : isCurrent ? "#ffeb3b" : "#c8e6c9")
+                    .attr("stroke", isCurrent ? "#f57c00" : "#4caf50");
+                svg.append("text")
+                    .attr("x", 120 + i * 45).attr("y", 227)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "14px")
+                    .attr("font-weight", isCurrent ? "bold" : "normal")
+                    .text(t);
+            });
+
+            if (phase === 'process') {
+                svg.append("text")
+                    .attr("x", 120 + e * 45).attr("y", 205)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "10px")
+                    .attr("fill", "#f57c00")
+                    .text("e");
+            }
+
+            // Rooms visualization
+            svg.append("text")
+                .attr("x", 50).attr("y", 280)
+                .attr("font-weight", "bold")
+                .text("Active Rooms:");
+
+            for (let i = 0; i < rooms; i++) {
+                svg.append("rect")
+                    .attr("x", 160 + i * 35).attr("y", 260)
+                    .attr("width", 30).attr("height", 30)
+                    .attr("rx", 5)
+                    .attr("fill", "#bbdefb").attr("stroke", "#1976d2");
+                svg.append("text")
+                    .attr("x", 175 + i * 35).attr("y", 280)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "14px")
+                    .text("🏢");
+            }
+
+            // Result
+            svg.append("rect")
+                .attr("x", width - 160).attr("y", 250)
+                .attr("width", 150).attr("height", 50)
+                .attr("rx", 10)
+                .attr("fill", "#e8eaf6").attr("stroke", "#3f51b5");
+
+            svg.append("text")
+                .attr("x", width - 85).attr("y", 272)
+                .attr("text-anchor", "middle")
+                .attr("font-size", "12px")
+                .text("Min Rooms:");
+
+            svg.append("text")
+                .attr("x", width - 85).attr("y", 292)
+                .attr("text-anchor", "middle")
+                .attr("font-size", "24px")
+                .attr("font-weight", "bold")
+                .attr("fill", "#3f51b5")
+                .text(maxRooms);
+
+            // Legend
+            svg.append("text")
+                .attr("x", 50).attr("y", height - 20)
+                .attr("font-size", "11px")
+                .text("If starts[s] < ends[e]: need new room | Otherwise: room freed");
+        }
+
+        function step() {
+            if (phase === 'init') {
+                starts = intervals.map(i => i[0]).sort((a, b) => a - b);
+                ends = intervals.map(i => i[1]).sort((a, b) => a - b);
+                s = 0; e = 0;
+                rooms = 0; maxRooms = 0;
+                phase = 'process';
+                document.getElementById("status").textContent = 
+                    "Sorted start and end times. Processing...";
+                draw();
+                return true;
+            }
+
+            if (phase === 'process') {
+                if (s >= starts.length) {
+                    phase = 'done';
+                    document.getElementById("status").textContent = 
+                        `Done! Minimum ${maxRooms} room(s) needed.`;
+                    draw();
+                    return false;
+                }
+
+                if (starts[s] < ends[e]) {
+                    rooms++;
+                    maxRooms = Math.max(maxRooms, rooms);
+                    document.getElementById("roomsDisplay").textContent = rooms;
+                    document.getElementById("maxDisplay").textContent = maxRooms;
+                    document.getElementById("status").textContent = 
+                        `Meeting starts at ${starts[s]} < next end ${ends[e]}: Need room! Rooms = ${rooms}`;
+                    s++;
+                } else {
+                    rooms--;
+                    document.getElementById("roomsDisplay").textContent = rooms;
+                    document.getElementById("status").textContent = 
+                        `Meeting ends at ${ends[e]} <= start ${starts[s]}: Room freed! Rooms = ${rooms}`;
+                    e++;
+                }
+
+                draw();
+                return s < starts.length;
+            }
+
+            return false;
+        }
+
+        function reset() {
+            starts = [];
+            ends = [];
+            s = 0; e = 0;
+            rooms = 0; maxRooms = 0;
+            phase = 'init';
+            autoRunning = false;
+            if (autoTimer) clearInterval(autoTimer);
+            
+            document.getElementById("roomsDisplay").textContent = "0";
+            document.getElementById("maxDisplay").textContent = "0";
+            document.getElementById("status").textContent = 
+                'Click "Step" to find minimum rooms needed';
+            document.getElementById("autoBtn").textContent = "Auto Run";
+            
+            draw();
+        }
+
+        function autoRun() {
+            if (autoRunning) {
+                autoRunning = false;
+                clearInterval(autoTimer);
+                document.getElementById("autoBtn").textContent = "Auto Run";
+            } else {
+                autoRunning = true;
+                document.getElementById("autoBtn").textContent = "Pause";
+                const speed = 2100 - document.getElementById("speed").value;
+                autoTimer = setInterval(() => {
+                    if (!step()) {
+                        autoRunning = false;
+                        clearInterval(autoTimer);
+                        document.getElementById("autoBtn").textContent = "Auto Run";
+                    }
+                }, speed);
+            }
+        }
+
+        document.getElementById("stepBtn").addEventListener("click", step);
+        document.getElementById("autoBtn").addEventListener("click", autoRun);
+        document.getElementById("resetBtn").addEventListener("click", reset);
+
+        draw();
+    </script>
+</body>
+</html>

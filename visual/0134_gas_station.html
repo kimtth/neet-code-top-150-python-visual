@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>134 - Gas Station</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="problem-info">
+            <h1><span class="problem-number">#134</span> Gas Station</h1>
+            <p>
+                Travel around a circular route of gas stations. At each station, you get gas[i] 
+                and consume cost[i] to reach the next. Find the starting station to complete the circuit.
+            </p>
+            <div class="problem-meta">
+                <span class="meta-tag">💰 Greedy</span>
+                <span class="meta-tag">⏱️ O(n)</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <code>python/0134_gas_station/0134_gas_station.py</code>
+            </div>
+
+            <h3>Example:</h3>
+            <pre>
+gas = [1, 2, 3, 4, 5], cost = [3, 4, 5, 1, 2]
+Output: 3 (start at station 3)
+            </pre>
+        </div>
+
+        <div class="explanation-panel">
+            <h4>🧠 How It Works (Layman's Terms)</h4>
+            <p>Greedy algorithms make <strong>locally optimal choices</strong>:</p>
+            <ul>
+                <li><strong>Local best:</strong> At each step, pick the best option</li>
+                <li><strong>No backtrack:</strong> Commit to choices</li>
+                <li><strong>Prove:</strong> Local optimal leads to global optimal</li>
+                <li><strong>Efficient:</strong> Usually O(n) time</li>
+            </ul>
+        </div>
+
+
+        <section class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+            <div class="controls">
+                <button id="stepBtn" class="btn">Step</button>
+                <button id="autoBtn" class="btn btn-success">Auto Run</button>
+                <button id="resetBtn" class="btn btn-danger">Reset</button>
+            </div>
+            <div class="status" id="status">Find starting station to complete the circular route</div>
+            <svg id="visualization"></svg>
+        </section>
+
+        <section class="code-section">
+            <h3>💻 Python Solution</h3>
+            <div class="code-block">
+                <pre><span class="keyword">def</span> <span class="function">canCompleteCircuit</span>(gas, cost):
+    total_gas = total_cost = <span class="number">0</span>
+    tank = <span class="number">0</span>
+    start = <span class="number">0</span>
+    
+    <span class="keyword">for</span> i <span class="keyword">in</span> <span class="function">range</span>(<span class="function">len</span>(gas)):
+        total_gas += gas[i]
+        total_cost += cost[i]
+        tank += gas[i] - cost[i]
+        <span class="keyword">if</span> tank < <span class="number">0</span>:
+            start = i + <span class="number">1</span>
+            tank = <span class="number">0</span>
+    
+    <span class="keyword">return</span> start <span class="keyword">if</span> total_gas >= total_cost <span class="keyword">else</span> <span class="number">-1</span></pre>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        const width = 900;
+        const height = 600;
+
+        const svg = d3.select("#visualization")
+            .attr("width", width)
+            .attr("height", height);
+
+        const gas = [1, 2, 3, 4, 5];
+        const cost = [3, 4, 5, 1, 2];
+        const n = gas.length;
+
+        let currentIdx = 0;
+        let tank = 0;
+        let startIdx = 0;
+        let totalGas = 0;
+        let totalCost = 0;
+        let isRunning = false;
+        let phase = "init";
+        let failedStarts = [];
+
+        function reset() {
+            currentIdx = 0;
+            tank = 0;
+            startIdx = 0;
+            totalGas = 0;
+            totalCost = 0;
+            phase = "init";
+            failedStarts = [];
+            isRunning = false;
+            document.getElementById("autoBtn").textContent = "Auto Run";
+            document.getElementById("status").textContent = 
+                `Gas: [${gas.join(',')}], Cost: [${cost.join(',')}]`;
+            render();
+        }
+
+        function render() {
+            svg.selectAll("*").remove();
+
+            const centerX = 300;
+            const centerY = 280;
+            const radius = 150;
+
+            // Draw circular route
+            svg.append("circle")
+                .attr("cx", centerX)
+                .attr("cy", centerY)
+                .attr("r", radius)
+                .attr("fill", "none")
+                .attr("stroke", "#e2e8f0")
+                .attr("stroke-width", 20);
+
+            // Draw stations
+            for (let i = 0; i < n; i++) {
+                const angle = (i / n) * 2 * Math.PI - Math.PI / 2;
+                const x = centerX + radius * Math.cos(angle);
+                const y = centerY + radius * Math.sin(angle);
+
+                const isActive = i === currentIdx;
+                const isStart = i === startIdx;
+                const isFailed = failedStarts.includes(i);
+
+                // Station marker
+                svg.append("circle")
+                    .attr("cx", x)
+                    .attr("cy", y)
+                    .attr("r", 35)
+                    .attr("fill", () => {
+                        if (phase === "done" && isStart) return "#d1fae5";
+                        if (isActive) return "#fef3c7";
+                        if (isStart) return "#dbeafe";
+                        if (isFailed) return "#fee2e2";
+                        return "#f8fafc";
+                    })
+                    .attr("stroke", () => {
+                        if (phase === "done" && isStart) return "#10b981";
+                        if (isActive) return "#f59e0b";
+                        if (isStart) return "#3b82f6";
+                        if (isFailed) return "#ef4444";
+                        return "#94a3b8";
+                    })
+                    .attr("stroke-width", (isActive || isStart) ? 3 : 2);
+
+                // Station number
+                svg.append("text")
+                    .attr("x", x)
+                    .attr("y", y + 5)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "16px")
+                    .attr("font-weight", "bold")
+                    .attr("fill", "#1e293b")
+                    .text(i);
+
+                // Gas/Cost labels
+                const labelRadius = radius + 55;
+                const lx = centerX + labelRadius * Math.cos(angle);
+                const ly = centerY + labelRadius * Math.sin(angle);
+
+                svg.append("text")
+                    .attr("x", lx)
+                    .attr("y", ly - 8)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "12px")
+                    .attr("fill", "#10b981")
+                    .text(`+${gas[i]} ⛽`);
+
+                svg.append("text")
+                    .attr("x", lx)
+                    .attr("y", ly + 10)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "12px")
+                    .attr("fill", "#ef4444")
+                    .text(`-${cost[i]} 🚗`);
+
+                // Net gain/loss
+                const net = gas[i] - cost[i];
+                svg.append("text")
+                    .attr("x", lx)
+                    .attr("y", ly + 28)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "11px")
+                    .attr("font-weight", "bold")
+                    .attr("fill", net >= 0 ? "#10b981" : "#ef4444")
+                    .text(`(${net >= 0 ? '+' : ''}${net})`);
+            }
+
+            // Direction arrows
+            for (let i = 0; i < n; i++) {
+                const angle1 = (i / n) * 2 * Math.PI - Math.PI / 2;
+                const angle2 = ((i + 0.5) / n) * 2 * Math.PI - Math.PI / 2;
+                const x = centerX + (radius - 40) * Math.cos(angle2);
+                const y = centerY + (radius - 40) * Math.sin(angle2);
+
+                svg.append("text")
+                    .attr("x", x)
+                    .attr("y", y)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "16px")
+                    .attr("fill", "#94a3b8")
+                    .text("→");
+            }
+
+            // Car (if running)
+            if (phase === "check") {
+                const angle = (currentIdx / n) * 2 * Math.PI - Math.PI / 2;
+                const carX = centerX + (radius - 70) * Math.cos(angle);
+                const carY = centerY + (radius - 70) * Math.sin(angle);
+
+                svg.append("text")
+                    .attr("x", carX)
+                    .attr("y", carY + 5)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "24px")
+                    .text("🚗");
+            }
+
+            // Info panel
+            const infoX = 550;
+            const infoY = 80;
+
+            svg.append("rect")
+                .attr("x", infoX)
+                .attr("y", infoY)
+                .attr("width", 300)
+                .attr("height", 200)
+                .attr("rx", 10)
+                .attr("fill", "#f8fafc")
+                .attr("stroke", "#e2e8f0");
+
+            svg.append("text")
+                .attr("x", infoX + 20)
+                .attr("y", infoY + 35)
+                .attr("font-size", "14px")
+                .attr("font-weight", "bold")
+                .attr("fill", "#1e293b")
+                .text("Current State:");
+
+            svg.append("text")
+                .attr("x", infoX + 20)
+                .attr("y", infoY + 65)
+                .attr("font-size", "13px")
+                .attr("fill", "#64748b")
+                .text(`Starting station: ${startIdx}`);
+
+            svg.append("text")
+                .attr("x", infoX + 20)
+                .attr("y", infoY + 90)
+                .attr("font-size", "13px")
+                .attr("fill", "#64748b")
+                .text(`Current tank: ${tank}`);
+
+            svg.append("text")
+                .attr("x", infoX + 20)
+                .attr("y", infoY + 115)
+                .attr("font-size", "13px")
+                .attr("fill", "#64748b")
+                .text(`Total gas: ${totalGas}`);
+
+            svg.append("text")
+                .attr("x", infoX + 20)
+                .attr("y", infoY + 140)
+                .attr("font-size", "13px")
+                .attr("fill", "#64748b")
+                .text(`Total cost: ${totalCost}`);
+
+            // Tank visualization
+            const tankY = infoY + 160;
+            const tankWidth = 200;
+            const tankFill = Math.min(tank / 10 * tankWidth, tankWidth);
+
+            svg.append("rect")
+                .attr("x", infoX + 20)
+                .attr("y", tankY)
+                .attr("width", tankWidth)
+                .attr("height", 25)
+                .attr("rx", 5)
+                .attr("fill", "#e2e8f0");
+
+            if (tank > 0) {
+                svg.append("rect")
+                    .attr("x", infoX + 20)
+                    .attr("y", tankY)
+                    .attr("width", tankFill)
+                    .attr("height", 25)
+                    .attr("rx", 5)
+                    .attr("fill", tank < 0 ? "#ef4444" : "#10b981");
+            }
+
+            svg.append("text")
+                .attr("x", infoX + 230)
+                .attr("y", tankY + 17)
+                .attr("font-size", "12px")
+                .attr("fill", "#64748b")
+                .text(`${tank} units`);
+
+            // Key insight
+            svg.append("text")
+                .attr("x", infoX)
+                .attr("y", 320)
+                .attr("font-size", "13px")
+                .attr("font-weight", "bold")
+                .attr("fill", "#1e293b")
+                .text("Greedy Insight:");
+
+            svg.append("text")
+                .attr("x", infoX)
+                .attr("y", 345)
+                .attr("font-size", "12px")
+                .attr("fill", "#64748b")
+                .text("If tank < 0, start from next station.");
+
+            svg.append("text")
+                .attr("x", infoX)
+                .attr("y", 370)
+                .attr("font-size", "12px")
+                .attr("fill", "#64748b")
+                .text("If total_gas ≥ total_cost, solution exists.");
+
+            // Legend
+            const legend = svg.append("g").attr("transform", `translate(${infoX}, 410)`);
+
+            legend.append("circle").attr("cx", 10).attr("cy", 0).attr("r", 8).attr("fill", "#dbeafe").attr("stroke", "#3b82f6");
+            legend.append("text").attr("x", 25).attr("y", 5).attr("font-size", "11px").text("Start candidate");
+
+            legend.append("circle").attr("cx", 10).attr("cy", 25).attr("r", 8).attr("fill", "#fee2e2").attr("stroke", "#ef4444");
+            legend.append("text").attr("x", 25).attr("y", 30).attr("font-size", "11px").text("Failed start");
+
+            legend.append("circle").attr("cx", 10).attr("cy", 50).attr("r", 8).attr("fill", "#d1fae5").attr("stroke", "#10b981");
+            legend.append("text").attr("x", 25).attr("y", 55).attr("font-size", "11px").text("Valid start");
+
+            // Result
+            if (phase === "done") {
+                svg.append("rect")
+                    .attr("x", 50)
+                    .attr("y", 530)
+                    .attr("width", 450)
+                    .attr("height", 55)
+                    .attr("rx", 10)
+                    .attr("fill", totalGas >= totalCost ? "#d1fae5" : "#fee2e2")
+                    .attr("stroke", totalGas >= totalCost ? "#10b981" : "#ef4444")
+                    .attr("stroke-width", 2);
+
+                svg.append("text")
+                    .attr("x", 275)
+                    .attr("y", 565)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "18px")
+                    .attr("font-weight", "bold")
+                    .attr("fill", totalGas >= totalCost ? "#10b981" : "#ef4444")
+                    .text(totalGas >= totalCost ? 
+                        `✓ Start at station ${startIdx} to complete circuit` :
+                        "✗ Cannot complete the circuit");
+            }
+        }
+
+        function step() {
+            if (phase === "done") return;
+
+            if (phase === "init") {
+                phase = "check";
+                document.getElementById("status").textContent = 
+                    `Checking station ${currentIdx}: gas=${gas[currentIdx]}, cost=${cost[currentIdx]}`;
+                render();
+                return;
+            }
+
+            if (phase === "check") {
+                totalGas += gas[currentIdx];
+                totalCost += cost[currentIdx];
+                tank += gas[currentIdx] - cost[currentIdx];
+
+                document.getElementById("status").textContent = 
+                    `Station ${currentIdx}: tank ${tank - (gas[currentIdx] - cost[currentIdx])} + ${gas[currentIdx]} - ${cost[currentIdx]} = ${tank}`;
+
+                if (tank < 0) {
+                    failedStarts.push(startIdx);
+                    startIdx = currentIdx + 1;
+                    tank = 0;
+                    document.getElementById("status").textContent = 
+                        `Tank < 0! Reset start to station ${startIdx}`;
+                }
+
+                render();
+
+                currentIdx++;
+                if (currentIdx >= n) {
+                    phase = "done";
+                    const result = totalGas >= totalCost ? startIdx : -1;
+                    document.getElementById("status").textContent = 
+                        totalGas >= totalCost ? 
+                        `✓ Total gas (${totalGas}) ≥ cost (${totalCost}). Start: ${startIdx}` :
+                        `✗ Total gas (${totalGas}) < cost (${totalCost}). No solution.`;
+                    render();
+                }
+            }
+        }
+
+        async function autoRun() {
+            if (isRunning) {
+                isRunning = false;
+                document.getElementById("autoBtn").textContent = "Auto Run";
+                return;
+            }
+
+            isRunning = true;
+            document.getElementById("autoBtn").textContent = "Pause";
+
+            while (phase !== "done" && isRunning) {
+                step();
+                await new Promise(r => setTimeout(r, 600));
+            }
+
+            isRunning = false;
+            document.getElementById("autoBtn").textContent = "Auto Run";
+        }
+
+        document.getElementById("stepBtn").addEventListener("click", step);
+        document.getElementById("autoBtn").addEventListener("click", autoRun);
+        document.getElementById("resetBtn").addEventListener("click", reset);
+
+        reset();
+    </script>
+</body>
+</html>

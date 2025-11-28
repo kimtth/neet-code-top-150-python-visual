@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LC 277: Find the Celebrity - Algorithm Visualization</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="problem-info">
+            <h1><span class="problem-number">#277</span> Find the Celebrity</h1>
+            <p>Among n people, find the celebrity (everyone knows them, they know no one). Use knows(a, b) API which returns if a knows b.</p>
+            <div class="problem-meta">
+                <span class="meta-tag">📊 Graph</span>
+                <span class="meta-tag">🔄 Two Pass</span>
+                <span class="meta-tag">⏱️ O(n)</span>
+                <span class="meta-tag">💾 O(1)</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <code>python/0277_find_the_celebrity/0277_find_the_celebrity.py</code>
+            </div>
+            </div>
+
+        <div class="explanation-panel">
+            <h4>🧠 How It Works (Layman's Terms)</h4>
+            <p><strong>Two-pass algorithm:</strong></p>
+            <ul>
+                <li><strong>Pass 1:</strong> Eliminate non-celebrities by asking "does A know B?"</li>
+                <li><strong>If A knows B:</strong> A can't be celebrity (celebrities know no one)</li>
+                <li><strong>If A doesn't know B:</strong> B can't be celebrity (everyone knows celebrity)</li>
+                <li><strong>Pass 2:</strong> Verify the candidate is actually a celebrity</li>
+            </ul>
+        </div>
+
+
+        <div class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+            
+            <div class="controls">
+                <button class="btn btn-primary" id="startBtn" onclick="start()">▶ Start</button>
+                <button class="btn" onclick="stepForward()">Step →</button>
+                <button class="btn btn-warning" onclick="reset()">Reset</button>
+                <button class="btn" onclick="randomize()">🎲 Random</button>
+            </div>
+
+            <div class="status-message" id="statusMessage">
+                Click Start to find the celebrity
+            </div>
+
+            <div style="display: flex; gap: 30px; flex-wrap: wrap; margin-top: 20px;">
+                <div style="flex: 1; min-width: 300px;">
+                    <svg id="graphViz" width="100%" height="350"></svg>
+                </div>
+                <div style="flex: 1; min-width: 250px;">
+                    <h4>📊 "Knows" Matrix</h4>
+                    <div id="matrixDisplay" style="padding: 10px; background: #f5f5f5; border-radius: 12px; font-family: monospace; font-size: 0.85em; overflow-x: auto;"></div>
+                    
+                    <h4 style="margin-top: 15px;">🎯 Current Candidate</h4>
+                    <div id="candidateDisplay" style="padding: 20px; background: #e3f2fd; border-radius: 12px; text-align: center; font-size: 2em; font-weight: bold; color: #2196f3;">
+                        -
+                    </div>
+                    
+                    <h4 style="margin-top: 15px;">❌ Eliminated</h4>
+                    <div id="eliminatedDisplay" style="padding: 15px; background: #ffebee; border-radius: 12px; min-height: 40px;"></div>
+                    
+                    <h4 style="margin-top: 15px;">🏆 Result</h4>
+                    <div id="resultDisplay" style="padding: 20px; background: #fff; border-radius: 12px; text-align: center; font-size: 1.3em; font-weight: bold; border: 2px solid #ddd;">
+                        ?
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="code-section">
+            <h3>💻 Python Solution</h3>
+            <div class="code-block">
+                <pre><span class="keyword">def</span> <span class="function">findCelebrity</span>(n):
+    <span class="comment"># Pass 1: Find candidate</span>
+    candidate = <span class="number">0</span>
+    <span class="keyword">for</span> i <span class="keyword">in</span> <span class="function">range</span>(<span class="number">1</span>, n):
+        <span class="keyword">if</span> <span class="function">knows</span>(candidate, i):
+            <span class="comment"># candidate knows i, so candidate is not celebrity</span>
+            candidate = i
+    
+    <span class="comment"># Pass 2: Verify candidate</span>
+    <span class="keyword">for</span> i <span class="keyword">in</span> <span class="function">range</span>(n):
+        <span class="keyword">if</span> i != candidate:
+            <span class="keyword">if</span> <span class="function">knows</span>(candidate, i) <span class="keyword">or not</span> <span class="function">knows</span>(i, candidate):
+                <span class="keyword">return</span> <span class="number">-1</span>
+    
+    <span class="keyword">return</span> candidate</pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let n = 5;
+        let celebrity = 2; // Person 2 is the celebrity
+        let knowsMatrix = [];
+        let candidate = 0;
+        let eliminated = new Set();
+        let currentQuery = null;
+        let isRunning = false;
+        let stepIndex = 0;
+        let steps = [];
+
+        function generateMatrix() {
+            knowsMatrix = Array.from({ length: n }, () => Array(n).fill(false));
+            
+            // Everyone knows the celebrity
+            for (let i = 0; i < n; i++) {
+                if (i !== celebrity) {
+                    knowsMatrix[i][celebrity] = true;
+                }
+            }
+            
+            // Random other relationships (celebrity knows no one)
+            for (let i = 0; i < n; i++) {
+                for (let j = 0; j < n; j++) {
+                    if (i !== celebrity && i !== j && j !== celebrity) {
+                        knowsMatrix[i][j] = Math.random() < 0.5;
+                    }
+                }
+            }
+        }
+
+        function knows(a, b) {
+            return knowsMatrix[a][b];
+        }
+
+        function precomputeSteps() {
+            steps = [];
+            const localEliminated = new Set();
+            let cand = 0;
+
+            steps.push({
+                type: 'init',
+                candidate: 0,
+                eliminated: new Set(),
+                message: `Start with candidate = 0`
+            });
+
+            // Pass 1: Find candidate
+            for (let i = 1; i < n; i++) {
+                const knowsI = knows(cand, i);
+                steps.push({
+                    type: 'query',
+                    query: [cand, i],
+                    result: knowsI,
+                    candidate: cand,
+                    eliminated: new Set(localEliminated),
+                    message: `knows(${cand}, ${i}) = ${knowsI}`
+                });
+
+                if (knowsI) {
+                    localEliminated.add(cand);
+                    cand = i;
+                    steps.push({
+                        type: 'eliminate',
+                        oldCandidate: cand,
+                        candidate: i,
+                        eliminated: new Set(localEliminated),
+                        message: `${cand - (i - cand)} knows ${i}, so ${cand - (i - cand)} is not celebrity. New candidate = ${i}`
+                    });
+                } else {
+                    localEliminated.add(i);
+                    steps.push({
+                        type: 'eliminate_other',
+                        candidate: cand,
+                        eliminated: new Set(localEliminated),
+                        message: `${cand} doesn't know ${i}, so ${i} is not celebrity. Keep candidate = ${cand}`
+                    });
+                }
+            }
+
+            steps.push({
+                type: 'verify_start',
+                candidate: cand,
+                eliminated: new Set(localEliminated),
+                message: `Pass 2: Verify candidate ${cand}`
+            });
+
+            // Pass 2: Verify
+            let valid = true;
+            for (let i = 0; i < n && valid; i++) {
+                if (i !== cand) {
+                    const candKnowsI = knows(cand, i);
+                    const iKnowsCand = knows(i, cand);
+                    
+                    if (candKnowsI || !iKnowsCand) {
+                        valid = false;
+                        steps.push({
+                            type: 'verify_fail',
+                            candidate: cand,
+                            i,
+                            candKnowsI,
+                            iKnowsCand,
+                            eliminated: new Set(localEliminated),
+                            message: `Verification failed: knows(${cand},${i})=${candKnowsI}, knows(${i},${cand})=${iKnowsCand}`
+                        });
+                    }
+                }
+            }
+
+            if (valid) {
+                steps.push({
+                    type: 'done',
+                    result: cand,
+                    eliminated: new Set(localEliminated),
+                    message: `✅ Celebrity found: Person ${cand}`
+                });
+            } else {
+                steps.push({
+                    type: 'done',
+                    result: -1,
+                    eliminated: new Set(localEliminated),
+                    message: `❌ No celebrity exists`
+                });
+            }
+        }
+
+        function getPositions() {
+            const positions = [];
+            const centerX = 150;
+            const centerY = 175;
+            const radius = 120;
+            for (let i = 0; i < n; i++) {
+                const angle = (2 * Math.PI * i) / n - Math.PI / 2;
+                positions.push({
+                    id: i,
+                    x: centerX + radius * Math.cos(angle),
+                    y: centerY + radius * Math.sin(angle)
+                });
+            }
+            return positions;
+        }
+
+        function render() {
+            const svg = d3.select("#graphViz");
+            svg.selectAll("*").remove();
+
+            const container = svg.node().parentElement;
+            const width = container.clientWidth;
+            const height = 350;
+            svg.attr("viewBox", `0 0 ${width} ${height}`);
+
+            const positions = getPositions();
+            const g = svg.append("g").attr("transform", `translate(${(width - 300) / 2}, 0)`);
+
+            // Arrow marker
+            g.append("defs").append("marker")
+                .attr("id", "arrow")
+                .attr("viewBox", "0 -5 10 10")
+                .attr("refX", 25)
+                .attr("refY", 0)
+                .attr("markerWidth", 5)
+                .attr("markerHeight", 5)
+                .attr("orient", "auto")
+                .append("path")
+                .attr("d", "M0,-5L10,0L0,5")
+                .attr("fill", "#999");
+
+            // Draw edges
+            for (let i = 0; i < n; i++) {
+                for (let j = 0; j < n; j++) {
+                    if (i !== j && knowsMatrix[i][j]) {
+                        const from = positions[i];
+                        const to = positions[j];
+                        const highlight = currentQuery && currentQuery[0] === i && currentQuery[1] === j;
+                        
+                        g.append("line")
+                            .attr("x1", from.x).attr("y1", from.y)
+                            .attr("x2", to.x).attr("y2", to.y)
+                            .attr("stroke", highlight ? "#e91e63" : "#ddd")
+                            .attr("stroke-width", highlight ? 3 : 1)
+                            .attr("marker-end", "url(#arrow)");
+                    }
+                }
+            }
+
+            // Draw nodes
+            positions.forEach(pos => {
+                const isCandidate = pos.id === candidate;
+                const isEliminated = eliminated.has(pos.id);
+                const isCelebrity = steps[steps.length - 1]?.result === pos.id;
+                
+                let fill = '#667eea';
+                if (isEliminated) fill = '#ccc';
+                if (isCandidate) fill = '#ff9800';
+                if (isCelebrity && stepIndex >= steps.length) fill = '#4caf50';
+
+                g.append("circle")
+                    .attr("cx", pos.x).attr("cy", pos.y).attr("r", 25)
+                    .attr("fill", fill)
+                    .attr("stroke", isCandidate ? '#e65100' : '#5a6fd6')
+                    .attr("stroke-width", isCandidate ? 4 : 2);
+
+                g.append("text")
+                    .attr("x", pos.x).attr("y", pos.y + 6)
+                    .attr("text-anchor", "middle")
+                    .attr("fill", "white").attr("font-weight", "bold").attr("font-size", "16px")
+                    .text(pos.id);
+            });
+
+            renderMatrix();
+            updateDisplays();
+        }
+
+        function renderMatrix() {
+            const container = document.getElementById('matrixDisplay');
+            let html = '<table style="border-collapse: collapse; width: 100%;">';
+            html += '<tr><th style="padding: 4px;"></th>';
+            for (let j = 0; j < n; j++) html += `<th style="padding: 4px;">${j}</th>`;
+            html += '</tr>';
+            
+            for (let i = 0; i < n; i++) {
+                const rowElim = eliminated.has(i);
+                html += `<tr style="${rowElim ? 'opacity: 0.5;' : ''}"><th style="padding: 4px;">${i}</th>`;
+                for (let j = 0; j < n; j++) {
+                    const val = i === j ? '-' : (knowsMatrix[i][j] ? '✓' : '✗');
+                    const highlight = currentQuery && currentQuery[0] === i && currentQuery[1] === j;
+                    const bg = highlight ? '#ffeb3b' : (knowsMatrix[i][j] ? '#e8f5e9' : '');
+                    html += `<td style="padding: 4px; text-align: center; background: ${bg};">${val}</td>`;
+                }
+                html += '</tr>';
+            }
+            html += '</table>';
+            container.innerHTML = html;
+        }
+
+        function updateDisplays() {
+            document.getElementById('candidateDisplay').textContent = candidate;
+            
+            const elimContainer = document.getElementById('eliminatedDisplay');
+            elimContainer.innerHTML = eliminated.size > 0 
+                ? Array.from(eliminated).sort().map(e => 
+                    `<span style="background: #f44336; color: white; padding: 5px 12px; margin: 3px; border-radius: 15px; display: inline-block;">${e}</span>`
+                ).join(' ')
+                : '<span style="color: #999;">(none)</span>';
+        }
+
+        function stepForward() {
+            if (stepIndex >= steps.length) return;
+            
+            const step = steps[stepIndex];
+            candidate = step.candidate;
+            eliminated = step.eliminated;
+            currentQuery = step.query || null;
+            
+            document.getElementById('statusMessage').textContent = step.message;
+            
+            if (step.type === 'done') {
+                const resultEl = document.getElementById('resultDisplay');
+                if (step.result >= 0) {
+                    resultEl.textContent = `Celebrity: Person ${step.result} 🎉`;
+                    resultEl.style.background = '#e8f5e9';
+                    resultEl.style.color = '#4caf50';
+                    resultEl.style.borderColor = '#4caf50';
+                } else {
+                    resultEl.textContent = 'No Celebrity ❌';
+                    resultEl.style.background = '#ffebee';
+                    resultEl.style.color = '#f44336';
+                    resultEl.style.borderColor = '#f44336';
+                }
+                isRunning = false;
+                document.getElementById('startBtn').textContent = '▶ Start';
+            }
+            
+            stepIndex++;
+            render();
+        }
+
+        async function start() {
+            if (isRunning) {
+                isRunning = false;
+                document.getElementById('startBtn').textContent = '▶ Start';
+                return;
+            }
+            
+            isRunning = true;
+            document.getElementById('startBtn').textContent = '⏸ Pause';
+            
+            while (stepIndex < steps.length && isRunning) {
+                stepForward();
+                await new Promise(r => setTimeout(r, 600));
+            }
+        }
+
+        function reset() {
+            isRunning = false;
+            stepIndex = 0;
+            candidate = 0;
+            eliminated = new Set();
+            currentQuery = null;
+            
+            document.getElementById('statusMessage').textContent = 'Click Start to find the celebrity';
+            document.getElementById('resultDisplay').textContent = '?';
+            document.getElementById('resultDisplay').style.background = '#fff';
+            document.getElementById('resultDisplay').style.color = '#333';
+            document.getElementById('resultDisplay').style.borderColor = '#ddd';
+            document.getElementById('startBtn').textContent = '▶ Start';
+            
+            precomputeSteps();
+            render();
+        }
+
+        function randomize() {
+            n = Math.floor(Math.random() * 3) + 4; // 4-6 people
+            celebrity = Math.random() < 0.8 ? Math.floor(Math.random() * n) : -1; // 80% chance of celebrity
+            generateMatrix();
+            
+            if (celebrity === -1) {
+                // Make sure no one is a celebrity
+                for (let i = 0; i < n; i++) {
+                    knowsMatrix[i][0] = Math.random() < 0.5;
+                }
+            }
+            
+            reset();
+        }
+
+        generateMatrix();
+        reset();
+        window.addEventListener('resize', render);
+    </script>
+</body>
+</html>

@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>416 - Partition Equal Subset Sum</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="problem-info">
+            <h1><span class="problem-number">#416</span> Partition Equal Subset Sum</h1>
+            <p>
+                Given an array, determine if it can be partitioned into two subsets with equal sum.
+                This is a 0/1 knapsack problem where target = totalSum / 2.
+            </p>
+            <div class="problem-meta">
+                <span class="meta-tag">📊 Array</span>
+                <span class="meta-tag">🧮 DP</span>
+                <span class="meta-tag">🔄 Backtracking</span>
+                <span class="meta-tag">⏱️ O(n)</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <code>python/0416_partition_equal_subset_sum/0416_partition_equal_subset_sum.py</code>
+            </div>
+
+            <h3>Example:</h3>
+            <pre>
+nums = [1, 5, 11, 5]
+Total = 22, Target = 11
+Output: true ([1,5,5] and [11])
+            </pre>
+        </div>
+
+        <div class="explanation-panel">
+            <h4>🧠 How It Works (Layman's Terms)</h4>
+            <p>Backtracking <strong>explores all possibilities</strong> like solving a maze:</p>
+            <ul>
+                <li><strong>Choose:</strong> Make a decision</li>
+                <li><strong>Explore:</strong> Recursively continue</li>
+                <li><strong>Validate:</strong> Check if path is valid</li>
+                <li><strong>Backtrack:</strong> Undo choice if stuck, try another</li>
+            </ul>
+        </div>
+
+
+        <section class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+            <div class="controls">
+                <button id="stepBtn" class="btn">Step</button>
+                <button id="autoBtn" class="btn btn-success">Auto Run</button>
+                <button id="resetBtn" class="btn btn-danger">Reset</button>
+            </div>
+            <div class="status" id="status">Can we partition into two equal-sum subsets?</div>
+            <svg id="visualization"></svg>
+        </section>
+
+        <section class="code-section">
+            <h3>💻 Python Solution</h3>
+            <div class="code-block">
+                <pre><span class="keyword">def</span> <span class="function">canPartition</span>(nums):
+    total = <span class="function">sum</span>(nums)
+    <span class="keyword">if</span> total % <span class="number">2</span> != <span class="number">0</span>:
+        <span class="keyword">return</span> <span class="keyword">False</span>
+    
+    target = total // <span class="number">2</span>
+    dp = [<span class="keyword">False</span>] * (target + <span class="number">1</span>)
+    dp[<span class="number">0</span>] = <span class="keyword">True</span>
+    
+    <span class="keyword">for</span> num <span class="keyword">in</span> nums:
+        <span class="keyword">for</span> j <span class="keyword">in</span> <span class="function">range</span>(target, num - <span class="number">1</span>, <span class="number">-1</span>):
+            <span class="keyword">if</span> dp[j - num]:
+                dp[j] = <span class="keyword">True</span>
+    
+    <span class="keyword">return</span> dp[target]</pre>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        const width = 900;
+        const height = 550;
+
+        const svg = d3.select("#visualization")
+            .attr("width", width)
+            .attr("height", height);
+
+        const nums = [1, 5, 11, 5];
+        const total = nums.reduce((a, b) => a + b, 0);
+        const target = total / 2;
+
+        let dp = [];
+        let currentNumIdx = -1;
+        let currentJ = -1;
+        let isRunning = false;
+        let phase = "init";
+        let history = [];
+
+        function reset() {
+            dp = new Array(target + 1).fill(false);
+            dp[0] = true;
+            currentNumIdx = -1;
+            currentJ = -1;
+            phase = "init";
+            history = [{ dp: [...dp], numIdx: -1, j: -1 }];
+            isRunning = false;
+            document.getElementById("autoBtn").textContent = "Auto Run";
+            document.getElementById("status").textContent = 
+                `Total = ${total}, Target = ${target}. Can we form sum ${target}?`;
+            render();
+        }
+
+        function render() {
+            svg.selectAll("*").remove();
+
+            const startX = 50;
+
+            // Array display
+            svg.append("text")
+                .attr("x", startX)
+                .attr("y", 35)
+                .attr("font-size", "16px")
+                .attr("font-weight", "bold")
+                .attr("fill", "#1e293b")
+                .text("Array nums[]:");
+
+            nums.forEach((num, idx) => {
+                const x = startX + 150 + idx * 70;
+                const isActive = idx === currentNumIdx;
+                const isProcessed = idx < currentNumIdx;
+
+                svg.append("rect")
+                    .attr("x", x)
+                    .attr("y", 15)
+                    .attr("width", 60)
+                    .attr("height", 50)
+                    .attr("rx", 8)
+                    .attr("fill", () => {
+                        if (isActive) return "#fef3c7";
+                        if (isProcessed) return "#d1fae5";
+                        return "#f8fafc";
+                    })
+                    .attr("stroke", () => {
+                        if (isActive) return "#f59e0b";
+                        if (isProcessed) return "#10b981";
+                        return "#94a3b8";
+                    })
+                    .attr("stroke-width", isActive ? 3 : 2);
+
+                svg.append("text")
+                    .attr("x", x + 30)
+                    .attr("y", 48)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "20px")
+                    .attr("font-weight", "bold")
+                    .attr("fill", "#1e293b")
+                    .text(num);
+            });
+
+            // Target info
+            svg.append("text")
+                .attr("x", 600)
+                .attr("y", 35)
+                .attr("font-size", "14px")
+                .attr("fill", "#64748b")
+                .text(`Total: ${total} | Target: ${target}`);
+
+            // DP array
+            const dpStartX = 50;
+            const dpStartY = 120;
+            const cellWidth = 55;
+
+            svg.append("text")
+                .attr("x", dpStartX)
+                .attr("y", dpStartY - 15)
+                .attr("font-size", "14px")
+                .attr("font-weight", "bold")
+                .attr("fill", "#1e293b")
+                .text("DP[j] = Can we form sum j?");
+
+            for (let j = 0; j <= target; j++) {
+                const x = dpStartX + j * cellWidth;
+                const y = dpStartY;
+                const isActive = j === currentJ;
+                const isTarget = j === target;
+
+                svg.append("rect")
+                    .attr("x", x)
+                    .attr("y", y)
+                    .attr("width", cellWidth - 4)
+                    .attr("height", 45)
+                    .attr("rx", 4)
+                    .attr("fill", () => {
+                        if (dp[j] && isTarget) return "#d1fae5";
+                        if (isActive) return "#fef3c7";
+                        if (dp[j]) return "#dbeafe";
+                        return "#f8fafc";
+                    })
+                    .attr("stroke", () => {
+                        if (isTarget) return "#10b981";
+                        if (isActive) return "#f59e0b";
+                        if (dp[j]) return "#3b82f6";
+                        return "#e2e8f0";
+                    })
+                    .attr("stroke-width", (isActive || isTarget) ? 2 : 1);
+
+                // Sum label
+                svg.append("text")
+                    .attr("x", x + (cellWidth - 4) / 2)
+                    .attr("y", y - 5)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "10px")
+                    .attr("fill", "#64748b")
+                    .text(j);
+
+                // T/F value
+                svg.append("text")
+                    .attr("x", x + (cellWidth - 4) / 2)
+                    .attr("y", y + 28)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "16px")
+                    .attr("font-weight", "bold")
+                    .attr("fill", dp[j] ? "#3b82f6" : "#94a3b8")
+                    .text(dp[j] ? "T" : "F");
+            }
+
+            // Arrow showing current transition
+            if (phase === "check" && currentJ >= 0 && currentNumIdx >= 0) {
+                const num = nums[currentNumIdx];
+                const fromJ = currentJ - num;
+                if (fromJ >= 0 && dp[fromJ]) {
+                    const x1 = dpStartX + fromJ * cellWidth + (cellWidth - 4) / 2;
+                    const x2 = dpStartX + currentJ * cellWidth + (cellWidth - 4) / 2;
+                    const y = dpStartY + 55;
+
+                    svg.append("path")
+                        .attr("d", `M ${x1} ${y} Q ${(x1 + x2) / 2} ${y + 30} ${x2} ${y}`)
+                        .attr("fill", "none")
+                        .attr("stroke", "#10b981")
+                        .attr("stroke-width", 2)
+                        .attr("marker-end", "url(#arrow)");
+
+                    svg.append("text")
+                        .attr("x", (x1 + x2) / 2)
+                        .attr("y", y + 50)
+                        .attr("text-anchor", "middle")
+                        .attr("font-size", "12px")
+                        .attr("fill", "#10b981")
+                        .text(`+${num}`);
+                }
+            }
+
+            // Arrow marker
+            svg.append("defs").append("marker")
+                .attr("id", "arrow")
+                .attr("viewBox", "0 -5 10 10")
+                .attr("refX", 8)
+                .attr("refY", 0)
+                .attr("markerWidth", 6)
+                .attr("markerHeight", 6)
+                .attr("orient", "auto")
+                .append("path")
+                .attr("d", "M0,-5L10,0L0,5")
+                .attr("fill", "#10b981");
+
+            // Explanation
+            svg.append("text")
+                .attr("x", 50)
+                .attr("y", 260)
+                .attr("font-size", "14px")
+                .attr("fill", "#64748b")
+                .text("Transition: If dp[j-num] is True, then dp[j] = True (we can add num to reach j)");
+
+            // Subset visualization
+            const subsetY = 320;
+            svg.append("text")
+                .attr("x", 50)
+                .attr("y", subsetY)
+                .attr("font-size", "14px")
+                .attr("font-weight", "bold")
+                .attr("fill", "#1e293b")
+                .text("Possible Sums (True in DP):");
+
+            const trueSums = [];
+            for (let j = 0; j <= target; j++) {
+                if (dp[j]) trueSums.push(j);
+            }
+
+            trueSums.forEach((sum, idx) => {
+                const x = 50 + idx * 50;
+                svg.append("rect")
+                    .attr("x", x)
+                    .attr("y", subsetY + 10)
+                    .attr("width", 45)
+                    .attr("height", 35)
+                    .attr("rx", 6)
+                    .attr("fill", sum === target ? "#d1fae5" : "#dbeafe")
+                    .attr("stroke", sum === target ? "#10b981" : "#3b82f6");
+
+                svg.append("text")
+                    .attr("x", x + 22)
+                    .attr("y", subsetY + 33)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "14px")
+                    .attr("font-weight", "bold")
+                    .attr("fill", "#1e293b")
+                    .text(sum);
+            });
+
+            // Final result
+            if (phase === "done") {
+                const resultY = 420;
+                svg.append("rect")
+                    .attr("x", 50)
+                    .attr("y", resultY)
+                    .attr("width", 400)
+                    .attr("height", 60)
+                    .attr("rx", 10)
+                    .attr("fill", dp[target] ? "#d1fae5" : "#fee2e2")
+                    .attr("stroke", dp[target] ? "#10b981" : "#ef4444")
+                    .attr("stroke-width", 2);
+
+                svg.append("text")
+                    .attr("x", 250)
+                    .attr("y", resultY + 38)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "18px")
+                    .attr("font-weight", "bold")
+                    .attr("fill", dp[target] ? "#10b981" : "#ef4444")
+                    .text(dp[target] ? 
+                        `✓ Can partition! [1,5,5] and [11] both sum to ${target}` : 
+                        "✗ Cannot partition into equal subsets");
+            }
+
+            // Legend
+            const legend = svg.append("g").attr("transform", `translate(550, 320)`);
+
+            legend.append("rect").attr("x", 0).attr("y", 0).attr("width", 20).attr("height", 20).attr("rx", 4).attr("fill", "#dbeafe").attr("stroke", "#3b82f6");
+            legend.append("text").attr("x", 28).attr("y", 15).attr("font-size", "12px").text("Reachable sum");
+
+            legend.append("rect").attr("x", 0).attr("y", 30).attr("width", 20).attr("height", 20).attr("rx", 4).attr("fill", "#fef3c7").attr("stroke", "#f59e0b");
+            legend.append("text").attr("x", 28).attr("y", 45).attr("font-size", "12px").text("Current check");
+
+            legend.append("rect").attr("x", 0).attr("y", 60).attr("width", 20).attr("height", 20).attr("rx", 4).attr("fill", "#d1fae5").attr("stroke", "#10b981");
+            legend.append("text").attr("x", 28).attr("y", 75).attr("font-size", "12px").text("Target reached!");
+        }
+
+        function step() {
+            if (phase === "done") {
+                return;
+            }
+
+            if (phase === "init") {
+                currentNumIdx = 0;
+                currentJ = target;
+                phase = "check";
+                document.getElementById("status").textContent = 
+                    `Processing num=${nums[0]}, checking from j=${target} down to ${nums[0]}`;
+                render();
+                return;
+            }
+
+            if (phase === "check") {
+                const num = nums[currentNumIdx];
+                
+                if (currentJ >= num) {
+                    if (dp[currentJ - num]) {
+                        dp[currentJ] = true;
+                        document.getElementById("status").textContent = 
+                            `dp[${currentJ-num}]=True, so dp[${currentJ}]=True (${currentJ-num}+${num}=${currentJ})`;
+                    } else {
+                        document.getElementById("status").textContent = 
+                            `dp[${currentJ-num}]=False, dp[${currentJ}] unchanged`;
+                    }
+                    render();
+                    currentJ--;
+                    return;
+                }
+
+                // Move to next number
+                currentNumIdx++;
+                if (currentNumIdx >= nums.length) {
+                    phase = "done";
+                    document.getElementById("status").textContent = 
+                        dp[target] ? `✓ Target ${target} is reachable! Can partition.` : 
+                                     `✗ Target ${target} not reachable. Cannot partition.`;
+                } else {
+                    currentJ = target;
+                    document.getElementById("status").textContent = 
+                        `Processing num=${nums[currentNumIdx]}, checking from j=${target}`;
+                }
+                render();
+            }
+        }
+
+        async function autoRun() {
+            if (isRunning) {
+                isRunning = false;
+                document.getElementById("autoBtn").textContent = "Auto Run";
+                return;
+            }
+
+            isRunning = true;
+            document.getElementById("autoBtn").textContent = "Pause";
+
+            while (phase !== "done" && isRunning) {
+                step();
+                await new Promise(r => setTimeout(r, 200));
+            }
+
+            isRunning = false;
+            document.getElementById("autoBtn").textContent = "Auto Run";
+        }
+
+        document.getElementById("stepBtn").addEventListener("click", step);
+        document.getElementById("autoBtn").addEventListener("click", autoRun);
+        document.getElementById("resetBtn").addEventListener("click", reset);
+
+        reset();
+    </script>
+</body>
+</html>

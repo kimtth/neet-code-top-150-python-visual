@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Surrounded Regions - LeetCode 130</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="problem-info">
+            <h1><span class="problem-number">#0130</span> Surrounded Regions</h1>
+            <p><strong>Problem:</strong> Capture all regions that are 4-directionally surrounded by 'X'. A region is captured by flipping all 'O's into 'X's.</p>
+            <p><strong>Pattern:</strong> Reverse Thinking - Mark border-connected 'O's, then flip the rest</p>
+            <div class="problem-meta">
+                <span class="meta-tag">🔍 DFS</span>
+                <span class="meta-tag">⏱️ O(n)</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <code>python/0130_surrounded_regions/0130_surrounded_regions.py</code>
+            </div>
+
+        </div>
+
+        <div class="explanation-panel">
+            <h4>🧠 How It Works (Layman's Terms)</h4>
+            <p>This algorithm solves the problem <strong>step by step</strong>:</p>
+            <ul>
+                <li><strong>Understand:</strong> Parse the input data</li>
+                <li><strong>Process:</strong> Apply the core logic</li>
+                <li><strong>Optimize:</strong> Use efficient data structures</li>
+                <li><strong>Return:</strong> Output the computed result</li>
+            </ul>
+        </div>
+
+
+        <div class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+
+            <div class="visualization">
+            <svg id="mainSvg"></svg>
+        </div>
+
+        <div class="controls">
+            <button id="stepBtn">Step</button>
+            <button id="autoBtn">Auto Run</button>
+            <button id="resetBtn">Reset</button>
+            <div class="speed-control">
+                <label for="speed">Speed:</label>
+                <input type="range" id="speed" min="100" max="2000" value="600">
+            </div>
+        </div>
+
+        <div class="status" id="status">Click "Step" to solve surrounded regions</div>
+
+        <div class="variables">
+            <div class="var-item">
+                <span class="var-label">Phase:</span>
+                <span id="phaseDisplay">1. Mark border O's</span>
+            </div>
+            <div class="var-item">
+                <span class="var-label">Safe O's:</span>
+                <span id="safeDisplay">0</span>
+            </div>
+        </div>
+
+        </div>
+
+        <div class="code-section">
+            <h3>💻 Python Solution</h3>
+            <div class="code-block">
+                <pre><span class="keyword">def</span> <span class="function">solve</span>(board):
+    <span class="string">"""
+    1. DFS from border 'O's, mark as 'T' (temporary)
+    2. Flip remaining 'O's to 'X' (captured)
+    3. Restore 'T's back to 'O'
+    Time: O(m*n), Space: O(m*n) for recursion
+    """</span>
+    <span class="keyword">if</span> <span class="keyword">not</span> board: <span class="keyword">return</span>
+    m, n = <span class="function">len</span>(board), <span class="function">len</span>(board[<span class="number">0</span>])
+    
+    <span class="keyword">def</span> <span class="function">dfs</span>(r, c):
+        <span class="keyword">if</span> r < <span class="number">0</span> <span class="keyword">or</span> r >= m <span class="keyword">or</span> c < <span class="number">0</span> <span class="keyword">or</span> c >= n:
+            <span class="keyword">return</span>
+        <span class="keyword">if</span> board[r][c] != <span class="string">'O'</span>:
+            <span class="keyword">return</span>
+        board[r][c] = <span class="string">'T'</span>  <span class="comment"># Mark as safe</span>
+        <span class="function">dfs</span>(r+<span class="number">1</span>, c); <span class="function">dfs</span>(r-<span class="number">1</span>, c)
+        <span class="function">dfs</span>(r, c+<span class="number">1</span>); <span class="function">dfs</span>(r, c-<span class="number">1</span>)
+    
+    <span class="comment"># Mark border-connected O's</span>
+    <span class="keyword">for</span> i <span class="keyword">in</span> <span class="function">range</span>(m):
+        <span class="function">dfs</span>(i, <span class="number">0</span>); <span class="function">dfs</span>(i, n-<span class="number">1</span>)
+    <span class="keyword">for</span> j <span class="keyword">in</span> <span class="function">range</span>(n):
+        <span class="function">dfs</span>(<span class="number">0</span>, j); <span class="function">dfs</span>(m-<span class="number">1</span>, j)
+    
+    <span class="comment"># Flip O->X (captured), T->O (safe)</span>
+    <span class="keyword">for</span> i <span class="keyword">in</span> <span class="function">range</span>(m):
+        <span class="keyword">for</span> j <span class="keyword">in</span> <span class="function">range</span>(n):
+            <span class="keyword">if</span> board[i][j] == <span class="string">'O'</span>: <span class="class-name">board</span>[i][j] = <span class="string">'X'</span>
+            <span class="keyword">elif</span> board[i][j] == <span class="string">'T'</span>: <span class="class-name">board</span>[i][j] = <span class="string">'O'</span></pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const originalBoard = [
+            ['X', 'X', 'X', 'X'],
+            ['X', 'O', 'O', 'X'],
+            ['X', 'X', 'O', 'X'],
+            ['X', 'O', 'X', 'X']
+        ];
+        
+        let board = JSON.parse(JSON.stringify(originalBoard));
+        const m = board.length;
+        const n = board[0].length;
+        
+        let phase = 1; // 1: mark borders, 2: DFS from borders, 3: flip
+        let borderCells = [];
+        let borderIndex = 0;
+        let dfsStack = [];
+        let safeCount = 0;
+        let autoRunning = false;
+        let autoTimer = null;
+
+        const width = 750;
+        const height = 450;
+        const svg = d3.select("#mainSvg")
+            .attr("width", width)
+            .attr("height", height);
+
+        const cellSize = 60;
+
+        function initBorderCells() {
+            borderCells = [];
+            // Top and bottom rows
+            for (let j = 0; j < n; j++) {
+                borderCells.push([0, j]);
+                if (m > 1) borderCells.push([m - 1, j]);
+            }
+            // Left and right columns (excluding corners)
+            for (let i = 1; i < m - 1; i++) {
+                borderCells.push([i, 0]);
+                if (n > 1) borderCells.push([i, n - 1]);
+            }
+        }
+
+        function draw(highlights = []) {
+            svg.selectAll("*").remove();
+
+            // Title
+            svg.append("text")
+                .attr("x", 150)
+                .attr("y", 30)
+                .attr("text-anchor", "middle")
+                .attr("font-weight", "bold")
+                .text("Original");
+
+            drawBoard(originalBoard, 50, 50, []);
+
+            svg.append("text")
+                .attr("x", width / 2 + 100)
+                .attr("y", 30)
+                .attr("text-anchor", "middle")
+                .attr("font-weight", "bold")
+                .text("Processing");
+
+            drawBoard(board, width / 2, 50, highlights);
+
+            // Legend
+            const legendY = 330;
+            const legends = [
+                { fill: "#f5f5f5", stroke: "#333", text: "X" },
+                { fill: "#4caf50", stroke: "#2e7d32", text: "O (region)" },
+                { fill: "#2196f3", stroke: "#1565c0", text: "T (safe)" },
+                { fill: "#ffeb3b", stroke: "#f57c00", text: "Current" }
+            ];
+
+            legends.forEach((l, idx) => {
+                svg.append("rect")
+                    .attr("x", 100 + idx * 160)
+                    .attr("y", legendY)
+                    .attr("width", 25)
+                    .attr("height", 25)
+                    .attr("rx", 4)
+                    .attr("fill", l.fill)
+                    .attr("stroke", l.stroke)
+                    .attr("stroke-width", 2);
+
+                svg.append("text")
+                    .attr("x", 130 + idx * 160)
+                    .attr("y", legendY + 18)
+                    .attr("font-size", "12px")
+                    .text(l.text);
+            });
+
+            // Phase indicator
+            const phases = ["1. Check borders", "2. DFS mark safe", "3. Flip captured"];
+            svg.append("rect")
+                .attr("x", width / 2 - 180)
+                .attr("y", 380)
+                .attr("width", 360)
+                .attr("height", 40)
+                .attr("rx", 8)
+                .attr("fill", "#e3f2fd")
+                .attr("stroke", "#1976d2");
+
+            phases.forEach((p, idx) => {
+                svg.append("text")
+                    .attr("x", width / 2 - 150 + idx * 120)
+                    .attr("y", 405)
+                    .attr("font-size", "12px")
+                    .attr("font-weight", phase === idx + 1 ? "bold" : "normal")
+                    .attr("fill", phase === idx + 1 ? "#1976d2" : "#666")
+                    .text(p);
+            });
+        }
+
+        function drawBoard(b, x, y, highlights) {
+            for (let i = 0; i < m; i++) {
+                for (let j = 0; j < n; j++) {
+                    const cellX = x + j * cellSize;
+                    const cellY = y + i * cellSize;
+                    const val = b[i][j];
+                    const isHighlight = highlights.some(([r, c]) => r === i && c === j);
+                    const isBorder = i === 0 || i === m - 1 || j === 0 || j === n - 1;
+
+                    let fill, stroke;
+                    if (isHighlight) {
+                        fill = "#ffeb3b";
+                        stroke = "#f57c00";
+                    } else if (val === 'X') {
+                        fill = "#f5f5f5";
+                        stroke = "#333";
+                    } else if (val === 'O') {
+                        fill = "#4caf50";
+                        stroke = "#2e7d32";
+                    } else { // 'T'
+                        fill = "#2196f3";
+                        stroke = "#1565c0";
+                    }
+
+                    svg.append("rect")
+                        .attr("x", cellX)
+                        .attr("y", cellY)
+                        .attr("width", cellSize - 4)
+                        .attr("height", cellSize - 4)
+                        .attr("rx", 5)
+                        .attr("fill", fill)
+                        .attr("stroke", stroke)
+                        .attr("stroke-width", isHighlight ? 3 : isBorder && b === board ? 2 : 1)
+                        .attr("stroke-dasharray", isBorder && b === board && phase === 1 ? "5,3" : "none");
+
+                    svg.append("text")
+                        .attr("x", cellX + (cellSize - 4) / 2)
+                        .attr("y", cellY + (cellSize - 4) / 2 + 6)
+                        .attr("text-anchor", "middle")
+                        .attr("font-size", "20px")
+                        .attr("font-weight", "bold")
+                        .text(val);
+                }
+            }
+        }
+
+        function step() {
+            if (phase === 1) {
+                // Check border cells
+                if (borderIndex >= borderCells.length) {
+                    phase = 2;
+                    document.getElementById("phaseDisplay").textContent = "2. DFS mark safe";
+                    // Initialize DFS stack with border O's
+                    for (let i = 0; i < m; i++) {
+                        for (let j = 0; j < n; j++) {
+                            if ((i === 0 || i === m - 1 || j === 0 || j === n - 1) && board[i][j] === 'O') {
+                                dfsStack.push([i, j]);
+                            }
+                        }
+                    }
+                    draw();
+                    document.getElementById("status").textContent = 
+                        "Border scan complete. Starting DFS to mark safe regions...";
+                    return true;
+                }
+
+                const [r, c] = borderCells[borderIndex];
+                draw([[r, c]]);
+                
+                if (board[r][c] === 'O') {
+                    document.getElementById("status").textContent = 
+                        `Found border O at (${r}, ${c}) - will mark as safe`;
+                } else {
+                    document.getElementById("status").textContent = 
+                        `Border (${r}, ${c}) is ${board[r][c]} - skip`;
+                }
+                
+                borderIndex++;
+                return true;
+
+            } else if (phase === 2) {
+                // DFS to mark safe O's
+                if (dfsStack.length === 0) {
+                    phase = 3;
+                    document.getElementById("phaseDisplay").textContent = "3. Flip captured";
+                    draw();
+                    document.getElementById("status").textContent = 
+                        "All safe regions marked. Now flipping captured O's to X...";
+                    borderIndex = 0;
+                    return true;
+                }
+
+                const [r, c] = dfsStack.pop();
+                
+                if (r < 0 || r >= m || c < 0 || c >= n || board[r][c] !== 'O') {
+                    return step(); // Skip invalid
+                }
+
+                board[r][c] = 'T';
+                safeCount++;
+                document.getElementById("safeDisplay").textContent = safeCount;
+
+                // Add neighbors
+                dfsStack.push([r + 1, c], [r - 1, c], [r, c + 1], [r, c - 1]);
+                
+                draw([[r, c]]);
+                document.getElementById("status").textContent = 
+                    `Marked (${r}, ${c}) as safe (T)`;
+                return true;
+
+            } else {
+                // Flip remaining O's to X, T's back to O
+                if (borderIndex >= m * n) {
+                    document.getElementById("status").textContent = 
+                        "Complete! Surrounded regions captured.";
+                    draw();
+                    return false;
+                }
+
+                const i = Math.floor(borderIndex / n);
+                const j = borderIndex % n;
+                
+                let msg = "";
+                if (board[i][j] === 'O') {
+                    board[i][j] = 'X';
+                    msg = `Captured (${i}, ${j}): O → X`;
+                } else if (board[i][j] === 'T') {
+                    board[i][j] = 'O';
+                    msg = `Restored (${i}, ${j}): T → O`;
+                }
+
+                borderIndex++;
+                draw([[i, j]]);
+                
+                if (msg) {
+                    document.getElementById("status").textContent = msg;
+                }
+                return borderIndex < m * n;
+            }
+        }
+
+        function reset() {
+            board = JSON.parse(JSON.stringify(originalBoard));
+            phase = 1;
+            borderIndex = 0;
+            dfsStack = [];
+            safeCount = 0;
+            autoRunning = false;
+            if (autoTimer) clearInterval(autoTimer);
+            
+            initBorderCells();
+            
+            document.getElementById("phaseDisplay").textContent = "1. Mark border O's";
+            document.getElementById("safeDisplay").textContent = "0";
+            document.getElementById("status").textContent = 
+                'Click "Step" to solve surrounded regions';
+            document.getElementById("autoBtn").textContent = "Auto Run";
+            
+            draw();
+        }
+
+        function autoRun() {
+            if (autoRunning) {
+                autoRunning = false;
+                clearInterval(autoTimer);
+                document.getElementById("autoBtn").textContent = "Auto Run";
+            } else {
+                autoRunning = true;
+                document.getElementById("autoBtn").textContent = "Pause";
+                const speed = 2100 - document.getElementById("speed").value;
+                autoTimer = setInterval(() => {
+                    if (!step()) {
+                        autoRunning = false;
+                        clearInterval(autoTimer);
+                        document.getElementById("autoBtn").textContent = "Auto Run";
+                    }
+                }, speed);
+            }
+        }
+
+        document.getElementById("stepBtn").addEventListener("click", step);
+        document.getElementById("autoBtn").addEventListener("click", autoRun);
+        document.getElementById("resetBtn").addEventListener("click", reset);
+
+        initBorderCells();
+        draw();
+    </script>
+</body>
+</html>

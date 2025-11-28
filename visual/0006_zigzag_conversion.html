@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zigzag Conversion - LeetCode 6</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    </div>
+
+    <div class="container">
+        <div class="problem-info">
+            <h1><span class="problem-number">#6</span> Zigzag Conversion</h1>
+            <p>Write characters in a zigzag pattern on given number of rows, then read line by line.</p>
+            <div class="problem-meta">
+                <span class="meta-tag">String</span>
+                <span class="meta-tag">Medium</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <code>python/0006_zigzag_conversion/0006_zigzag_conversion.py</code>
+            </div>
+
+        </div>
+
+        <div class="explanation-panel">
+            <h4>🧠 How It Works (Layman's Terms)</h4>
+            <p>This algorithm solves the problem <strong>step by step</strong>:</p>
+            <ul>
+                <li><strong>Understand:</strong> Parse the input data</li>
+                <li><strong>Process:</strong> Apply the core logic</li>
+                <li><strong>Optimize:</strong> Use efficient data structures</li>
+                <li><strong>Return:</strong> Output the computed result</li>
+            </ul>
+        </div>
+
+
+        <div class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+            <div class="controls">
+                <button id="stepBtn" class="btn">Step</button>
+                <button id="autoBtn" class="btn">Auto Run</button>
+                <button id="resetBtn" class="btn btn-secondary">Reset</button>
+                <div class="speed-control">
+                    <label>Speed:</label>
+                    <input type="range" id="speedSlider" min="1" max="10" value="5">
+                </div>
+            </div>
+            <svg id="mainSvg" width="900" height="450"></svg>
+            <div class="variables-display">
+                <div id="varDisplay"></div>
+            </div>
+            <div class="status-message" id="status">Click "Step" to see zigzag pattern</div>
+        </div>
+
+        <div class="code-section">
+            <h3>💻 Python Solution</h3>
+            <div class="code-block">
+                <pre><span class="keyword">def</span> <span class="function">convert</span>(s: <span class="class-name">str</span>, numRows: <span class="class-name">int</span>) -> str:
+    <span class="keyword">if</span> numRows == <span class="number">1</span> <span class="keyword">or</span> numRows >= <span class="function">len</span>(s):
+        <span class="keyword">return</span> s
+    
+    rows = [<span class="string">''</span>] * numRows
+    index, step = <span class="number">0</span>, <span class="number">1</span>
+    
+    <span class="keyword">for</span> char <span class="keyword">in</span> s:
+        rows[index] += char
+        
+        <span class="keyword">if</span> index == <span class="number">0</span>:
+            step = <span class="number">1</span>
+        <span class="keyword">elif</span> index == numRows - <span class="number">1</span>:
+            step = <span class="number">-1</span>
+        
+        index += step
+    
+    <span class="keyword">return</span> <span class="string">''</span>.<span class="function">join</span>(rows)</pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const inputString = "PAYPALISHIRING";
+        const numRows = 4;
+        const width = 900, height = 450;
+        const svg = d3.select("#mainSvg");
+
+        // State variables
+        let charIndex = 0;
+        let rowIndex = 0;
+        let direction = 1;  // 1 = down, -1 = up
+        let rows = Array(numRows).fill(null).map(() => []);
+        let positions = [];
+        let autoTimer = null;
+        let autoRunning = false;
+
+        const cellWidth = 50;
+        const cellHeight = 55;
+        const startX = 120;
+        const startY = 80;
+
+        function draw() {
+            svg.selectAll("*").remove();
+
+            // Title
+            svg.append("text")
+                .attr("x", width / 2)
+                .attr("y", 35)
+                .attr("text-anchor", "middle")
+                .attr("font-weight", "bold")
+                .attr("font-size", "16px")
+                .text(`Zigzag: "${inputString}" with ${numRows} rows`);
+
+            // Draw input string at top
+            svg.append("text")
+                .attr("x", 20)
+                .attr("y", 60)
+                .attr("font-size", "12px")
+                .attr("fill", "#666")
+                .text("Input:");
+
+            for (let i = 0; i < inputString.length; i++) {
+                const isProcessed = i < charIndex;
+                const isCurrent = i === charIndex;
+                
+                svg.append("rect")
+                    .attr("x", 70 + i * 30)
+                    .attr("y", 45)
+                    .attr("width", 26)
+                    .attr("height", 26)
+                    .attr("rx", 4)
+                    .attr("fill", isCurrent ? "#fef3c7" : isProcessed ? "#d1d5db" : "#e0e7ff")
+                    .attr("stroke", isCurrent ? "#f59e0b" : "#6366f1")
+                    .attr("stroke-width", isCurrent ? 2 : 1);
+
+                svg.append("text")
+                    .attr("x", 70 + i * 30 + 13)
+                    .attr("y", 63)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "14px")
+                    .attr("font-weight", isCurrent ? "bold" : "normal")
+                    .attr("fill", isProcessed && !isCurrent ? "#9ca3af" : "#1f2937")
+                    .text(inputString[i]);
+            }
+
+            // Draw row labels
+            for (let row = 0; row < numRows; row++) {
+                const isCurrentRow = row === rowIndex && charIndex < inputString.length;
+                
+                svg.append("text")
+                    .attr("x", 20)
+                    .attr("y", startY + row * cellHeight + 30)
+                    .attr("font-size", "14px")
+                    .attr("font-weight", isCurrentRow ? "bold" : "normal")
+                    .attr("fill", isCurrentRow ? "#6366f1" : "#666")
+                    .text(`Row ${row}:`);
+
+                // Draw row highlight
+                if (isCurrentRow) {
+                    svg.append("rect")
+                        .attr("x", startX - 10)
+                        .attr("y", startY + row * cellHeight)
+                        .attr("width", (positions.filter(p => p.row === row).length + 1) * cellWidth + 20)
+                        .attr("height", cellHeight)
+                        .attr("rx", 6)
+                        .attr("fill", "#eef2ff")
+                        .attr("opacity", 0.5);
+                }
+            }
+
+            // Draw placed characters with animations
+            positions.forEach((pos, idx) => {
+                const x = startX + pos.colInRow * cellWidth;
+                const y = startY + pos.row * cellHeight;
+                const isCurrent = idx === positions.length - 1;
+
+                const rect = svg.append("rect")
+                    .attr("x", x)
+                    .attr("y", y)
+                    .attr("width", cellWidth - 8)
+                    .attr("height", cellHeight - 10)
+                    .attr("rx", 8)
+                    .attr("fill", isCurrent ? "#fef3c7" : "#e0e7ff")
+                    .attr("stroke", isCurrent ? "#f59e0b" : "#6366f1")
+                    .attr("stroke-width", isCurrent ? 3 : 2);
+
+                // Animate new elements
+                if (isCurrent) {
+                    rect.attr("opacity", 0)
+                        .transition()
+                        .duration(300)
+                        .attr("opacity", 1);
+                }
+
+                const text = svg.append("text")
+                    .attr("x", x + (cellWidth - 8) / 2)
+                    .attr("y", y + (cellHeight - 10) / 2 + 6)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "22px")
+                    .attr("font-weight", "bold")
+                    .attr("fill", "#1f2937")
+                    .text(pos.char);
+
+                if (isCurrent) {
+                    text.attr("opacity", 0)
+                        .transition()
+                        .duration(300)
+                        .attr("opacity", 1);
+                }
+            });
+
+            // Draw zigzag path lines
+            if (positions.length >= 2) {
+                for (let i = 1; i < positions.length; i++) {
+                    const prev = positions[i - 1];
+                    const curr = positions[i];
+                    
+                    const x1 = startX + prev.colInRow * cellWidth + (cellWidth - 8) / 2;
+                    const y1 = startY + prev.row * cellHeight + (cellHeight - 10) / 2;
+                    const x2 = startX + curr.colInRow * cellWidth + (cellWidth - 8) / 2;
+                    const y2 = startY + curr.row * cellHeight + (cellHeight - 10) / 2;
+
+                    svg.append("line")
+                        .attr("x1", x1)
+                        .attr("y1", y1)
+                        .attr("x2", x2)
+                        .attr("y2", y2)
+                        .attr("stroke", "#cbd5e1")
+                        .attr("stroke-width", 2)
+                        .attr("stroke-dasharray", "4,4")
+                        .attr("opacity", 0.7);
+                }
+            }
+
+            // Draw direction indicator
+            if (charIndex < inputString.length) {
+                const arrowY = startY + rowIndex * cellHeight + (cellHeight - 10) / 2;
+                const arrowX = startX - 50;
+                
+                svg.append("text")
+                    .attr("x", arrowX)
+                    .attr("y", arrowY + 5)
+                    .attr("font-size", "20px")
+                    .attr("fill", direction > 0 ? "#10b981" : "#f59e0b")
+                    .text(direction > 0 ? "↓" : "↑");
+            }
+
+            // Draw result section
+            const resultY = startY + numRows * cellHeight + 30;
+            
+            svg.append("text")
+                .attr("x", 20)
+                .attr("y", resultY)
+                .attr("font-weight", "bold")
+                .attr("font-size", "14px")
+                .text("Result (read rows left to right):");
+
+            // Draw each row's contribution to result
+            let resultX = 220;
+            for (let row = 0; row < numRows; row++) {
+                const rowChars = positions.filter(p => p.row === row).map(p => p.char);
+                
+                if (rowChars.length > 0) {
+                    svg.append("text")
+                        .attr("x", resultX)
+                        .attr("y", resultY)
+                        .attr("font-size", "16px")
+                        .attr("fill", "#059669")
+                        .attr("font-weight", "bold")
+                        .text(rowChars.join(""));
+                    
+                    resultX += rowChars.length * 14 + 5;
+                }
+            }
+
+            // Full result string
+            const fullResult = [];
+            for (let row = 0; row < numRows; row++) {
+                const rowChars = positions.filter(p => p.row === row).map(p => p.char);
+                fullResult.push(...rowChars);
+            }
+
+            svg.append("text")
+                .attr("x", 20)
+                .attr("y", resultY + 30)
+                .attr("font-size", "12px")
+                .attr("fill", "#666")
+                .text(`Full Result: "${fullResult.join("")}"`);
+
+            // Update variables display
+            updateVariables();
+        }
+
+        function updateVariables() {
+            const remaining = inputString.substring(charIndex);
+            document.getElementById("varDisplay").innerHTML = `
+                <span class="var-item">Current Index: ${charIndex}</span>
+                <span class="var-item">Current Row: ${rowIndex}</span>
+                <span class="var-item">Direction: ${direction > 0 ? "Down ↓" : "Up ↑"}</span>
+                <span class="var-item">Remaining: "${remaining}"</span>
+            `;
+        }
+
+        function doStep() {
+            if (charIndex >= inputString.length) {
+                const result = [];
+                for (let row = 0; row < numRows; row++) {
+                    const rowChars = positions.filter(p => p.row === row).map(p => p.char);
+                    result.push(...rowChars);
+                }
+                document.getElementById("status").textContent = 
+                    `✓ Done! Result: "${result.join("")}"`;
+                return false;
+            }
+
+            const char = inputString[charIndex];
+            const colInRow = positions.filter(p => p.row === rowIndex).length;
+            
+            // Add character to current row
+            rows[rowIndex].push(char);
+            positions.push({ 
+                char, 
+                row: rowIndex, 
+                colInRow: colInRow,
+                index: charIndex 
+            });
+
+            document.getElementById("status").textContent = 
+                `Placing '${char}' at Row ${rowIndex}. Moving ${direction > 0 ? 'down ↓' : 'up ↑'}`;
+
+            // Update direction at boundaries
+            if (rowIndex === 0) {
+                direction = 1;
+            } else if (rowIndex === numRows - 1) {
+                direction = -1;
+            }
+            
+            // Move to next row
+            rowIndex += direction;
+            charIndex++;
+
+            draw();
+            return charIndex < inputString.length;
+        }
+
+        function reset() {
+            charIndex = 0;
+            rowIndex = 0;
+            direction = 1;
+            rows = Array(numRows).fill(null).map(() => []);
+            positions = [];
+            stopAuto();
+            document.getElementById("status").textContent = 'Click "Step" to see zigzag pattern';
+            draw();
+        }
+
+        function stopAuto() {
+            if (autoTimer) {
+                clearInterval(autoTimer);
+                autoTimer = null;
+            }
+            autoRunning = false;
+            document.getElementById("autoBtn").textContent = "Auto Run";
+        }
+
+        function toggleAuto() {
+            if (autoRunning) {
+                stopAuto();
+            } else {
+                autoRunning = true;
+                document.getElementById("autoBtn").textContent = "Pause";
+                const speed = 11 - document.getElementById("speedSlider").value;
+                autoTimer = setInterval(() => {
+                    if (!doStep()) {
+                        stopAuto();
+                    }
+                }, speed * 150);
+            }
+        }
+
+        // Event listeners
+        document.getElementById("stepBtn").addEventListener("click", doStep);
+        document.getElementById("autoBtn").addEventListener("click", toggleAuto);
+        document.getElementById("resetBtn").addEventListener("click", reset);
+
+        // Initial draw
+        draw();
+    </script>
+</body>
+</html>

@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>079 - Word Search</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="problem-info">
+            <h1><span class="problem-number">#079</span> Word Search</h1>
+            <p>
+                Given a 2D board and a word, find if the word exists in the grid by moving to adjacent cells.
+                Uses DFS backtracking, marking cells as visited and restoring them.
+            </p>
+            <div class="problem-meta">
+                <span class="meta-tag">🔤 String</span>
+                <span class="meta-tag">🔄 Backtracking</span>
+                <span class="meta-tag">⏱️ O(n)</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <code>python/0079_word_search/0079_word_search.py</code>
+            </div>
+
+        </div>
+
+        <div class="explanation-panel">
+            <h4>🧠 How It Works (Layman's Terms)</h4>
+            <p>Backtracking <strong>explores all possibilities</strong> like solving a maze:</p>
+            <ul>
+                <li><strong>Choose:</strong> Make a decision</li>
+                <li><strong>Explore:</strong> Recursively continue</li>
+                <li><strong>Validate:</strong> Check if path is valid</li>
+                <li><strong>Backtrack:</strong> Undo choice if stuck, try another</li>
+            </ul>
+        </div>
+
+
+        <section class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+            <div class="controls">
+                <button id="autoRunBtn" class="btn">▶ Auto Run</button>
+                <button id="stepBtn" class="btn btn-success">Step</button>
+                <button id="resetBtn" class="btn btn-danger">Reset</button>
+            </div>
+            <div class="status" id="status">Click Auto Run to search for "ABCCED"</div>
+            <svg id="visualization"></svg>
+        </section>
+
+        <section class="code-section">
+            <h3>💻 Python Solution</h3>
+            <div class="code-block">
+                <pre><span class="keyword">def</span> <span class="function">exist</span>(board, word):
+    <span class="keyword">def</span> <span class="function">dfs</span>(i, j, index):
+        <span class="keyword">if</span> index == <span class="function">len</span>(word):
+            <span class="keyword">return</span> <span class="keyword">True</span>
+        <span class="keyword">if</span> (i < <span class="number">0</span> <span class="keyword">or</span> i >= m <span class="keyword">or</span> j < <span class="number">0</span> <span class="keyword">or</span> j >= n 
+            <span class="keyword">or</span> board[i][j] != word[index]):
+            <span class="keyword">return</span> <span class="keyword">False</span>
+        
+        <span class="comment"># Mark as visited</span>
+        original = board[i][j]
+        board[i][j] = <span class="string">'#'</span>
+        
+        <span class="comment"># Explore 4 directions</span>
+        found = (<span class="function">dfs</span>(i+<span class="number">1</span>, j, index+<span class="number">1</span>) <span class="keyword">or</span>
+                 <span class="function">dfs</span>(i-<span class="number">1</span>, j, index+<span class="number">1</span>) <span class="keyword">or</span>
+                 <span class="function">dfs</span>(i, j+<span class="number">1</span>, index+<span class="number">1</span>) <span class="keyword">or</span>
+                 <span class="function">dfs</span>(i, j-<span class="number">1</span>, index+<span class="number">1</span>))
+        
+        <span class="comment"># Restore for backtracking</span>
+        board[i][j] = original
+        <span class="keyword">return</span> found
+    
+    m, n = <span class="function">len</span>(board), <span class="function">len</span>(board[<span class="number">0</span>])
+    <span class="keyword">for</span> i <span class="keyword">in</span> <span class="function">range</span>(m):
+        <span class="keyword">for</span> j <span class="keyword">in</span> <span class="function">range</span>(n):
+            <span class="keyword">if</span> <span class="function">dfs</span>(i, j, <span class="number">0</span>):
+                <span class="keyword">return</span> <span class="keyword">True</span>
+    <span class="keyword">return</span> <span class="keyword">False</span></pre>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        const width = 900;
+        const height = 550;
+
+        const svg = d3.select("#visualization")
+            .attr("width", width)
+            .attr("height", height);
+
+        // Board and word
+        const originalBoard = [
+            ["A", "B", "C", "E"],
+            ["S", "F", "C", "S"],
+            ["A", "D", "E", "E"]
+        ];
+        const word = "ABCCED";
+
+        let board = [];
+        let path = [];
+        let searchStack = [];
+        let found = false;
+        let wordIndex = 0;
+        let animationTimer = null;
+        let explorationHistory = [];
+
+        function reset() {
+            board = originalBoard.map(row => [...row]);
+            path = [];
+            searchStack = [];
+            found = false;
+            wordIndex = 0;
+            explorationHistory = [];
+            if (animationTimer) clearInterval(animationTimer);
+            
+            // Initialize search from all starting positions
+            for (let i = 0; i < board.length; i++) {
+                for (let j = 0; j < board[0].length; j++) {
+                    if (board[i][j] === word[0]) {
+                        searchStack.push({ i, j, wordIdx: 0, path: [], action: 'start' });
+                    }
+                }
+            }
+            
+            document.getElementById("status").textContent = `Searching for "${word}" - found ${searchStack.length} starting points`;
+            render();
+        }
+
+        function render() {
+            svg.selectAll("*").remove();
+
+            const cellSize = 60;
+            const startX = 80;
+            const startY = 80;
+
+            // Title
+            svg.append("text")
+                .attr("x", 30)
+                .attr("y", 40)
+                .attr("font-size", "16px")
+                .attr("font-weight", "bold")
+                .attr("fill", "#1e293b")
+                .text("Board:");
+
+            // Draw board
+            board.forEach((row, i) => {
+                row.forEach((cell, j) => {
+                    const x = startX + j * cellSize;
+                    const y = startY + i * cellSize;
+                    
+                    const isInPath = path.some(p => p.i === i && p.j === j);
+                    const pathIdx = path.findIndex(p => p.i === i && p.j === j);
+                    const isVisited = cell === '#';
+                    
+                    svg.append("rect")
+                        .attr("x", x)
+                        .attr("y", y)
+                        .attr("width", cellSize - 4)
+                        .attr("height", cellSize - 4)
+                        .attr("rx", 8)
+                        .attr("fill", () => {
+                            if (found && isInPath) return "#bbf7d0";
+                            if (isInPath) return "#fef3c7";
+                            if (isVisited) return "#fee2e2";
+                            return "#f8fafc";
+                        })
+                        .attr("stroke", () => {
+                            if (found && isInPath) return "#10b981";
+                            if (isInPath) return "#f59e0b";
+                            if (isVisited) return "#ef4444";
+                            return "#cbd5e1";
+                        })
+                        .attr("stroke-width", isInPath ? 3 : 2);
+
+                    svg.append("text")
+                        .attr("x", x + cellSize / 2 - 2)
+                        .attr("y", y + cellSize / 2 + 6)
+                        .attr("text-anchor", "middle")
+                        .attr("font-size", "20px")
+                        .attr("font-weight", "bold")
+                        .attr("fill", isVisited ? "#94a3b8" : "#1e293b")
+                        .text(isVisited ? "×" : cell);
+
+                    // Path index
+                    if (isInPath) {
+                        svg.append("circle")
+                            .attr("cx", x + cellSize - 12)
+                            .attr("cy", y + 12)
+                            .attr("r", 10)
+                            .attr("fill", "#3b82f6");
+
+                        svg.append("text")
+                            .attr("x", x + cellSize - 12)
+                            .attr("y", y + 16)
+                            .attr("text-anchor", "middle")
+                            .attr("font-size", "11px")
+                            .attr("fill", "white")
+                            .text(pathIdx + 1);
+                    }
+                });
+            });
+
+            // Draw path arrows
+            for (let i = 1; i < path.length; i++) {
+                const prev = path[i - 1];
+                const curr = path[i];
+                const x1 = startX + prev.j * cellSize + cellSize / 2 - 2;
+                const y1 = startY + prev.i * cellSize + cellSize / 2 - 2;
+                const x2 = startX + curr.j * cellSize + cellSize / 2 - 2;
+                const y2 = startY + curr.i * cellSize + cellSize / 2 - 2;
+
+                svg.append("line")
+                    .attr("x1", x1)
+                    .attr("y1", y1)
+                    .attr("x2", (x1 + x2) / 2)
+                    .attr("y2", (y1 + y2) / 2)
+                    .attr("stroke", found ? "#10b981" : "#f59e0b")
+                    .attr("stroke-width", 3)
+                    .attr("marker-end", "url(#arrow)");
+            }
+
+            // Arrow marker
+            svg.append("defs")
+                .append("marker")
+                .attr("id", "arrow")
+                .attr("viewBox", "0 0 10 10")
+                .attr("refX", 5)
+                .attr("refY", 5)
+                .attr("markerWidth", 4)
+                .attr("markerHeight", 4)
+                .attr("orient", "auto")
+                .append("path")
+                .attr("d", "M 0 0 L 10 5 L 0 10 z")
+                .attr("fill", found ? "#10b981" : "#f59e0b");
+
+            // Draw word to find
+            svg.append("text")
+                .attr("x", 400)
+                .attr("y", 40)
+                .attr("font-size", "14px")
+                .attr("font-weight", "bold")
+                .attr("fill", "#1e293b")
+                .text("Target Word:");
+
+            word.split('').forEach((ch, idx) => {
+                const x = 400 + idx * 45;
+                const isMatched = idx < path.length;
+
+                svg.append("rect")
+                    .attr("x", x)
+                    .attr("y", 55)
+                    .attr("width", 40)
+                    .attr("height", 40)
+                    .attr("rx", 6)
+                    .attr("fill", isMatched ? "#bbf7d0" : "#f8fafc")
+                    .attr("stroke", isMatched ? "#10b981" : "#94a3b8")
+                    .attr("stroke-width", 2);
+
+                svg.append("text")
+                    .attr("x", x + 20)
+                    .attr("y", 82)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "18px")
+                    .attr("font-weight", "bold")
+                    .attr("fill", "#1e293b")
+                    .text(ch);
+            });
+
+            // Legend
+            const legendY = 280;
+            svg.append("text")
+                .attr("x", 30)
+                .attr("y", legendY)
+                .attr("font-size", "14px")
+                .attr("font-weight", "bold")
+                .attr("fill", "#1e293b")
+                .text("Legend:");
+
+            const legendItems = [
+                { color: "#fef3c7", stroke: "#f59e0b", text: "Current path" },
+                { color: "#fee2e2", stroke: "#ef4444", text: "Visited (backtracked)" },
+                { color: "#bbf7d0", stroke: "#10b981", text: "Found match" }
+            ];
+
+            legendItems.forEach((item, idx) => {
+                svg.append("rect")
+                    .attr("x", 30)
+                    .attr("y", legendY + 20 + idx * 30)
+                    .attr("width", 20)
+                    .attr("height", 20)
+                    .attr("rx", 4)
+                    .attr("fill", item.color)
+                    .attr("stroke", item.stroke)
+                    .attr("stroke-width", 2);
+
+                svg.append("text")
+                    .attr("x", 60)
+                    .attr("y", legendY + 35 + idx * 30)
+                    .attr("font-size", "12px")
+                    .attr("fill", "#64748b")
+                    .text(item.text);
+            });
+
+            // Algorithm steps
+            svg.append("text")
+                .attr("x", 400)
+                .attr("y", 140)
+                .attr("font-size", "12px")
+                .attr("fill", "#64748b")
+                .text("1. Start from cells matching first character");
+
+            svg.append("text")
+                .attr("x", 400)
+                .attr("y", 165)
+                .attr("font-size", "12px")
+                .attr("fill", "#64748b")
+                .text("2. DFS through adjacent cells (up/down/left/right)");
+
+            svg.append("text")
+                .attr("x", 400)
+                .attr("y", 190)
+                .attr("font-size", "12px")
+                .attr("fill", "#64748b")
+                .text("3. Mark cells as visited, backtrack if dead end");
+
+            svg.append("text")
+                .attr("x", 400)
+                .attr("y", 215)
+                .attr("font-size", "12px")
+                .attr("fill", "#64748b")
+                .text("4. Restore cells after backtracking");
+        }
+
+        function step() {
+            if (found) {
+                document.getElementById("status").textContent = `✓ Found "${word}"!`;
+                return;
+            }
+
+            if (searchStack.length === 0) {
+                document.getElementById("status").textContent = `✗ Word "${word}" not found`;
+                return;
+            }
+
+            const current = searchStack.pop();
+            const { i, j, wordIdx } = current;
+
+            // Restore board for new attempt
+            board = originalBoard.map(row => [...row]);
+            path = current.path.slice();
+
+            // Check bounds and character match
+            if (i < 0 || i >= board.length || j < 0 || j >= board[0].length) {
+                document.getElementById("status").textContent = `Out of bounds at (${i}, ${j})`;
+                render();
+                return;
+            }
+
+            if (board[i][j] !== word[wordIdx]) {
+                document.getElementById("status").textContent = 
+                    `Character mismatch at (${i}, ${j}): '${board[i][j]}' ≠ '${word[wordIdx]}'`;
+                render();
+                return;
+            }
+
+            // Add to path
+            path.push({ i, j });
+
+            // Mark visited in board display
+            for (const p of path) {
+                board[p.i][p.j] = '#';
+            }
+            board[i][j] = originalBoard[i][j]; // Show current cell
+
+            if (wordIdx === word.length - 1) {
+                found = true;
+                document.getElementById("status").textContent = `✓ Found "${word}"! Path complete.`;
+                // Restore path for display
+                path.forEach(p => {
+                    board[p.i][p.j] = originalBoard[p.i][p.j];
+                });
+                render();
+                return;
+            }
+
+            // Add neighbors to stack (in reverse order so we process up first)
+            const directions = [[1, 0], [-1, 0], [0, 1], [0, -1]];
+            const dirNames = ['down', 'up', 'right', 'left'];
+            
+            for (let d = directions.length - 1; d >= 0; d--) {
+                const [di, dj] = directions[d];
+                const ni = i + di;
+                const nj = j + dj;
+                
+                if (ni >= 0 && ni < board.length && 
+                    nj >= 0 && nj < board[0].length &&
+                    !path.some(p => p.i === ni && p.j === nj)) {
+                    searchStack.push({
+                        i: ni,
+                        j: nj,
+                        wordIdx: wordIdx + 1,
+                        path: [...path]
+                    });
+                }
+            }
+
+            document.getElementById("status").textContent = 
+                `Matched '${word[wordIdx]}' at (${i}, ${j}). Looking for '${word[wordIdx + 1]}'...`;
+            
+            // Restore for display
+            path.forEach(p => {
+                board[p.i][p.j] = originalBoard[p.i][p.j];
+            });
+            
+            render();
+        }
+
+        function autoRun() {
+            if (animationTimer) {
+                clearInterval(animationTimer);
+                animationTimer = null;
+                document.getElementById("autoRunBtn").textContent = "▶ Auto Run";
+                return;
+            }
+
+            document.getElementById("autoRunBtn").textContent = "⏸ Pause";
+            animationTimer = setInterval(() => {
+                if (found || searchStack.length === 0) {
+                    clearInterval(animationTimer);
+                    animationTimer = null;
+                    document.getElementById("autoRunBtn").textContent = "▶ Auto Run";
+                    return;
+                }
+                step();
+            }, 600);
+        }
+
+        document.getElementById("autoRunBtn").addEventListener("click", autoRun);
+        document.getElementById("stepBtn").addEventListener("click", step);
+        document.getElementById("resetBtn").addEventListener("click", reset);
+
+        reset();
+    </script>
+</body>
+</html>

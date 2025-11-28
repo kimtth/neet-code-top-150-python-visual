@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Symmetric Tree - LeetCode 101</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="problem-info">
+            <h1><span class="problem-number">#101</span> Symmetric Tree</h1>
+            <p>Check whether a binary tree is a mirror of itself (symmetric around its center).</p>
+            <div class="problem-meta">
+                <span class="meta-tag">Tree</span>
+                <span class="meta-tag">BFS/DFS</span>
+                <span class="meta-tag">Easy</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <code>python/0101_symmetric_tree/0101_symmetric_tree.py</code>
+            </div>
+
+        </div>
+
+        <div class="explanation-panel">
+            <h4>🧠 How It Works (Layman's Terms)</h4>
+            <p>Tree traversal is like <strong>exploring a family tree</strong>:</p>
+            <ul>
+                <li><strong>Root:</strong> Start at the top node</li>
+                <li><strong>Recurse:</strong> Visit left and right children</li>
+                <li><strong>Base case:</strong> Stop at null/leaf nodes</li>
+                <li><strong>Combine:</strong> Build answer from subtree results</li>
+            </ul>
+        </div>
+
+
+        <div class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+            <div class="controls">
+                <button id="stepBtn">Step</button>
+                <button id="autoBtn">Auto Run</button>
+                <button id="resetBtn">Reset</button>
+            </div>
+            <svg id="mainSvg" width="700" height="380"></svg>
+            <div class="status-message" id="status">Click "Step" to check symmetry</div>
+        </div>
+
+        <div class="code-section">
+            <h3>💻 Python Solution</h3>
+            <div class="code-block">
+                <pre><span class="keyword">def</span> <span class="function">isSymmetric</span>(root):
+    <span class="keyword">def</span> <span class="function">isMirror</span>(left, right):
+        <span class="keyword">if</span> <span class="keyword">not</span> left <span class="keyword">and</span> <span class="keyword">not</span> right:
+            <span class="keyword">return</span> <span class="keyword">True</span>
+        <span class="keyword">if</span> <span class="keyword">not</span> left <span class="keyword">or</span> <span class="keyword">not</span> right:
+            <span class="keyword">return</span> <span class="keyword">False</span>
+        <span class="keyword">return</span> (left.val == right.val <span class="keyword">and</span>
+                <span class="function">isMirror</span>(left.left, right.right) <span class="keyword">and</span>
+                <span class="function">isMirror</span>(left.right, right.left))
+    
+    <span class="keyword">return</span> <span class="function">isMirror</span>(root.left, root.right)</pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const tree = {
+            val: 1,
+            left: { val: 2, left: { val: 3, left: null, right: null }, right: { val: 4, left: null, right: null } },
+            right: { val: 2, left: { val: 4, left: null, right: null }, right: { val: 3, left: null, right: null } }
+        };
+
+        let comparisons = [];
+        let currentPair = null;
+        let result = null;
+        let stepIdx = 0;
+
+        const width = 700, height = 380;
+        const svg = d3.select("#mainSvg");
+        let autoTimer = null, autoRunning = false;
+
+        function generateComparisons(left, right, leftPath, rightPath) {
+            const pairs = [];
+            function helper(l, r, lp, rp) {
+                pairs.push({ left: l, right: r, leftPath: lp, rightPath: rp });
+                if (l && r) {
+                    helper(l.left, r.right, lp + 'L', rp + 'R');
+                    helper(l.right, r.left, lp + 'R', rp + 'L');
+                }
+            }
+            helper(left, right, leftPath, rightPath);
+            return pairs;
+        }
+
+        function drawTree(node, x, y, dx, path, highlightPath) {
+            if (!node) return;
+            const r = 22;
+
+            if (node.left) {
+                svg.append("line").attr("x1", x).attr("y1", y + r)
+                    .attr("x2", x - dx).attr("y2", y + 55 - r)
+                    .attr("stroke", "#ccc").attr("stroke-width", 2);
+                drawTree(node.left, x - dx, y + 55, dx / 2, path + 'L', highlightPath);
+            }
+            if (node.right) {
+                svg.append("line").attr("x1", x).attr("y1", y + r)
+                    .attr("x2", x + dx).attr("y2", y + 55 - r)
+                    .attr("stroke", "#ccc").attr("stroke-width", 2);
+                drawTree(node.right, x + dx, y + 55, dx / 2, path + 'R', highlightPath);
+            }
+
+            let fill = "#e3f2fd", stroke = "#1976d2";
+            if (highlightPath && highlightPath.includes(path)) {
+                fill = "#fef3c7"; stroke = "#f59e0b";
+            }
+
+            svg.append("circle").attr("cx", x).attr("cy", y).attr("r", r)
+                .attr("fill", fill).attr("stroke", stroke).attr("stroke-width", 2);
+            svg.append("text").attr("x", x).attr("y", y + 6)
+                .attr("text-anchor", "middle").attr("font-size", "16px")
+                .attr("font-weight", "bold").text(node.val);
+        }
+
+        function draw() {
+            svg.selectAll("*").remove();
+
+            svg.append("text").attr("x", width/2).attr("y", 25)
+                .attr("text-anchor", "middle").attr("font-weight", "bold")
+                .text("Is This Tree Symmetric?");
+
+            // Draw mirror line
+            svg.append("line").attr("x1", width/2).attr("y1", 50)
+                .attr("x2", width/2).attr("y2", 250)
+                .attr("stroke", "#e91e63").attr("stroke-width", 2)
+                .attr("stroke-dasharray", "5,5");
+
+            svg.append("text").attr("x", width/2).attr("y", 265)
+                .attr("text-anchor", "middle").attr("font-size", "11px")
+                .attr("fill", "#e91e63").text("Mirror Line");
+
+            const highlights = currentPair ? [currentPair.leftPath, currentPair.rightPath] : [];
+            drawTree(tree, width/2, 70, 120, 'root', highlights);
+
+            // Current comparison
+            if (currentPair) {
+                const lVal = currentPair.left ? currentPair.left.val : "null";
+                const rVal = currentPair.right ? currentPair.right.val : "null";
+                const match = (!currentPair.left && !currentPair.right) || 
+                    (currentPair.left && currentPair.right && currentPair.left.val === currentPair.right.val);
+
+                svg.append("rect").attr("x", width/2 - 150).attr("y", 290)
+                    .attr("width", 300).attr("height", 40).attr("rx", 10)
+                    .attr("fill", match ? "#d1fae5" : "#fee2e2")
+                    .attr("stroke", match ? "#10b981" : "#ef4444");
+
+                svg.append("text").attr("x", width/2).attr("y", 316)
+                    .attr("text-anchor", "middle").attr("font-size", "14px")
+                    .text(`Comparing: ${lVal} ↔ ${rVal} ${match ? "✓ Match" : "✗ Mismatch"}`);
+            }
+
+            // Result
+            if (result !== null) {
+                svg.append("rect").attr("x", width/2 - 100).attr("y", 340)
+                    .attr("width", 200).attr("height", 35).attr("rx", 10)
+                    .attr("fill", result ? "#d1fae5" : "#fee2e2")
+                    .attr("stroke", result ? "#10b981" : "#ef4444");
+                svg.append("text").attr("x", width/2).attr("y", 363)
+                    .attr("text-anchor", "middle").attr("font-weight", "bold")
+                    .attr("fill", result ? "#10b981" : "#ef4444")
+                    .text(result ? "✓ Symmetric!" : "✗ Not Symmetric");
+            }
+        }
+
+        function step() {
+            if (result !== null) return false;
+
+            if (stepIdx >= comparisons.length) {
+                result = true;
+                document.getElementById("status").textContent = "All pairs match! Tree is symmetric.";
+                draw();
+                return false;
+            }
+
+            currentPair = comparisons[stepIdx];
+            const lVal = currentPair.left ? currentPair.left.val : "null";
+            const rVal = currentPair.right ? currentPair.right.val : "null";
+
+            const match = (!currentPair.left && !currentPair.right) || 
+                (currentPair.left && currentPair.right && currentPair.left.val === currentPair.right.val);
+
+            if (!match) {
+                result = false;
+                document.getElementById("status").textContent = `${lVal} ≠ ${rVal}. Not symmetric!`;
+            } else {
+                document.getElementById("status").textContent = `${lVal} = ${rVal}. Continue checking...`;
+                stepIdx++;
+            }
+
+            draw();
+            return result === null;
+        }
+
+        function reset() {
+            comparisons = generateComparisons(tree.left, tree.right, 'rootL', 'rootR');
+            currentPair = null; result = null; stepIdx = 0;
+            if (autoTimer) clearInterval(autoTimer);
+            autoRunning = false;
+            document.getElementById("autoBtn").textContent = "Auto Run";
+            document.getElementById("status").textContent = 'Click "Step" to check symmetry';
+            draw();
+        }
+
+        function autoRun() {
+            if (autoRunning) { clearInterval(autoTimer); autoRunning = false; document.getElementById("autoBtn").textContent = "Auto Run"; }
+            else {
+                autoRunning = true; document.getElementById("autoBtn").textContent = "Pause";
+                autoTimer = setInterval(() => { if (!step()) { clearInterval(autoTimer); autoRunning = false; document.getElementById("autoBtn").textContent = "Auto Run"; } }, 800);
+            }
+        }
+
+        document.getElementById("stepBtn").addEventListener("click", step);
+        document.getElementById("autoBtn").addEventListener("click", autoRun);
+        document.getElementById("resetBtn").addEventListener("click", reset);
+        reset();
+    </script>
+</body>
+</html>

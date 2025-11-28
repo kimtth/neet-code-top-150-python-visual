@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LC 1272: Remove Interval - Algorithm Visualization</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="problem-info">
+            <h1><span class="problem-number">#1272</span> Remove Interval</h1>
+            <p>Given a sorted list of disjoint intervals and an interval to remove, return the remaining intervals after removal.</p>
+            <div class="problem-meta">
+                <span class="meta-tag">📅 Intervals</span>
+                <span class="meta-tag">➕ Merge</span>
+                <span class="meta-tag">⏱️ O(n)</span>
+                <span class="meta-tag">💾 O(n)</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <code>python/1272_remove_interval/1272_remove_interval.py</code>
+            </div>
+            </div>
+
+        <div class="explanation-panel">
+            <h4>🧠 How It Works (Layman's Terms)</h4>
+            <p>For each interval, check overlap with removal interval:</p>
+            <ul>
+                <li><strong>No overlap:</strong> Keep interval as-is</li>
+                <li><strong>Full overlap:</strong> Remove entire interval</li>
+                <li><strong>Left part remains:</strong> Keep [start, removeStart]</li>
+                <li><strong>Right part remains:</strong> Keep [removeEnd, end]</li>
+                <li><strong>Split:</strong> Keep both left and right parts</li>
+            </ul>
+        </div>
+
+
+        <div class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+            
+            <div class="controls">
+                <button class="btn btn-primary" id="startBtn" onclick="start()">▶ Start</button>
+                <button class="btn" onclick="stepForward()">Step →</button>
+                <button class="btn btn-warning" onclick="reset()">Reset</button>
+            </div>
+
+            <div class="status-message" id="statusMessage">
+                Click Start to remove interval from list
+            </div>
+
+            <svg id="intervalViz" width="100%" height="350"></svg>
+
+            <div style="display: flex; gap: 20px; margin-top: 20px; flex-wrap: wrap;">
+                <div style="flex: 1; min-width: 200px; padding: 15px; background: #ffebee; border-radius: 12px;">
+                    <h4 style="margin: 0 0 10px 0; color: #c62828;">🗑️ Interval to Remove</h4>
+                    <div id="removeDisplay" style="font-size: 20px; font-weight: bold;">[5, 10]</div>
+                </div>
+                <div style="flex: 2; min-width: 300px; padding: 15px; background: #e8f5e9; border-radius: 12px;">
+                    <h4 style="margin: 0 0 10px 0; color: #2e7d32;">✅ Result Intervals</h4>
+                    <div id="resultDisplay" style="font-size: 16px;">Processing...</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="code-section">
+            <h3>💻 Python Solution</h3>
+            <div class="code-block">
+                <pre><span class="keyword">def</span> <span class="function">removeInterval</span>(intervals, toBeRemoved):
+    result = []
+    remove_start, remove_end = toBeRemoved
+    
+    <span class="keyword">for</span> start, end <span class="keyword">in</span> intervals:
+        <span class="comment"># No overlap - keep entire interval</span>
+        <span class="keyword">if</span> end <= remove_start <span class="keyword">or</span> start >= remove_end:
+            result.<span class="function">append</span>([start, end])
+        <span class="keyword">else</span>:
+            <span class="comment"># Left part (before removal)</span>
+            <span class="keyword">if</span> start < remove_start:
+                result.<span class="function">append</span>([start, remove_start])
+            <span class="comment"># Right part (after removal)</span>
+            <span class="keyword">if</span> end > remove_end:
+                result.<span class="function">append</span>([remove_end, end])
+    
+    <span class="keyword">return</span> result</pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Input intervals (sorted, disjoint)
+        const intervals = [[0, 2], [3, 4], [5, 7], [8, 11], [12, 15]];
+        const toBeRemoved = [5, 10];
+
+        let stepIndex = 0;
+        let steps = [];
+        let isRunning = false;
+
+        function precomputeSteps() {
+            steps = [];
+            const [removeStart, removeEnd] = toBeRemoved;
+            let result = [];
+
+            steps.push({
+                phase: 'init',
+                message: `Remove interval [${removeStart}, ${removeEnd}] from the list`,
+                currentIdx: -1,
+                result: [],
+                action: null
+            });
+
+            intervals.forEach((interval, idx) => {
+                const [start, end] = interval;
+                let action = '';
+                let added = [];
+
+                if (end <= removeStart || start >= removeEnd) {
+                    // No overlap
+                    action = 'keep';
+                    added = [[start, end]];
+                    result = [...result, [start, end]];
+                } else if (start >= removeStart && end <= removeEnd) {
+                    // Fully contained - remove
+                    action = 'remove';
+                    added = [];
+                } else {
+                    // Partial overlap
+                    if (start < removeStart && end > removeEnd) {
+                        // Split into two
+                        action = 'split';
+                        added = [[start, removeStart], [removeEnd, end]];
+                        result = [...result, [start, removeStart], [removeEnd, end]];
+                    } else if (start < removeStart) {
+                        // Keep left part
+                        action = 'keep-left';
+                        added = [[start, removeStart]];
+                        result = [...result, [start, removeStart]];
+                    } else {
+                        // Keep right part
+                        action = 'keep-right';
+                        added = [[removeEnd, end]];
+                        result = [...result, [removeEnd, end]];
+                    }
+                }
+
+                let message = '';
+                switch (action) {
+                    case 'keep':
+                        message = `[${start}, ${end}]: No overlap with removal zone → Keep entire interval`;
+                        break;
+                    case 'remove':
+                        message = `[${start}, ${end}]: Fully inside removal zone → Remove entirely`;
+                        break;
+                    case 'split':
+                        message = `[${start}, ${end}]: Removal zone splits it → Keep [${start}, ${removeStart}] and [${removeEnd}, ${end}]`;
+                        break;
+                    case 'keep-left':
+                        message = `[${start}, ${end}]: Right side overlaps → Keep left part [${start}, ${removeStart}]`;
+                        break;
+                    case 'keep-right':
+                        message = `[${start}, ${end}]: Left side overlaps → Keep right part [${removeEnd}, ${end}]`;
+                        break;
+                }
+
+                steps.push({
+                    phase: 'process',
+                    message: message,
+                    currentIdx: idx,
+                    result: [...result],
+                    action: action,
+                    added: added
+                });
+            });
+
+            steps.push({
+                phase: 'done',
+                message: `Done! Result: ${result.map(i => `[${i[0]}, ${i[1]}]`).join(', ')}`,
+                currentIdx: -1,
+                result: result,
+                action: null
+            });
+        }
+
+        function render() {
+            const svg = d3.select("#intervalViz");
+            svg.selectAll("*").remove();
+
+            const container = svg.node().parentElement;
+            const width = container.clientWidth;
+            const height = 350;
+            svg.attr("viewBox", `0 0 ${width} ${height}`);
+
+            const margin = { left: 60, right: 40, top: 40, bottom: 60 };
+            const chartWidth = width - margin.left - margin.right;
+            const step = stepIndex < steps.length ? steps[stepIndex] : steps[steps.length - 1];
+
+            const maxTime = 16;
+            const xScale = d3.scaleLinear().domain([0, maxTime]).range([0, chartWidth]);
+            const g = svg.append("g").attr("transform", `translate(${margin.left}, ${margin.top})`);
+
+            // Time axis
+            for (let t = 0; t <= maxTime; t++) {
+                g.append("line")
+                    .attr("x1", xScale(t)).attr("y1", 0)
+                    .attr("x2", xScale(t)).attr("y2", 250)
+                    .attr("stroke", "#eee");
+                
+                g.append("text")
+                    .attr("x", xScale(t)).attr("y", 270)
+                    .attr("text-anchor", "middle")
+                    .attr("fill", "#666").attr("font-size", "11px")
+                    .text(t);
+            }
+
+            // Draw removal zone
+            const [removeStart, removeEnd] = toBeRemoved;
+            g.append("rect")
+                .attr("x", xScale(removeStart)).attr("y", 0)
+                .attr("width", xScale(removeEnd) - xScale(removeStart))
+                .attr("height", 250)
+                .attr("fill", "#f44336")
+                .attr("opacity", 0.15);
+
+            g.append("text")
+                .attr("x", xScale((removeStart + removeEnd) / 2)).attr("y", -10)
+                .attr("text-anchor", "middle")
+                .attr("fill", "#c62828").attr("font-weight", "bold")
+                .text("Remove Zone");
+
+            // Row 1: Original intervals
+            const row1Y = 30;
+            g.append("text")
+                .attr("x", -10).attr("y", row1Y + 15)
+                .attr("text-anchor", "end")
+                .attr("fill", "#333").attr("font-size", "12px")
+                .text("Input");
+
+            intervals.forEach((interval, idx) => {
+                const [start, end] = interval;
+                const isCurrent = step.currentIdx === idx;
+                const isProcessed = step.currentIdx > idx;
+
+                let fill = '#667eea';
+                let opacity = 1;
+                if (isCurrent) fill = '#ff9800';
+                if (isProcessed) {
+                    fill = '#9e9e9e';
+                    opacity = 0.5;
+                }
+
+                g.append("rect")
+                    .attr("x", xScale(start)).attr("y", row1Y)
+                    .attr("width", xScale(end) - xScale(start))
+                    .attr("height", 25)
+                    .attr("fill", fill)
+                    .attr("opacity", opacity)
+                    .attr("stroke", isCurrent ? '#e65100' : 'transparent')
+                    .attr("stroke-width", 3)
+                    .attr("rx", 4);
+
+                g.append("text")
+                    .attr("x", xScale((start + end) / 2)).attr("y", row1Y + 17)
+                    .attr("text-anchor", "middle")
+                    .attr("fill", "white").attr("font-size", "12px").attr("font-weight", "bold")
+                    .text(`[${start},${end}]`);
+            });
+
+            // Row 2: Action display
+            const row2Y = 100;
+            if (step.action && step.currentIdx >= 0) {
+                const [start, end] = intervals[step.currentIdx];
+                
+                // Original interval
+                g.append("rect")
+                    .attr("x", xScale(start)).attr("y", row2Y)
+                    .attr("width", xScale(end) - xScale(start))
+                    .attr("height", 25)
+                    .attr("fill", "none")
+                    .attr("stroke", "#ff9800")
+                    .attr("stroke-width", 2)
+                    .attr("stroke-dasharray", "5,3")
+                    .attr("rx", 4);
+
+                // Show what parts are kept/removed
+                if (step.action === 'remove') {
+                    g.append("text")
+                        .attr("x", xScale((start + end) / 2)).attr("y", row2Y + 17)
+                        .attr("text-anchor", "middle")
+                        .attr("fill", "#f44336").attr("font-size", "14px").attr("font-weight", "bold")
+                        .text("❌ REMOVED");
+                } else if (step.added) {
+                    step.added.forEach(([s, e], i) => {
+                        g.append("rect")
+                            .attr("x", xScale(s)).attr("y", row2Y)
+                            .attr("width", xScale(e) - xScale(s))
+                            .attr("height", 25)
+                            .attr("fill", "#4caf50")
+                            .attr("rx", 4);
+
+                        g.append("text")
+                            .attr("x", xScale((s + e) / 2)).attr("y", row2Y + 17)
+                            .attr("text-anchor", "middle")
+                            .attr("fill", "white").attr("font-size", "11px").attr("font-weight", "bold")
+                            .text(`[${s},${e}]`);
+                    });
+                }
+
+                g.append("text")
+                    .attr("x", -10).attr("y", row2Y + 15)
+                    .attr("text-anchor", "end")
+                    .attr("fill", "#333").attr("font-size", "12px")
+                    .text("Action");
+            }
+
+            // Row 3: Result
+            const row3Y = 180;
+            g.append("text")
+                .attr("x", -10).attr("y", row3Y + 15)
+                .attr("text-anchor", "end")
+                .attr("fill", "#2e7d32").attr("font-size", "12px").attr("font-weight", "bold")
+                .text("Result");
+
+            if (step.result) {
+                step.result.forEach(([start, end]) => {
+                    g.append("rect")
+                        .attr("x", xScale(start)).attr("y", row3Y)
+                        .attr("width", xScale(end) - xScale(start))
+                        .attr("height", 25)
+                        .attr("fill", "#4caf50")
+                        .attr("rx", 4);
+
+                    g.append("text")
+                        .attr("x", xScale((start + end) / 2)).attr("y", row3Y + 17)
+                        .attr("text-anchor", "middle")
+                        .attr("fill", "white").attr("font-size", "11px").attr("font-weight", "bold")
+                        .text(`[${start},${end}]`);
+                });
+            }
+
+            // Update displays
+            document.getElementById('statusMessage').textContent = step.message;
+            document.getElementById('removeDisplay').textContent = `[${removeStart}, ${removeEnd}]`;
+            
+            if (step.result && step.result.length > 0) {
+                document.getElementById('resultDisplay').innerHTML = step.result.map(([s, e]) => 
+                    `<span style="display: inline-block; margin: 3px; padding: 8px 12px; 
+                        background: #4caf50; color: white; border-radius: 6px; font-weight: bold;">
+                        [${s}, ${e}]
+                    </span>`
+                ).join('');
+            } else if (step.phase === 'done' && step.result.length === 0) {
+                document.getElementById('resultDisplay').textContent = 'Empty (all removed)';
+            } else {
+                document.getElementById('resultDisplay').textContent = 'Processing...';
+            }
+        }
+
+        function stepForward() {
+            if (stepIndex < steps.length - 1) {
+                stepIndex++;
+                render();
+            }
+        }
+
+        async function start() {
+            if (isRunning) {
+                isRunning = false;
+                document.getElementById('startBtn').textContent = '▶ Start';
+                return;
+            }
+            
+            isRunning = true;
+            document.getElementById('startBtn').textContent = '⏸ Pause';
+            
+            while (stepIndex < steps.length - 1 && isRunning) {
+                stepForward();
+                await new Promise(r => setTimeout(r, 1200));
+            }
+            
+            isRunning = false;
+            document.getElementById('startBtn').textContent = '▶ Start';
+        }
+
+        function reset() {
+            isRunning = false;
+            stepIndex = 0;
+            document.getElementById('startBtn').textContent = '▶ Start';
+            precomputeSteps();
+            render();
+        }
+
+        reset();
+        window.addEventListener('resize', render);
+    </script>
+</body>
+</html>

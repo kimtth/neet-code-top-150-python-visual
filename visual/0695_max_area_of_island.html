@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>695 - Max Area of Island</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="problem-info">
+            <h1><span class="problem-number">#695</span> Max Area of Island</h1>
+            <p>
+                Given a 2D grid where 1 represents land and 0 represents water, find the maximum 
+                area of an island (group of 1s connected 4-directionally).
+            </p>
+            <div class="problem-meta">
+                <span class="meta-tag">🔗 Graph</span>
+                <span class="meta-tag">🔍 DFS</span>
+                <span class="meta-tag">⏱️ O(m×n)</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <code>python/0695_max_area_of_island/0695_max_area_of_island.py</code>
+            </div>
+
+        </div>
+
+        <div class="explanation-panel">
+            <h4>🧠 How It Works (Layman's Terms)</h4>
+            <p>Graph problems are like <strong>exploring a maze</strong>:</p>
+            <ul>
+                <li><strong>Nodes:</strong> Points or locations</li>
+                <li><strong>Edges:</strong> Connections between nodes</li>
+                <li><strong>Traverse:</strong> Use DFS or BFS to explore</li>
+                <li><strong>Track visited:</strong> Avoid infinite loops</li>
+            </ul>
+        </div>
+
+
+        <section class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+            <div class="controls">
+                <button id="stepBtn" class="btn">Step</button>
+                <button id="autoBtn" class="btn btn-success">Auto Run</button>
+                <button id="resetBtn" class="btn btn-danger">Reset</button>
+            </div>
+            <div class="status" id="status">Find the maximum island area using DFS</div>
+            <svg id="visualization"></svg>
+        </section>
+
+        <section class="code-section">
+            <h3>💻 Python Solution</h3>
+            <div class="code-block">
+                <pre><span class="keyword">def</span> <span class="function">maxAreaOfIsland</span>(grid):
+    rows, cols = <span class="function">len</span>(grid), <span class="function">len</span>(grid[<span class="number">0</span>])
+    max_area = <span class="number">0</span>
+    
+    <span class="keyword">def</span> <span class="function">dfs</span>(r, c):
+        <span class="keyword">if</span> r < <span class="number">0</span> <span class="keyword">or</span> r >= rows <span class="keyword">or</span> c < <span class="number">0</span> <span class="keyword">or</span> c >= cols <span class="keyword">or</span> grid[r][c] == <span class="number">0</span>:
+            <span class="keyword">return</span> <span class="number">0</span>
+        grid[r][c] = <span class="number">0</span>  <span class="comment"># Mark visited</span>
+        <span class="keyword">return</span> <span class="number">1</span> + <span class="function">dfs</span>(r+<span class="number">1</span>, c) + <span class="function">dfs</span>(r-<span class="number">1</span>, c) + <span class="function">dfs</span>(r, c+<span class="number">1</span>) + <span class="function">dfs</span>(r, c-<span class="number">1</span>)
+    
+    <span class="keyword">for</span> r <span class="keyword">in</span> <span class="function">range</span>(rows):
+        <span class="keyword">for</span> c <span class="keyword">in</span> <span class="function">range</span>(cols):
+            <span class="keyword">if</span> grid[r][c] == <span class="number">1</span>:
+                max_area = <span class="function">max</span>(max_area, <span class="function">dfs</span>(r, c))
+    
+    <span class="keyword">return</span> max_area</pre>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        const width = 900;
+        const height = 550;
+
+        const svg = d3.select("#visualization")
+            .attr("width", width)
+            .attr("height", height);
+
+        const originalGrid = [
+            [0, 0, 1, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0],
+            [0, 1, 1, 0, 1, 0, 0],
+            [0, 1, 0, 0, 1, 1, 0],
+            [0, 1, 0, 0, 1, 1, 0],
+            [0, 0, 0, 0, 0, 0, 0]
+        ];
+
+        let grid = [];
+        let visited = [];
+        let currentIsland = [];
+        let maxArea = 0;
+        let currentArea = 0;
+        let scanRow = 0;
+        let scanCol = 0;
+        let isRunning = false;
+        let dfsStack = [];
+        let phase = "scan"; // "scan", "dfs", "done"
+        let islandColors = {};
+        let islandCount = 0;
+
+        const colorPalette = ["#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899"];
+
+        function deepCopy(arr) {
+            return arr.map(row => [...row]);
+        }
+
+        function reset() {
+            grid = deepCopy(originalGrid);
+            visited = originalGrid.map(row => row.map(() => false));
+            currentIsland = [];
+            maxArea = 0;
+            currentArea = 0;
+            scanRow = 0;
+            scanCol = 0;
+            isRunning = false;
+            dfsStack = [];
+            phase = "scan";
+            islandColors = {};
+            islandCount = 0;
+            document.getElementById("autoBtn").textContent = "Auto Run";
+            document.getElementById("status").textContent = "Find the maximum island area using DFS";
+            render();
+        }
+
+        function render() {
+            svg.selectAll("*").remove();
+
+            const rows = grid.length;
+            const cols = grid[0].length;
+            const cellSize = 55;
+            const startX = 80;
+            const startY = 80;
+
+            // Title
+            svg.append("text")
+                .attr("x", startX)
+                .attr("y", 40)
+                .attr("font-size", "18px")
+                .attr("font-weight", "bold")
+                .attr("fill", "#1e293b")
+                .text("Grid (1 = Land, 0 = Water)");
+
+            // Draw grid
+            for (let r = 0; r < rows; r++) {
+                for (let c = 0; c < cols; c++) {
+                    const x = startX + c * cellSize;
+                    const y = startY + r * cellSize;
+                    const isLand = originalGrid[r][c] === 1;
+                    const isVisited = visited[r][c];
+                    const isCurrent = currentIsland.some(([cr, cc]) => cr === r && cc === c);
+                    const isScanning = phase === "scan" && r === scanRow && c === scanCol;
+                    const isInStack = dfsStack.some(([sr, sc]) => sr === r && sc === c);
+
+                    const key = `${r}-${c}`;
+                    const islandColor = islandColors[key];
+
+                    svg.append("rect")
+                        .attr("x", x)
+                        .attr("y", y)
+                        .attr("width", cellSize - 4)
+                        .attr("height", cellSize - 4)
+                        .attr("rx", 6)
+                        .attr("fill", () => {
+                            if (islandColor) return islandColor;
+                            if (isCurrent) return "#fef3c7";
+                            if (isInStack) return "#dbeafe";
+                            if (isScanning) return "#fce7f3";
+                            if (isLand && !isVisited) return "#d1fae5";
+                            if (isLand && isVisited) return "#e2e8f0";
+                            return "#f8fafc";
+                        })
+                        .attr("stroke", () => {
+                            if (isCurrent) return "#f59e0b";
+                            if (isInStack) return "#3b82f6";
+                            if (isScanning) return "#ec4899";
+                            if (isLand) return "#10b981";
+                            return "#cbd5e1";
+                        })
+                        .attr("stroke-width", (isCurrent || isScanning || isInStack) ? 3 : 1);
+
+                    svg.append("text")
+                        .attr("x", x + cellSize / 2 - 2)
+                        .attr("y", y + cellSize / 2 + 2)
+                        .attr("text-anchor", "middle")
+                        .attr("dy", "0.35em")
+                        .attr("font-size", "18px")
+                        .attr("font-weight", "bold")
+                        .attr("fill", () => {
+                            if (islandColor) return "white";
+                            return isLand ? "#065f46" : "#94a3b8";
+                        })
+                        .text(originalGrid[r][c]);
+                }
+            }
+
+            // Stats panel
+            const statsX = 550;
+            const statsY = 80;
+
+            svg.append("rect")
+                .attr("x", statsX)
+                .attr("y", statsY)
+                .attr("width", 300)
+                .attr("height", 200)
+                .attr("rx", 10)
+                .attr("fill", "#f8fafc")
+                .attr("stroke", "#e2e8f0")
+                .attr("stroke-width", 2);
+
+            svg.append("text")
+                .attr("x", statsX + 20)
+                .attr("y", statsY + 30)
+                .attr("font-size", "16px")
+                .attr("font-weight", "bold")
+                .attr("fill", "#1e293b")
+                .text("Statistics");
+
+            svg.append("text")
+                .attr("x", statsX + 20)
+                .attr("y", statsY + 60)
+                .attr("font-size", "14px")
+                .attr("fill", "#64748b")
+                .text(`Current Island Area: ${currentArea}`);
+
+            svg.append("text")
+                .attr("x", statsX + 20)
+                .attr("y", statsY + 85)
+                .attr("font-size", "14px")
+                .attr("fill", "#64748b")
+                .text(`Max Area Found: ${maxArea}`);
+
+            svg.append("text")
+                .attr("x", statsX + 20)
+                .attr("y", statsY + 110)
+                .attr("font-size", "14px")
+                .attr("fill", "#64748b")
+                .text(`Islands Found: ${islandCount}`);
+
+            svg.append("text")
+                .attr("x", statsX + 20)
+                .attr("y", statsY + 135)
+                .attr("font-size", "14px")
+                .attr("fill", "#64748b")
+                .text(`Scan Position: (${scanRow}, ${scanCol})`);
+
+            svg.append("text")
+                .attr("x", statsX + 20)
+                .attr("y", statsY + 160)
+                .attr("font-size", "14px")
+                .attr("fill", "#64748b")
+                .text(`DFS Stack: ${dfsStack.length} cells`);
+
+            svg.append("text")
+                .attr("x", statsX + 20)
+                .attr("y", statsY + 185)
+                .attr("font-size", "14px")
+                .attr("fill", "#64748b")
+                .text(`Phase: ${phase}`);
+
+            // Legend
+            const legend = svg.append("g").attr("transform", `translate(80, ${height - 80})`);
+
+            legend.append("rect").attr("x", 0).attr("y", 0).attr("width", 20).attr("height", 20).attr("rx", 4).attr("fill", "#d1fae5").attr("stroke", "#10b981");
+            legend.append("text").attr("x", 28).attr("y", 15).attr("font-size", "12px").text("Unvisited Land");
+
+            legend.append("rect").attr("x", 140).attr("y", 0).attr("width", 20).attr("height", 20).attr("rx", 4).attr("fill", "#fce7f3").attr("stroke", "#ec4899");
+            legend.append("text").attr("x", 168).attr("y", 15).attr("font-size", "12px").text("Scanning");
+
+            legend.append("rect").attr("x", 260).attr("y", 0).attr("width", 20).attr("height", 20).attr("rx", 4).attr("fill", "#dbeafe").attr("stroke", "#3b82f6");
+            legend.append("text").attr("x", 288).attr("y", 15).attr("font-size", "12px").text("In DFS Stack");
+
+            legend.append("rect").attr("x", 400).attr("y", 0).attr("width", 20).attr("height", 20).attr("rx", 4).attr("fill", "#fef3c7").attr("stroke", "#f59e0b");
+            legend.append("text").attr("x", 428).attr("y", 15).attr("font-size", "12px").text("Current Cell");
+
+            legend.append("rect").attr("x", 540).attr("y", 0).attr("width", 20).attr("height", 20).attr("rx", 4).attr("fill", colorPalette[0]);
+            legend.append("text").attr("x", 568).attr("y", 15).attr("font-size", "12px").text("Visited Island");
+        }
+
+        function step() {
+            if (phase === "done") {
+                document.getElementById("status").textContent = `Done! Maximum island area: ${maxArea}`;
+                return;
+            }
+
+            if (phase === "scan") {
+                // Find next unvisited land cell
+                while (scanRow < grid.length) {
+                    while (scanCol < grid[0].length) {
+                        if (grid[scanRow][scanCol] === 1 && !visited[scanRow][scanCol]) {
+                            // Found new island, start DFS
+                            phase = "dfs";
+                            currentIsland = [];
+                            currentArea = 0;
+                            dfsStack = [[scanRow, scanCol]];
+                            islandCount++;
+                            document.getElementById("status").textContent = 
+                                `Found new island at (${scanRow}, ${scanCol})! Starting DFS...`;
+                            render();
+                            return;
+                        }
+                        scanCol++;
+                    }
+                    scanCol = 0;
+                    scanRow++;
+                }
+                // No more cells to scan
+                phase = "done";
+                document.getElementById("status").textContent = `Done! Maximum island area: ${maxArea}`;
+                render();
+                return;
+            }
+
+            if (phase === "dfs") {
+                if (dfsStack.length === 0) {
+                    // DFS complete for this island
+                    maxArea = Math.max(maxArea, currentArea);
+                    const color = colorPalette[(islandCount - 1) % colorPalette.length];
+                    currentIsland.forEach(([r, c]) => {
+                        islandColors[`${r}-${c}`] = color;
+                    });
+                    currentIsland = [];
+                    phase = "scan";
+                    document.getElementById("status").textContent = 
+                        `Island complete! Area: ${currentArea}, Max so far: ${maxArea}`;
+                    render();
+                    return;
+                }
+
+                const [r, c] = dfsStack.pop();
+
+                if (r < 0 || r >= grid.length || c < 0 || c >= grid[0].length || 
+                    visited[r][c] || grid[r][c] === 0) {
+                    document.getElementById("status").textContent = 
+                        `Skipping (${r}, ${c}) - out of bounds, visited, or water`;
+                    render();
+                    return;
+                }
+
+                visited[r][c] = true;
+                currentIsland.push([r, c]);
+                currentArea++;
+
+                // Add neighbors to stack
+                dfsStack.push([r + 1, c], [r - 1, c], [r, c + 1], [r, c - 1]);
+
+                document.getElementById("status").textContent = 
+                    `Visiting (${r}, ${c}), area now: ${currentArea}`;
+                render();
+            }
+        }
+
+        async function autoRun() {
+            if (isRunning) {
+                isRunning = false;
+                document.getElementById("autoBtn").textContent = "Auto Run";
+                return;
+            }
+
+            isRunning = true;
+            document.getElementById("autoBtn").textContent = "Pause";
+
+            while (phase !== "done" && isRunning) {
+                step();
+                await new Promise(r => setTimeout(r, 200));
+            }
+
+            isRunning = false;
+            document.getElementById("autoBtn").textContent = "Auto Run";
+        }
+
+        document.getElementById("stepBtn").addEventListener("click", step);
+        document.getElementById("autoBtn").addEventListener("click", autoRun);
+        document.getElementById("resetBtn").addEventListener("click", reset);
+
+        reset();
+    </script>
+</body>
+</html>

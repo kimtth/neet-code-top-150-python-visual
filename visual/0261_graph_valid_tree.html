@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>261 - Graph Valid Tree</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        .grid-container { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
+        .legend { display: flex; justify-content: center; gap: 20px; margin: 15px 0; flex-wrap: wrap; }
+        .legend-item { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: #64748b; }
+        .legend-color { width: 20px; height: 20px; border-radius: 50%; }
+        #graphArea { min-height: 350px; }
+        .result { font-size: 1.3rem; text-align: center; padding: 15px; border-radius: 8px; margin-top: 15px; }
+        .result.valid { background: rgba(34, 197, 94, 0.2); border: 2px solid #22c55e; color: #166534; }
+        .result.invalid { background: rgba(239, 68, 68, 0.2); border: 2px solid #ef4444; color: #dc2626; }
+        .uf-visual { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-top: 15px; }
+        .uf-set { background: #f1f5f9; border: 1px solid #6366f1; border-radius: 8px; padding: 10px; min-width: 60px; text-align: center; color: #334155; }
+        .uf-set.merged { background: rgba(34, 197, 94, 0.2); border-color: #22c55e; }
+        select { background: #f8fafc; color: #334155; border: 1px solid #e2e8f0; padding: 10px; border-radius: 8px; }
+        select:focus { outline: none; border-color: #6366f1; }
+        .info-box { background: #f1f5f9; border-radius: 8px; padding: 15px; margin-bottom: 15px; font-size: 0.9rem; line-height: 1.6; color: #475569; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <section class="problem-info">
+            <h1><span class="problem-number">#261</span> Graph Valid Tree</h1>
+            <p>Given n nodes and a list of undirected edges, check if these edges form a valid tree. A valid tree must have exactly n-1 edges, be fully connected, and have no cycles.</p>
+            <div class="problem-meta">
+                <span class="meta-tag">Medium</span>
+                <span class="meta-tag">Graph</span>
+                <span class="meta-tag">Union Find</span>
+                <span class="meta-tag">DFS/BFS</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <code>python/0261_graph_valid_tree/0261_graph_valid_tree.py</code>
+            </div>
+
+        </section>
+
+        <div class="explanation-panel">
+            <h4>🧠 How It Works (Layman's Terms)</h4>
+            <p>A stack works like a <strong>pile of plates</strong> - last in, first out (LIFO):</p>
+            <ul>
+                <li><strong>Push:</strong> Add item to the top</li>
+                <li><strong>Pop:</strong> Remove and return the top item</li>
+                <li><strong>Peek:</strong> Look at top without removing</li>
+                <li><strong>Match pairs:</strong> Great for matching brackets, parentheses</li>
+            </ul>
+        </div>
+
+
+        <section class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+            <div class="controls">
+                <select id="exampleSelect" onchange="loadExample()">
+                    <option value="valid">Valid Tree (5 nodes)</option>
+                    <option value="invalid-cycle">Invalid: Has Cycle</option>
+                    <option value="invalid-disconnected">Invalid: Disconnected</option>
+                </select>
+                <button id="stepBtn" onclick="step()">Step</button>
+                <button id="autoBtn" onclick="toggleAuto()">▶ Auto Run</button>
+                <button onclick="reset()">Reset</button>
+            </div>
+        </section>
+
+        <div class="grid-container">
+            <section class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+                <div class="info-box">
+                    A valid tree must: 1) Have exactly n-1 edges, 2) Be fully connected, 3) Have no cycles.
+                    Using Union-Find: if adding edge creates cycle (same parent), not a tree.
+                </div>
+                <svg id="graphArea" width="100%" height="350"></svg>
+            </section>
+            <section class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+                <div class="legend">
+                    <div class="legend-item"><div class="legend-color" style="background: #6366f1;"></div> Unvisited</div>
+                    <div class="legend-item"><div class="legend-color" style="background: #f59e0b;"></div> Processing</div>
+                    <div class="legend-item"><div class="legend-color" style="background: #22c55e;"></div> Connected</div>
+                    <div class="legend-item"><div class="legend-color" style="background: #ef4444;"></div> Cycle Found</div>
+                </div>
+                <div id="ufVisual" class="uf-visual"></div>
+                <div id="edgeList" style="margin-top: 15px;"></div>
+            </section>
+        </div>
+
+        <section class="visualization-section">
+            <div class="status-message" id="stepDisplay">Ready to start</div>
+            <div id="resultArea"></div>
+        </section>
+
+        <section class="code-section">
+            <h3>💻 Python Solution</h3>
+            <div class="code-block">
+                <pre><span class="keyword">def</span> <span class="function">validTree</span>(n: <span class="class-name">int</span>, edges: <span class="class-name">List</span>[List[int]]) -> bool:
+    <span class="comment"># A tree with n nodes must have exactly n-1 edges</span>
+    <span class="keyword">if</span> <span class="function">len</span>(edges) != n - <span class="number">1</span>:
+        <span class="keyword">return</span> <span class="keyword">False</span>
+    
+    <span class="comment"># Union-Find with path compression and union by rank</span>
+    parent = <span class="function">list</span>(<span class="function">range</span>(n))
+    rank = [<span class="number">0</span>] * n
+    
+    <span class="keyword">def</span> <span class="function">find</span>(x):
+        <span class="keyword">if</span> parent[x] != x:
+            parent[x] = <span class="function">find</span>(parent[x])  <span class="comment"># Path compression</span>
+        <span class="keyword">return</span> parent[x]
+    
+    <span class="keyword">def</span> <span class="function">union</span>(x, y):
+        px, py = <span class="function">find</span>(x), <span class="function">find</span>(y)
+        <span class="keyword">if</span> px == py:
+            <span class="keyword">return</span> <span class="keyword">False</span>  <span class="comment"># Cycle detected</span>
+        
+        <span class="comment"># Union by rank</span>
+        <span class="keyword">if</span> rank[px] < rank[py]:
+            parent[px] = py
+        <span class="keyword">elif</span> rank[px] > rank[py]:
+            parent[py] = px
+        <span class="keyword">else</span>:
+            parent[py] = px
+            rank[px] += <span class="number">1</span>
+        <span class="keyword">return</span> <span class="keyword">True</span>
+    
+    <span class="comment"># Process each edge</span>
+    <span class="keyword">for</span> a, b <span class="keyword">in</span> edges:
+        <span class="keyword">if</span> <span class="keyword">not</span> <span class="function">union</span>(a, b):
+            <span class="keyword">return</span> <span class="keyword">False</span>  <span class="comment"># Cycle found</span>
+    
+    <span class="keyword">return</span> <span class="keyword">True</span>  <span class="comment"># n-1 edges, no cycle → valid tree</span></pre>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        const examples = {
+            'valid': {
+                n: 5,
+                edges: [[0, 1], [0, 2], [0, 3], [1, 4]],
+                positions: [{x: 200, y: 50}, {x: 100, y: 150}, {x: 200, y: 150}, {x: 300, y: 150}, {x: 100, y: 250}]
+            },
+            'invalid-cycle': {
+                n: 5,
+                edges: [[0, 1], [1, 2], [2, 3], [1, 3], [1, 4]],
+                positions: [{x: 200, y: 50}, {x: 200, y: 150}, {x: 100, y: 250}, {x: 300, y: 250}, {x: 200, y: 250}]
+            },
+            'invalid-disconnected': {
+                n: 5,
+                edges: [[0, 1], [2, 3]],
+                positions: [{x: 100, y: 100}, {x: 100, y: 200}, {x: 300, y: 100}, {x: 300, y: 200}, {x: 200, y: 300}]
+            }
+        };
+
+        let currentExample = 'valid';
+        let n = 5;
+        let edges = [];
+        let positions = [];
+        let parent = [];
+        let rank = [];
+        let steps = [];
+        let stepIndex = 0;
+        let autoInterval = null;
+
+        function loadExample() {
+            currentExample = document.getElementById('exampleSelect').value;
+            reset();
+        }
+
+        function find(x) {
+            if (parent[x] !== x) parent[x] = find(parent[x]);
+            return parent[x];
+        }
+
+        function reset() {
+            const ex = examples[currentExample];
+            n = ex.n;
+            edges = [...ex.edges];
+            positions = [...ex.positions];
+            
+            parent = Array.from({length: n}, (_, i) => i);
+            rank = Array(n).fill(0);
+            steps = [];
+            stepIndex = 0;
+            
+            if (autoInterval) {
+                clearInterval(autoInterval);
+                autoInterval = null;
+                document.getElementById('autoBtn').textContent = '▶ Auto Run';
+            }
+            
+            if (edges.length !== n - 1) {
+                steps.push({
+                    type: 'edge-count',
+                    valid: false,
+                    desc: `Edge count ${edges.length} ≠ n-1 (${n-1}). Not a valid tree!`
+                });
+            } else {
+                const tempParent = Array.from({length: n}, (_, i) => i);
+                
+                for (let i = 0; i < edges.length; i++) {
+                    const [a, b] = edges[i];
+                    let pa = a, pb = b;
+                    while (tempParent[pa] !== pa) pa = tempParent[pa];
+                    while (tempParent[pb] !== pb) pb = tempParent[pb];
+                    
+                    if (pa === pb) {
+                        steps.push({
+                            type: 'cycle',
+                            edgeIdx: i,
+                            a, b, pa, pb,
+                            parent: [...tempParent],
+                            desc: `Edge [${a}, ${b}]: Both have same root ${pa}. CYCLE DETECTED!`
+                        });
+                        break;
+                    } else {
+                        tempParent[pa] = pb;
+                        steps.push({
+                            type: 'union',
+                            edgeIdx: i,
+                            a, b, pa, pb,
+                            parent: [...tempParent],
+                            desc: `Edge [${a}, ${b}]: Union roots ${pa} → ${pb}. Connected!`
+                        });
+                    }
+                }
+                
+                if (steps.length === edges.length && steps[steps.length - 1].type !== 'cycle') {
+                    steps.push({
+                        type: 'complete',
+                        valid: true,
+                        parent: [...steps[steps.length - 1].parent],
+                        desc: `All ${edges.length} edges processed. Valid tree!`
+                    });
+                }
+            }
+            render();
+        }
+
+        function step() {
+            if (stepIndex >= steps.length) return;
+            const s = steps[stepIndex];
+            if (s.parent) parent = [...s.parent];
+            stepIndex++;
+            render();
+        }
+
+        function toggleAuto() {
+            if (autoInterval) {
+                clearInterval(autoInterval);
+                autoInterval = null;
+                document.getElementById('autoBtn').textContent = '▶ Auto Run';
+            } else {
+                autoInterval = setInterval(() => {
+                    if (stepIndex >= steps.length) {
+                        clearInterval(autoInterval);
+                        autoInterval = null;
+                        document.getElementById('autoBtn').textContent = '▶ Auto Run';
+                    } else {
+                        step();
+                    }
+                }, 1000);
+                document.getElementById('autoBtn').textContent = '⏸ Pause';
+            }
+        }
+
+        function render() {
+            const svg = d3.select('#graphArea');
+            svg.selectAll('*').remove();
+            
+            const width = svg.node().getBoundingClientRect().width;
+            const height = 350;
+            const g = svg.append('g').attr('transform', 'translate(50, 20)');
+            
+            const curStep = stepIndex > 0 ? steps[stepIndex - 1] : null;
+            const processedEdges = curStep?.edgeIdx !== undefined ? curStep.edgeIdx + 1 : 0;
+            
+            edges.forEach(([a, b], i) => {
+                let strokeColor = '#94a3b8';
+                let strokeWidth = 3;
+                
+                if (curStep) {
+                    if (i < processedEdges - 1 || (i === processedEdges - 1 && curStep.type !== 'cycle')) {
+                        strokeColor = '#22c55e';
+                    } else if (i === processedEdges - 1 && curStep.type === 'cycle') {
+                        strokeColor = '#ef4444';
+                        strokeWidth = 5;
+                    } else if (i === processedEdges - 1) {
+                        strokeColor = '#f59e0b';
+                        strokeWidth = 4;
+                    }
+                }
+                
+                g.append('line')
+                    .attr('x1', positions[a].x).attr('y1', positions[a].y)
+                    .attr('x2', positions[b].x).attr('y2', positions[b].y)
+                    .attr('stroke', strokeColor).attr('stroke-width', strokeWidth);
+            });
+            
+            for (let i = 0; i < n; i++) {
+                let fillColor = '#6366f1';
+                
+                if (curStep && curStep.type !== 'edge-count') {
+                    if (curStep.a === i || curStep.b === i) {
+                        fillColor = curStep.type === 'cycle' ? '#ef4444' : '#f59e0b';
+                    } else if (parent[i] !== i || i === find(0)) {
+                        fillColor = '#22c55e';
+                    }
+                }
+                
+                g.append('circle')
+                    .attr('cx', positions[i].x).attr('cy', positions[i].y).attr('r', 25)
+                    .attr('fill', fillColor).attr('stroke', '#fff').attr('stroke-width', 2);
+                
+                g.append('text')
+                    .attr('x', positions[i].x).attr('y', positions[i].y + 5)
+                    .attr('text-anchor', 'middle').attr('fill', '#fff').attr('font-weight', 'bold')
+                    .text(i);
+            }
+            
+            let ufHtml = '<div style="font-size: 0.9rem; margin-bottom: 10px; color: #64748b;">Parent array:</div>';
+            ufHtml += '<div style="display: flex; gap: 5px; justify-content: center;">';
+            for (let i = 0; i < n; i++) {
+                const isMerged = parent[i] !== i;
+                ufHtml += `<div class="uf-set ${isMerged ? 'merged' : ''}">
+                    <div style="font-size: 0.7rem; color: #94a3b8;">${i}</div>
+                    <div style="font-weight: bold;">${parent[i]}</div>
+                </div>`;
+            }
+            ufHtml += '</div>';
+            document.getElementById('ufVisual').innerHTML = ufHtml;
+            
+            let edgeHtml = '<div style="font-size: 0.9rem; margin-bottom: 10px; color: #64748b;">Edges to process:</div>';
+            edges.forEach(([a, b], i) => {
+                let style = 'padding: 5px 10px; margin: 3px; border-radius: 5px; display: inline-block; ';
+                if (i < processedEdges) {
+                    if (curStep && i === processedEdges - 1 && curStep.type === 'cycle') {
+                        style += 'background: rgba(239,68,68,0.3); border: 1px solid #ef4444; color: #dc2626;';
+                    } else {
+                        style += 'background: rgba(34,197,94,0.3); border: 1px solid #22c55e; color: #166534;';
+                    }
+                } else {
+                    style += 'background: #f1f5f9; border: 1px solid #e2e8f0; color: #64748b;';
+                }
+                edgeHtml += `<span style="${style}">[${a}, ${b}]</span>`;
+            });
+            document.getElementById('edgeList').innerHTML = edgeHtml;
+            
+            document.getElementById('stepDisplay').textContent = curStep ? curStep.desc : 'Ready to start';
+            
+            if (curStep && (curStep.type === 'complete' || curStep.type === 'cycle' || curStep.type === 'edge-count')) {
+                const isValid = curStep.valid === true || curStep.type === 'complete';
+                document.getElementById('resultArea').innerHTML = `
+                    <div class="result ${isValid ? 'valid' : 'invalid'}">
+                        ${isValid ? '✅ Valid Tree!' : '❌ Not a Valid Tree'}
+                    </div>`;
+            } else {
+                document.getElementById('resultArea').innerHTML = '';
+            }
+        }
+
+        reset();
+    </script>
+</body>
+</html>

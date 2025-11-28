@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Search a 2D Matrix - LeetCode 74</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="problem-info">
+            <h1><span class="problem-number">#74</span> Search a 2D Matrix</h1>
+            <p>Search for a target in a sorted 2D matrix. Treat the matrix as a flattened 1D array and use binary search!</p>
+            <div class="problem-meta">
+                <span class="meta-tag">🔍 Binary Search</span>
+                <span class="meta-tag">📊 Matrix</span>
+                <span class="meta-tag">⏱️ O(log(m×n))</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <a href="../python/0074_search_a_2d_matrix/0074_search_a_2d_matrix.py">0074_search_a_2d_matrix.py</a>
+            </div>
+            </div>
+
+        <div class="explanation-panel">
+            <h4>💡 How It Works (Layman's Terms)</h4>
+            <ul>
+                <li><strong>Key insight:</strong> The matrix is essentially a sorted 1D array arranged in rows</li>
+                <li><strong>Flattening:</strong> We can treat it as a 1D array of size m×n</li>
+                <li><strong>Index conversion:</strong> 1D index → row = index / cols, col = index % cols</li>
+                <li><strong>Binary search:</strong> Standard binary search on the "virtual" 1D array</li>
+                <li><strong>Why it works:</strong> Each row continues where the previous ended, so the whole matrix is sorted</li>
+            </ul>
+        </div>
+
+
+        <div class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+            
+            <div class="controls">
+                <button class="btn btn-primary" id="stepBtn" onclick="step()">Step</button>
+                <button class="btn btn-success" id="autoBtn" onclick="toggleAuto()">Auto Run</button>
+                <button class="btn btn-warning" onclick="reset()">Reset</button>
+            </div>
+
+            <div class="info-box">
+                Target = 3
+            </div>
+
+            <div class="status-message" id="statusMessage">
+                Click "Step" or "Auto Run" to search the matrix using binary search
+            </div>
+
+            <div class="variable-display">
+                <div class="variable-box">
+                    <div class="variable-name">Left (1D index)</div>
+                    <div class="variable-value" id="leftVal">0</div>
+                </div>
+                <div class="variable-box">
+                    <div class="variable-name">Right (1D index)</div>
+                    <div class="variable-value" id="rightVal">11</div>
+                </div>
+                <div class="variable-box">
+                    <div class="variable-name">Mid (1D index)</div>
+                    <div class="variable-value" id="midVal">-</div>
+                </div>
+                <div class="variable-box">
+                    <div class="variable-name">Mid → [row, col]</div>
+                    <div class="variable-value" id="coordVal">-</div>
+                </div>
+            </div>
+
+            <div class="array-section">
+                <div class="array-label">Matrix (each row sorted, first of each row > last of previous):</div>
+                <div class="matrix-container" id="matrixContainer"></div>
+            </div>
+
+            <div class="array-section">
+                <div class="array-label">Flattened View (how binary search sees it):</div>
+                <div class="array-container" id="flatContainer"></div>
+            </div>
+
+            <div class="info-box" id="resultBox" style="display: none;"></div>
+        </div>
+
+        <div class="code-section">
+            <h3>💻 Python Solution</h3>
+            <div class="code-block">
+                <pre><span class="keyword">def</span> <span class="function">searchMatrix</span>(self, matrix, target: <span class="class-name">int</span>) -> <span class="class-name">bool</span>:
+    m, n = <span class="function">len</span>(matrix), <span class="function">len</span>(matrix[<span class="number">0</span>])
+    
+    <span class="comment"># Treat matrix as 1D sorted array</span>
+    left, right = <span class="number">0</span>, m * n - <span class="number">1</span>
+    
+    <span class="keyword">while</span> left <= right:
+        mid = (left + right) // <span class="number">2</span>
+        
+        <span class="comment"># Convert 1D index to 2D coordinates</span>
+        row, col = mid // n, mid % n
+        
+        <span class="keyword">if</span> matrix[row][col] == target:
+            <span class="keyword">return</span> <span class="class-name">True</span>
+        <span class="keyword">elif</span> matrix[row][col] < target:
+            left = mid + <span class="number">1</span>
+        <span class="keyword">else</span>:
+            right = mid - <span class="number">1</span>
+    
+    <span class="keyword">return</span> <span class="class-name">False</span></pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const matrix = [
+            [1, 3, 5, 7],
+            [10, 11, 16, 20],
+            [23, 30, 34, 60]
+        ];
+        const target = 3;
+        const m = matrix.length;
+        const n = matrix[0].length;
+        
+        let left = 0;
+        let right = m * n - 1;
+        let mid = -1;
+        let phase = 'init';
+        let autoInterval = null;
+
+        function init() {
+            left = 0;
+            right = m * n - 1;
+            mid = -1;
+            renderMatrix();
+            renderFlat();
+            document.getElementById('leftVal').textContent = '0';
+            document.getElementById('rightVal').textContent = (m * n - 1).toString();
+            document.getElementById('midVal').textContent = '-';
+            document.getElementById('coordVal').textContent = '-';
+            document.getElementById('resultBox').style.display = 'none';
+        }
+
+        function renderMatrix() {
+            const container = document.getElementById('matrixContainer');
+            container.innerHTML = '';
+            
+            matrix.forEach((row, r) => {
+                const rowDiv = document.createElement('div');
+                rowDiv.className = 'matrix-row';
+                
+                row.forEach((val, c) => {
+                    const cell = document.createElement('div');
+                    cell.className = 'matrix-cell';
+                    cell.id = `cell-${r}-${c}`;
+                    
+                    const idx = r * n + c;
+                    if (idx === mid) {
+                        cell.classList.add('current');
+                    }
+                    if (idx < left || idx > right) {
+                        cell.style.opacity = '0.3';
+                    }
+                    if (val === target && phase === 'done') {
+                        cell.classList.add('visited');
+                    }
+                    
+                    cell.textContent = val;
+                    rowDiv.appendChild(cell);
+                });
+                
+                container.appendChild(rowDiv);
+            });
+        }
+
+        function renderFlat() {
+            const container = document.getElementById('flatContainer');
+            container.innerHTML = '';
+            
+            for (let i = 0; i < m * n; i++) {
+                const r = Math.floor(i / n);
+                const c = i % n;
+                const val = matrix[r][c];
+                
+                const box = document.createElement('div');
+                box.className = 'array-box small';
+                box.style.width = '45px';
+                box.style.height = '45px';
+                
+                if (i === mid) {
+                    box.classList.add('highlight');
+                }
+                if (i < left || i > right) {
+                    box.style.opacity = '0.3';
+                }
+                if (i === left) {
+                    box.style.borderLeftWidth = '3px';
+                    box.style.borderLeftColor = '#4caf50';
+                }
+                if (i === right) {
+                    box.style.borderRightWidth = '3px';
+                    box.style.borderRightColor = '#f44336';
+                }
+                
+                box.innerHTML = `${val}<span class="index-label">${i}</span>`;
+                container.appendChild(box);
+            }
+        }
+
+        function step() {
+            if (phase === 'init') {
+                phase = 'searching';
+                document.getElementById('statusMessage').textContent = 
+                    'Starting binary search on the matrix (treated as 1D array)...';
+            }
+
+            if (phase === 'searching') {
+                if (left > right) {
+                    phase = 'done';
+                    document.getElementById('resultBox').style.display = 'block';
+                    document.getElementById('resultBox').className = 'info-box highlight';
+                    document.getElementById('resultBox').textContent = `❌ Target ${target} not found in matrix`;
+                    document.getElementById('statusMessage').textContent = 'Binary search complete. Target not found.';
+                    document.getElementById('stepBtn').disabled = true;
+                    stopAuto();
+                    return;
+                }
+
+                mid = Math.floor((left + right) / 2);
+                const row = Math.floor(mid / n);
+                const col = mid % n;
+                const val = matrix[row][col];
+
+                document.getElementById('midVal').textContent = mid;
+                document.getElementById('coordVal').textContent = `[${row}, ${col}]`;
+                document.getElementById('leftVal').textContent = left;
+                document.getElementById('rightVal').textContent = right;
+
+                renderMatrix();
+                renderFlat();
+
+                if (val === target) {
+                    phase = 'done';
+                    document.getElementById('resultBox').style.display = 'block';
+                    document.getElementById('resultBox').className = 'info-box secondary';
+                    document.getElementById('resultBox').textContent = `✅ Found target ${target} at matrix[${row}][${col}] (1D index: ${mid})`;
+                    document.getElementById('statusMessage').textContent = 
+                        `Found! matrix[${row}][${col}] = ${val} = target`;
+                    document.getElementById('stepBtn').disabled = true;
+                    stopAuto();
+                } else if (val < target) {
+                    document.getElementById('statusMessage').textContent = 
+                        `matrix[${row}][${col}] = ${val} < target ${target} → Search right half, left = ${mid + 1}`;
+                    left = mid + 1;
+                } else {
+                    document.getElementById('statusMessage').textContent = 
+                        `matrix[${row}][${col}] = ${val} > target ${target} → Search left half, right = ${mid - 1}`;
+                    right = mid - 1;
+                }
+            }
+        }
+
+        function toggleAuto() {
+            if (autoInterval) {
+                stopAuto();
+            } else {
+                document.getElementById('autoBtn').textContent = 'Pause';
+                autoInterval = setInterval(() => {
+                    if (phase === 'done') {
+                        stopAuto();
+                    } else {
+                        step();
+                    }
+                }, 1200);
+            }
+        }
+
+        function stopAuto() {
+            if (autoInterval) {
+                clearInterval(autoInterval);
+                autoInterval = null;
+            }
+            document.getElementById('autoBtn').textContent = 'Auto Run';
+        }
+
+        function reset() {
+            stopAuto();
+            phase = 'init';
+            document.getElementById('stepBtn').disabled = false;
+            document.getElementById('statusMessage').textContent = 
+                'Click "Step" or "Auto Run" to search the matrix using binary search';
+            init();
+        }
+
+        init();
+    </script>
+</body>
+</html>

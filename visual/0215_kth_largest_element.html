@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LC 215: Kth Largest Element in an Array - Algorithm Visualization</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="problem-info">
+            <h1><span class="problem-number">#215</span> Kth Largest Element in an Array</h1>
+            <p>Given an integer array nums and an integer k, return the kth largest element in the array.</p>
+            <div class="problem-meta">
+                <span class="meta-tag">📊 Heap</span>
+                <span class="meta-tag">🔢 Array</span>
+                <span class="meta-tag">⏱️ O(n log k)</span>
+                <span class="meta-tag">💾 O(k)</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <code>python/0215_kth_largest_element_in_an_array/0215_kth_largest_element_in_an_array.py</code>
+            </div>
+            </div>
+
+        <div class="explanation-panel">
+            <h4>🧠 How It Works (Layman's Terms)</h4>
+            <p>We use a <strong>min-heap of size k</strong> to track the k largest elements:</p>
+            <ul>
+                <li><strong>Min-heap:</strong> Always gives us the smallest element in O(1)</li>
+                <li><strong>Trick:</strong> If we keep only k elements, the smallest of those k IS the kth largest overall!</li>
+                <li><strong>Process:</strong> Add each number, but if heap grows past k, remove the smallest</li>
+                <li><strong>Result:</strong> The heap's minimum (top) is our answer</li>
+            </ul>
+        </div>
+
+
+        <div class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+            
+            <div class="controls">
+                <label>k = </label>
+                <select id="kValue" style="padding: 8px; border-radius: 5px; border: 2px solid #ddd;">
+                    <option value="1">1 (largest)</option>
+                    <option value="2" selected>2</option>
+                    <option value="3">3</option>
+                    <option value="4">4</option>
+                </select>
+                <button class="btn btn-primary" onclick="step()">Step</button>
+                <button class="btn btn-success" onclick="autoRun()">Auto Run</button>
+                <button class="btn" style="background: #607d8b; color: white;" onclick="reset()">Reset</button>
+            </div>
+
+            <div class="status-message" id="statusMessage">
+                Click Step to process each element
+            </div>
+
+            <div style="margin-top: 20px;">
+                <h4 style="margin-bottom: 10px;">📊 Input Array</h4>
+                <div id="arrayContainer" style="display: flex; gap: 8px; flex-wrap: wrap; padding: 15px; background: #f5f5f5; border-radius: 12px;">
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 30px; flex-wrap: wrap; margin-top: 20px;">
+                <div style="flex: 1; min-width: 250px;">
+                    <h4 style="margin-bottom: 10px;">📊 Min-Heap (size ≤ k)</h4>
+                    <svg id="heapViz" width="100%" height="200"></svg>
+                    <div id="heapArray" style="margin-top: 10px; padding: 10px; background: #e3f2fd; border-radius: 8px; text-align: center;">
+                        Heap: []
+                    </div>
+                </div>
+                <div style="flex: 1; min-width: 200px;">
+                    <h4 style="margin-bottom: 10px;">🎯 Tracking k Largest</h4>
+                    <div id="kLargestContainer" style="padding: 15px; background: #fff3e0; border-radius: 12px; min-height: 100px;">
+                        <span style="color: #999;">Will track k largest seen so far</span>
+                    </div>
+                    
+                    <h4 style="margin-top: 20px; margin-bottom: 10px;">✅ Answer</h4>
+                    <div id="answerContainer" style="padding: 20px; background: #e8f5e9; border-radius: 12px; text-align: center; font-size: 1.5em; font-weight: bold; color: #4caf50;">
+                        -
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="code-section">
+            <h3>💻 Python Solution</h3>
+            <div class="code-block">
+                <pre><span class="keyword">import</span> heapq
+
+<span class="keyword">def</span> <span class="function">findKthLargest</span>(nums, k):
+    min_heap = []
+    
+    <span class="keyword">for</span> num <span class="keyword">in</span> nums:
+        heapq.<span class="function">heappush</span>(min_heap, num)
+        
+        <span class="comment"># Keep only k elements</span>
+        <span class="keyword">if</span> <span class="function">len</span>(min_heap) > k:
+            heapq.<span class="function">heappop</span>(min_heap)  <span class="comment"># Remove smallest</span>
+    
+    <span class="keyword">return</span> min_heap[<span class="number">0</span>]  <span class="comment"># Smallest of k largest = kth largest</span></pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const nums = [3, 2, 1, 5, 6, 4];
+        let k = 2;
+        let heap = [];
+        let currentIdx = 0;
+        let done = false;
+        let isRunning = false;
+
+        function heapPush(val) {
+            heap.push(val);
+            let i = heap.length - 1;
+            while (i > 0) {
+                const parent = Math.floor((i - 1) / 2);
+                if (heap[parent] <= heap[i]) break;
+                [heap[parent], heap[i]] = [heap[i], heap[parent]];
+                i = parent;
+            }
+        }
+
+        function heapPop() {
+            if (heap.length === 0) return null;
+            const min = heap[0];
+            const last = heap.pop();
+            if (heap.length > 0) {
+                heap[0] = last;
+                let i = 0;
+                while (true) {
+                    const left = 2 * i + 1;
+                    const right = 2 * i + 2;
+                    let smallest = i;
+                    if (left < heap.length && heap[left] < heap[smallest]) smallest = left;
+                    if (right < heap.length && heap[right] < heap[smallest]) smallest = right;
+                    if (smallest === i) break;
+                    [heap[i], heap[smallest]] = [heap[smallest], heap[i]];
+                    i = smallest;
+                }
+            }
+            return min;
+        }
+
+        function renderArray() {
+            const container = document.getElementById('arrayContainer');
+            container.innerHTML = nums.map((n, i) => {
+                let bgColor = '#fff';
+                let borderColor = '#ddd';
+                let textColor = '#333';
+
+                if (i < currentIdx) {
+                    if (heap.includes(n) || (done && [...heap].sort((a,b)=>b-a).includes(n))) {
+                        bgColor = '#667eea';
+                        borderColor = '#5a6fd6';
+                        textColor = 'white';
+                    } else {
+                        bgColor = '#e0e0e0';
+                        textColor = '#999';
+                    }
+                } else if (i === currentIdx) {
+                    bgColor = '#ff9800';
+                    borderColor = '#f57c00';
+                    textColor = 'white';
+                }
+
+                return `
+                    <div style="padding: 15px 20px; background: ${bgColor}; border: 2px solid ${borderColor}; 
+                                border-radius: 8px; font-weight: bold; font-size: 1.3em; color: ${textColor};">
+                        ${n}
+                        ${i === currentIdx ? '<div style="font-size: 0.6em;">▲</div>' : ''}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderHeap() {
+            const svg = d3.select("#heapViz");
+            svg.selectAll("*").remove();
+
+            const container = svg.node().parentElement;
+            const width = container.clientWidth;
+            const height = 200;
+            svg.attr("viewBox", `0 0 ${width} ${height}`);
+
+            if (heap.length === 0) {
+                svg.append("text")
+                    .attr("x", width / 2)
+                    .attr("y", height / 2)
+                    .attr("text-anchor", "middle")
+                    .attr("fill", "#999")
+                    .text("Empty heap");
+                return;
+            }
+
+            const nodeRadius = 25;
+            const g = svg.append("g");
+
+            // Calculate positions for heap nodes
+            const positions = [];
+            for (let i = 0; i < heap.length; i++) {
+                const level = Math.floor(Math.log2(i + 1));
+                const posInLevel = i - (Math.pow(2, level) - 1);
+                const totalInLevel = Math.pow(2, level);
+                const levelWidth = width * 0.8;
+                const x = width / 2 + (posInLevel - (totalInLevel - 1) / 2) * (levelWidth / totalInLevel);
+                const y = 40 + level * 60;
+                positions.push({ x, y });
+            }
+
+            // Draw edges
+            heap.forEach((_, i) => {
+                const left = 2 * i + 1;
+                const right = 2 * i + 2;
+                if (left < heap.length) {
+                    g.append("line")
+                        .attr("x1", positions[i].x)
+                        .attr("y1", positions[i].y)
+                        .attr("x2", positions[left].x)
+                        .attr("y2", positions[left].y)
+                        .attr("stroke", "#ccc")
+                        .attr("stroke-width", 2);
+                }
+                if (right < heap.length) {
+                    g.append("line")
+                        .attr("x1", positions[i].x)
+                        .attr("y1", positions[i].y)
+                        .attr("x2", positions[right].x)
+                        .attr("y2", positions[right].y)
+                        .attr("stroke", "#ccc")
+                        .attr("stroke-width", 2);
+                }
+            });
+
+            // Draw nodes
+            heap.forEach((val, i) => {
+                const pos = positions[i];
+                const isRoot = i === 0;
+
+                g.append("circle")
+                    .attr("cx", pos.x)
+                    .attr("cy", pos.y)
+                    .attr("r", nodeRadius)
+                    .attr("fill", isRoot ? "#4caf50" : "#667eea")
+                    .attr("stroke", isRoot ? "#388e3c" : "#5a6fd6")
+                    .attr("stroke-width", 2);
+
+                g.append("text")
+                    .attr("x", pos.x)
+                    .attr("y", pos.y + 6)
+                    .attr("text-anchor", "middle")
+                    .attr("fill", "white")
+                    .attr("font-weight", "bold")
+                    .attr("font-size", "16px")
+                    .text(val);
+
+                if (isRoot) {
+                    g.append("text")
+                        .attr("x", pos.x)
+                        .attr("y", pos.y - 35)
+                        .attr("text-anchor", "middle")
+                        .attr("fill", "#4caf50")
+                        .attr("font-size", "12px")
+                        .text("min (kth largest)");
+                }
+            });
+
+            document.getElementById('heapArray').textContent = 
+                `Heap: [${heap.join(', ')}] (size: ${heap.length}/${k})`;
+        }
+
+        function renderKLargest() {
+            const container = document.getElementById('kLargestContainer');
+            if (heap.length === 0) {
+                container.innerHTML = '<span style="color: #999;">Empty</span>';
+                return;
+            }
+
+            const sorted = [...heap].sort((a, b) => b - a);
+            container.innerHTML = `
+                <div style="font-weight: bold; margin-bottom: 10px;">Current k=${k} largest:</div>
+                <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                    ${sorted.map((n, i) => `
+                        <div style="padding: 10px 15px; background: ${i === k - 1 ? '#4caf50' : '#667eea'}; 
+                                    color: white; border-radius: 8px; font-weight: bold;">
+                            ${n}${i === k - 1 ? ' ← kth' : ''}
+                        </div>
+                    `).join('')}
+
+        </div>
+            `;
+        }
+
+        function step() {
+            if (done) {
+                document.getElementById('statusMessage').textContent = 
+                    `Done! The ${k}${k === 1 ? 'st' : k === 2 ? 'nd' : k === 3 ? 'rd' : 'th'} largest element is ${heap[0]}`;
+                return;
+            }
+
+            if (currentIdx >= nums.length) {
+                done = true;
+                document.getElementById('answerContainer').textContent = heap[0];
+                document.getElementById('statusMessage').textContent = 
+                    `Complete! The ${k}${k === 1 ? 'st' : k === 2 ? 'nd' : k === 3 ? 'rd' : 'th'} largest = ${heap[0]}`;
+                renderArray();
+                return;
+            }
+
+            const num = nums[currentIdx];
+            heapPush(num);
+            let msg = `Push ${num} to heap. `;
+
+            if (heap.length > k) {
+                const removed = heapPop();
+                msg += `Heap size > k, so remove smallest (${removed}). `;
+            }
+
+            msg += `Heap now has ${heap.length} elements.`;
+            document.getElementById('statusMessage').textContent = msg;
+
+            currentIdx++;
+            renderArray();
+            renderHeap();
+            renderKLargest();
+
+            if (currentIdx >= nums.length) {
+                document.getElementById('answerContainer').textContent = heap[0];
+            }
+        }
+
+        function autoRun() {
+            if (isRunning) return;
+            isRunning = true;
+
+            const interval = setInterval(() => {
+                if (done || currentIdx >= nums.length) {
+                    clearInterval(interval);
+                    isRunning = false;
+                    done = true;
+                    document.getElementById('answerContainer').textContent = heap[0];
+                    document.getElementById('statusMessage').textContent = 
+                        `Complete! The ${k}${k === 1 ? 'st' : k === 2 ? 'nd' : k === 3 ? 'rd' : 'th'} largest = ${heap[0]}`;
+                    return;
+                }
+                step();
+            }, 1000);
+        }
+
+        function reset() {
+            k = parseInt(document.getElementById('kValue').value);
+            heap = [];
+            currentIdx = 0;
+            done = false;
+            isRunning = false;
+
+            document.getElementById('statusMessage').textContent = 
+                `Find the ${k}${k === 1 ? 'st' : k === 2 ? 'nd' : k === 3 ? 'rd' : 'th'} largest element. Click Step to begin.`;
+            document.getElementById('answerContainer').textContent = '-';
+            
+            renderArray();
+            renderHeap();
+            renderKLargest();
+        }
+
+        document.getElementById('kValue').addEventListener('change', reset);
+        reset();
+        window.addEventListener('resize', renderHeap);
+    </script>
+</body>
+</html>

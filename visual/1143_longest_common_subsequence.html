@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>1143 - Longest Common Subsequence</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="problem-info">
+            <h1><span class="problem-number">#1143</span> Longest Common Subsequence</h1>
+            <p>
+                Given two strings, return the length of their longest common subsequence. 
+                A subsequence maintains relative order but doesn't need to be contiguous.
+            </p>
+            <div class="problem-meta">
+                <span class="meta-tag">🧮 DP</span>
+                <span class="meta-tag">⏱️ O(n)</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <code>python/1143_longest_common_subsequence/1143_longest_common_subsequence.py</code>
+            </div>
+
+            <h3>Example:</h3>
+            <pre>
+text1 = "abcde", text2 = "ace"
+Output: 3 (LCS = "ace")
+            </pre>
+        </div>
+
+        <div class="explanation-panel">
+            <h4>🧠 How It Works (Layman's Terms)</h4>
+            <p>Dynamic Programming <strong>breaks big problems into smaller ones</strong>:</p>
+            <ul>
+                <li><strong>Subproblems:</strong> Solve smaller versions first</li>
+                <li><strong>Memoization:</strong> Cache results to avoid recalculation</li>
+                <li><strong>Build up:</strong> Combine small solutions for final answer</li>
+                <li><strong>State:</strong> Define what each position represents</li>
+            </ul>
+        </div>
+
+
+        <section class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+            <div class="controls">
+                <button id="stepBtn" class="btn">Step</button>
+                <button id="autoBtn" class="btn btn-success">Auto Run</button>
+                <button id="resetBtn" class="btn btn-danger">Reset</button>
+            </div>
+            <div class="status" id="status">Find the longest subsequence common to both strings</div>
+            <svg id="visualization"></svg>
+        </section>
+
+        <section class="code-section">
+            <h3>💻 Python Solution</h3>
+            <div class="code-block">
+                <pre><span class="keyword">def</span> <span class="function">longestCommonSubsequence</span>(text1, text2):
+    m, n = <span class="function">len</span>(text1), <span class="function">len</span>(text2)
+    dp = [[<span class="number">0</span>] * (n + <span class="number">1</span>) <span class="keyword">for</span> _ <span class="keyword">in</span> <span class="function">range</span>(m + <span class="number">1</span>)]
+    
+    <span class="keyword">for</span> i <span class="keyword">in</span> <span class="function">range</span>(<span class="number">1</span>, m + <span class="number">1</span>):
+        <span class="keyword">for</span> j <span class="keyword">in</span> <span class="function">range</span>(<span class="number">1</span>, n + <span class="number">1</span>):
+            <span class="keyword">if</span> text1[i-<span class="number">1</span>] == text2[j-<span class="number">1</span>]:
+                dp[i][j] = dp[i-<span class="number">1</span>][j-<span class="number">1</span>] + <span class="number">1</span>
+            <span class="keyword">else</span>:
+                dp[i][j] = <span class="function">max</span>(dp[i-<span class="number">1</span>][j], dp[i][j-<span class="number">1</span>])
+    
+    <span class="keyword">return</span> dp[m][n]</pre>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        const width = 900;
+        const height = 600;
+
+        const svg = d3.select("#visualization")
+            .attr("width", width)
+            .attr("height", height);
+
+        const text1 = "abcde";
+        const text2 = "ace";
+        const m = text1.length;
+        const n = text2.length;
+
+        let dp = [];
+        let currentI = 1;
+        let currentJ = 1;
+        let isRunning = false;
+        let phase = "init";
+        let lcsPath = [];
+
+        function reset() {
+            dp = Array.from({ length: m + 1 }, () => Array(n + 1).fill(0));
+            currentI = 1;
+            currentJ = 1;
+            phase = "init";
+            lcsPath = [];
+            isRunning = false;
+            document.getElementById("autoBtn").textContent = "Auto Run";
+            document.getElementById("status").textContent = 
+                `Find LCS of "${text1}" and "${text2}"`;
+            render();
+        }
+
+        function computeLCSPath() {
+            lcsPath = [];
+            let i = m, j = n;
+            while (i > 0 && j > 0) {
+                if (text1[i-1] === text2[j-1]) {
+                    lcsPath.unshift({ i, j, char: text1[i-1] });
+                    i--;
+                    j--;
+                } else if (dp[i-1][j] > dp[i][j-1]) {
+                    i--;
+                } else {
+                    j--;
+                }
+            }
+        }
+
+        function render() {
+            svg.selectAll("*").remove();
+
+            const startX = 100;
+            const startY = 80;
+            const cellSize = 50;
+
+            // Column headers (text2)
+            svg.append("text")
+                .attr("x", startX + cellSize/2)
+                .attr("y", startY - 25)
+                .attr("text-anchor", "middle")
+                .attr("font-size", "14px")
+                .attr("fill", "#94a3b8")
+                .text("ε");
+
+            for (let j = 0; j < n; j++) {
+                const inLCS = lcsPath.some(p => p.j === j + 1);
+                svg.append("text")
+                    .attr("x", startX + (j + 1.5) * cellSize)
+                    .attr("y", startY - 25)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "18px")
+                    .attr("font-weight", "bold")
+                    .attr("fill", inLCS && phase === "done" ? "#10b981" : "#3b82f6")
+                    .text(text2[j]);
+            }
+
+            // Row headers (text1)
+            svg.append("text")
+                .attr("x", startX - 25)
+                .attr("y", startY + cellSize/2 + 5)
+                .attr("text-anchor", "middle")
+                .attr("font-size", "14px")
+                .attr("fill", "#94a3b8")
+                .text("ε");
+
+            for (let i = 0; i < m; i++) {
+                const inLCS = lcsPath.some(p => p.i === i + 1);
+                svg.append("text")
+                    .attr("x", startX - 25)
+                    .attr("y", startY + (i + 1.5) * cellSize + 5)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "18px")
+                    .attr("font-weight", "bold")
+                    .attr("fill", inLCS && phase === "done" ? "#10b981" : "#3b82f6")
+                    .text(text1[i]);
+            }
+
+            // DP table
+            for (let i = 0; i <= m; i++) {
+                for (let j = 0; j <= n; j++) {
+                    const x = startX + j * cellSize;
+                    const y = startY + i * cellSize;
+                    const isActive = i === currentI && j === currentJ && phase === "fill";
+                    const isResult = i === m && j === n && phase === "done";
+                    const inPath = lcsPath.some(p => p.i === i && p.j === j) && phase === "done";
+                    const isFilled = phase === "fill" ? 
+                        (i < currentI || (i === currentI && j <= currentJ)) : 
+                        (phase === "done");
+
+                    svg.append("rect")
+                        .attr("x", x)
+                        .attr("y", y)
+                        .attr("width", cellSize - 2)
+                        .attr("height", cellSize - 2)
+                        .attr("rx", 4)
+                        .attr("fill", () => {
+                            if (inPath) return "#d1fae5";
+                            if (isResult) return "#dbeafe";
+                            if (isActive) return "#fef3c7";
+                            if (isFilled) return "#f8fafc";
+                            return "#f1f5f9";
+                        })
+                        .attr("stroke", () => {
+                            if (inPath) return "#10b981";
+                            if (isResult) return "#3b82f6";
+                            if (isActive) return "#f59e0b";
+                            return "#e2e8f0";
+                        })
+                        .attr("stroke-width", (isActive || inPath || isResult) ? 2 : 1);
+
+                    if (isFilled || phase === "done" || i === 0 || j === 0) {
+                        svg.append("text")
+                            .attr("x", x + (cellSize - 2) / 2)
+                            .attr("y", y + (cellSize - 2) / 2 + 5)
+                            .attr("text-anchor", "middle")
+                            .attr("font-size", "16px")
+                            .attr("font-weight", "bold")
+                            .attr("fill", inPath ? "#10b981" : "#1e293b")
+                            .text(dp[i][j]);
+                    }
+                }
+            }
+
+            // Draw LCS path arrows
+            if (phase === "done" && lcsPath.length > 0) {
+                for (let k = 0; k < lcsPath.length - 1; k++) {
+                    const from = lcsPath[k];
+                    const to = lcsPath[k + 1];
+                    const x1 = startX + from.j * cellSize + cellSize/2;
+                    const y1 = startY + from.i * cellSize + cellSize/2;
+                    const x2 = startX + to.j * cellSize + cellSize/2;
+                    const y2 = startY + to.i * cellSize + cellSize/2;
+
+                    svg.append("line")
+                        .attr("x1", x1)
+                        .attr("y1", y1)
+                        .attr("x2", x2)
+                        .attr("y2", y2)
+                        .attr("stroke", "#10b981")
+                        .attr("stroke-width", 3)
+                        .attr("marker-end", "url(#arrow)");
+                }
+            }
+
+            // Arrow marker
+            svg.append("defs").append("marker")
+                .attr("id", "arrow")
+                .attr("viewBox", "0 -5 10 10")
+                .attr("refX", 8)
+                .attr("refY", 0)
+                .attr("markerWidth", 6)
+                .attr("markerHeight", 6)
+                .attr("orient", "auto")
+                .append("path")
+                .attr("d", "M0,-5L10,0L0,5")
+                .attr("fill", "#10b981");
+
+            // Current comparison highlight
+            if (phase === "fill" && currentI > 0 && currentJ > 0) {
+                const char1 = text1[currentI - 1];
+                const char2 = text2[currentJ - 1];
+                const match = char1 === char2;
+
+                svg.append("rect")
+                    .attr("x", 450)
+                    .attr("y", 100)
+                    .attr("width", 180)
+                    .attr("height", 80)
+                    .attr("rx", 10)
+                    .attr("fill", match ? "#d1fae5" : "#fee2e2")
+                    .attr("stroke", match ? "#10b981" : "#ef4444");
+
+                svg.append("text")
+                    .attr("x", 540)
+                    .attr("y", 135)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "20px")
+                    .attr("font-weight", "bold")
+                    .text(`'${char1}' ${match ? "==" : "≠"} '${char2}'`);
+
+                svg.append("text")
+                    .attr("x", 540)
+                    .attr("y", 165)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "14px")
+                    .attr("fill", "#64748b")
+                    .text(match ? "+1 to diagonal" : "max(up, left)");
+            }
+
+            // LCS result display
+            if (phase === "done") {
+                const lcsStr = lcsPath.map(p => p.char).join("");
+                
+                svg.append("rect")
+                    .attr("x", 450)
+                    .attr("y", 100)
+                    .attr("width", 250)
+                    .attr("height", 100)
+                    .attr("rx", 10)
+                    .attr("fill", "#d1fae5")
+                    .attr("stroke", "#10b981")
+                    .attr("stroke-width", 2);
+
+                svg.append("text")
+                    .attr("x", 575)
+                    .attr("y", 135)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "16px")
+                    .attr("font-weight", "bold")
+                    .attr("fill", "#1e293b")
+                    .text("Longest Common Subsequence:");
+
+                svg.append("text")
+                    .attr("x", 575)
+                    .attr("y", 175)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "28px")
+                    .attr("font-weight", "bold")
+                    .attr("fill", "#10b981")
+                    .text(`"${lcsStr}" (length ${dp[m][n]})`);
+            }
+
+            // Legend
+            const legend = svg.append("g").attr("transform", "translate(450, 250)");
+
+            legend.append("text")
+                .attr("x", 0)
+                .attr("y", 0)
+                .attr("font-size", "14px")
+                .attr("font-weight", "bold")
+                .text("Recurrence:");
+
+            legend.append("text")
+                .attr("x", 0)
+                .attr("y", 25)
+                .attr("font-size", "12px")
+                .attr("fill", "#64748b")
+                .text("If chars match:");
+
+            legend.append("text")
+                .attr("x", 0)
+                .attr("y", 45)
+                .attr("font-size", "12px")
+                .attr("font-family", "monospace")
+                .attr("fill", "#10b981")
+                .text("dp[i][j] = dp[i-1][j-1] + 1");
+
+            legend.append("text")
+                .attr("x", 0)
+                .attr("y", 75)
+                .attr("font-size", "12px")
+                .attr("fill", "#64748b")
+                .text("If chars don't match:");
+
+            legend.append("text")
+                .attr("x", 0)
+                .attr("y", 95)
+                .attr("font-size", "12px")
+                .attr("font-family", "monospace")
+                .attr("fill", "#ef4444")
+                .text("dp[i][j] = max(dp[i-1][j], dp[i][j-1])");
+        }
+
+        function step() {
+            if (phase === "done") return;
+
+            if (phase === "init") {
+                phase = "fill";
+                document.getElementById("status").textContent = 
+                    `Comparing text1[${currentI-1}]='${text1[currentI-1]}' with text2[${currentJ-1}]='${text2[currentJ-1]}'`;
+                render();
+                return;
+            }
+
+            if (phase === "fill") {
+                const char1 = text1[currentI - 1];
+                const char2 = text2[currentJ - 1];
+
+                if (char1 === char2) {
+                    dp[currentI][currentJ] = dp[currentI - 1][currentJ - 1] + 1;
+                    document.getElementById("status").textContent = 
+                        `Match! '${char1}' == '${char2}' → dp[${currentI}][${currentJ}] = ${dp[currentI-1][currentJ-1]} + 1 = ${dp[currentI][currentJ]}`;
+                } else {
+                    dp[currentI][currentJ] = Math.max(dp[currentI - 1][currentJ], dp[currentI][currentJ - 1]);
+                    document.getElementById("status").textContent = 
+                        `No match: '${char1}' ≠ '${char2}' → dp[${currentI}][${currentJ}] = max(${dp[currentI-1][currentJ]}, ${dp[currentI][currentJ-1]}) = ${dp[currentI][currentJ]}`;
+                }
+
+                render();
+
+                currentJ++;
+                if (currentJ > n) {
+                    currentJ = 1;
+                    currentI++;
+                    if (currentI > m) {
+                        phase = "done";
+                        computeLCSPath();
+                        const lcsStr = lcsPath.map(p => p.char).join("");
+                        document.getElementById("status").textContent = 
+                            `✓ LCS = "${lcsStr}", Length = ${dp[m][n]}`;
+                        render();
+                    }
+                }
+            }
+        }
+
+        async function autoRun() {
+            if (isRunning) {
+                isRunning = false;
+                document.getElementById("autoBtn").textContent = "Auto Run";
+                return;
+            }
+
+            isRunning = true;
+            document.getElementById("autoBtn").textContent = "Pause";
+
+            while (phase !== "done" && isRunning) {
+                step();
+                await new Promise(r => setTimeout(r, 250));
+            }
+
+            isRunning = false;
+            document.getElementById("autoBtn").textContent = "Auto Run";
+        }
+
+        document.getElementById("stepBtn").addEventListener("click", step);
+        document.getElementById("autoBtn").addEventListener("click", autoRun);
+        document.getElementById("resetBtn").addEventListener("click", reset);
+
+        reset();
+    </script>
+</body>
+</html>

@@ -1,0 +1,794 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NeetCode 150 - Algorithm Visualizations</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f8fafc;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .app-container {
+            display: flex;
+            height: 100vh;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 340px;
+            min-width: 340px;
+            background: #ffffff;
+            border-right: 1px solid #e2e8f0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .sidebar-header {
+            padding: 20px;
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            color: white;
+        }
+
+        .sidebar-header h1 {
+            font-size: 1.4em;
+            margin-bottom: 5px;
+        }
+
+        .sidebar-header p {
+            font-size: 0.85em;
+            opacity: 0.9;
+        }
+
+        .stats-row {
+            display: flex;
+            gap: 15px;
+            margin-top: 12px;
+        }
+
+        .stat-box {
+            background: rgba(255,255,255,0.15);
+            padding: 8px 14px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .stat-box .num {
+            font-size: 1.3em;
+            font-weight: bold;
+        }
+
+        .stat-box .label {
+            font-size: 0.75em;
+            opacity: 0.85;
+        }
+
+        /* Search & Filter */
+        .search-filter {
+            padding: 15px 20px;
+            background: #f8fafc;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .search-box {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 0.95em;
+            background: white;
+            transition: border-color 0.2s;
+        }
+
+        .search-box:focus {
+            outline: none;
+            border-color: #6366f1;
+        }
+
+        .filter-buttons {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .filter-btn {
+            flex: 1;
+            padding: 8px 12px;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            background: white;
+            cursor: pointer;
+            font-size: 0.85em;
+            transition: all 0.2s;
+            color: #64748b;
+        }
+
+        .filter-btn:hover {
+            background: #f1f5f9;
+        }
+
+        .filter-btn.active {
+            background: #6366f1;
+            color: white;
+            border-color: #6366f1;
+        }
+
+        /* Problem List */
+        .problem-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px;
+        }
+
+        .category {
+            margin-bottom: 15px;
+        }
+
+        .category-header {
+            padding: 10px 12px;
+            font-weight: 600;
+            color: #475569;
+            font-size: 0.9em;
+            background: #f1f5f9;
+            border-radius: 8px;
+            margin-bottom: 6px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .category-header:hover {
+            background: #e2e8f0;
+        }
+
+        .category-header .count {
+            font-size: 0.8em;
+            color: #94a3b8;
+        }
+
+        .category-items {
+            padding-left: 8px;
+        }
+
+        .problem-item {
+            display: flex;
+            align-items: center;
+            padding: 10px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.15s;
+            text-decoration: none;
+            color: inherit;
+            margin-bottom: 2px;
+        }
+
+        .problem-item:hover {
+            background: #f1f5f9;
+        }
+
+        .problem-item.active {
+            background: #eef2ff;
+            border-left: 3px solid #6366f1;
+        }
+
+        .problem-item.ready {
+            color: #1e293b;
+        }
+
+        .problem-num {
+            font-weight: 600;
+            font-size: 0.85em;
+            color: #6366f1;
+            min-width: 45px;
+        }
+
+        .problem-name {
+            flex: 1;
+            font-size: 0.9em;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .problem-status {
+            font-size: 0.7em;
+            padding: 3px 8px;
+            border-radius: 10px;
+            font-weight: 500;
+        }
+
+        .problem-status.ready {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: #f8fafc;
+            overflow: hidden;
+        }
+
+        .iframe-container {
+            flex: 1;
+            padding: 0;
+            overflow: hidden;
+        }
+
+        .iframe-container iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            background: white;
+        }
+
+        .welcome-screen {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            color: #64748b;
+        }
+
+        .welcome-screen h2 {
+            font-size: 1.8em;
+            color: #1e293b;
+            margin-bottom: 10px;
+        }
+
+        .welcome-screen p {
+            font-size: 1.1em;
+            max-width: 400px;
+            line-height: 1.6;
+        }
+
+        .welcome-icon {
+            font-size: 4em;
+            margin-bottom: 20px;
+        }
+
+        /* Scrollbar Styling */
+        .problem-list::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .problem-list::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .problem-list::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 3px;
+        }
+
+        .problem-list::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        /* Resize Handle */
+        .resize-handle {
+            width: 4px;
+            background: transparent;
+            cursor: col-resize;
+            transition: background 0.2s;
+        }
+
+        .resize-handle:hover {
+            background: #6366f1;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <div class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <h1>🚀 NeetCode 150+</h1>
+                <p>Interactive Algorithm Visualizations</p>
+                <div class="stats-row">
+                    <div class="stat-box">
+                        <div class="num" id="totalCount">193</div>
+                        <div class="label">Visuals</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="num" id="readyCount">0</div>
+                        <div class="label">Ready</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="num" id="categoryCount">17</div>
+                        <div class="label">Categories</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="search-filter">
+                <input type="text" class="search-box" id="searchBox" placeholder="🔍 Search problems...">
+                <div class="filter-buttons">
+                    <button class="filter-btn active" data-filter="all">All</button>
+                    <button class="filter-btn" data-filter="ready">✅ Ready</button>
+                </div>
+            </div>
+
+            <div class="problem-list" id="problemList">
+                <!-- Problems will be inserted here -->
+            </div>
+        </div>
+
+        <!-- Resize Handle -->
+        <div class="resize-handle" id="resizeHandle"></div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <div class="iframe-container" id="iframeContainer">
+                <div class="welcome-screen" id="welcomeScreen">
+                    <div class="welcome-icon">📊</div>
+                    <h2>Algorithm Visualizations</h2>
+                    <p>Select a problem from the sidebar to view its interactive visualization with step-by-step animations.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Problem data organized by category
+        const PROBLEMS = {
+            "Array & Hashing 📊": [
+                { num: "0001", name: "Two Sum", file: "visual/0001_two_sum.html" },
+                { num: "0036", name: "Valid Sudoku", file: "visual/0036_valid_sudoku.html" },
+                { num: "0049", name: "Group Anagrams", file: "visual/0049_group_anagrams.html" },
+                { num: "0088", name: "Merge Sorted Array", file: "visual/0088_merge_sorted_array.html" },
+                { num: "0118", name: "Pascal's Triangle", file: "visual/0118_pascals_triangle.html" },
+                { num: "0128", name: "Longest Consecutive Sequence", file: "visual/0128_longest_consecutive_sequence.html" },
+                { num: "0217", name: "Contains Duplicate", file: "visual/0217_contains_duplicate.html" },
+                { num: "0238", name: "Product of Array Except Self", file: "visual/0238_product_of_array_except_self.html" },
+                { num: "0242", name: "Valid Anagram", file: "visual/0242_valid_anagram.html" },
+                { num: "0271", name: "Encode and Decode Strings", file: "visual/0271_encode_and_decode_strings.html" },
+                { num: "0347", name: "Top K Frequent Elements", file: "visual/0347_top_k_frequent_elements.html" },
+                { num: "0953", name: "Verifying an Alien Dictionary", file: "visual/0953_verifying_an_alien_dictionary.html" },
+            ],
+            "Two Pointers 👉👉": [
+                { num: "0011", name: "Container With Most Water", file: "visual/0011_container_with_most_water.html" },
+                { num: "0015", name: "3Sum", file: "visual/0015_3_sum.html" },
+                { num: "0042", name: "Trapping Rain Water", file: "visual/0042_trapping_rain_water.html" },
+                { num: "0125", name: "Valid Palindrome", file: "visual/0125_valid_palindrome.html" },
+                { num: "0167", name: "Two Sum II", file: "visual/0167_two_sum_ii.html" },
+            ],
+            "Sliding Window 🪟": [
+                { num: "0003", name: "Longest Substring Without Repeating", file: "visual/0003_longest_substring.html" },
+                { num: "0076", name: "Minimum Window Substring", file: "visual/0076_minimum_window_substring.html" },
+                { num: "0121", name: "Best Time to Buy and Sell Stock", file: "visual/0121_best_time_to_buy_and_sell_stock.html" },
+                { num: "0239", name: "Sliding Window Maximum", file: "visual/0239_sliding_window_maximum.html" },
+                { num: "0424", name: "Longest Repeating Character Replacement", file: "visual/0424_longest_repeating_character.html" },
+                { num: "0567", name: "Permutation in String", file: "visual/0567_permutation_in_string.html" },
+            ],
+            "Stack 📚": [
+                { num: "0020", name: "Valid Parentheses", file: "visual/0020_valid_parentheses.html" },
+                { num: "0022", name: "Generate Parentheses", file: "visual/0022_generate_parentheses.html" },
+                { num: "0084", name: "Largest Rectangle in Histogram", file: "visual/0084_largest_rectangle_in_histogram.html" },
+                { num: "0150", name: "Evaluate Reverse Polish Notation", file: "visual/0150_evaluate_reverse_polish_notation.html" },
+                { num: "0155", name: "Min Stack", file: "visual/0155_min_stack.html" },
+                { num: "0716", name: "Max Stack", file: "visual/0716_max_stack.html" },
+                { num: "0739", name: "Daily Temperatures", file: "visual/0739_daily_temperatures.html" },
+                { num: "0853", name: "Car Fleet", file: "visual/0853_car_fleet.html" },
+                { num: "1249", name: "Min Remove to Make Valid Parentheses", file: "visual/1249_min_remove_parentheses.html" },
+            ],
+            "Binary Search 🔍": [
+                { num: "0004", name: "Median of Two Sorted Arrays", file: "visual/0004_median_two_sorted_arrays.html" },
+                { num: "0033", name: "Search in Rotated Sorted Array", file: "visual/0033_search_in_rotated_sorted_array.html" },
+                { num: "0034", name: "Find First and Last Position", file: "visual/0034_find_first_and_last_position.html" },
+                { num: "0074", name: "Search a 2D Matrix", file: "visual/0074_search_2d_matrix.html" },
+                { num: "0153", name: "Find Min in Rotated Sorted Array", file: "visual/0153_min_rotated_sorted.html" },
+                { num: "0704", name: "Binary Search", file: "visual/0704_binary_search.html" },
+                { num: "0875", name: "Koko Eating Bananas", file: "visual/0875_koko_eating_bananas.html" },
+                { num: "0981", name: "Time Based Key-Value Store", file: "visual/0981_time_based_key_value_store.html" },
+            ],
+            "Linked List 🔗": [
+                { num: "0002", name: "Add Two Numbers", file: "visual/0002_add_two_numbers.html" },
+                { num: "0019", name: "Remove Nth Node From End", file: "visual/0019_remove_nth_node.html" },
+                { num: "0021", name: "Merge Two Sorted Lists", file: "visual/0021_merge_two_sorted_lists.html" },
+                { num: "0023", name: "Merge K Sorted Lists", file: "visual/0023_merge_k_sorted_lists.html" },
+                { num: "0025", name: "Reverse Nodes in k-Group", file: "visual/0025_reverse_nodes_in_k_group.html" },
+                { num: "0138", name: "Copy List with Random Pointer", file: "visual/0138_copy_list_with_random_pointer.html" },
+                { num: "0141", name: "Linked List Cycle", file: "visual/0141_linked_list_cycle.html" },
+                { num: "0143", name: "Reorder List", file: "visual/0143_reorder_list.html" },
+                { num: "0146", name: "LRU Cache", file: "visual/0146_lru_cache.html" },
+                { num: "0148", name: "Sort List", file: "visual/0148_sort_list.html" },
+                { num: "0206", name: "Reverse Linked List", file: "visual/0206_reverse_linked_list.html" },
+                { num: "0234", name: "Palindrome Linked List", file: "visual/0234_palindrome_linked_list.html" },
+                { num: "0287", name: "Find the Duplicate Number", file: "visual/0287_find_duplicate_number.html" },
+                { num: "0876", name: "Middle of the Linked List", file: "visual/0876_middle_of_the_linked_list.html" },
+            ],
+            "Trees 🌳": [
+                { num: "0098", name: "Validate Binary Search Tree", file: "visual/0098_validate_binary_search_tree.html" },
+                { num: "0100", name: "Same Tree", file: "visual/0100_same_tree.html" },
+                { num: "0102", name: "Binary Tree Level Order Traversal", file: "visual/0102_binary_tree_level_order.html" },
+                { num: "0104", name: "Maximum Depth of Binary Tree", file: "visual/0104_max_depth_binary_tree.html" },
+                { num: "0105", name: "Construct Tree from Preorder/Inorder", file: "visual/0105_construct_binary_tree_from_preorder_and_inorder.html" },
+                { num: "0108", name: "Convert Sorted Array to BST", file: "visual/0108_convert_sorted_array_to_bst.html" },
+                { num: "0110", name: "Balanced Binary Tree", file: "visual/0110_balanced_binary_tree.html" },
+                { num: "0111", name: "Minimum Depth of Binary Tree", file: "visual/0111_minimum_depth_of_binary_tree.html" },
+                { num: "0112", name: "Path Sum", file: "visual/0112_path_sum.html" },
+                { num: "0113", name: "Path Sum II", file: "visual/0113_path_sum_ii.html" },
+                { num: "0114", name: "Flatten Binary Tree to Linked List", file: "visual/0114_flatten_binary_tree_to_linked_list.html" },
+                { num: "0124", name: "Binary Tree Maximum Path Sum", file: "visual/0124_binary_tree_maximum_path_sum.html" },
+                { num: "0199", name: "Binary Tree Right Side View", file: "visual/0199_binary_tree_right_side_view.html" },
+                { num: "0208", name: "Implement Trie", file: "visual/0208_implement_trie.html" },
+                { num: "0211", name: "Design Add and Search Words", file: "visual/0211_design_add_and_search_words.html" },
+                { num: "0212", name: "Word Search II", file: "visual/0212_word_search_ii.html" },
+                { num: "0226", name: "Invert Binary Tree", file: "visual/0226_invert_binary_tree.html" },
+                { num: "0230", name: "Kth Smallest Element in BST", file: "visual/0230_kth_smallest_element_in_bst.html" },
+                { num: "0235", name: "Lowest Common Ancestor of BST", file: "visual/0235_lowest_common_ancestor_of_bst.html" },
+                { num: "0297", name: "Serialize and Deserialize Tree", file: "visual/0297_serialize_and_deserialize_binary_tree.html" },
+                { num: "0366", name: "Find Leaves of Binary Tree", file: "visual/0366_find_leaves_of_binary_tree.html" },
+                { num: "0543", name: "Diameter of Binary Tree", file: "visual/0543_diameter_of_binary_tree.html" },
+                { num: "0572", name: "Subtree of Another Tree", file: "visual/0572_subtree_of_another_tree.html" },
+                { num: "1448", name: "Count Good Nodes in Binary Tree", file: "visual/1448_count_good_nodes_in_binary_tree.html" },
+            ],
+            "Heap / Priority Queue ⛰️": [
+                { num: "0215", name: "Kth Largest Element in Array", file: "visual/0215_kth_largest_element.html" },
+                { num: "0295", name: "Find Median from Data Stream", file: "visual/0295_find_median_data_stream.html" },
+                { num: "0355", name: "Design Twitter", file: "visual/0355_design_twitter.html" },
+                { num: "0621", name: "Task Scheduler", file: "visual/0621_task_scheduler.html" },
+                { num: "0703", name: "Kth Largest Element in a Stream", file: "visual/0703_kth_largest_element_in_a_stream.html" },
+                { num: "0973", name: "K Closest Points to Origin", file: "visual/0973_k_closest_points.html" },
+                { num: "1046", name: "Last Stone Weight", file: "visual/1046_last_stone_weight.html" },
+                { num: "1086", name: "High Five", file: "visual/1086_high_five.html" },
+                { num: "1851", name: "Min Interval to Include Each Query", file: "visual/1851_minimum_interval_to_include_each_query.html" },
+            ],
+            "Graphs 📊": [
+                { num: "0127", name: "Word Ladder", file: "visual/0127_word_ladder.html" },
+                { num: "0130", name: "Surrounded Regions", file: "visual/0130_surrounded_regions.html" },
+                { num: "0133", name: "Clone Graph", file: "visual/0133_clone_graph.html" },
+                { num: "0200", name: "Number of Islands", file: "visual/0200_number_of_islands.html" },
+                { num: "0207", name: "Course Schedule", file: "visual/0207_course_schedule.html" },
+                { num: "0210", name: "Course Schedule II", file: "visual/0210_course_schedule_ii.html" },
+                { num: "0261", name: "Graph Valid Tree", file: "visual/0261_graph_valid_tree.html" },
+                { num: "0269", name: "Alien Dictionary", file: "visual/0269_alien_dictionary.html" },
+                { num: "0277", name: "Find the Celebrity", file: "visual/0277_find_the_celebrity.html" },
+                { num: "0286", name: "Walls and Gates", file: "visual/0286_walls_and_gates.html" },
+                { num: "0323", name: "Number of Connected Components", file: "visual/0323_number_of_connected_components.html" },
+                { num: "0329", name: "Longest Increasing Path in Matrix", file: "visual/0329_longest_increasing_path_in_a_matrix.html" },
+                { num: "0332", name: "Reconstruct Itinerary", file: "visual/0332_reconstruct_itinerary.html" },
+                { num: "0417", name: "Pacific Atlantic Water Flow", file: "visual/0417_pacific_atlantic_water_flow.html" },
+                { num: "0547", name: "Number of Provinces", file: "visual/0547_number_of_provinces.html" },
+                { num: "0684", name: "Redundant Connection", file: "visual/0684_redundant_connection.html" },
+                { num: "0695", name: "Max Area of Island", file: "visual/0695_max_area_of_island.html" },
+                { num: "0743", name: "Network Delay Time", file: "visual/0743_network_delay_time.html" },
+                { num: "0778", name: "Swim in Rising Water", file: "visual/0778_swim_in_rising_water.html" },
+                { num: "0787", name: "Cheapest Flights Within K Stops", file: "visual/0787_cheapest_flights_within_k_stops.html" },
+                { num: "0994", name: "Rotting Oranges", file: "visual/0994_rotting_oranges.html" },
+                { num: "1584", name: "Min Cost to Connect All Points", file: "visual/1584_min_cost_connect_points.html" },
+            ],
+            "Dynamic Programming 📈": [
+                { num: "0005", name: "Longest Palindromic Substring", file: "visual/0005_longest_palindromic_substring.html" },
+                { num: "0010", name: "Regular Expression Matching", file: "visual/0010_regular_expression_matching.html" },
+                { num: "0045", name: "Jump Game II", file: "visual/0045_jump_game_ii.html" },
+                { num: "0053", name: "Maximum Subarray", file: "visual/0053_maximum_subarray.html" },
+                { num: "0055", name: "Jump Game", file: "visual/0055_jump_game.html" },
+                { num: "0062", name: "Unique Paths", file: "visual/0062_unique_paths.html" },
+                { num: "0070", name: "Climbing Stairs", file: "visual/0070_climbing_stairs.html" },
+                { num: "0072", name: "Edit Distance", file: "visual/0072_edit_distance.html" },
+                { num: "0091", name: "Decode Ways", file: "visual/0091_decode_ways.html" },
+                { num: "0097", name: "Interleaving String", file: "visual/0097_interleaving_string.html" },
+                { num: "0115", name: "Distinct Subsequences", file: "visual/0115_distinct_subsequences.html" },
+                { num: "0139", name: "Word Break", file: "visual/0139_word_break.html" },
+                { num: "0152", name: "Maximum Product Subarray", file: "visual/0152_maximum_product_subarray.html" },
+                { num: "0198", name: "House Robber", file: "visual/0198_house_robber.html" },
+                { num: "0213", name: "House Robber II", file: "visual/0213_house_robber_ii.html" },
+                { num: "0300", name: "Longest Increasing Subsequence", file: "visual/0300_longest_increasing_subsequence.html" },
+                { num: "0309", name: "Best Time Buy/Sell with Cooldown", file: "visual/0309_best_time_cooldown.html" },
+                { num: "0312", name: "Burst Balloons", file: "visual/0312_burst_balloons.html" },
+                { num: "0322", name: "Coin Change", file: "visual/0322_coin_change.html" },
+                { num: "0416", name: "Partition Equal Subset Sum", file: "visual/0416_partition_equal_subset_sum.html" },
+                { num: "0494", name: "Target Sum", file: "visual/0494_target_sum.html" },
+                { num: "0518", name: "Coin Change II", file: "visual/0518_coin_change_ii.html" },
+                { num: "0647", name: "Palindromic Substrings", file: "visual/0647_palindromic_substrings.html" },
+                { num: "0746", name: "Min Cost Climbing Stairs", file: "visual/0746_min_cost_climbing_stairs.html" },
+                { num: "0818", name: "Race Car", file: "visual/0818_race_car.html" },
+                { num: "1143", name: "Longest Common Subsequence", file: "visual/1143_longest_common_subsequence.html" },
+            ],
+            "Greedy 🤑": [
+                { num: "0134", name: "Gas Station", file: "visual/0134_gas_station.html" },
+                { num: "0179", name: "Largest Number", file: "visual/0179_largest_number.html" },
+                { num: "0678", name: "Valid Parenthesis String", file: "visual/0678_valid_parenthesis_string.html" },
+                { num: "0763", name: "Partition Labels", file: "visual/0763_partition_labels.html" },
+                { num: "0846", name: "Hand of Straights", file: "visual/0846_hand_of_straights.html" },
+                { num: "1899", name: "Merge Triplets to Form Target", file: "visual/1899_merge_triplets_to_form_target_triplet.html" },
+            ],
+            "Backtracking ↩️": [
+                { num: "0017", name: "Letter Combinations of Phone", file: "visual/0017_letter_combinations.html" },
+                { num: "0039", name: "Combination Sum", file: "visual/0039_combination_sum.html" },
+                { num: "0040", name: "Combination Sum II", file: "visual/0040_combination_sum_ii.html" },
+                { num: "0046", name: "Permutations", file: "visual/0046_permutations.html" },
+                { num: "0051", name: "N-Queens", file: "visual/0051_n_queens.html" },
+                { num: "0078", name: "Subsets", file: "visual/0078_subsets.html" },
+                { num: "0079", name: "Word Search", file: "visual/0079_word_search.html" },
+                { num: "0090", name: "Subsets II", file: "visual/0090_subsets_ii.html" },
+                { num: "0131", name: "Palindrome Partitioning", file: "visual/0131_palindrome_partitioning.html" },
+            ],
+            "Math & Geometry 📐": [
+                { num: "0007", name: "Reverse Integer", file: "visual/0007_reverse_integer.html" },
+                { num: "0043", name: "Multiply Strings", file: "visual/0043_multiply_strings.html" },
+                { num: "0048", name: "Rotate Image", file: "visual/0048_rotate_image.html" },
+                { num: "0050", name: "Pow(x, n)", file: "visual/0050_pow_x_n.html" },
+                { num: "0054", name: "Spiral Matrix", file: "visual/0054_spiral_matrix.html" },
+                { num: "0066", name: "Plus One", file: "visual/0066_plus_one.html" },
+                { num: "0073", name: "Set Matrix Zeroes", file: "visual/0073_set_matrix_zeroes.html" },
+                { num: "0136", name: "Single Number", file: "visual/0136_single_number.html" },
+                { num: "0190", name: "Reverse Bits", file: "visual/0190_reverse_bits.html" },
+                { num: "0191", name: "Number of 1 Bits", file: "visual/0191_number_of_1_bits.html" },
+                { num: "0202", name: "Happy Number", file: "visual/0202_happy_number.html" },
+                { num: "0268", name: "Missing Number", file: "visual/0268_missing_number.html" },
+                { num: "0338", name: "Counting Bits", file: "visual/0338_counting_bits.html" },
+                { num: "0371", name: "Sum of Two Integers", file: "visual/0371_sum_of_two_integers.html" },
+            ],
+            "Intervals 📅": [
+                { num: "0056", name: "Merge Intervals", file: "visual/0056_merge_intervals.html" },
+                { num: "0057", name: "Insert Interval", file: "visual/0057_insert_interval.html" },
+                { num: "0252", name: "Meeting Rooms", file: "visual/0252_meeting_rooms.html" },
+                { num: "0253", name: "Meeting Rooms II", file: "visual/0253_meeting_rooms_ii.html" },
+                { num: "0435", name: "Non-overlapping Intervals", file: "visual/0435_non_overlapping_intervals.html" },
+                { num: "0759", name: "Employee Free Time", file: "visual/0759_employee_free_time.html" },
+                { num: "1272", name: "Remove Interval", file: "visual/1272_remove_interval.html" },
+            ],
+            "String 🔤": [
+                { num: "0006", name: "Zigzag Conversion", file: "visual/0006_zigzag_conversion.html" },
+                { num: "0008", name: "String to Integer (atoi)", file: "visual/0008_string_to_integer_atoi.html" },
+                { num: "0009", name: "Palindrome Number", file: "visual/0009_palindrome_number.html" },
+                { num: "0012", name: "Integer to Roman", file: "visual/0012_integer_to_roman.html" },
+                { num: "0013", name: "Roman to Integer", file: "visual/0013_roman_to_integer.html" },
+                { num: "0014", name: "Longest Common Prefix", file: "visual/0014_longest_common_prefix.html" },
+                { num: "0031", name: "Next Permutation", file: "visual/0031_next_permutation.html" },
+                { num: "0032", name: "Longest Valid Parentheses", file: "visual/0032_longest_valid_parentheses.html" },
+                { num: "0068", name: "Text Justification", file: "visual/0068_text_justification.html" },
+            ],
+            "Extra Problems ⭐": [
+                { num: "0024", name: "Swap Nodes in Pairs", file: "visual/0024_swap_nodes_in_pairs.html" },
+                { num: "0041", name: "First Missing Positive", file: "visual/0041_first_missing_positive.html" },
+                { num: "0094", name: "Binary Tree Inorder Traversal", file: "visual/0094_binary_tree_inorder_traversal.html" },
+                { num: "0101", name: "Symmetric Tree", file: "visual/0101_symmetric_tree.html" },
+                { num: "0103", name: "Binary Tree Zigzag Level Order", file: "visual/0103_binary_tree_zigzag_level_order.html" },
+                { num: "0169", name: "Majority Element", file: "visual/0169_majority_element.html" },
+                { num: "0289", name: "Game of Life", file: "visual/0289_game_of_life.html" },
+                { num: "0346", name: "Moving Average from Data Stream", file: "visual/0346_moving_average_from_data_stream.html" },
+                { num: "0348", name: "Design Tic-Tac-Toe", file: "visual/0348_design_tic_tac_toe.html" },
+                { num: "0359", name: "Logger Rate Limiter", file: "visual/0359_logger_rate_limiter.html" },
+                { num: "0380", name: "Insert Delete GetRandom O(1)", file: "visual/0380_insert_delete_getrandom_o1.html" },
+                { num: "0412", name: "Fizz Buzz", file: "visual/0412_fizz_buzz.html" },
+                { num: "2013", name: "Detect Squares", file: "visual/2013_detect_squares.html" },
+            ],
+        };
+
+        // Check which files exist (will be populated dynamically)
+        const existingFiles = new Set();
+        let totalReady = 0;
+
+        // DOM Elements
+        const problemList = document.getElementById('problemList');
+        const searchBox = document.getElementById('searchBox');
+        const filterButtons = document.querySelectorAll('.filter-btn');
+        const iframeContainer = document.getElementById('iframeContainer');
+        const welcomeScreen = document.getElementById('welcomeScreen');
+
+        let currentFilter = 'all';
+        let currentIframe = null;
+
+        // Known existing files - populated from actual file system
+        // This list is auto-generated and should match actual visualization files
+        // Last updated: 2025-01 - 193 visualizations
+        const KNOWN_FILES = [
+            "visual/0001_two_sum.html", "visual/0002_add_two_numbers.html", "visual/0003_longest_substring.html",
+            "visual/0004_median_two_sorted_arrays.html", "visual/0005_longest_palindromic_substring.html",
+            "visual/0006_zigzag_conversion.html", "visual/0007_reverse_integer.html", "visual/0008_string_to_integer_atoi.html",
+            "visual/0009_palindrome_number.html", "visual/0010_regular_expression_matching.html",
+            "visual/0011_container_with_most_water.html", "visual/0012_integer_to_roman.html", "visual/0013_roman_to_integer.html",
+            "visual/0014_longest_common_prefix.html", "visual/0015_3_sum.html", "visual/0017_letter_combinations.html",
+            "visual/0019_remove_nth_node.html", "visual/0020_valid_parentheses.html", "visual/0021_merge_two_sorted_lists.html",
+            "visual/0022_generate_parentheses.html", "visual/0023_merge_k_sorted_lists.html", "visual/0024_swap_nodes_in_pairs.html",
+            "visual/0025_reverse_nodes_in_k_group.html", "visual/0031_next_permutation.html", "visual/0032_longest_valid_parentheses.html",
+            "visual/0033_search_in_rotated_sorted_array.html", "visual/0034_find_first_and_last_position.html",
+            "visual/0036_valid_sudoku.html", "visual/0039_combination_sum.html", "visual/0040_combination_sum_ii.html",
+            "visual/0041_first_missing_positive.html", "visual/0042_trapping_rain_water.html", "visual/0043_multiply_strings.html",
+            "visual/0045_jump_game_ii.html", "visual/0046_permutations.html", "visual/0048_rotate_image.html",
+            "visual/0049_group_anagrams.html", "visual/0050_pow_x_n.html", "visual/0051_n_queens.html",
+            "visual/0053_maximum_subarray.html", "visual/0054_spiral_matrix.html", "visual/0055_jump_game.html",
+            "visual/0056_merge_intervals.html", "visual/0057_insert_interval.html", "visual/0062_unique_paths.html",
+            "visual/0066_plus_one.html", "visual/0068_text_justification.html", "visual/0070_climbing_stairs.html",
+            "visual/0072_edit_distance.html", "visual/0073_set_matrix_zeroes.html", "visual/0074_search_2d_matrix.html",
+            "visual/0076_minimum_window_substring.html", "visual/0078_subsets.html", "visual/0079_word_search.html",
+            "visual/0084_largest_rectangle_in_histogram.html", "visual/0088_merge_sorted_array.html",
+            "visual/0090_subsets_ii.html", "visual/0091_decode_ways.html", "visual/0094_binary_tree_inorder_traversal.html",
+            "visual/0097_interleaving_string.html", "visual/0098_validate_binary_search_tree.html", "visual/0100_same_tree.html",
+            "visual/0101_symmetric_tree.html", "visual/0102_binary_tree_level_order.html", "visual/0103_binary_tree_zigzag_level_order.html",
+            "visual/0104_max_depth_binary_tree.html", "visual/0105_construct_binary_tree_from_preorder_and_inorder.html",
+            "visual/0108_convert_sorted_array_to_bst.html", "visual/0110_balanced_binary_tree.html",
+            "visual/0111_minimum_depth_of_binary_tree.html", "visual/0112_path_sum.html", "visual/0113_path_sum_ii.html",
+            "visual/0114_flatten_binary_tree_to_linked_list.html", "visual/0115_distinct_subsequences.html",
+            "visual/0118_pascals_triangle.html", "visual/0121_best_time_to_buy_and_sell_stock.html",
+            "visual/0124_binary_tree_maximum_path_sum.html", "visual/0125_valid_palindrome.html", "visual/0127_word_ladder.html",
+            "visual/0128_longest_consecutive_sequence.html", "visual/0130_surrounded_regions.html",
+            "visual/0131_palindrome_partitioning.html", "visual/0133_clone_graph.html", "visual/0134_gas_station.html",
+            "visual/0136_single_number.html", "visual/0138_copy_list_with_random_pointer.html", "visual/0139_word_break.html",
+            "visual/0141_linked_list_cycle.html", "visual/0143_reorder_list.html", "visual/0146_lru_cache.html",
+            "visual/0148_sort_list.html", "visual/0150_evaluate_reverse_polish_notation.html",
+            "visual/0152_maximum_product_subarray.html", "visual/0153_min_rotated_sorted.html", "visual/0155_min_stack.html",
+            "visual/0167_two_sum_ii.html", "visual/0169_majority_element.html", "visual/0179_largest_number.html",
+            "visual/0190_reverse_bits.html", "visual/0191_number_of_1_bits.html", "visual/0198_house_robber.html",
+            "visual/0199_binary_tree_right_side_view.html", "visual/0200_number_of_islands.html", "visual/0202_happy_number.html",
+            "visual/0206_reverse_linked_list.html", "visual/0207_course_schedule.html", "visual/0208_implement_trie.html",
+            "visual/0210_course_schedule_ii.html", "visual/0211_design_add_and_search_words.html", "visual/0212_word_search_ii.html",
+            "visual/0213_house_robber_ii.html", "visual/0215_kth_largest_element.html", "visual/0217_contains_duplicate.html",
+            "visual/0226_invert_binary_tree.html", "visual/0230_kth_smallest_element_in_bst.html",
+            "visual/0234_palindrome_linked_list.html", "visual/0235_lowest_common_ancestor_of_bst.html",
+            "visual/0238_product_of_array_except_self.html", "visual/0239_sliding_window_maximum.html",
+            "visual/0242_valid_anagram.html", "visual/0252_meeting_rooms.html", "visual/0253_meeting_rooms_ii.html",
+            "visual/0261_graph_valid_tree.html", "visual/0268_missing_number.html", "visual/0269_alien_dictionary.html",
+            "visual/0271_encode_and_decode_strings.html", "visual/0277_find_the_celebrity.html",
+            "visual/0286_walls_and_gates.html", "visual/0287_find_duplicate_number.html", "visual/0289_game_of_life.html",
+            "visual/0295_find_median_data_stream.html", "visual/0297_serialize_and_deserialize_binary_tree.html",
+            "visual/0300_longest_increasing_subsequence.html", "visual/0309_best_time_cooldown.html",
+            "visual/0312_burst_balloons.html", "visual/0322_coin_change.html", "visual/0323_number_of_connected_components.html",
+            "visual/0329_longest_increasing_path_in_a_matrix.html", "visual/0332_reconstruct_itinerary.html",
+            "visual/0338_counting_bits.html", "visual/0346_moving_average_from_data_stream.html",
+            "visual/0347_top_k_frequent_elements.html", "visual/0348_design_tic_tac_toe.html", "visual/0355_design_twitter.html",
+            "visual/0359_logger_rate_limiter.html", "visual/0366_find_leaves_of_binary_tree.html",
+            "visual/0371_sum_of_two_integers.html", "visual/0380_insert_delete_getrandom_o1.html",
+            "visual/0412_fizz_buzz.html", "visual/0416_partition_equal_subset_sum.html",
+            "visual/0417_pacific_atlantic_water_flow.html", "visual/0424_longest_repeating_character.html",
+            "visual/0435_non_overlapping_intervals.html", "visual/0494_target_sum.html", "visual/0518_coin_change_ii.html",
+            "visual/0543_diameter_of_binary_tree.html", "visual/0547_number_of_provinces.html",
+            "visual/0567_permutation_in_string.html", "visual/0572_subtree_of_another_tree.html",
+            "visual/0621_task_scheduler.html", "visual/0647_palindromic_substrings.html",
+            "visual/0678_valid_parenthesis_string.html", "visual/0684_redundant_connection.html", "visual/0695_max_area_of_island.html",
+            "visual/0703_kth_largest_element_in_a_stream.html", "visual/0704_binary_search.html",
+            "visual/0716_max_stack.html", "visual/0739_daily_temperatures.html",
+            "visual/0743_network_delay_time.html", "visual/0746_min_cost_climbing_stairs.html",
+            "visual/0759_employee_free_time.html", "visual/0763_partition_labels.html",
+            "visual/0778_swim_in_rising_water.html", "visual/0787_cheapest_flights_within_k_stops.html",
+            "visual/0818_race_car.html", "visual/0846_hand_of_straights.html", "visual/0853_car_fleet.html",
+            "visual/0875_koko_eating_bananas.html", "visual/0876_middle_of_the_linked_list.html",
+            "visual/0953_verifying_an_alien_dictionary.html", "visual/0973_k_closest_points.html",
+            "visual/0981_time_based_key_value_store.html", "visual/0994_rotting_oranges.html",
+            "visual/1046_last_stone_weight.html", "visual/1086_high_five.html", "visual/1143_longest_common_subsequence.html",
+            "visual/1249_min_remove_parentheses.html", "visual/1272_remove_interval.html",
+            "visual/1448_count_good_nodes_in_binary_tree.html", "visual/1584_min_cost_connect_points.html",
+            "visual/1851_minimum_interval_to_include_each_query.html", "visual/1899_merge_triplets_to_form_target_triplet.html",
+            "visual/2013_detect_squares.html"
+        ];
+
+        // Initialize - use known files list (works with file:// protocol)
+        function initialize() {
+            // Add all known files to the set
+            KNOWN_FILES.forEach(file => {
+                existingFiles.add(file);
+                totalReady++;
+            });
+
+            document.getElementById('readyCount').textContent = totalReady;
+            renderProblemList();
+        }
+
+        // Render problem list
+        function renderProblemList() {
+            const searchTerm = searchBox.value.toLowerCase();
+            problemList.innerHTML = '';
+
+            for (const [category, problems] of Object.entries(PROBLEMS)) {
+                const filteredProblems = problems.filter(problem => {
+                    const matchesSearch = problem.name.toLowerCase().includes(searchTerm) ||
+                                         problem.num.includes(searchTerm);
+                    const isReady = existingFiles.has(problem.file);
+                    
+                    if (currentFilter === 'ready' && !isReady) return false;
+                    
+                    return matchesSearch;
+                });
+
+                if (filteredProblems.length === 0) continue;
+
+                const readyCount = filteredProblems.filter(p => existingFiles.has(p.file)).length;
+
+                const categoryDiv = document.createElement('div');
+                categoryDiv.className = 'category';
+                categoryDiv.innerHTML = `
+                    <div class="category-header">
+                        <span>${category}</span>
+                        <span class="count">${readyCount}/${filteredProblems.length}</span>
+                    </div>
+                    <div class="category-items"></div>
+                `;
+
+                const itemsContainer = categoryDiv.querySelector('.category-items');
+
+                filteredProblems.forEach(problem => {
+                    const isReady = existingFiles.has(problem.file);
+                    const item = document.createElement('div');
+                    item.className = `problem-item ${isReady ? 'ready' : ''}`;
+                    item.innerHTML = `
+                        <span class="problem-num">#${problem.num}</span>
+                        <span class="problem-name">${problem.name}</span>
+                        <span class="problem-status ready">✓</span>
+                    `;
+
+                    if (isReady) {
+                        item.addEventListener('click', (e) => loadVisualization(problem, e.currentTarget));
+                    }
+
+                    itemsContainer.appendChild(item);
+                });
+
+                problemList.appendChild(categoryDiv);
+            }
+        }
+
+        // Load visualization in iframe
+        function loadVisualization(problem, clickedElement) {
+            // Update active state
+            document.querySelectorAll('.problem-item').forEach(item => item.classList.remove('active'));
+            if (clickedElement) clickedElement.classList.add('active');
+
+            // Hide welcome screen
+            welcomeScreen.style.display = 'none';
+
+            // Create or update iframe
+            if (!currentIframe) {
+                currentIframe = document.createElement('iframe');
+                iframeContainer.appendChild(currentIframe);
+            }
+            currentIframe.src = problem.file;
+        }
+
+        // Event listeners
+        searchBox.addEventListener('input', renderProblemList);
+
+        filterButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                filterButtons.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                currentFilter = btn.dataset.filter;
+                renderProblemList();
+            });
+        });
+
+        // Sidebar resize functionality
+        const sidebar = document.getElementById('sidebar');
+        const resizeHandle = document.getElementById('resizeHandle');
+        let isResizing = false;
+
+        resizeHandle.addEventListener('mousedown', (e) => {
+            isResizing = true;
+            document.addEventListener('mousemove', handleMouseMove);
+            document.addEventListener('mouseup', () => {
+                isResizing = false;
+                document.removeEventListener('mousemove', handleMouseMove);
+            });
+        });
+
+        function handleMouseMove(e) {
+            if (!isResizing) return;
+            const newWidth = Math.max(250, Math.min(500, e.clientX));
+            sidebar.style.width = newWidth + 'px';
+            sidebar.style.minWidth = newWidth + 'px';
+        }
+
+        // Initialize
+        initialize();
+    </script>
+</body>
+</html>

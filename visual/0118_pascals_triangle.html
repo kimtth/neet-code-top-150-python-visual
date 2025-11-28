@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>118 - Pascal's Triangle</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="problem-info">
+            <h1><span class="problem-number">#118</span> Pascal's Triangle</h1>
+            <p>
+                Given an integer numRows, return the first numRows of Pascal's triangle.
+                In Pascal's triangle, each number is the sum of the two numbers directly above it.
+            </p>
+            <h3>Key Pattern</h3>
+            <p>
+                Each row starts and ends with 1. For middle elements: 
+                <strong>triangle[row][col] = triangle[row-1][col-1] + triangle[row-1][col]</strong>
+            </p>
+            <div class="problem-meta">
+                <span class="meta-tag">📝 Algorithm</span>
+                <span class="meta-tag">⏱️ O(n)</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <code>python/0118_pascal's_triangle/0118_pascal's_triangle.py</code>
+            </div>
+
+        </div>
+
+        <div class="explanation-panel">
+            <h4>🧠 How It Works (Layman's Terms)</h4>
+            <p>This algorithm solves the problem <strong>step by step</strong>:</p>
+            <ul>
+                <li><strong>Understand:</strong> Parse the input data</li>
+                <li><strong>Process:</strong> Apply the core logic</li>
+                <li><strong>Optimize:</strong> Use efficient data structures</li>
+                <li><strong>Return:</strong> Output the computed result</li>
+            </ul>
+        </div>
+
+
+        <section class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+            <div class="controls">
+                <button id="autoRunBtn" class="btn">▶ Auto Run</button>
+                <button id="stepBtn" class="btn btn-success">Step</button>
+                <button id="resetBtn" class="btn btn-danger">Reset</button>
+                <label style="margin-left: 20px;">
+                    Rows: <input type="range" id="rowSlider" min="1" max="10" value="6">
+                    <span id="rowCount">6</span>
+                </label>
+            </div>
+            <div class="status" id="status">Click Auto Run to build Pascal's Triangle row by row</div>
+            <svg id="visualization"></svg>
+        </section>
+
+        <section class="code-section">
+            <h3>💻 Python Solution</h3>
+            <div class="code-block">
+                <pre><span class="keyword">def</span> <span class="function">generate</span>(numRows):
+    result = []
+    <span class="keyword">if</span> numRows >= <span class="number">1</span>:
+        result.<span class="function">append</span>([<span class="number">1</span>])
+    
+    <span class="keyword">for</span> row <span class="keyword">in</span> <span class="function">range</span>(<span class="number">1</span>, numRows):
+        current_row = [<span class="number">1</span>]  <span class="comment"># Start with 1</span>
+        prev_row = result[row - <span class="number">1</span>]
+        
+        <span class="comment"># Middle elements: sum of two above</span>
+        <span class="keyword">for</span> j <span class="keyword">in</span> <span class="function">range</span>(<span class="number">1</span>, row):
+            current_row.<span class="function">append</span>(prev_row[j-<span class="number">1</span>] + prev_row[j])
+        
+        current_row.<span class="function">append</span>(<span class="number">1</span>)  <span class="comment"># End with 1</span>
+        result.<span class="function">append</span>(current_row)
+    
+    <span class="keyword">return</span> result</pre>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        const width = 900;
+        const height = 600;
+
+        const svg = d3.select("#visualization")
+            .attr("width", width)
+            .attr("height", height);
+
+        let numRows = 6;
+        let triangle = [];
+        let currentRow = 0;
+        let currentCol = 0;
+        let phase = "init";
+        let animationTimer = null;
+        let highlighting = null;
+
+        document.getElementById("rowSlider").addEventListener("input", (e) => {
+            numRows = parseInt(e.target.value);
+            document.getElementById("rowCount").textContent = numRows;
+            reset();
+        });
+
+        function reset() {
+            triangle = [];
+            currentRow = 0;
+            currentCol = 0;
+            phase = "init";
+            highlighting = null;
+
+            if (animationTimer) clearInterval(animationTimer);
+            animationTimer = null;
+            document.getElementById("autoRunBtn").textContent = "▶ Auto Run";
+            document.getElementById("status").textContent = 
+                `Building Pascal's Triangle with ${numRows} rows`;
+            render();
+        }
+
+        function render() {
+            svg.selectAll("*").remove();
+
+            const cellSize = 55;
+            const startY = 50;
+            const centerX = width / 2;
+
+            // Title
+            svg.append("text")
+                .attr("x", 30)
+                .attr("y", 25)
+                .attr("font-size", "14px")
+                .attr("font-weight", "bold")
+                .attr("fill", "#1e293b")
+                .text(`Pascal's Triangle (${numRows} rows)`);
+
+            // Draw the triangle
+            for (let row = 0; row < triangle.length; row++) {
+                const rowValues = triangle[row];
+                const rowWidth = rowValues.length * cellSize;
+                const startX = centerX - rowWidth / 2;
+
+                for (let col = 0; col < rowValues.length; col++) {
+                    const x = startX + col * cellSize;
+                    const y = startY + row * 55;
+                    const value = rowValues[col];
+                    
+                    const isCurrentCell = row === currentRow && col === currentCol && phase !== "done";
+                    const isHighlighted = highlighting && 
+                        ((row === highlighting.row && col === highlighting.col1) ||
+                         (row === highlighting.row && col === highlighting.col2));
+                    const isNewCell = row === currentRow && phase === "building";
+                    const isJustAdded = row === currentRow && col < currentCol;
+
+                    // Draw hexagon-like shape for visual appeal
+                    const hexPath = `M${x + cellSize/2},${y} 
+                                    L${x + cellSize - 5},${y + 15} 
+                                    L${x + cellSize - 5},${y + 40} 
+                                    L${x + cellSize/2},${y + 55} 
+                                    L${x + 5},${y + 40} 
+                                    L${x + 5},${y + 15} Z`;
+
+                    svg.append("path")
+                        .attr("d", hexPath)
+                        .attr("fill", () => {
+                            if (isCurrentCell) return "#fef3c7";
+                            if (isHighlighted) return "#dbeafe";
+                            if (isJustAdded) return "#d1fae5";
+                            return "#f0fdf4";
+                        })
+                        .attr("stroke", () => {
+                            if (isCurrentCell) return "#f59e0b";
+                            if (isHighlighted) return "#3b82f6";
+                            if (isJustAdded) return "#10b981";
+                            return "#86efac";
+                        })
+                        .attr("stroke-width", isCurrentCell || isHighlighted ? 3 : 2);
+
+                    svg.append("text")
+                        .attr("x", x + cellSize / 2)
+                        .attr("y", y + 32)
+                        .attr("text-anchor", "middle")
+                        .attr("font-size", value > 99 ? "14px" : "16px")
+                        .attr("font-weight", "bold")
+                        .attr("fill", "#1e293b")
+                        .text(value);
+                }
+            }
+
+            // Draw arrows showing current computation
+            if (highlighting && triangle.length > 1 && currentRow > 0) {
+                const prevRow = currentRow - 1;
+                const prevRowValues = triangle[prevRow];
+                const prevRowWidth = prevRowValues.length * cellSize;
+                const prevStartX = centerX - prevRowWidth / 2;
+
+                const currRowWidth = (triangle[currentRow] ? triangle[currentRow].length : currentCol) * cellSize;
+                const currStartX = centerX - currRowWidth / 2;
+
+                // Arrow from left parent
+                if (highlighting.col1 >= 0 && highlighting.col1 < prevRowValues.length) {
+                    const fromX = prevStartX + highlighting.col1 * cellSize + cellSize / 2;
+                    const fromY = startY + prevRow * 55 + 55;
+                    const toX = currStartX + currentCol * cellSize + cellSize / 2 - 10;
+                    const toY = startY + currentRow * 55;
+
+                    svg.append("path")
+                        .attr("d", `M${fromX},${fromY} Q${fromX},${(fromY + toY) / 2} ${toX},${toY}`)
+                        .attr("fill", "none")
+                        .attr("stroke", "#3b82f6")
+                        .attr("stroke-width", 2)
+                        .attr("stroke-dasharray", "5,3");
+                }
+
+                // Arrow from right parent
+                if (highlighting.col2 >= 0 && highlighting.col2 < prevRowValues.length) {
+                    const fromX = prevStartX + highlighting.col2 * cellSize + cellSize / 2;
+                    const fromY = startY + prevRow * 55 + 55;
+                    const toX = currStartX + currentCol * cellSize + cellSize / 2 + 10;
+                    const toY = startY + currentRow * 55;
+
+                    svg.append("path")
+                        .attr("d", `M${fromX},${fromY} Q${fromX},${(fromY + toY) / 2} ${toX},${toY}`)
+                        .attr("fill", "none")
+                        .attr("stroke", "#3b82f6")
+                        .attr("stroke-width", 2)
+                        .attr("stroke-dasharray", "5,3");
+                }
+            }
+
+            // Calculation display
+            if (highlighting && phase === "building") {
+                const calcY = height - 130;
+                svg.append("rect")
+                    .attr("x", 30)
+                    .attr("y", calcY)
+                    .attr("width", 400)
+                    .attr("height", 50)
+                    .attr("rx", 10)
+                    .attr("fill", "#eff6ff")
+                    .attr("stroke", "#3b82f6");
+
+                svg.append("text")
+                    .attr("x", 230)
+                    .attr("y", calcY + 32)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "14px")
+                    .attr("fill", "#1e293b")
+                    .text(highlighting.text);
+            }
+
+            // Algorithm explanation
+            const algoY = height - 70;
+            svg.append("text")
+                .attr("x", 30)
+                .attr("y", algoY)
+                .attr("font-size", "12px")
+                .attr("fill", "#64748b")
+                .text("Pattern: Each number = sum of two numbers above it");
+
+            svg.append("text")
+                .attr("x", 30)
+                .attr("y", algoY + 20)
+                .attr("font-size", "12px")
+                .attr("fill", "#64748b")
+                .text("First and last elements of each row are always 1");
+
+            // Completion message
+            if (phase === "done") {
+                svg.append("rect")
+                    .attr("x", width / 2 - 200)
+                    .attr("y", height - 70)
+                    .attr("width", 400)
+                    .attr("height", 55)
+                    .attr("rx", 10)
+                    .attr("fill", "#d1fae5")
+                    .attr("stroke", "#10b981")
+                    .attr("stroke-width", 2);
+
+                svg.append("text")
+                    .attr("x", width / 2)
+                    .attr("y", height - 35)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "16px")
+                    .attr("font-weight", "bold")
+                    .attr("fill", "#10b981")
+                    .text(`✓ Pascal's Triangle with ${numRows} rows complete!`);
+            }
+        }
+
+        function step() {
+            if (phase === "done") return;
+
+            if (phase === "init") {
+                // Start with first row
+                triangle.push([1]);
+                currentRow = 0;
+                phase = "row_complete";
+                document.getElementById("status").textContent = "Row 1: [1] - First row always just contains 1";
+                render();
+                return;
+            }
+
+            if (phase === "row_complete") {
+                currentRow++;
+                if (currentRow >= numRows) {
+                    phase = "done";
+                    document.getElementById("status").textContent = `✓ Complete! Generated ${numRows} rows.`;
+                    render();
+                    return;
+                }
+                currentCol = 0;
+                triangle.push([]);
+                phase = "building";
+            }
+
+            if (phase === "building") {
+                const row = currentRow;
+                const col = currentCol;
+                const prevRow = triangle[row - 1];
+
+                if (col === 0 || col === row) {
+                    // First or last element is always 1
+                    triangle[row].push(1);
+                    highlighting = { 
+                        row: row - 1, 
+                        col1: col > 0 ? col - 1 : -1, 
+                        col2: col < row ? col : -1,
+                        text: `Position [${row}][${col}]: Edge element = 1`
+                    };
+                    document.getElementById("status").textContent = 
+                        `Row ${row + 1}, Position ${col}: Edge element, value = 1`;
+                } else {
+                    // Middle element = sum of two above
+                    const val = prevRow[col - 1] + prevRow[col];
+                    triangle[row].push(val);
+                    highlighting = { 
+                        row: row - 1, 
+                        col1: col - 1, 
+                        col2: col,
+                        text: `Position [${row}][${col}]: ${prevRow[col-1]} + ${prevRow[col]} = ${val}`
+                    };
+                    document.getElementById("status").textContent = 
+                        `Row ${row + 1}, Position ${col}: ${prevRow[col-1]} + ${prevRow[col]} = ${val}`;
+                }
+
+                currentCol++;
+                
+                if (currentCol > row) {
+                    phase = "row_complete";
+                    highlighting = null;
+                    document.getElementById("status").textContent = 
+                        `Row ${row + 1} complete: [${triangle[row].join(', ')}]`;
+                }
+
+                render();
+            }
+        }
+
+        function autoRun() {
+            if (animationTimer) {
+                clearInterval(animationTimer);
+                animationTimer = null;
+                document.getElementById("autoRunBtn").textContent = "▶ Auto Run";
+                return;
+            }
+
+            document.getElementById("autoRunBtn").textContent = "⏸ Pause";
+            animationTimer = setInterval(() => {
+                if (phase === "done") {
+                    clearInterval(animationTimer);
+                    animationTimer = null;
+                    document.getElementById("autoRunBtn").textContent = "▶ Auto Run";
+                    return;
+                }
+                step();
+            }, 600);
+        }
+
+        document.getElementById("autoRunBtn").addEventListener("click", autoRun);
+        document.getElementById("stepBtn").addEventListener("click", step);
+        document.getElementById("resetBtn").addEventListener("click", reset);
+
+        reset();
+    </script>
+</body>
+</html>

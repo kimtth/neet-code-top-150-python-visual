@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>39 - Combination Sum</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="problem-info">
+            <h1><span class="problem-number">#39</span> Combination Sum</h1>
+            <p>
+                Given an array of distinct integers and a target, find all unique combinations 
+                where the numbers sum to target. The same number may be used unlimited times.
+            </p>
+            <div class="problem-meta">
+                <span class="meta-tag">📊 Array</span>
+                <span class="meta-tag">🔄 Backtracking</span>
+                <span class="meta-tag">⏱️ O(2ⁿ)</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <code>python/0039_combination_sum/0039_combination_sum.py</code>
+            </div>
+
+            <h3>Example:</h3>
+            <pre>
+candidates = [2, 3, 6, 7], target = 7
+Output: [[2,2,3], [7]]
+            </pre>
+        </div>
+
+        <div class="explanation-panel">
+            <h4>🧠 How It Works (Layman's Terms)</h4>
+            <p>Backtracking <strong>explores all possibilities</strong> like solving a maze:</p>
+            <ul>
+                <li><strong>Choose:</strong> Make a decision</li>
+                <li><strong>Explore:</strong> Recursively continue</li>
+                <li><strong>Validate:</strong> Check if path is valid</li>
+                <li><strong>Backtrack:</strong> Undo choice if stuck, try another</li>
+            </ul>
+        </div>
+
+        <section class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+            <div class="controls">
+                <button id="stepBtn" class="btn">Step</button>
+                <button id="autoBtn" class="btn btn-success">Auto Run</button>
+                <button id="resetBtn" class="btn btn-danger">Reset</button>
+            </div>
+            <div class="status" id="status">Find all combinations that sum to target</div>
+            <svg id="visualization"></svg>
+        </section>
+
+        <section class="code-section">
+            <h3>💻 Python Solution</h3>
+            <div class="code-block">
+                <pre><span class="keyword">def</span> <span class="function">combinationSum</span>(candidates, target):
+    result = []
+    
+    <span class="keyword">def</span> <span class="function">backtrack</span>(start, path, remaining):
+        <span class="keyword">if</span> remaining == <span class="number">0</span>:
+            result.<span class="function">append</span>(path[:])
+            <span class="keyword">return</span>
+        <span class="keyword">if</span> remaining < <span class="number">0</span>:
+            <span class="keyword">return</span>
+        
+        <span class="keyword">for</span> i <span class="keyword">in</span> <span class="function">range</span>(start, <span class="function">len</span>(candidates)):
+            path.<span class="function">append</span>(candidates[i])
+            <span class="function">backtrack</span>(i, path, remaining - candidates[i])
+            path.<span class="function">pop</span>()
+    
+    <span class="function">backtrack</span>(<span class="number">0</span>, [], target)
+    <span class="keyword">return</span> result</pre>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        const width = 900;
+        const height = 650;
+
+        const svg = d3.select("#visualization")
+            .attr("width", width)
+            .attr("height", height);
+
+        const candidates = [2, 3, 6, 7];
+        const target = 7;
+
+        let treeNodes = [];
+        let treeEdges = [];
+        let currentPath = [];
+        let results = [];
+        let stack = [];
+        let isRunning = false;
+        let phase = "init";
+        let nodeId = 0;
+
+        function reset() {
+            treeNodes = [];
+            treeEdges = [];
+            currentPath = [];
+            results = [];
+            stack = [{ start: 0, path: [], remaining: target, parentId: null }];
+            phase = "init";
+            nodeId = 0;
+            isRunning = false;
+            document.getElementById("autoBtn").textContent = "Auto Run";
+            document.getElementById("status").textContent = 
+                `Find combinations from [${candidates.join(', ')}] that sum to ${target}`;
+            render();
+        }
+
+        function render() {
+            svg.selectAll("*").remove();
+
+            const startX = 50;
+
+            // Candidates display
+            svg.append("text")
+                .attr("x", startX)
+                .attr("y", 30)
+                .attr("font-size", "14px")
+                .attr("font-weight", "bold")
+                .attr("fill", "#1e293b")
+                .text("Candidates:");
+
+            candidates.forEach((c, idx) => {
+                const x = startX + 100 + idx * 60;
+                svg.append("rect")
+                    .attr("x", x)
+                    .attr("y", 10)
+                    .attr("width", 50)
+                    .attr("height", 35)
+                    .attr("rx", 6)
+                    .attr("fill", "#dbeafe")
+                    .attr("stroke", "#3b82f6");
+
+                svg.append("text")
+                    .attr("x", x + 25)
+                    .attr("y", 33)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "16px")
+                    .attr("font-weight", "bold")
+                    .attr("fill", "#1e293b")
+                    .text(c);
+            });
+
+            svg.append("text")
+                .attr("x", startX + 380)
+                .attr("y", 33)
+                .attr("font-size", "14px")
+                .attr("fill", "#64748b")
+                .text(`Target: ${target}`);
+
+            // Current path
+            svg.append("text")
+                .attr("x", startX)
+                .attr("y", 70)
+                .attr("font-size", "14px")
+                .attr("font-weight", "bold")
+                .attr("fill", "#1e293b")
+                .text(`Current path: [${currentPath.join(', ')}]`);
+
+            const pathSum = currentPath.reduce((a, b) => a + b, 0);
+            svg.append("text")
+                .attr("x", startX + 250)
+                .attr("y", 70)
+                .attr("font-size", "14px")
+                .attr("fill", pathSum === target ? "#10b981" : "#64748b")
+                .text(`Sum: ${pathSum}, Remaining: ${target - pathSum}`);
+
+            // Decision tree
+            const treeStartY = 100;
+            const levelHeight = 80;
+
+            // Draw edges first
+            treeEdges.forEach(edge => {
+                const parent = treeNodes.find(n => n.id === edge.from);
+                const child = treeNodes.find(n => n.id === edge.to);
+                if (parent && child) {
+                    svg.append("line")
+                        .attr("x1", parent.x)
+                        .attr("y1", parent.y + 20)
+                        .attr("x2", child.x)
+                        .attr("y2", child.y - 20)
+                        .attr("stroke", child.isResult ? "#10b981" : child.isPruned ? "#ef4444" : "#94a3b8")
+                        .attr("stroke-width", 2);
+
+                    // Edge label
+                    svg.append("text")
+                        .attr("x", (parent.x + child.x) / 2 + 10)
+                        .attr("y", (parent.y + child.y) / 2)
+                        .attr("font-size", "11px")
+                        .attr("fill", "#64748b")
+                        .text(`+${edge.value}`);
+                }
+            });
+
+            // Draw nodes
+            treeNodes.forEach(node => {
+                svg.append("circle")
+                    .attr("cx", node.x)
+                    .attr("cy", node.y)
+                    .attr("r", 22)
+                    .attr("fill", () => {
+                        if (node.isResult) return "#d1fae5";
+                        if (node.isPruned) return "#fee2e2";
+                        if (node.isCurrent) return "#fef3c7";
+                        return "#f8fafc";
+                    })
+                    .attr("stroke", () => {
+                        if (node.isResult) return "#10b981";
+                        if (node.isPruned) return "#ef4444";
+                        if (node.isCurrent) return "#f59e0b";
+                        return "#94a3b8";
+                    })
+                    .attr("stroke-width", node.isCurrent ? 3 : 2);
+
+                svg.append("text")
+                    .attr("x", node.x)
+                    .attr("y", node.y + 5)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "12px")
+                    .attr("font-weight", "bold")
+                    .attr("fill", "#1e293b")
+                    .text(node.remaining);
+
+                // Result/pruned indicator
+                if (node.isResult) {
+                    svg.append("text")
+                        .attr("x", node.x)
+                        .attr("y", node.y + 38)
+                        .attr("text-anchor", "middle")
+                        .attr("font-size", "10px")
+                        .attr("fill", "#10b981")
+                        .text("✓ Found!");
+                }
+                if (node.isPruned) {
+                    svg.append("text")
+                        .attr("x", node.x)
+                        .attr("y", node.y + 38)
+                        .attr("text-anchor", "middle")
+                        .attr("font-size", "10px")
+                        .attr("fill", "#ef4444")
+                        .text("✗ Prune");
+                }
+            });
+
+            // Results display
+            const resultsY = 480;
+            svg.append("text")
+                .attr("x", startX)
+                .attr("y", resultsY)
+                .attr("font-size", "14px")
+                .attr("font-weight", "bold")
+                .attr("fill", "#1e293b")
+                .text("Valid Combinations Found:");
+
+            results.forEach((result, idx) => {
+                const x = startX + idx * 150;
+                svg.append("rect")
+                    .attr("x", x)
+                    .attr("y", resultsY + 15)
+                    .attr("width", 140)
+                    .attr("height", 35)
+                    .attr("rx", 8)
+                    .attr("fill", "#d1fae5")
+                    .attr("stroke", "#10b981");
+
+                svg.append("text")
+                    .attr("x", x + 70)
+                    .attr("y", resultsY + 38)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "14px")
+                    .attr("font-weight", "bold")
+                    .attr("fill", "#1e293b")
+                    .text(`[${result.join(', ')}]`);
+            });
+
+            // Legend
+            const legendX = 600;
+            svg.append("text")
+                .attr("x", legendX)
+                .attr("y", resultsY)
+                .attr("font-size", "12px")
+                .attr("fill", "#64748b")
+                .text("Node value = remaining target");
+
+            svg.append("text")
+                .attr("x", legendX)
+                .attr("y", resultsY + 20)
+                .attr("font-size", "12px")
+                .attr("fill", "#64748b")
+                .text("0 = found valid combination");
+
+            svg.append("text")
+                .attr("x", legendX)
+                .attr("y", resultsY + 40)
+                .attr("font-size", "12px")
+                .attr("fill", "#64748b")
+                .text("< 0 = pruned (exceeded target)");
+
+            // Final result
+            if (phase === "done") {
+                svg.append("rect")
+                    .attr("x", startX)
+                    .attr("y", 570)
+                    .attr("width", 450)
+                    .attr("height", 55)
+                    .attr("rx", 10)
+                    .attr("fill", "#d1fae5")
+                    .attr("stroke", "#10b981")
+                    .attr("stroke-width", 2);
+
+                svg.append("text")
+                    .attr("x", startX + 225)
+                    .attr("y", 605)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "18px")
+                    .attr("font-weight", "bold")
+                    .attr("fill", "#10b981")
+                    .text(`✓ Found ${results.length} combinations!`);
+            }
+        }
+
+        function getNodeX(level, index, totalAtLevel) {
+            const levelWidth = 800;
+            const spacing = levelWidth / (totalAtLevel + 1);
+            return 50 + spacing * (index + 1);
+        }
+
+        function step() {
+            if (phase === "done") return;
+
+            if (phase === "init") {
+                // Add root node
+                const rootNode = {
+                    id: nodeId++,
+                    x: 450,
+                    y: 120,
+                    remaining: target,
+                    isCurrent: true,
+                    isResult: false,
+                    isPruned: false
+                };
+                treeNodes.push(rootNode);
+                phase = "explore";
+                document.getElementById("status").textContent = 
+                    `Start: remaining = ${target}, explore candidates`;
+                render();
+                return;
+            }
+
+            if (phase === "explore") {
+                if (stack.length === 0) {
+                    phase = "done";
+                    document.getElementById("status").textContent = 
+                        `✓ Search complete! Found ${results.length} combinations.`;
+                    render();
+                    return;
+                }
+
+                const current = stack.pop();
+                currentPath = current.path;
+
+                // Mark previous current node as not current
+                treeNodes.forEach(n => n.isCurrent = false);
+
+                if (current.remaining === 0) {
+                    // Found a valid combination
+                    results.push([...current.path]);
+                    
+                    // Find and mark the current node as result
+                    if (current.nodeId !== undefined) {
+                        const node = treeNodes.find(n => n.id === current.nodeId);
+                        if (node) {
+                            node.isResult = true;
+                            node.isCurrent = true;
+                        }
+                    }
+                    
+                    document.getElementById("status").textContent = 
+                        `✓ Found: [${current.path.join(', ')}] = ${target}!`;
+                    render();
+                    return;
+                }
+
+                if (current.remaining < 0) {
+                    // Exceeded target, prune
+                    if (current.nodeId !== undefined) {
+                        const node = treeNodes.find(n => n.id === current.nodeId);
+                        if (node) {
+                            node.isPruned = true;
+                            node.isCurrent = true;
+                        }
+                    }
+                    document.getElementById("status").textContent = 
+                        `✗ Pruned: [${current.path.join(', ')}] exceeds target`;
+                    render();
+                    return;
+                }
+
+                // Mark current node
+                if (current.nodeId !== undefined) {
+                    const node = treeNodes.find(n => n.id === current.nodeId);
+                    if (node) node.isCurrent = true;
+                }
+
+                // Expand: add children in reverse order so they get processed in order
+                const children = [];
+                for (let i = candidates.length - 1; i >= current.start; i--) {
+                    const newPath = [...current.path, candidates[i]];
+                    const newRemaining = current.remaining - candidates[i];
+                    
+                    // Create child node
+                    const childNode = {
+                        id: nodeId++,
+                        x: 0, // Will be calculated
+                        y: 120 + (current.path.length + 1) * 70,
+                        remaining: newRemaining,
+                        isCurrent: false,
+                        isResult: false,
+                        isPruned: false
+                    };
+
+                    // Position nodes based on level
+                    const nodesAtLevel = treeNodes.filter(n => n.y === childNode.y).length;
+                    childNode.x = 100 + nodesAtLevel * 100;
+
+                    treeNodes.push(childNode);
+
+                    if (current.nodeId !== undefined || current.parentId === null) {
+                        treeEdges.push({
+                            from: current.nodeId !== undefined ? current.nodeId : 0,
+                            to: childNode.id,
+                            value: candidates[i]
+                        });
+                    }
+
+                    stack.push({
+                        start: i,
+                        path: newPath,
+                        remaining: newRemaining,
+                        parentId: current.nodeId,
+                        nodeId: childNode.id
+                    });
+                }
+
+                document.getElementById("status").textContent = 
+                    `Exploring: [${current.path.join(', ')}], remaining = ${current.remaining}`;
+                render();
+            }
+        }
+
+        async function autoRun() {
+            if (isRunning) {
+                isRunning = false;
+                document.getElementById("autoBtn").textContent = "Auto Run";
+                return;
+            }
+
+            isRunning = true;
+            document.getElementById("autoBtn").textContent = "Pause";
+
+            while (phase !== "done" && isRunning) {
+                step();
+                await new Promise(r => setTimeout(r, 300));
+            }
+
+            isRunning = false;
+            document.getElementById("autoBtn").textContent = "Auto Run";
+        }
+
+        document.getElementById("stepBtn").addEventListener("click", step);
+        document.getElementById("autoBtn").addEventListener("click", autoRun);
+        document.getElementById("resetBtn").addEventListener("click", reset);
+
+        reset();
+    </script>
+</body>
+</html>

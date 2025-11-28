@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LC 286: Walls and Gates - Algorithm Visualization</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="problem-info">
+            <h1><span class="problem-number">#286</span> Walls and Gates</h1>
+            <p>Fill each empty room with distance to nearest gate. -1 = wall, 0 = gate, INF = empty room.</p>
+            <div class="problem-meta">
+                <span class="meta-tag">📊 Graph</span>
+                <span class="meta-tag">🔍 BFS</span>
+                <span class="meta-tag">⏱️ O(m×n)</span>
+                <span class="meta-tag">💾 O(m×n)</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <code>python/0286_walls_and_gates/0286_walls_and_gates.py</code>
+            </div>
+            </div>
+
+        <div class="explanation-panel">
+            <h4>🧠 How It Works (Layman's Terms)</h4>
+            <p><strong>Multi-source BFS</strong> from all gates simultaneously:</p>
+            <ul>
+                <li><strong>Start:</strong> Add all gates to queue (distance 0)</li>
+                <li><strong>Expand:</strong> BFS level by level, incrementing distance</li>
+                <li><strong>Update:</strong> Only update cells with larger distances</li>
+                <li><strong>Result:</strong> Each cell gets distance to nearest gate</li>
+            </ul>
+        </div>
+
+
+        <div class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+            
+            <div class="controls">
+                <button class="btn btn-primary" id="startBtn" onclick="start()">▶ Start BFS</button>
+                <button class="btn" onclick="stepForward()">Step →</button>
+                <button class="btn btn-warning" onclick="reset()">Reset</button>
+            </div>
+
+            <div class="status-message" id="statusMessage">
+                Click Start to begin multi-source BFS from all gates
+            </div>
+
+            <div style="display: flex; gap: 30px; flex-wrap: wrap; margin-top: 20px;">
+                <div style="flex: 2; min-width: 350px;">
+                    <div id="gridDisplay" style="display: inline-grid; gap: 3px; background: #333; padding: 8px; border-radius: 12px;"></div>
+                </div>
+                <div style="flex: 1; min-width: 200px;">
+                    <h4>📊 BFS Queue</h4>
+                    <div id="queueDisplay" style="padding: 15px; background: #e3f2fd; border-radius: 12px; min-height: 60px; max-height: 150px; overflow-y: auto; font-family: monospace; font-size: 0.85em;"></div>
+                    
+                    <h4 style="margin-top: 15px;">🔢 Current Distance</h4>
+                    <div id="distanceDisplay" style="padding: 20px; background: #fff3e0; border-radius: 12px; text-align: center; font-size: 2em; font-weight: bold; color: #ff9800;">
+                        0
+                    </div>
+                    
+                    <div style="margin-top: 20px; padding: 15px; background: #f5f5f5; border-radius: 12px;">
+                        <h4 style="margin-bottom: 10px;">📝 Legend</h4>
+                        <div style="display: flex; flex-wrap: wrap; gap: 10px; font-size: 0.85em;">
+                            <span>🚪 Gate (0)</span>
+                            <span>🧱 Wall (-1)</span>
+                            <span>🏠 Room (∞)</span>
+                            <span>✨ Updated</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="code-section">
+            <h3>💻 Python Solution</h3>
+            <div class="code-block">
+                <pre><span class="keyword">from</span> collections <span class="keyword">import</span> deque
+
+<span class="keyword">def</span> <span class="function">wallsAndGates</span>(rooms):
+    <span class="keyword">if not</span> rooms:
+        <span class="keyword">return</span>
+    
+    m, n = <span class="function">len</span>(rooms), <span class="function">len</span>(rooms[<span class="number">0</span>])
+    queue = deque()
+    
+    <span class="comment"># Add all gates to queue</span>
+    <span class="keyword">for</span> i <span class="keyword">in</span> <span class="function">range</span>(m):
+        <span class="keyword">for</span> j <span class="keyword">in</span> <span class="function">range</span>(n):
+            <span class="keyword">if</span> rooms[i][j] == <span class="number">0</span>:
+                queue.<span class="function">append</span>((i, j))
+    
+    <span class="comment"># BFS from all gates</span>
+    <span class="keyword">while</span> queue:
+        r, c = queue.<span class="function">popleft</span>()
+        <span class="keyword">for</span> dr, dc <span class="keyword">in</span> [(<span class="number">-1</span>,<span class="number">0</span>), (<span class="number">1</span>,<span class="number">0</span>), (<span class="number">0</span>,<span class="number">-1</span>), (<span class="number">0</span>,<span class="number">1</span>)]:
+            nr, nc = r + dr, c + dc
+            <span class="keyword">if</span> <span class="number">0</span> <= nr < m <span class="keyword">and</span> <span class="number">0</span> <= nc < n <span class="keyword">and</span> \
+               rooms[nr][nc] > rooms[r][c] + <span class="number">1</span>:
+                rooms[nr][nc] = rooms[r][c] + <span class="number">1</span>
+                queue.<span class="function">append</span>((nr, nc))</pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const INF = 2147483647;
+        const WALL = -1;
+        const GATE = 0;
+
+        let originalGrid = [
+            [INF, WALL, GATE, INF],
+            [INF, INF, INF, WALL],
+            [INF, WALL, INF, WALL],
+            [GATE, WALL, INF, INF]
+        ];
+
+        let grid = [];
+        let queue = [];
+        let currentDistance = 0;
+        let highlighted = new Set();
+        let isRunning = false;
+        let stepIndex = 0;
+        let steps = [];
+
+        function copyGrid(g) {
+            return g.map(row => [...row]);
+        }
+
+        function precomputeSteps() {
+            steps = [];
+            grid = copyGrid(originalGrid);
+            const m = grid.length, n = grid[0].length;
+            const localQueue = [];
+
+            // Find all gates
+            for (let i = 0; i < m; i++) {
+                for (let j = 0; j < n; j++) {
+                    if (grid[i][j] === GATE) {
+                        localQueue.push([i, j]);
+                    }
+                }
+            }
+
+            steps.push({
+                type: 'init',
+                grid: copyGrid(grid),
+                queue: [...localQueue],
+                distance: 0,
+                highlighted: new Set(localQueue.map(([r, c]) => `${r},${c}`)),
+                message: `Found ${localQueue.length} gates. Starting BFS...`
+            });
+
+            const dirs = [[-1,0], [1,0], [0,-1], [0,1]];
+            
+            while (localQueue.length > 0) {
+                const [r, c] = localQueue.shift();
+                const newHighlighted = new Set();
+                
+                for (const [dr, dc] of dirs) {
+                    const nr = r + dr, nc = c + dc;
+                    if (nr >= 0 && nr < m && nc >= 0 && nc < n && 
+                        grid[nr][nc] > grid[r][c] + 1) {
+                        grid[nr][nc] = grid[r][c] + 1;
+                        localQueue.push([nr, nc]);
+                        newHighlighted.add(`${nr},${nc}`);
+                    }
+                }
+
+                if (newHighlighted.size > 0) {
+                    steps.push({
+                        type: 'update',
+                        grid: copyGrid(grid),
+                        queue: [...localQueue],
+                        distance: grid[r][c] + 1,
+                        highlighted: newHighlighted,
+                        from: [r, c],
+                        message: `From (${r},${c}): Updated ${newHighlighted.size} neighbors to distance ${grid[r][c] + 1}`
+                    });
+                }
+            }
+
+            steps.push({
+                type: 'done',
+                grid: copyGrid(grid),
+                queue: [],
+                distance: 0,
+                highlighted: new Set(),
+                message: 'Done! All rooms filled with nearest gate distance.'
+            });
+        }
+
+        function render() {
+            const container = document.getElementById('gridDisplay');
+            const m = grid.length, n = grid[0].length;
+            container.style.gridTemplateColumns = `repeat(${n}, 60px)`;
+
+            let html = '';
+            for (let i = 0; i < m; i++) {
+                for (let j = 0; j < n; j++) {
+                    const val = grid[i][j];
+                    const isHighlighted = highlighted.has(`${i},${j}`);
+                    
+                    let bg, content, color = 'white';
+                    if (val === WALL) {
+                        bg = '#424242';
+                        content = '🧱';
+                    } else if (val === GATE) {
+                        bg = '#4caf50';
+                        content = '🚪';
+                    } else if (val === INF) {
+                        bg = '#e3f2fd';
+                        content = '∞';
+                        color = '#2196f3';
+                    } else {
+                        bg = isHighlighted ? '#ffeb3b' : '#fff3e0';
+                        content = val;
+                        color = '#ff9800';
+                    }
+
+                    html += `<div style="
+                        width: 60px; height: 60px;
+                        background: ${bg};
+                        display: flex; align-items: center; justify-content: center;
+                        font-size: 1.3em; font-weight: bold;
+                        color: ${color};
+                        border-radius: 8px;
+                        ${isHighlighted ? 'box-shadow: 0 0 10px rgba(255, 235, 59, 0.8);' : ''}
+                        transition: all 0.3s;
+                    ">${content}</div>`;
+                }
+            }
+            container.innerHTML = html;
+
+            // Update queue display
+            const queueContainer = document.getElementById('queueDisplay');
+            if (queue.length === 0) {
+                queueContainer.textContent = '(empty)';
+            } else {
+                queueContainer.innerHTML = queue.slice(0, 10).map(([r, c]) => 
+                    `<span style="background: #bbdefb; padding: 3px 8px; margin: 2px; border-radius: 4px; display: inline-block;">(${r},${c})</span>`
+                ).join(' ') + (queue.length > 10 ? ` ... +${queue.length - 10} more` : '');
+            }
+
+            document.getElementById('distanceDisplay').textContent = currentDistance;
+        }
+
+        function stepForward() {
+            if (stepIndex >= steps.length) return;
+            
+            const step = steps[stepIndex];
+            grid = step.grid;
+            queue = step.queue;
+            currentDistance = step.distance;
+            highlighted = step.highlighted;
+            
+            document.getElementById('statusMessage').textContent = step.message;
+            
+            if (step.type === 'done') {
+                isRunning = false;
+                document.getElementById('startBtn').textContent = '▶ Start BFS';
+            }
+            
+            stepIndex++;
+            render();
+        }
+
+        async function start() {
+            if (isRunning) {
+                isRunning = false;
+                document.getElementById('startBtn').textContent = '▶ Start BFS';
+                return;
+            }
+            
+            isRunning = true;
+            document.getElementById('startBtn').textContent = '⏸ Pause';
+            
+            while (stepIndex < steps.length && isRunning) {
+                stepForward();
+                await new Promise(r => setTimeout(r, 400));
+            }
+        }
+
+        function reset() {
+            isRunning = false;
+            stepIndex = 0;
+            grid = copyGrid(originalGrid);
+            queue = [];
+            currentDistance = 0;
+            highlighted = new Set();
+            
+            document.getElementById('statusMessage').textContent = 'Click Start to begin multi-source BFS from all gates';
+            document.getElementById('startBtn').textContent = '▶ Start BFS';
+            
+            precomputeSteps();
+            render();
+        }
+
+        reset();
+    </script>
+</body>
+</html>

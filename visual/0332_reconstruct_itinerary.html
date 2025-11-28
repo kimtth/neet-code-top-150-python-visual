@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>332 - Reconstruct Itinerary</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="problem-info">
+            <h1><span class="problem-number">#332</span> Reconstruct Itinerary</h1>
+            <p>
+                Given airline tickets, reconstruct the itinerary starting from "JFK".
+                If multiple valid itineraries exist, return the one with smallest lexical order.
+                Uses Hierholzer's algorithm to find Eulerian path.
+            </p>
+            <div class="problem-meta">
+                <span class="meta-tag">📝 Algorithm</span>
+                <span class="meta-tag">⏱️ O(n)</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <code>python/0332_reconstruct_itinerary/0332_reconstruct_itinerary.py</code>
+            </div>
+
+        </div>
+
+        <div class="explanation-panel">
+            <h4>🧠 How It Works (Layman's Terms)</h4>
+            <p>This algorithm solves the problem <strong>step by step</strong>:</p>
+            <ul>
+                <li><strong>Understand:</strong> Parse the input data</li>
+                <li><strong>Process:</strong> Apply the core logic</li>
+                <li><strong>Optimize:</strong> Use efficient data structures</li>
+                <li><strong>Return:</strong> Output the computed result</li>
+            </ul>
+        </div>
+
+
+        <section class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+            <div class="controls">
+                <button id="autoRunBtn" class="btn">▶ Auto Run</button>
+                <button id="stepBtn" class="btn btn-success">Step</button>
+                <button id="resetBtn" class="btn btn-danger">Reset</button>
+            </div>
+            <div class="status" id="status">Click Auto Run to reconstruct the itinerary</div>
+            <svg id="visualization"></svg>
+        </section>
+
+        <section class="code-section">
+            <h3>💻 Python Solution</h3>
+            <div class="code-block">
+                <pre><span class="keyword">def</span> <span class="function">findItinerary</span>(tickets):
+    graph = <span class="function">defaultdict</span>(list)
+    <span class="keyword">for</span> from_airport, to_airport <span class="keyword">in</span> tickets:
+        graph[from_airport].<span class="function">append</span>(to_airport)
+    
+    <span class="comment"># Sort destinations in lexical order</span>
+    <span class="keyword">for</span> destinations <span class="keyword">in</span> graph.<span class="function">values</span>():
+        destinations.<span class="function">sort</span>()
+    
+    itinerary = <span class="function">deque</span>()
+    
+    <span class="keyword">def</span> <span class="function">dfs</span>(airport):
+        <span class="keyword">while</span> graph[airport]:
+            next_airport = graph[airport].<span class="function">pop</span>(<span class="number">0</span>)
+            <span class="function">dfs</span>(next_airport)
+        itinerary.<span class="function">appendleft</span>(airport)
+    
+    <span class="function">dfs</span>(<span class="string">"JFK"</span>)
+    <span class="keyword">return</span> <span class="function">list</span>(itinerary)</pre>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        const width = 900;
+        const height = 650;
+
+        const svg = d3.select("#visualization")
+            .attr("width", width)
+            .attr("height", height);
+
+        // Tickets data
+        const tickets = [["JFK","SFO"],["JFK","ATL"],["SFO","ATL"],["ATL","JFK"],["ATL","SFO"]];
+        
+        // Airport positions
+        const airports = {
+            "JFK": { x: 150, y: 200 },
+            "ATL": { x: 400, y: 150 },
+            "SFO": { x: 400, y: 350 }
+        };
+
+        let graph = {};
+        let itinerary = [];
+        let currentAirport = null;
+        let callStack = [];
+        let usedEdges = [];
+        let animationTimer = null;
+        let steps = [];
+        let stepIdx = 0;
+
+        function reset() {
+            // Build graph
+            graph = {};
+            for (const [from, to] of tickets) {
+                if (!graph[from]) graph[from] = [];
+                graph[from].push(to);
+            }
+            // Sort each destination list
+            for (const key in graph) {
+                graph[key].sort();
+            }
+            
+            itinerary = [];
+            currentAirport = null;
+            callStack = [];
+            usedEdges = [];
+            steps = [];
+            stepIdx = 0;
+            
+            // Generate steps
+            generateSteps();
+            
+            if (animationTimer) clearInterval(animationTimer);
+            document.getElementById("status").textContent = "Click Auto Run to reconstruct the itinerary";
+            render();
+        }
+
+        function generateSteps() {
+            // Deep copy graph
+            const g = {};
+            for (const [from, to] of tickets) {
+                if (!g[from]) g[from] = [];
+                g[from].push(to);
+            }
+            for (const key in g) {
+                g[key].sort();
+            }
+
+            const result = [];
+            const stack = [];
+            const used = [];
+
+            function dfs(airport) {
+                stack.push(airport);
+                steps.push({ type: "enter", airport, stack: [...stack], graph: JSON.parse(JSON.stringify(g)) });
+                
+                while (g[airport] && g[airport].length > 0) {
+                    const next = g[airport].shift();
+                    used.push([airport, next]);
+                    steps.push({ type: "use_edge", from: airport, to: next, used: [...used], stack: [...stack], graph: JSON.parse(JSON.stringify(g)) });
+                    dfs(next);
+                }
+                
+                result.unshift(airport);
+                stack.pop();
+                steps.push({ type: "add_result", airport, result: [...result], stack: [...stack] });
+            }
+
+            dfs("JFK");
+        }
+
+        function render() {
+            svg.selectAll("*").remove();
+
+            // Draw edges
+            const edgeGroups = {};
+            for (const [from, to] of tickets) {
+                const key = `${from}-${to}`;
+                if (!edgeGroups[key]) edgeGroups[key] = { from, to, count: 0, used: 0 };
+                edgeGroups[key].count++;
+            }
+            
+            // Count used edges
+            for (const [from, to] of usedEdges) {
+                const key = `${from}-${to}`;
+                if (edgeGroups[key]) edgeGroups[key].used++;
+            }
+
+            Object.values(edgeGroups).forEach(edge => {
+                const source = airports[edge.from];
+                const target = airports[edge.to];
+                
+                // Calculate curve
+                const dx = target.x - source.x;
+                const dy = target.y - source.y;
+                const cx = (source.x + target.x) / 2 - dy * 0.2;
+                const cy = (source.y + target.y) / 2 + dx * 0.2;
+
+                // Draw multiple edges if count > 1
+                for (let i = 0; i < edge.count; i++) {
+                    const offset = (i - (edge.count - 1) / 2) * 15;
+                    const isUsed = i < edge.used;
+                    
+                    svg.append("path")
+                        .attr("d", `M ${source.x} ${source.y + offset} Q ${cx} ${cy + offset} ${target.x} ${target.y + offset}`)
+                        .attr("fill", "none")
+                        .attr("stroke", isUsed ? "#d1d5db" : "#3b82f6")
+                        .attr("stroke-width", 2)
+                        .attr("stroke-dasharray", isUsed ? "5,5" : "none")
+                        .attr("marker-end", `url(#arrow${isUsed ? "-used" : ""})`);
+                }
+            });
+
+            // Arrow markers
+            svg.append("defs").append("marker")
+                .attr("id", "arrow")
+                .attr("viewBox", "0 0 10 10")
+                .attr("refX", 35)
+                .attr("refY", 5)
+                .attr("markerWidth", 4)
+                .attr("markerHeight", 4)
+                .attr("orient", "auto")
+                .append("path")
+                .attr("d", "M 0 0 L 10 5 L 0 10 z")
+                .attr("fill", "#3b82f6");
+
+            svg.append("defs").append("marker")
+                .attr("id", "arrow-used")
+                .attr("viewBox", "0 0 10 10")
+                .attr("refX", 35)
+                .attr("refY", 5)
+                .attr("markerWidth", 4)
+                .attr("markerHeight", 4)
+                .attr("orient", "auto")
+                .append("path")
+                .attr("d", "M 0 0 L 10 5 L 0 10 z")
+                .attr("fill", "#d1d5db");
+
+            // Draw airports
+            Object.entries(airports).forEach(([code, pos]) => {
+                const isCurrent = code === currentAirport;
+                const inStack = callStack.includes(code);
+                
+                svg.append("circle")
+                    .attr("cx", pos.x)
+                    .attr("cy", pos.y)
+                    .attr("r", 35)
+                    .attr("fill", () => {
+                        if (isCurrent) return "#fef3c7";
+                        if (inStack) return "#dbeafe";
+                        return "#f8fafc";
+                    })
+                    .attr("stroke", () => {
+                        if (isCurrent) return "#f59e0b";
+                        if (inStack) return "#3b82f6";
+                        return "#94a3b8";
+                    })
+                    .attr("stroke-width", isCurrent ? 4 : 2);
+
+                svg.append("text")
+                    .attr("x", pos.x)
+                    .attr("y", pos.y + 6)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "16px")
+                    .attr("font-weight", "bold")
+                    .attr("fill", "#1e293b")
+                    .text(code);
+
+                // Show remaining destinations
+                if (graph[code] && graph[code].length > 0) {
+                    svg.append("text")
+                        .attr("x", pos.x)
+                        .attr("y", pos.y + 55)
+                        .attr("text-anchor", "middle")
+                        .attr("font-size", "11px")
+                        .attr("fill", "#64748b")
+                        .text(`→ ${graph[code].join(", ")}`);
+                }
+            });
+
+            // Draw call stack
+            drawCallStack();
+
+            // Draw itinerary
+            drawItinerary();
+
+            // Draw tickets list
+            drawTickets();
+        }
+
+        function drawCallStack() {
+            const x = 550;
+            const y = 80;
+
+            svg.append("text")
+                .attr("x", x)
+                .attr("y", y - 20)
+                .attr("font-size", "14px")
+                .attr("font-weight", "bold")
+                .attr("fill", "#1e293b")
+                .text("DFS Call Stack:");
+
+            if (callStack.length === 0) {
+                svg.append("text")
+                    .attr("x", x)
+                    .attr("y", y + 15)
+                    .attr("font-size", "12px")
+                    .attr("fill", "#64748b")
+                    .text("(empty)");
+            } else {
+                callStack.forEach((airport, idx) => {
+                    svg.append("rect")
+                        .attr("x", x + idx * 60)
+                        .attr("y", y)
+                        .attr("width", 50)
+                        .attr("height", 30)
+                        .attr("rx", 4)
+                        .attr("fill", idx === callStack.length - 1 ? "#fef3c7" : "#dbeafe")
+                        .attr("stroke", idx === callStack.length - 1 ? "#f59e0b" : "#3b82f6");
+
+                    svg.append("text")
+                        .attr("x", x + idx * 60 + 25)
+                        .attr("y", y + 20)
+                        .attr("text-anchor", "middle")
+                        .attr("font-size", "12px")
+                        .attr("font-weight", "bold")
+                        .attr("fill", "#1e293b")
+                        .text(airport);
+                });
+            }
+        }
+
+        function drawItinerary() {
+            const y = 450;
+
+            svg.append("text")
+                .attr("x", 50)
+                .attr("y", y)
+                .attr("font-size", "14px")
+                .attr("font-weight", "bold")
+                .attr("fill", "#1e293b")
+                .text("Itinerary (built in reverse):");
+
+            if (itinerary.length === 0) {
+                svg.append("text")
+                    .attr("x", 50)
+                    .attr("y", y + 30)
+                    .attr("font-size", "12px")
+                    .attr("fill", "#64748b")
+                    .text("(empty)");
+            } else {
+                itinerary.forEach((airport, idx) => {
+                    const x = 50 + idx * 80;
+                    
+                    svg.append("rect")
+                        .attr("x", x)
+                        .attr("y", y + 15)
+                        .attr("width", 60)
+                        .attr("height", 30)
+                        .attr("rx", 4)
+                        .attr("fill", "#d1fae5")
+                        .attr("stroke", "#10b981");
+
+                    svg.append("text")
+                        .attr("x", x + 30)
+                        .attr("y", y + 35)
+                        .attr("text-anchor", "middle")
+                        .attr("font-size", "13px")
+                        .attr("font-weight", "bold")
+                        .attr("fill", "#1e293b")
+                        .text(airport);
+
+                    if (idx < itinerary.length - 1) {
+                        svg.append("text")
+                            .attr("x", x + 68)
+                            .attr("y", y + 35)
+                            .attr("font-size", "14px")
+                            .attr("fill", "#64748b")
+                            .text("→");
+                    }
+                });
+            }
+        }
+
+        function drawTickets() {
+            const x = 600;
+            const y = 200;
+
+            svg.append("text")
+                .attr("x", x)
+                .attr("y", y)
+                .attr("font-size", "14px")
+                .attr("font-weight", "bold")
+                .attr("fill", "#1e293b")
+                .text("Tickets:");
+
+            tickets.forEach((ticket, idx) => {
+                const isUsed = usedEdges.some(e => e[0] === ticket[0] && e[1] === ticket[1]);
+                
+                svg.append("text")
+                    .attr("x", x)
+                    .attr("y", y + 25 + idx * 25)
+                    .attr("font-size", "12px")
+                    .attr("fill", isUsed ? "#9ca3af" : "#1e293b")
+                    .attr("text-decoration", isUsed ? "line-through" : "none")
+                    .text(`${ticket[0]} → ${ticket[1]}`);
+            });
+        }
+
+        function step() {
+            if (stepIdx >= steps.length) {
+                document.getElementById("status").textContent = 
+                    `✓ Complete! Itinerary: ${itinerary.join(" → ")}`;
+                return;
+            }
+
+            const s = steps[stepIdx++];
+
+            switch (s.type) {
+                case "enter":
+                    currentAirport = s.airport;
+                    callStack = s.stack;
+                    if (s.graph) {
+                        graph = s.graph;
+                    }
+                    document.getElementById("status").textContent = 
+                        `DFS(${s.airport}): Enter airport`;
+                    break;
+                case "use_edge":
+                    currentAirport = s.from;
+                    usedEdges = s.used;
+                    if (s.graph) {
+                        graph = s.graph;
+                    }
+                    callStack = s.stack;
+                    document.getElementById("status").textContent = 
+                        `Use ticket: ${s.from} → ${s.to}`;
+                    break;
+                case "add_result":
+                    itinerary = s.result;
+                    callStack = s.stack;
+                    currentAirport = s.stack.length > 0 ? s.stack[s.stack.length - 1] : null;
+                    document.getElementById("status").textContent = 
+                        `Add ${s.airport} to itinerary (prepend)`;
+                    break;
+            }
+
+            render();
+        }
+
+        function autoRun() {
+            if (animationTimer) {
+                clearInterval(animationTimer);
+                animationTimer = null;
+                document.getElementById("autoRunBtn").textContent = "▶ Auto Run";
+                return;
+            }
+
+            document.getElementById("autoRunBtn").textContent = "⏸ Pause";
+            animationTimer = setInterval(() => {
+                if (stepIdx >= steps.length) {
+                    clearInterval(animationTimer);
+                    animationTimer = null;
+                    document.getElementById("autoRunBtn").textContent = "▶ Auto Run";
+                    document.getElementById("status").textContent = 
+                        `✓ Complete! Itinerary: ${itinerary.join(" → ")}`;
+                    return;
+                }
+                step();
+            }, 800);
+        }
+
+        document.getElementById("autoRunBtn").addEventListener("click", autoRun);
+        document.getElementById("stepBtn").addEventListener("click", step);
+        document.getElementById("resetBtn").addEventListener("click", reset);
+
+        reset();
+    </script>
+</body>
+</html>

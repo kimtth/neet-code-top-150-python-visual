@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Binary Tree Zigzag Level Order - LeetCode 103</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="problem-info">
+            <h1><span class="problem-number">#103</span> Binary Tree Zigzag Level Order Traversal</h1>
+            <p>Return the zigzag level order traversal (alternating left-right, right-left).</p>
+            <div class="problem-meta">
+                <span class="meta-tag">Tree</span>
+                <span class="meta-tag">BFS</span>
+                <span class="meta-tag">Medium</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <code>python/0103_binary_tree_zigzag_level_order_traversal/0103_binary_tree_zigzag_level_order_traversal.py</code>
+            </div>
+
+        </div>
+
+        <div class="explanation-panel">
+            <h4>🧠 How It Works (Layman's Terms)</h4>
+            <p>Tree traversal is like <strong>exploring a family tree</strong>:</p>
+            <ul>
+                <li><strong>Root:</strong> Start at the top node</li>
+                <li><strong>Recurse:</strong> Visit left and right children</li>
+                <li><strong>Base case:</strong> Stop at null/leaf nodes</li>
+                <li><strong>Combine:</strong> Build answer from subtree results</li>
+            </ul>
+        </div>
+
+
+        <div class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+            <div class="controls">
+                <button id="stepBtn">Step</button>
+                <button id="autoBtn">Auto Run</button>
+                <button id="resetBtn">Reset</button>
+            </div>
+            <svg id="mainSvg" width="700" height="420"></svg>
+            <div class="status-message" id="status">Click "Step" for zigzag traversal</div>
+        </div>
+
+        <div class="code-section">
+            <h3>💻 Python Solution</h3>
+            <div class="code-block">
+                <pre><span class="keyword">def</span> <span class="function">zigzagLevelOrder</span>(root):
+    <span class="keyword">if</span> <span class="keyword">not</span> root: <span class="keyword">return</span> []
+    result, queue = [], <span class="function">deque</span>([root])
+    left_to_right = <span class="keyword">True</span>
+    
+    <span class="keyword">while</span> queue:
+        level = []
+        <span class="keyword">for</span> _ <span class="keyword">in</span> <span class="function">range</span>(<span class="function">len</span>(queue)):
+            node = queue.<span class="function">popleft</span>()
+            level.<span class="function">append</span>(node.val)
+            <span class="keyword">if</span> node.left: <span class="class-name">queue</span>.<span class="function">append</span>(node.left)
+            <span class="keyword">if</span> node.right: <span class="class-name">queue</span>.<span class="function">append</span>(node.right)
+        
+        <span class="keyword">if</span> <span class="keyword">not</span> left_to_right:
+            level.<span class="function">reverse</span>()
+        result.<span class="function">append</span>(level)
+        left_to_right = <span class="keyword">not</span> left_to_right
+    
+    <span class="keyword">return</span> result</pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const tree = {
+            val: 3,
+            left: { val: 9, left: null, right: null },
+            right: { val: 20, left: { val: 15, left: null, right: null }, right: { val: 7, left: null, right: null } }
+        };
+
+        let queue = [];
+        let result = [];
+        let currentLevel = [];
+        let leftToRight = true;
+        let levelNum = 0;
+        let visitedNodes = new Set();
+
+        const width = 700, height = 420;
+        const svg = d3.select("#mainSvg");
+        let autoTimer = null, autoRunning = false;
+
+        function drawTree(node, x, y, dx, id) {
+            if (!node) return;
+            const r = 25;
+
+            if (node.left) {
+                svg.append("line").attr("x1", x).attr("y1", y + r)
+                    .attr("x2", x - dx).attr("y2", y + 60 - r)
+                    .attr("stroke", "#ccc").attr("stroke-width", 2);
+                drawTree(node.left, x - dx, y + 60, dx / 2, id + 'L');
+            }
+            if (node.right) {
+                svg.append("line").attr("x1", x).attr("y1", y + r)
+                    .attr("x2", x + dx).attr("y2", y + 60 - r)
+                    .attr("stroke", "#ccc").attr("stroke-width", 2);
+                drawTree(node.right, x + dx, y + 60, dx / 2, id + 'R');
+            }
+
+            let fill = "#e3f2fd", stroke = "#1976d2";
+            if (queue.some(q => q.id === id)) { fill = "#fef3c7"; stroke = "#f59e0b"; }
+            if (visitedNodes.has(id)) { fill = "#d1fae5"; stroke = "#10b981"; }
+
+            svg.append("circle").attr("cx", x).attr("cy", y).attr("r", r)
+                .attr("fill", fill).attr("stroke", stroke).attr("stroke-width", 2);
+            svg.append("text").attr("x", x).attr("y", y + 6)
+                .attr("text-anchor", "middle").attr("font-size", "16px")
+                .attr("font-weight", "bold").text(node.val);
+        }
+
+        function draw() {
+            svg.selectAll("*").remove();
+
+            svg.append("text").attr("x", width/2).attr("y", 25)
+                .attr("text-anchor", "middle").attr("font-weight", "bold")
+                .text("Zigzag Level Order Traversal");
+
+            drawTree(tree, width/2, 60, 100, 'root');
+
+            // Direction indicator
+            svg.append("text").attr("x", width/2).attr("y", 220)
+                .attr("text-anchor", "middle").attr("font-size", "14px")
+                .attr("fill", "#666")
+                .text(`Level ${levelNum}: ${leftToRight ? "→ Left to Right" : "← Right to Left"}`);
+
+            // Queue
+            svg.append("text").attr("x", 30).attr("y", 260).attr("font-weight", "bold").text("Queue:");
+            queue.forEach((item, idx) => {
+                svg.append("rect").attr("x", 90 + idx * 50).attr("y", 245)
+                    .attr("width", 45).attr("height", 30).attr("rx", 5)
+                    .attr("fill", "#fef3c7").attr("stroke", "#f59e0b");
+                svg.append("text").attr("x", 112 + idx * 50).attr("y", 265)
+                    .attr("text-anchor", "middle").attr("font-weight", "bold").text(item.node.val);
+            });
+
+            // Result
+            svg.append("text").attr("x", 30).attr("y", 310).attr("font-weight", "bold").text("Result:");
+            let rx = 100;
+            result.forEach((level, lidx) => {
+                svg.append("text").attr("x", rx).attr("y", 330 + lidx * 35)
+                    .attr("font-size", "14px")
+                    .text(`[${level.join(", ")}]`);
+            });
+        }
+
+        function step() {
+            if (queue.length === 0 && result.length > 0) {
+                document.getElementById("status").textContent = `Done! Result: [${result.map(l => `[${l}]`).join(", ")}]`;
+                return false;
+            }
+
+            if (queue.length === 0 && result.length === 0) {
+                queue.push({ node: tree, id: 'root' });
+                document.getElementById("status").textContent = "Starting with root node";
+                draw();
+                return true;
+            }
+
+            // Process entire level
+            const levelSize = queue.length;
+            currentLevel = [];
+            
+            for (let i = 0; i < levelSize; i++) {
+                const { node, id } = queue.shift();
+                visitedNodes.add(id);
+                currentLevel.push(node.val);
+
+                if (node.left) queue.push({ node: node.left, id: id + 'L' });
+                if (node.right) queue.push({ node: node.right, id: id + 'R' });
+            }
+
+            if (!leftToRight) currentLevel.reverse();
+            result.push([...currentLevel]);
+
+            document.getElementById("status").textContent = 
+                `Level ${levelNum} (${leftToRight ? "L→R" : "R→L"}): [${currentLevel.join(", ")}]`;
+
+            leftToRight = !leftToRight;
+            levelNum++;
+            draw();
+            return queue.length > 0;
+        }
+
+        function reset() {
+            queue = []; result = []; currentLevel = []; leftToRight = true; levelNum = 0; visitedNodes = new Set();
+            if (autoTimer) clearInterval(autoTimer);
+            autoRunning = false;
+            document.getElementById("autoBtn").textContent = "Auto Run";
+            document.getElementById("status").textContent = 'Click "Step" for zigzag traversal';
+            draw();
+        }
+
+        function autoRun() {
+            if (autoRunning) { clearInterval(autoTimer); autoRunning = false; document.getElementById("autoBtn").textContent = "Auto Run"; }
+            else {
+                autoRunning = true; document.getElementById("autoBtn").textContent = "Pause";
+                autoTimer = setInterval(() => { if (!step()) { clearInterval(autoTimer); autoRunning = false; document.getElementById("autoBtn").textContent = "Auto Run"; } }, 1000);
+            }
+        }
+
+        document.getElementById("stepBtn").addEventListener("click", step);
+        document.getElementById("autoBtn").addEventListener("click", autoRun);
+        document.getElementById("resetBtn").addEventListener("click", reset);
+        reset();
+    </script>
+</body>
+</html>

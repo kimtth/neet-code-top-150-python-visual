@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LC 207: Course Schedule - Algorithm Visualization</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="problem-info">
+            <h1><span class="problem-number">#207</span> Course Schedule</h1>
+            <p>Given numCourses and prerequisites pairs [a, b] (meaning course a requires course b first), determine if you can finish all courses. Essentially: detect if there's a cycle in the dependency graph.</p>
+            <div class="problem-meta">
+                <span class="meta-tag">🔗 Graphs</span>
+                <span class="meta-tag">🔄 DFS / Topological Sort</span>
+                <span class="meta-tag">⏱️ O(V + E)</span>
+                <span class="meta-tag">💾 O(V + E)</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <code>python/0207_course_schedule/0207_course_schedule.py</code>
+            </div>
+            </div>
+
+        <div class="explanation-panel">
+            <h4>🧠 How It Works (Layman's Terms)</h4>
+            <p>This problem asks: <strong>Can you complete all courses given their prerequisites?</strong></p>
+            <ul>
+                <li><strong>Build a graph:</strong> Course B → Course A means "B is needed for A"</li>
+                <li><strong>The key question:</strong> Is there a cycle? If A needs B, B needs C, and C needs A, it's impossible!</li>
+                <li><strong>DFS approach:</strong> Follow paths through the graph. If we revisit a node we're currently exploring, it's a cycle</li>
+                <li><strong>No cycle = can finish all courses!</strong></li>
+            </ul>
+        </div>
+
+
+        <div class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+            
+            <div class="controls">
+                <select id="exampleSelect" style="padding: 8px; border-radius: 5px; border: 2px solid #ddd;">
+                    <option value="0">[[1,0]] - Can finish (no cycle)</option>
+                    <option value="1">[[1,0],[0,1]] - Cannot finish (cycle!)</option>
+                    <option value="2">[[1,0],[2,1],[3,2]] - Chain (can finish)</option>
+                </select>
+                <button class="btn btn-primary" onclick="loadExample()">Load</button>
+                <button class="btn btn-primary" onclick="step()">Step</button>
+                <button class="btn btn-success" onclick="autoRun()">Auto Run</button>
+                <button class="btn" style="background: #607d8b; color: white;" onclick="reset()">Reset</button>
+            </div>
+
+            <div class="status-message" id="statusMessage">
+                Click Step to check if courses can be completed
+            </div>
+
+            <div style="display: flex; gap: 30px; flex-wrap: wrap; margin-top: 20px;">
+                <div style="flex: 2; min-width: 350px;">
+                    <h4 style="margin-bottom: 10px;">📊 Course Dependency Graph</h4>
+                    <svg id="graphViz" width="100%" height="300"></svg>
+                </div>
+                <div style="flex: 1; min-width: 200px;">
+                    <h4 style="margin-bottom: 10px;">🔍 DFS Path (visited set)</h4>
+                    <div id="pathContainer" style="padding: 15px; background: #fff3e0; border-radius: 12px; min-height: 80px;">
+                        <span style="color: #999;">Empty</span>
+                    </div>
+                    
+                    <h4 style="margin-top: 20px; margin-bottom: 10px;">✅ Processed Courses</h4>
+                    <div id="processedContainer" style="padding: 15px; background: #e8f5e9; border-radius: 12px; min-height: 80px;">
+                        <span style="color: #999;">None yet</span>
+                    </div>
+                    
+                    <h4 style="margin-top: 20px; margin-bottom: 10px;">🎯 Result</h4>
+                    <div id="resultContainer" style="padding: 20px; background: #f5f5f5; border-radius: 12px; text-align: center; font-size: 1.3em; font-weight: bold;">
+                        -
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="code-section">
+            <h3>💻 Python Solution (DFS Cycle Detection)</h3>
+            <div class="code-block">
+                <pre><span class="keyword">def</span> <span class="function">canFinish</span>(numCourses, prerequisites):
+    graph = defaultdict(list)
+    <span class="keyword">for</span> course, prereq <span class="keyword">in</span> prerequisites:
+        graph[prereq].<span class="function">append</span>(course)
+    
+    visited = <span class="function">set</span>()  <span class="comment"># Currently in DFS path</span>
+    
+    <span class="keyword">def</span> <span class="function">dfs</span>(course):
+        <span class="keyword">if</span> course <span class="keyword">in</span> visited:  <span class="comment"># Cycle detected!</span>
+            <span class="keyword">return</span> <span class="keyword">False</span>
+        <span class="keyword">if not</span> graph[course]:  <span class="comment"># No dependencies</span>
+            <span class="keyword">return</span> <span class="keyword">True</span>
+        
+        visited.<span class="function">add</span>(course)
+        <span class="keyword">for</span> next_course <span class="keyword">in</span> graph[course]:
+            <span class="keyword">if not</span> <span class="function">dfs</span>(next_course):
+                <span class="keyword">return</span> <span class="keyword">False</span>
+        visited.<span class="function">remove</span>(course)
+        graph[course] = []  <span class="comment"># Mark as processed</span>
+        <span class="keyword">return</span> <span class="keyword">True</span>
+    
+    <span class="keyword">return</span> <span class="function">all</span>(<span class="function">dfs</span>(c) <span class="keyword">for</span> c <span class="keyword">in</span> <span class="function">range</span>(numCourses))</pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const examples = [
+            { numCourses: 2, prereqs: [[1, 0]], canFinish: true },
+            { numCourses: 2, prereqs: [[1, 0], [0, 1]], canFinish: false },
+            { numCourses: 4, prereqs: [[1, 0], [2, 1], [3, 2]], canFinish: true }
+        ];
+
+        let currentExample = examples[0];
+        let graph = {};
+        let visited = new Set();
+        let processed = new Set();
+        let currentCourse = -1;
+        let dfsStack = [];
+        let done = false;
+        let cycleDetected = false;
+        let isRunning = false;
+
+        function loadExample() {
+            const idx = parseInt(document.getElementById('exampleSelect').value);
+            currentExample = examples[idx];
+            reset();
+        }
+
+        function buildGraph() {
+            graph = {};
+            for (let i = 0; i < currentExample.numCourses; i++) {
+                graph[i] = [];
+            }
+            for (const [course, prereq] of currentExample.prereqs) {
+                graph[prereq].push(course);
+            }
+        }
+
+        function drawGraph() {
+            const svg = d3.select("#graphViz");
+            svg.selectAll("*").remove();
+
+            const container = svg.node().parentElement;
+            const width = container.clientWidth;
+            const height = 300;
+            svg.attr("viewBox", `0 0 ${width} ${height}`);
+
+            const g = svg.append("g");
+
+            // Calculate node positions
+            const nodeCount = currentExample.numCourses;
+            const nodes = [];
+            const radius = Math.min(width, height) * 0.35;
+            const centerX = width / 2;
+            const centerY = height / 2;
+
+            for (let i = 0; i < nodeCount; i++) {
+                const angle = (2 * Math.PI * i / nodeCount) - Math.PI / 2;
+                nodes.push({
+                    id: i,
+                    x: centerX + radius * Math.cos(angle),
+                    y: centerY + radius * Math.sin(angle)
+                });
+            }
+
+            // Draw edges with arrows
+            svg.append("defs").append("marker")
+                .attr("id", "arrowhead")
+                .attr("viewBox", "0 -5 10 10")
+                .attr("refX", 25)
+                .attr("refY", 0)
+                .attr("markerWidth", 6)
+                .attr("markerHeight", 6)
+                .attr("orient", "auto")
+                .append("path")
+                .attr("d", "M0,-5L10,0L0,5")
+                .attr("fill", "#666");
+
+            for (const [prereq, courses] of Object.entries(graph)) {
+                for (const course of courses) {
+                    const from = nodes[parseInt(prereq)];
+                    const to = nodes[course];
+                    
+                    g.append("line")
+                        .attr("x1", from.x)
+                        .attr("y1", from.y)
+                        .attr("x2", to.x)
+                        .attr("y2", to.y)
+                        .attr("stroke", "#666")
+                        .attr("stroke-width", 2)
+                        .attr("marker-end", "url(#arrowhead)");
+                }
+            }
+
+            // Draw nodes
+            nodes.forEach(node => {
+                let fillColor = '#e0e0e0';
+                let strokeColor = '#bdbdbd';
+
+                if (cycleDetected && visited.has(node.id)) {
+                    fillColor = '#f44336';
+                    strokeColor = '#d32f2f';
+                } else if (node.id === currentCourse) {
+                    fillColor = '#ff9800';
+                    strokeColor = '#f57c00';
+                } else if (visited.has(node.id)) {
+                    fillColor = '#667eea';
+                    strokeColor = '#5a6fd6';
+                } else if (processed.has(node.id)) {
+                    fillColor = '#4caf50';
+                    strokeColor = '#388e3c';
+                }
+
+                g.append("circle")
+                    .attr("cx", node.x)
+                    .attr("cy", node.y)
+                    .attr("r", 25)
+                    .attr("fill", fillColor)
+                    .attr("stroke", strokeColor)
+                    .attr("stroke-width", 3);
+
+                g.append("text")
+                    .attr("x", node.x)
+                    .attr("y", node.y + 6)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "18px")
+                    .attr("font-weight", "bold")
+                    .attr("fill", visited.has(node.id) || processed.has(node.id) || node.id === currentCourse ? "white" : "#333")
+                    .text(`C${node.id}`);
+            });
+
+            // Legend
+            g.append("text")
+                .attr("x", 10)
+                .attr("y", 20)
+                .attr("font-size", "12px")
+                .attr("fill", "#666")
+                .text("Arrow: prerequisite → course");
+        }
+
+        function renderPath() {
+            const container = document.getElementById('pathContainer');
+            if (visited.size === 0) {
+                container.innerHTML = '<span style="color: #999;">Empty</span>';
+                return;
+            }
+            container.innerHTML = Array.from(visited).map(c => `
+                <span style="display: inline-block; padding: 5px 12px; margin: 3px; 
+                            background: ${cycleDetected ? '#f44336' : '#667eea'}; color: white; 
+                            border-radius: 5px; font-weight: bold;">C${c}</span>
+            `).join(' → ');
+        }
+
+        function renderProcessed() {
+            const container = document.getElementById('processedContainer');
+            if (processed.size === 0) {
+                container.innerHTML = '<span style="color: #999;">None yet</span>';
+                return;
+            }
+            container.innerHTML = Array.from(processed).map(c => `
+                <span style="display: inline-block; padding: 5px 12px; margin: 3px; 
+                            background: #4caf50; color: white; border-radius: 5px; font-weight: bold;">C${c}</span>
+            `).join('');
+        }
+
+        function step() {
+            if (done) {
+                return;
+            }
+
+            if (dfsStack.length === 0) {
+                // Find next unprocessed course
+                let nextCourse = -1;
+                for (let i = 0; i < currentExample.numCourses; i++) {
+                    if (!processed.has(i)) {
+                        nextCourse = i;
+                        break;
+                    }
+                }
+
+                if (nextCourse === -1) {
+                    done = true;
+                    document.getElementById('resultContainer').innerHTML = 
+                        '<span style="color: #4caf50;">✅ Can Finish!</span>';
+                    document.getElementById('statusMessage').textContent = 
+                        'All courses can be completed! No cycles detected.';
+                    return;
+                }
+
+                dfsStack.push({ course: nextCourse, childIdx: 0 });
+                visited.add(nextCourse);
+                currentCourse = nextCourse;
+                document.getElementById('statusMessage').textContent = 
+                    `Starting DFS from Course ${nextCourse}`;
+            } else {
+                const current = dfsStack[dfsStack.length - 1];
+                const neighbors = graph[current.course] || [];
+
+                if (current.childIdx >= neighbors.length) {
+                    // Done with this course
+                    visited.delete(current.course);
+                    processed.add(current.course);
+                    dfsStack.pop();
+                    currentCourse = dfsStack.length > 0 ? dfsStack[dfsStack.length - 1].course : -1;
+                    document.getElementById('statusMessage').textContent = 
+                        `Course ${current.course} completed! Backtracking...`;
+                } else {
+                    const nextCourse = neighbors[current.childIdx];
+                    current.childIdx++;
+
+                    if (visited.has(nextCourse)) {
+                        // Cycle detected!
+                        cycleDetected = true;
+                        done = true;
+                        currentCourse = nextCourse;
+                        document.getElementById('resultContainer').innerHTML = 
+                            '<span style="color: #f44336;">❌ Cannot Finish!</span>';
+                        document.getElementById('statusMessage').textContent = 
+                            `Cycle detected! Course ${nextCourse} is already in our DFS path!`;
+                    } else if (!processed.has(nextCourse)) {
+                        dfsStack.push({ course: nextCourse, childIdx: 0 });
+                        visited.add(nextCourse);
+                        currentCourse = nextCourse;
+                        document.getElementById('statusMessage').textContent = 
+                            `Exploring Course ${nextCourse}...`;
+                    } else {
+                        document.getElementById('statusMessage').textContent = 
+                            `Course ${nextCourse} already processed, skipping...`;
+                    }
+                }
+            }
+
+            drawGraph();
+            renderPath();
+            renderProcessed();
+        }
+
+        function autoRun() {
+            if (isRunning) return;
+            isRunning = true;
+
+            const interval = setInterval(() => {
+                if (done) {
+                    clearInterval(interval);
+                    isRunning = false;
+                    return;
+                }
+                step();
+            }, 800);
+        }
+
+        function reset() {
+            buildGraph();
+            visited = new Set();
+            processed = new Set();
+            currentCourse = -1;
+            dfsStack = [];
+            done = false;
+            cycleDetected = false;
+            isRunning = false;
+
+            document.getElementById('statusMessage').textContent = 
+                `Courses: ${currentExample.numCourses}, Prerequisites: ${JSON.stringify(currentExample.prereqs)}`;
+            document.getElementById('resultContainer').textContent = '-';
+            
+            drawGraph();
+            renderPath();
+            renderProcessed();
+        }
+
+        reset();
+        window.addEventListener('resize', drawGraph);
+    </script>
+</body>
+</html>

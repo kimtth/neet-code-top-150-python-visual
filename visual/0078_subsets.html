@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LC 78: Subsets - Algorithm Visualization</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="problem-info">
+            <h1><span class="problem-number">#78</span> Subsets</h1>
+            <p>Given an array of unique integers, return all possible subsets (the power set). The solution must not contain duplicate subsets.</p>
+            <div class="problem-meta">
+                <span class="meta-tag">↩️ Backtracking</span>
+                <span class="meta-tag">🔢 Bit Manipulation</span>
+                <span class="meta-tag">⏱️ O(n × 2ⁿ)</span>
+                <span class="meta-tag">💾 O(n × 2ⁿ)</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <code>python/0078_subsets/0078_subsets.py</code>
+            </div>
+            </div>
+
+        <div class="explanation-panel">
+            <h4>🧠 How It Works (Layman's Terms)</h4>
+            <p>For each element, you have two choices: <strong>include it</strong> or <strong>don't include it</strong>.</p>
+            <ul>
+                <li><strong>Power set:</strong> All possible combinations (2ⁿ subsets for n elements)</li>
+                <li><strong>At each step:</strong> Add current subset to result, then explore adding more elements</li>
+                <li><strong>Start index:</strong> Ensures we don't create duplicates like [1,2] and [2,1]</li>
+                <li><strong>Backtracking:</strong> After exploring with an element, remove it and try next</li>
+            </ul>
+        </div>
+
+
+        <div class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+            
+            <div class="controls">
+                <button class="btn btn-primary" id="stepBtn" onclick="step()">Step</button>
+                <button class="btn btn-success" id="autoBtn" onclick="toggleAuto()">Auto Run</button>
+                <button class="btn btn-warning" onclick="reset()">Reset</button>
+            </div>
+
+            <div class="info-box secondary" style="margin-bottom: 20px;">
+                📊 Input: <strong>[1, 2, 3]</strong> → Expected: 2³ = 8 subsets
+            </div>
+
+            <div class="status-message" id="statusMessage">
+                Click "Step" or "Auto Run" to start visualization
+            </div>
+
+            <div style="display: flex; gap: 30px; flex-wrap: wrap; margin-top: 20px;">
+                <div style="flex: 1; min-width: 300px;">
+                    <div class="array-section">
+                        <div class="array-label">🔢 Input Array:</div>
+                        <div class="array-container" id="inputContainer"></div>
+                    </div>
+
+                    <div class="array-section" style="margin-top: 15px;">
+                        <div class="array-label">📝 Current Subset:</div>
+                        <div class="array-container" id="subsetContainer"></div>
+                    </div>
+
+                    <div class="explanation-panel" style="margin-top: 15px;">
+                        <h4>📍 Current Position: start = <span id="startIdx">0</span></h4>
+                        <div id="actionDisplay" style="padding: 10px; font-size: 1.1em;">
+                            Waiting to start...
+                        </div>
+                    </div>
+                </div>
+
+                <div style="flex: 1; min-width: 300px;">
+                    <div class="array-section">
+                        <div class="array-label">✅ Collected Subsets (<span id="count">0</span>/8):</div>
+                        <div id="resultContainer" style="display: flex; flex-direction: column; gap: 8px; padding: 10px; background: #f5f5f5; border-radius: 8px; min-height: 200px; max-height: 300px; overflow-y: auto;">
+                            <span style="color: #666;">None yet...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="treeContainer" style="width: 100%; height: 320px; margin-top: 20px; overflow-x: auto;"></div>
+        </div>
+        <div class="code-section">
+            <h3>💻 Python Solution</h3>
+            <div class="code-block">
+                <pre><span class="keyword">def</span> <span class="function">subsets</span>(self, nums):
+    result = []
+    
+    <span class="keyword">def</span> <span class="function">backtrack</span>(start, subset):
+        result.<span class="function">append</span>(subset[:])  <span class="comment"># Add copy of current subset</span>
+        
+        <span class="keyword">for</span> i <span class="keyword">in</span> <span class="function">range</span>(start, <span class="function">len</span>(nums)):
+            subset.<span class="function">append</span>(nums[i])     <span class="comment"># Include</span>
+            <span class="function">backtrack</span>(i + <span class="number">1</span>, subset)  <span class="comment"># Recurse</span>
+            subset.<span class="function">pop</span>()               <span class="comment"># Exclude (backtrack)</span>
+    
+    <span class="function">backtrack</span>(<span class="number">0</span>, [])
+    <span class="keyword">return</span> result</pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const nums = [1, 2, 3];
+        let steps = [];
+        let currentStepIdx = -1;
+        let results = [];
+        let autoInterval = null;
+
+        function generateSteps() {
+            steps = [];
+            results = [];
+            
+            function backtrack(start, subset, path) {
+                // First, add current subset
+                steps.push({
+                    type: 'add',
+                    subset: [...subset],
+                    start,
+                    path: [...path],
+                    message: `Adding [${subset.join(', ')}] to result`
+                });
+                results.push([...subset]);
+                
+                for (let i = start; i < nums.length; i++) {
+                    // Include
+                    steps.push({
+                        type: 'include',
+                        subset: [...subset],
+                        element: nums[i],
+                        index: i,
+                        start,
+                        path: [...path, 'include-' + i],
+                        message: `Including ${nums[i]} in subset`
+                    });
+                    
+                    subset.push(nums[i]);
+                    backtrack(i + 1, subset, [...path, i]);
+                    
+                    // Backtrack
+                    steps.push({
+                        type: 'backtrack',
+                        subset: [...subset],
+                        element: nums[i],
+                        index: i,
+                        start,
+                        path: [...path],
+                        message: `Backtracking: removing ${nums[i]}`
+                    });
+                    subset.pop();
+                }
+            }
+            
+            backtrack(0, [], []);
+        }
+
+        function init() {
+            generateSteps();
+            results = [];
+            renderInput([]);
+            renderSubset([]);
+            renderResults();
+            renderTree();
+        }
+
+        function renderInput(currentSubset) {
+            const container = document.getElementById('inputContainer');
+            container.innerHTML = '';
+            
+            nums.forEach((num, i) => {
+                const box = document.createElement('div');
+                box.className = 'array-box';
+                box.textContent = num;
+                box.style.background = currentSubset.includes(num) ? '#c8e6c9' : '#fff';
+                box.style.borderColor = currentSubset.includes(num) ? '#4caf50' : '#667eea';
+                container.appendChild(box);
+            });
+        }
+
+        function renderSubset(subset) {
+            const container = document.getElementById('subsetContainer');
+            
+            if (subset.length === 0) {
+                container.innerHTML = '<span style="color: #666; padding: 10px;">[ ] (empty)</span>';
+                return;
+            }
+            
+            container.innerHTML = '';
+            subset.forEach(num => {
+                const box = document.createElement('div');
+                box.className = 'array-box';
+                box.textContent = num;
+                box.style.background = '#c8e6c9';
+                box.style.borderColor = '#4caf50';
+                container.appendChild(box);
+            });
+        }
+
+        function renderResults() {
+            const container = document.getElementById('resultContainer');
+            document.getElementById('count').textContent = results.length;
+            
+            if (results.length === 0) {
+                container.innerHTML = '<span style="color: #666;">None yet...</span>';
+                return;
+            }
+            
+            container.innerHTML = results.map((subset, i) => {
+                const latest = i === results.length - 1 && currentStepIdx >= 0 && steps[currentStepIdx].type === 'add';
+                return `<div style="padding: 8px 12px; background: ${latest ? '#4caf50' : '#e8f5e9'}; 
+                        color: ${latest ? 'white' : '#333'}; border-radius: 5px; font-weight: bold;
+                        ${latest ? 'animation: pulse 0.5s ease;' : ''}">
+                    ${i + 1}. [${subset.join(', ')}]${subset.length === 0 ? ' (empty)' : ''}
+
+        </div>`;
+            }).join('');
+        }
+
+        function renderTree() {
+            const container = document.getElementById('treeContainer');
+            d3.select('#treeContainer').selectAll('*').remove();
+            
+            const width = Math.max(container.offsetWidth, 800);
+            const height = 300;
+            
+            const svg = d3.select('#treeContainer')
+                .append('svg')
+                .attr('width', width)
+                .attr('height', height);
+
+            // Build decision tree
+            // Root: [], children for each choice
+            const treeData = {
+                name: '[]',
+                subset: [],
+                children: [
+                    {
+                        name: '+1', subset: [1], children: [
+                            {name: '+2', subset: [1,2], children: [
+                                {name: '+3', subset: [1,2,3], children: []}
+                            ]},
+                            {name: '+3', subset: [1,3], children: []}
+                        ]
+                    },
+                    {
+                        name: '+2', subset: [2], children: [
+                            {name: '+3', subset: [2,3], children: []}
+                        ]
+                    },
+                    {
+                        name: '+3', subset: [3], children: []
+                    }
+                ]
+            };
+
+            const hierarchy = d3.hierarchy(treeData);
+            const treeLayout = d3.tree().size([width - 100, height - 80]);
+            treeLayout(hierarchy);
+
+            // Get current subset from steps
+            let currentSubset = [];
+            if (currentStepIdx >= 0) {
+                currentSubset = steps[currentStepIdx].subset || [];
+            }
+
+            // Draw links
+            svg.selectAll('.link')
+                .data(hierarchy.links())
+                .enter()
+                .append('line')
+                .attr('x1', d => d.source.x + 50)
+                .attr('y1', d => d.source.y + 25)
+                .attr('x2', d => d.target.x + 50)
+                .attr('y2', d => d.target.y + 25)
+                .attr('stroke', '#ccc')
+                .attr('stroke-width', 2);
+
+            // Draw nodes
+            const nodes = svg.selectAll('.node')
+                .data(hierarchy.descendants())
+                .enter()
+                .append('g')
+                .attr('transform', d => `translate(${d.x + 50}, ${d.y + 25})`);
+
+            nodes.append('rect')
+                .attr('x', -30)
+                .attr('y', -15)
+                .attr('width', 60)
+                .attr('height', 30)
+                .attr('rx', 5)
+                .attr('fill', d => {
+                    const nodeSubset = d.data.subset.join(',');
+                    const currSubset = currentSubset.join(',');
+                    
+                    // Check if this subset has been added to results
+                    const isInResults = results.some(r => r.join(',') === nodeSubset);
+                    
+                    if (nodeSubset === currSubset) return '#667eea';
+                    if (isInResults) return '#4caf50';
+                    return '#fff';
+                })
+                .attr('stroke', '#667eea')
+                .attr('stroke-width', 2);
+
+            nodes.append('text')
+                .attr('text-anchor', 'middle')
+                .attr('dy', 5)
+                .attr('font-size', '11px')
+                .attr('font-weight', 'bold')
+                .attr('fill', d => {
+                    const nodeSubset = d.data.subset.join(',');
+                    const currSubset = currentSubset.join(',');
+                    const isInResults = results.some(r => r.join(',') === nodeSubset);
+                    return (nodeSubset === currSubset || isInResults) ? '#fff' : '#333';
+                })
+                .text(d => `[${d.data.subset.join(',')}]`);
+        }
+
+        function step() {
+            currentStepIdx++;
+            
+            if (currentStepIdx >= steps.length) {
+                document.getElementById('statusMessage').className = 'status-message success';
+                document.getElementById('statusMessage').textContent = 
+                    `✅ Complete! Generated all ${results.length} subsets (power set).`;
+                document.getElementById('stepBtn').disabled = true;
+                stopAuto();
+                return;
+            }
+
+            const s = steps[currentStepIdx];
+            
+            // Track actual results
+            if (s.type === 'add') {
+                if (currentStepIdx === 0) {
+                    results = [[...s.subset]];
+                } else {
+                    // Find and add the subset
+                    const existingIndex = results.findIndex(r => r.join(',') === s.subset.join(','));
+                    if (existingIndex === -1) {
+                        results.push([...s.subset]);
+                    }
+                }
+            }
+
+            document.getElementById('statusMessage').textContent = s.message;
+            document.getElementById('startIdx').textContent = s.start;
+            
+            let actionText = '';
+            if (s.type === 'add') {
+                actionText = `<span style="color: #4caf50;">✅ ADD [${s.subset.join(', ')}] to result</span>`;
+            } else if (s.type === 'include') {
+                actionText = `<span style="color: #2196f3;">➕ INCLUDE ${s.element}</span>`;
+            } else if (s.type === 'backtrack') {
+                actionText = `<span style="color: #ff9800;">↩️ BACKTRACK (remove ${s.element})</span>`;
+            }
+            document.getElementById('actionDisplay').innerHTML = actionText;
+
+            renderInput(s.subset);
+            renderSubset(s.subset);
+            renderResults();
+            renderTree();
+        }
+
+        function toggleAuto() {
+            if (autoInterval) {
+                stopAuto();
+            } else {
+                document.getElementById('autoBtn').textContent = 'Pause';
+                autoInterval = setInterval(() => {
+                    if (currentStepIdx >= steps.length - 1) {
+                        step();
+                        stopAuto();
+                    } else {
+                        step();
+                    }
+                }, 500);
+            }
+        }
+
+        function stopAuto() {
+            if (autoInterval) {
+                clearInterval(autoInterval);
+                autoInterval = null;
+            }
+            document.getElementById('autoBtn').textContent = 'Auto Run';
+        }
+
+        function reset() {
+            stopAuto();
+            currentStepIdx = -1;
+            results = [];
+            document.getElementById('stepBtn').disabled = false;
+            document.getElementById('statusMessage').className = 'status-message';
+            document.getElementById('statusMessage').textContent = 'Click "Step" or "Auto Run" to start visualization';
+            document.getElementById('actionDisplay').textContent = 'Waiting to start...';
+            document.getElementById('startIdx').textContent = '0';
+            init();
+        }
+
+        init();
+    </script>
+</body>
+</html>

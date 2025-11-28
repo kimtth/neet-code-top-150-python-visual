@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LC 716: Max Stack - Algorithm Visualization</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="problem-info">
+            <h1><span class="problem-number">#716</span> Max Stack</h1>
+            <p>Design a max stack that supports push, pop, top, peekMax, and popMax operations in O(log n) time.</p>
+            <div class="problem-meta">
+                <span class="meta-tag">📦 Stack</span>
+                <span class="meta-tag">🌳 Heap</span>
+                <span class="meta-tag">⏱️ O(log n) ops</span>
+                <span class="meta-tag">💾 O(n)</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <code>python/0716_max_stack/0716_max_stack.py</code>
+            </div>
+            </div>
+
+        <div class="explanation-panel">
+            <h4>🧠 How It Works (Layman's Terms)</h4>
+            <p>Use a <strong>Doubly Linked List + Max Heap + Set</strong>:</p>
+            <ul>
+                <li><strong>Linked List:</strong> Stack order (push/pop from tail)</li>
+                <li><strong>Max Heap:</strong> Track maximum values with node IDs</li>
+                <li><strong>Removed Set:</strong> Mark lazy-deleted items</li>
+                <li><strong>Lazy deletion:</strong> Clean up heap when accessing max</li>
+            </ul>
+        </div>
+
+
+        <div class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+            
+            <div class="controls">
+                <input type="number" id="inputValue" value="5" style="width: 60px; padding: 8px; border-radius: 6px; border: 1px solid #ddd;">
+                <button class="btn btn-primary" onclick="push()">Push</button>
+                <button class="btn btn-warning" onclick="pop()">Pop</button>
+                <button class="btn" onclick="getTop()">Top</button>
+                <button class="btn" style="background: #9c27b0; color: white;" onclick="peekMax()">PeekMax</button>
+                <button class="btn" style="background: #f44336; color: white;" onclick="popMax()">PopMax</button>
+                <button class="btn" onclick="reset()">Reset</button>
+            </div>
+
+            <div class="status-message" id="statusMessage">
+                Perform operations on the Max Stack
+            </div>
+
+            <div style="display: flex; gap: 20px; flex-wrap: wrap; margin-top: 20px;">
+                <div style="flex: 1; min-width: 200px;">
+                    <h4>📚 Stack (Linked List)</h4>
+                    <svg id="stackViz" width="100%" height="300"></svg>
+                </div>
+                <div style="flex: 1; min-width: 200px;">
+                    <h4>🔺 Max Heap</h4>
+                    <div id="heapDisplay" style="padding: 15px; background: #f3e5f5; border-radius: 12px; min-height: 200px;"></div>
+                </div>
+                <div style="flex: 1; min-width: 180px;">
+                    <h4>📊 Current State</h4>
+                    <div id="stateDisplay" style="padding: 15px; background: #e8f5e9; border-radius: 12px;">
+                        <div style="margin: 10px 0; padding: 15px; background: white; border-radius: 8px; text-align: center;">
+                            <div style="font-size: 12px; color: #666;">Top</div>
+                            <div id="topValue" style="font-size: 24px; font-weight: bold; color: #2196f3;">-</div>
+                        </div>
+                        <div style="margin: 10px 0; padding: 15px; background: white; border-radius: 8px; text-align: center;">
+                            <div style="font-size: 12px; color: #666;">Max</div>
+                            <div id="maxValue" style="font-size: 24px; font-weight: bold; color: #9c27b0;">-</div>
+                        </div>
+                        <div style="margin: 10px 0; padding: 15px; background: white; border-radius: 8px; text-align: center;">
+                            <div style="font-size: 12px; color: #666;">Size</div>
+                            <div id="sizeValue" style="font-size: 24px; font-weight: bold; color: #4caf50;">0</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="code-section">
+            <h3>💻 Python Solution</h3>
+            <div class="code-block">
+                <pre><span class="keyword">import</span> heapq
+
+<span class="keyword">class</span> <span class="function">MaxStack</span>:
+    <span class="keyword">def</span> <span class="function">__init__</span>(self):
+        self.stack = []  <span class="comment"># (value, id)</span>
+        self.heap = []   <span class="comment"># (-value, -id) max heap</span>
+        self.removed = <span class="function">set</span>()  <span class="comment"># ids of removed items</span>
+        self.id = <span class="number">0</span>
+    
+    <span class="keyword">def</span> <span class="function">push</span>(self, x):
+        heapq.<span class="function">heappush</span>(self.heap, (-x, -self.id))
+        self.stack.<span class="function">append</span>((x, self.id))
+        self.id += <span class="number">1</span>
+    
+    <span class="keyword">def</span> <span class="function">pop</span>(self):
+        self.<span class="function">_clean_stack</span>()
+        val, idx = self.stack.<span class="function">pop</span>()
+        self.removed.<span class="function">add</span>(idx)
+        <span class="keyword">return</span> val
+    
+    <span class="keyword">def</span> <span class="function">popMax</span>(self):
+        self.<span class="function">_clean_heap</span>()
+        val, idx = heapq.<span class="function">heappop</span>(self.heap)
+        self.removed.<span class="function">add</span>(-idx)
+        <span class="keyword">return</span> -val
+    
+    <span class="keyword">def</span> <span class="function">_clean_stack</span>(self):
+        <span class="keyword">while</span> self.stack <span class="keyword">and</span> self.stack[-<span class="number">1</span>][<span class="number">1</span>] <span class="keyword">in</span> self.removed:
+            self.stack.<span class="function">pop</span>()</pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Max Stack implementation
+        class MaxStack {
+            constructor() {
+                this.stack = []; // [{value, id}]
+                this.heap = [];  // [{value, id}] as max heap
+                this.removed = new Set();
+                this.nextId = 0;
+            }
+
+            push(x) {
+                const id = this.nextId++;
+                this.stack.push({ value: x, id });
+                this.heap.push({ value: x, id });
+                this.heap.sort((a, b) => b.value - a.value || b.id - a.id);
+            }
+
+            pop() {
+                this._cleanStack();
+                if (this.stack.length === 0) return null;
+                const item = this.stack.pop();
+                this.removed.add(item.id);
+                return item.value;
+            }
+
+            top() {
+                this._cleanStack();
+                return this.stack.length > 0 ? this.stack[this.stack.length - 1].value : null;
+            }
+
+            peekMax() {
+                this._cleanHeap();
+                return this.heap.length > 0 ? this.heap[0].value : null;
+            }
+
+            popMax() {
+                this._cleanHeap();
+                if (this.heap.length === 0) return null;
+                const item = this.heap.shift();
+                this.removed.add(item.id);
+                return item.value;
+            }
+
+            _cleanStack() {
+                while (this.stack.length > 0 && this.removed.has(this.stack[this.stack.length - 1].id)) {
+                    this.stack.pop();
+                }
+            }
+
+            _cleanHeap() {
+                while (this.heap.length > 0 && this.removed.has(this.heap[0].id)) {
+                    this.heap.shift();
+                }
+            }
+
+            getActiveStack() {
+                return this.stack.filter(item => !this.removed.has(item.id));
+            }
+
+            getActiveHeap() {
+                return this.heap.filter(item => !this.removed.has(item.id));
+            }
+        }
+
+        let maxStack = new MaxStack();
+        let highlightId = null;
+        let highlightType = null;
+
+        function render() {
+            // Draw stack
+            const svg = d3.select("#stackViz");
+            svg.selectAll("*").remove();
+
+            const container = svg.node().parentElement;
+            const width = container.clientWidth;
+            const height = 300;
+            svg.attr("viewBox", `0 0 ${width} ${height}`);
+
+            const activeStack = maxStack.getActiveStack();
+            const boxHeight = 40;
+            const boxWidth = 80;
+            const startX = width / 2 - boxWidth / 2;
+            const startY = height - 30;
+
+            activeStack.forEach((item, i) => {
+                const y = startY - (i + 1) * boxHeight;
+                const isHighlight = highlightId === item.id;
+                const isMax = maxStack.peekMax() === item.value && 
+                              item.id === maxStack.getActiveHeap().find(h => h.value === item.value)?.id;
+
+                svg.append("rect")
+                    .attr("x", startX).attr("y", y)
+                    .attr("width", boxWidth).attr("height", boxHeight - 5)
+                    .attr("fill", isHighlight ? '#ff9800' : (isMax ? '#9c27b0' : '#667eea'))
+                    .attr("stroke", isHighlight ? '#e65100' : '#5a6fd6')
+                    .attr("stroke-width", isHighlight ? 3 : 2)
+                    .attr("rx", 6);
+
+                svg.append("text")
+                    .attr("x", startX + boxWidth / 2).attr("y", y + boxHeight / 2 + 2)
+                    .attr("text-anchor", "middle")
+                    .attr("fill", "white").attr("font-weight", "bold").attr("font-size", "18px")
+                    .text(item.value);
+
+                if (i === activeStack.length - 1) {
+                    svg.append("text")
+                        .attr("x", startX - 10).attr("y", y + boxHeight / 2 + 2)
+                        .attr("text-anchor", "end")
+                        .attr("fill", "#666").attr("font-size", "12px")
+                        .text("TOP →");
+                }
+            });
+
+            if (activeStack.length === 0) {
+                svg.append("text")
+                    .attr("x", width / 2).attr("y", height / 2)
+                    .attr("text-anchor", "middle")
+                    .attr("fill", "#999").attr("font-size", "16px")
+                    .text("Stack is empty");
+            }
+
+            // Base
+            svg.append("line")
+                .attr("x1", startX - 20).attr("y1", startY)
+                .attr("x2", startX + boxWidth + 20).attr("y2", startY)
+                .attr("stroke", "#333").attr("stroke-width", 3);
+
+            // Draw heap
+            const heapContainer = document.getElementById('heapDisplay');
+            const activeHeap = maxStack.getActiveHeap();
+            
+            if (activeHeap.length === 0) {
+                heapContainer.innerHTML = '<span style="color: #999;">Heap is empty</span>';
+            } else {
+                heapContainer.innerHTML = activeHeap.map((item, i) => {
+                    const isHighlight = highlightId === item.id;
+                    const bgColor = isHighlight ? '#ff9800' : (i === 0 ? '#9c27b0' : '#e1bee7');
+                    const textColor = (i === 0 || isHighlight) ? 'white' : '#4a148c';
+                    return `<div style="display: inline-block; margin: 5px; padding: 10px 15px; background: ${bgColor}; 
+                                color: ${textColor}; border-radius: 20px; font-weight: bold;">
+                        ${item.value}${i === 0 ? ' (MAX)' : ''}
+                    </div>`;
+                }).join('');
+            }
+
+            // Update state
+            const top = maxStack.top();
+            const max = maxStack.peekMax();
+            document.getElementById('topValue').textContent = top !== null ? top : '-';
+            document.getElementById('maxValue').textContent = max !== null ? max : '-';
+            document.getElementById('sizeValue').textContent = activeStack.length;
+        }
+
+        function push() {
+            const value = parseInt(document.getElementById('inputValue').value) || 0;
+            maxStack.push(value);
+            document.getElementById('statusMessage').textContent = `Pushed ${value} to stack`;
+            render();
+        }
+
+        function pop() {
+            const value = maxStack.pop();
+            if (value !== null) {
+                document.getElementById('statusMessage').textContent = `Popped ${value} from stack`;
+            } else {
+                document.getElementById('statusMessage').textContent = 'Stack is empty!';
+            }
+            render();
+        }
+
+        function getTop() {
+            const value = maxStack.top();
+            if (value !== null) {
+                document.getElementById('statusMessage').textContent = `Top element: ${value}`;
+                const activeStack = maxStack.getActiveStack();
+                if (activeStack.length > 0) {
+                    highlightId = activeStack[activeStack.length - 1].id;
+                    render();
+                    setTimeout(() => { highlightId = null; render(); }, 1000);
+                }
+            } else {
+                document.getElementById('statusMessage').textContent = 'Stack is empty!';
+            }
+        }
+
+        function peekMax() {
+            const value = maxStack.peekMax();
+            if (value !== null) {
+                document.getElementById('statusMessage').textContent = `Max element: ${value}`;
+                const activeHeap = maxStack.getActiveHeap();
+                if (activeHeap.length > 0) {
+                    highlightId = activeHeap[0].id;
+                    render();
+                    setTimeout(() => { highlightId = null; render(); }, 1000);
+                }
+            } else {
+                document.getElementById('statusMessage').textContent = 'Stack is empty!';
+            }
+        }
+
+        function popMax() {
+            const value = maxStack.popMax();
+            if (value !== null) {
+                document.getElementById('statusMessage').textContent = `Popped max element: ${value}`;
+            } else {
+                document.getElementById('statusMessage').textContent = 'Stack is empty!';
+            }
+            render();
+        }
+
+        function reset() {
+            maxStack = new MaxStack();
+            highlightId = null;
+            document.getElementById('statusMessage').textContent = 'Max Stack reset';
+            render();
+        }
+
+        // Initialize with some values
+        [3, 1, 5, 2].forEach(v => maxStack.push(v));
+        render();
+        window.addEventListener('resize', render);
+    </script>
+</body>
+</html>

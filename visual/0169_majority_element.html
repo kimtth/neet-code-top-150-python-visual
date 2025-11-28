@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Majority Element - LeetCode 169</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="problem-info">
+            <h1><span class="problem-number">#169</span> Majority Element</h1>
+            <p>Find the element that appears more than ⌊n/2⌋ times using Boyer-Moore Voting.</p>
+            <div class="problem-meta">
+                <span class="meta-tag">Array</span>
+                <span class="meta-tag">Divide and Conquer</span>
+                <span class="meta-tag">Easy</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <code>python/0169_majority_element/0169_majority_element.py</code>
+            </div>
+
+        </div>
+
+        <div class="explanation-panel">
+            <h4>🧠 How It Works (Layman's Terms)</h4>
+            <p>This algorithm solves the problem <strong>step by step</strong>:</p>
+            <ul>
+                <li><strong>Understand:</strong> Parse the input data</li>
+                <li><strong>Process:</strong> Apply the core logic</li>
+                <li><strong>Optimize:</strong> Use efficient data structures</li>
+                <li><strong>Return:</strong> Output the computed result</li>
+            </ul>
+        </div>
+
+
+        <div class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+            <div class="controls">
+                <button id="stepBtn">Step</button>
+                <button id="autoBtn">Auto Run</button>
+                <button id="resetBtn">Reset</button>
+            </div>
+            <svg id="mainSvg" width="800" height="350"></svg>
+            <div class="status-message" id="status">Click "Step" to find majority element</div>
+        </div>
+
+        <div class="code-section">
+            <h3>💻 Python Solution</h3>
+            <div class="code-block">
+                <pre><span class="keyword">def</span> <span class="function">majorityElement</span>(nums):
+    candidate, count = <span class="keyword">None</span>, <span class="number">0</span>
+    
+    <span class="keyword">for</span> num <span class="keyword">in</span> nums:
+        <span class="keyword">if</span> count == <span class="number">0</span>:
+            candidate = num
+        count += <span class="number">1</span> <span class="keyword">if</span> num == candidate <span class="keyword">else</span> <span class="number">-1</span>
+    
+    <span class="keyword">return</span> candidate</pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const nums = [2, 2, 1, 1, 1, 2, 2];
+        let candidate = null;
+        let count = 0;
+        let i = 0;
+
+        const width = 800, height = 350;
+        const svg = d3.select("#mainSvg");
+        let autoTimer = null, autoRunning = false;
+
+        function draw() {
+            svg.selectAll("*").remove();
+            const cellWidth = 60, startX = 150, startY = 80;
+
+            svg.append("text").attr("x", width/2).attr("y", 30)
+                .attr("text-anchor", "middle").attr("font-weight", "bold")
+                .text("Boyer-Moore Voting Algorithm");
+
+            // Draw array
+            nums.forEach((num, idx) => {
+                const x = startX + idx * cellWidth;
+                let fill = "#e3f2fd", stroke = "#1976d2";
+                if (idx === i) { fill = "#fef3c7"; stroke = "#f59e0b"; }
+                else if (idx < i) { fill = num === candidate ? "#d1fae5" : "#fee2e2"; stroke = num === candidate ? "#10b981" : "#ef4444"; }
+
+                svg.append("rect").attr("x", x).attr("y", startY)
+                    .attr("width", cellWidth - 5).attr("height", 50).attr("rx", 8)
+                    .attr("fill", fill).attr("stroke", stroke).attr("stroke-width", 2);
+
+                svg.append("text").attr("x", x + (cellWidth-5)/2).attr("y", startY + 33)
+                    .attr("text-anchor", "middle").attr("font-size", "22px")
+                    .attr("font-weight", "bold").text(num);
+            });
+
+            // Pointer
+            if (i < nums.length) {
+                svg.append("text").attr("x", startX + i * cellWidth + (cellWidth-5)/2).attr("y", startY - 10)
+                    .attr("text-anchor", "middle").attr("font-size", "12px").attr("fill", "#f59e0b")
+                    .text("▼");
+            }
+
+            // Variables
+            const varsY = 180;
+            svg.append("rect").attr("x", 150).attr("y", varsY)
+                .attr("width", 150).attr("height", 60).attr("rx", 10)
+                .attr("fill", "#e8f5e9").attr("stroke", "#4caf50");
+            svg.append("text").attr("x", 225).attr("y", varsY + 22)
+                .attr("text-anchor", "middle").attr("font-size", "12px").text("Candidate:");
+            svg.append("text").attr("x", 225).attr("y", varsY + 48)
+                .attr("text-anchor", "middle").attr("font-size", "24px")
+                .attr("font-weight", "bold").text(candidate !== null ? candidate : "?");
+
+            svg.append("rect").attr("x", 350).attr("y", varsY)
+                .attr("width", 150).attr("height", 60).attr("rx", 10)
+                .attr("fill", "#e3f2fd").attr("stroke", "#1976d2");
+            svg.append("text").attr("x", 425).attr("y", varsY + 22)
+                .attr("text-anchor", "middle").attr("font-size", "12px").text("Count:");
+            svg.append("text").attr("x", 425).attr("y", varsY + 48)
+                .attr("text-anchor", "middle").attr("font-size", "24px")
+                .attr("font-weight", "bold").text(count);
+
+            // Result
+            if (i >= nums.length) {
+                svg.append("rect").attr("x", width/2 - 120).attr("y", 280)
+                    .attr("width", 240).attr("height", 50).attr("rx", 12)
+                    .attr("fill", "#d1fae5").attr("stroke", "#10b981").attr("stroke-width", 2);
+                svg.append("text").attr("x", width/2).attr("y", 312)
+                    .attr("text-anchor", "middle").attr("font-size", "20px")
+                    .attr("font-weight", "bold").attr("fill", "#10b981")
+                    .text(`Majority Element: ${candidate}`);
+            }
+        }
+
+        function step() {
+            if (i >= nums.length) return false;
+
+            const num = nums[i];
+            if (count === 0) {
+                candidate = num;
+                document.getElementById("status").textContent = `count=0, new candidate: ${num}`;
+            }
+
+            if (num === candidate) {
+                count++;
+                document.getElementById("status").textContent = `${num} = candidate, count++: ${count}`;
+            } else {
+                count--;
+                document.getElementById("status").textContent = `${num} ≠ candidate, count--: ${count}`;
+            }
+
+            i++;
+            draw();
+            return i < nums.length;
+        }
+
+        function reset() {
+            candidate = null; count = 0; i = 0;
+            if (autoTimer) clearInterval(autoTimer);
+            autoRunning = false;
+            document.getElementById("autoBtn").textContent = "Auto Run";
+            document.getElementById("status").textContent = 'Click "Step" to find majority element';
+            draw();
+        }
+
+        function autoRun() {
+            if (autoRunning) { clearInterval(autoTimer); autoRunning = false; document.getElementById("autoBtn").textContent = "Auto Run"; }
+            else {
+                autoRunning = true; document.getElementById("autoBtn").textContent = "Pause";
+                autoTimer = setInterval(() => { if (!step()) { clearInterval(autoTimer); autoRunning = false; document.getElementById("autoBtn").textContent = "Auto Run"; } }, 700);
+            }
+        }
+
+        document.getElementById("stepBtn").addEventListener("click", step);
+        document.getElementById("autoBtn").addEventListener("click", autoRun);
+        document.getElementById("resetBtn").addEventListener("click", reset);
+        reset();
+    </script>
+</body>
+</html>

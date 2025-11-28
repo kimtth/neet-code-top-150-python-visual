@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Number of 1 Bits - LeetCode 191</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="problem-info">
+            <h1><span class="problem-number">#0191</span> Number of 1 Bits (Hamming Weight)</h1>
+            <p><strong>Problem:</strong> Write a function that takes an unsigned integer and returns the number of '1' bits it has.</p>
+            <p><strong>Pattern:</strong> Bit Manipulation - n & (n-1) clears the lowest set bit</p>
+            <div class="problem-meta">
+                <span class="meta-tag">💻 Bit</span>
+                <span class="meta-tag">⏱️ O(n)</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <code>python/0191_number_of_1s_bit/0191_number_of_1s_bit.py</code>
+            </div>
+
+        </div>
+
+        <div class="explanation-panel">
+            <h4>🧠 How It Works (Layman's Terms)</h4>
+            <p>Bit manipulation works with <strong>binary representations</strong>:</p>
+            <ul>
+                <li><strong>AND (&):</strong> Both bits must be 1</li>
+                <li><strong>OR (|):</strong> At least one bit is 1</li>
+                <li><strong>XOR (^):</strong> Bits must be different</li>
+                <li><strong>Shift:</strong> Move bits left/right</li>
+            </ul>
+        </div>
+
+
+        <div class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+
+            <div class="visualization">
+            <svg id="mainSvg"></svg>
+        </div>
+
+        <div class="controls">
+            <button id="stepBtn">Step</button>
+            <button id="autoBtn">Auto Run</button>
+            <button id="resetBtn">Reset</button>
+            <div class="speed-control">
+                <label for="speed">Speed:</label>
+                <input type="range" id="speed" min="100" max="2000" value="800">
+            </div>
+        </div>
+
+        <div class="status" id="status">Click "Step" to count 1 bits using n & (n-1) trick</div>
+
+        <div class="variables">
+            <div class="var-item">
+                <span class="var-label">Current n:</span>
+                <span id="currentN">-</span>
+            </div>
+            <div class="var-item">
+                <span class="var-label">Count:</span>
+                <span id="countDisplay">0</span>
+            </div>
+        </div>
+
+        </div>
+
+        <div class="code-section">
+            <h3>💻 Python Solution</h3>
+            <div class="code-block">
+                <pre><span class="keyword">def</span> <span class="function">hammingWeight</span>(n):
+    <span class="string">"""
+    Count number of 1 bits.
+    n & (n-1) clears the lowest set bit.
+    Time: O(number of 1 bits), Space: O(1)
+    """</span>
+    count = <span class="number">0</span>
+    <span class="keyword">while</span> n:
+        n &= (n - <span class="number">1</span>)  <span class="comment"># Clear lowest set bit</span>
+        count += <span class="number">1</span>
+    <span class="keyword">return</span> count</pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const BITS = 8;
+        const originalNum = 43; // 00101011 = 4 ones
+        let n = originalNum;
+        let count = 0;
+        let history = [{n: originalNum, cleared: -1}];
+        let autoRunning = false;
+        let autoTimer = null;
+
+        const width = 800;
+        const height = 450;
+        const svg = d3.select("#mainSvg")
+            .attr("width", width)
+            .attr("height", height);
+
+        function toBinary(num, bits = BITS) {
+            return (num >>> 0).toString(2).padStart(bits, '0');
+        }
+
+        function draw() {
+            svg.selectAll("*").remove();
+
+            svg.append("text")
+                .attr("x", width / 2)
+                .attr("y", 30)
+                .attr("text-anchor", "middle")
+                .attr("font-weight", "bold")
+                .text(`Counting 1s in ${originalNum} using n & (n-1) trick`);
+
+            // Explanation
+            svg.append("text")
+                .attr("x", width / 2)
+                .attr("y", 55)
+                .attr("text-anchor", "middle")
+                .attr("font-size", "12px")
+                .attr("fill", "#666")
+                .text("n & (n-1) clears the rightmost 1 bit. Count how many times until n = 0");
+
+            // Show history of operations
+            const startY = 90;
+            const rowHeight = 45;
+
+            history.forEach((h, idx) => {
+                const y = startY + idx * rowHeight;
+                const bits = toBinary(h.n);
+
+                // Step label
+                svg.append("text")
+                    .attr("x", 60)
+                    .attr("y", y + 20)
+                    .attr("text-anchor", "end")
+                    .attr("font-size", "12px")
+                    .attr("fill", "#666")
+                    .text(idx === 0 ? "Start:" : `Step ${idx}:`);
+
+                // Draw bits
+                bits.split('').forEach((bit, bitIdx) => {
+                    const wasCleared = h.cleared === BITS - 1 - bitIdx;
+                    const x = 80 + bitIdx * 40;
+
+                    svg.append("rect")
+                        .attr("x", x)
+                        .attr("y", y)
+                        .attr("width", 32)
+                        .attr("height", 32)
+                        .attr("rx", 4)
+                        .attr("fill", wasCleared ? "#ffcdd2" : bit === '1' ? "#c8e6c9" : "#f5f5f5")
+                        .attr("stroke", wasCleared ? "#e53935" : bit === '1' ? "#4caf50" : "#bdbdbd")
+                        .attr("stroke-width", wasCleared ? 3 : 2);
+
+                    svg.append("text")
+                        .attr("x", x + 16)
+                        .attr("y", y + 20)
+                        .attr("text-anchor", "middle")
+                        .attr("font-family", "monospace")
+                        .attr("font-size", "16px")
+                        .attr("font-weight", "bold")
+                        .attr("fill", bit === '1' ? "#2e7d32" : "#999")
+                        .text(bit);
+                });
+
+                // Value
+                svg.append("text")
+                    .attr("x", 420)
+                    .attr("y", y + 20)
+                    .attr("font-size", "14px")
+                    .text(`n = ${h.n}`);
+
+                // Arrow to next
+                if (idx < history.length - 1) {
+                    svg.append("text")
+                        .attr("x", 500)
+                        .attr("y", y + 20)
+                        .attr("font-size", "12px")
+                        .attr("fill", "#666")
+                        .text(`n & (n-1) = ${h.n} & ${h.n - 1}`);
+                }
+            });
+
+            // Count display
+            const countY = startY + history.length * rowHeight + 20;
+            
+            svg.append("rect")
+                .attr("x", width / 2 - 80)
+                .attr("y", countY)
+                .attr("width", 160)
+                .attr("height", 50)
+                .attr("rx", 8)
+                .attr("fill", n === 0 ? "#c8e6c9" : "#e3f2fd")
+                .attr("stroke", n === 0 ? "#4caf50" : "#1976d2")
+                .attr("stroke-width", 2);
+
+            svg.append("text")
+                .attr("x", width / 2)
+                .attr("y", countY + 32)
+                .attr("text-anchor", "middle")
+                .attr("font-size", "24px")
+                .attr("font-weight", "bold")
+                .text(`Count: ${count}`);
+
+            // Visual of which bits were originally 1
+            const legendY = countY + 80;
+            svg.append("text")
+                .attr("x", width / 2)
+                .attr("y", legendY)
+                .attr("text-anchor", "middle")
+                .attr("font-size", "12px")
+                .attr("fill", "#666")
+                .text(`Original ${originalNum} = ${toBinary(originalNum)} has ${toBinary(originalNum).split('').filter(b => b === '1').length} ones`);
+        }
+
+        function findClearedBitPosition(before, after) {
+            const diff = before ^ after;
+            for (let i = 0; i < BITS; i++) {
+                if ((diff >> i) & 1) return i;
+            }
+            return -1;
+        }
+
+        function step() {
+            if (n === 0) return false;
+
+            const prevN = n;
+            n = n & (n - 1);
+            count++;
+
+            const clearedPos = findClearedBitPosition(prevN, n);
+            history.push({n: n, cleared: clearedPos});
+
+            document.getElementById("currentN").textContent = `${n} (${toBinary(n)})`;
+            document.getElementById("countDisplay").textContent = count;
+
+            draw();
+
+            if (n === 0) {
+                document.getElementById("status").textContent = 
+                    `Complete! ${originalNum} has ${count} one bits`;
+                return false;
+            } else {
+                document.getElementById("status").textContent = 
+                    `Cleared lowest 1 bit: ${prevN} & ${prevN - 1} = ${n}`;
+                return true;
+            }
+        }
+
+        function reset() {
+            n = originalNum;
+            count = 0;
+            history = [{n: originalNum, cleared: -1}];
+            autoRunning = false;
+            if (autoTimer) clearInterval(autoTimer);
+            
+            document.getElementById("currentN").textContent = "-";
+            document.getElementById("countDisplay").textContent = "0";
+            document.getElementById("status").textContent = 'Click "Step" to count 1 bits using n & (n-1) trick';
+            document.getElementById("autoBtn").textContent = "Auto Run";
+            
+            draw();
+        }
+
+        function autoRun() {
+            if (autoRunning) {
+                autoRunning = false;
+                clearInterval(autoTimer);
+                document.getElementById("autoBtn").textContent = "Auto Run";
+            } else {
+                autoRunning = true;
+                document.getElementById("autoBtn").textContent = "Pause";
+                const speed = 2100 - document.getElementById("speed").value;
+                autoTimer = setInterval(() => {
+                    if (!step()) {
+                        autoRunning = false;
+                        clearInterval(autoTimer);
+                        document.getElementById("autoBtn").textContent = "Auto Run";
+                    }
+                }, speed);
+            }
+        }
+
+        document.getElementById("stepBtn").addEventListener("click", step);
+        document.getElementById("autoBtn").addEventListener("click", autoRun);
+        document.getElementById("resetBtn").addEventListener("click", reset);
+
+        draw();
+    </script>
+</body>
+</html>

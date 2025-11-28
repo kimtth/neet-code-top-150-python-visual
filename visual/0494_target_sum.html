@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>494 - Target Sum</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="problem-info">
+            <h1><span class="problem-number">#494</span> Target Sum</h1>
+            <p>
+                Given an array of integers and a target, find the number of ways to assign + or - 
+                to each number such that they sum to the target. Uses DP subset sum transformation.
+            </p>
+            <div class="problem-meta">
+                <span class="meta-tag">📊 Array</span>
+                <span class="meta-tag">🧮 DP</span>
+                <span class="meta-tag">⏱️ O(n)</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <code>python/0494_target_sum/0494_target_sum.py</code>
+            </div>
+
+            <h3>Example:</h3>
+            <pre>
+nums = [1, 1, 1, 1, 1], target = 3
+Output: 5 ways
+(+1-1+1+1+1, +1+1-1+1+1, +1+1+1-1+1, +1+1+1+1-1, -1+1+1+1+1)
+            </pre>
+        </div>
+
+        <div class="explanation-panel">
+            <h4>🧠 How It Works (Layman's Terms)</h4>
+            <p>This algorithm solves the problem <strong>step by step</strong>:</p>
+            <ul>
+                <li><strong>Understand:</strong> Parse the input data</li>
+                <li><strong>Process:</strong> Apply the core logic</li>
+                <li><strong>Optimize:</strong> Use efficient data structures</li>
+                <li><strong>Return:</strong> Output the computed result</li>
+            </ul>
+        </div>
+
+
+        <section class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+            <div class="controls">
+                <button id="stepBtn" class="btn">Step</button>
+                <button id="autoBtn" class="btn btn-success">Auto Run</button>
+                <button id="resetBtn" class="btn btn-danger">Reset</button>
+            </div>
+            <div class="status" id="status">Transform: P - N = target, P + N = total → P = (target + total) / 2</div>
+            <svg id="visualization"></svg>
+        </section>
+
+        <section class="code-section">
+            <h3>💻 Python Solution</h3>
+            <div class="code-block">
+                <pre><span class="keyword">def</span> <span class="function">findTargetSumWays</span>(nums, target):
+    total = <span class="function">sum</span>(nums)
+    <span class="keyword">if</span> (target + total) % <span class="number">2</span> != <span class="number">0</span> <span class="keyword">or</span> total < <span class="function">abs</span>(target):
+        <span class="keyword">return</span> <span class="number">0</span>
+    
+    subset_sum = (target + total) // <span class="number">2</span>
+    dp = [<span class="number">0</span>] * (subset_sum + <span class="number">1</span>)
+    dp[<span class="number">0</span>] = <span class="number">1</span>
+    
+    <span class="keyword">for</span> num <span class="keyword">in</span> nums:
+        <span class="keyword">for</span> j <span class="keyword">in</span> <span class="function">range</span>(subset_sum, num - <span class="number">1</span>, <span class="number">-1</span>):
+            dp[j] += dp[j - num]
+    
+    <span class="keyword">return</span> dp[subset_sum]</pre>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        const width = 900;
+        const height = 600;
+
+        const svg = d3.select("#visualization")
+            .attr("width", width)
+            .attr("height", height);
+
+        const nums = [1, 1, 1, 1, 1];
+        const target = 3;
+        const total = nums.reduce((a, b) => a + b, 0);
+        const subsetSum = (target + total) / 2; // = 4
+
+        let dp = [];
+        let currentNumIdx = -1;
+        let currentJ = -1;
+        let isRunning = false;
+        let phase = "init";
+        let expressions = [];
+
+        function reset() {
+            dp = new Array(subsetSum + 1).fill(0);
+            dp[0] = 1;
+            currentNumIdx = -1;
+            currentJ = -1;
+            phase = "init";
+            expressions = [];
+            isRunning = false;
+            document.getElementById("autoBtn").textContent = "Auto Run";
+            document.getElementById("status").textContent = 
+                `Total=${total}, Target=${target}, SubsetSum=(${target}+${total})/2 = ${subsetSum}`;
+            render();
+        }
+
+        function render() {
+            svg.selectAll("*").remove();
+
+            const startX = 50;
+
+            // Transformation explanation
+            svg.append("text")
+                .attr("x", startX)
+                .attr("y", 30)
+                .attr("font-size", "14px")
+                .attr("fill", "#64748b")
+                .text(`Key Insight: P - N = ${target} and P + N = ${total} → P = ${subsetSum}`);
+
+            // Array display
+            svg.append("text")
+                .attr("x", startX)
+                .attr("y", 65)
+                .attr("font-size", "14px")
+                .attr("font-weight", "bold")
+                .attr("fill", "#1e293b")
+                .text("nums[]:");
+
+            nums.forEach((num, idx) => {
+                const x = startX + 70 + idx * 55;
+                const isActive = idx === currentNumIdx;
+                const isProcessed = idx < currentNumIdx;
+
+                svg.append("rect")
+                    .attr("x", x)
+                    .attr("y", 45)
+                    .attr("width", 45)
+                    .attr("height", 40)
+                    .attr("rx", 6)
+                    .attr("fill", () => {
+                        if (isActive) return "#fef3c7";
+                        if (isProcessed) return "#d1fae5";
+                        return "#f8fafc";
+                    })
+                    .attr("stroke", () => {
+                        if (isActive) return "#f59e0b";
+                        if (isProcessed) return "#10b981";
+                        return "#94a3b8";
+                    })
+                    .attr("stroke-width", isActive ? 2 : 1);
+
+                svg.append("text")
+                    .attr("x", x + 22)
+                    .attr("y", 72)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "18px")
+                    .attr("font-weight", "bold")
+                    .attr("fill", "#1e293b")
+                    .text(num);
+            });
+
+            // DP array
+            const dpY = 130;
+            svg.append("text")
+                .attr("x", startX)
+                .attr("y", dpY - 15)
+                .attr("font-size", "14px")
+                .attr("font-weight", "bold")
+                .attr("fill", "#1e293b")
+                .text("DP[j] = Number of ways to form sum j (for + subset):");
+
+            const cellWidth = 80;
+            for (let j = 0; j <= subsetSum; j++) {
+                const x = startX + j * cellWidth;
+                const isActive = j === currentJ;
+                const isTarget = j === subsetSum;
+
+                svg.append("rect")
+                    .attr("x", x)
+                    .attr("y", dpY)
+                    .attr("width", cellWidth - 5)
+                    .attr("height", 50)
+                    .attr("rx", 6)
+                    .attr("fill", () => {
+                        if (isTarget && dp[j] > 0) return "#d1fae5";
+                        if (isActive) return "#fef3c7";
+                        if (dp[j] > 0) return "#dbeafe";
+                        return "#f8fafc";
+                    })
+                    .attr("stroke", () => {
+                        if (isTarget) return "#10b981";
+                        if (isActive) return "#f59e0b";
+                        if (dp[j] > 0) return "#3b82f6";
+                        return "#e2e8f0";
+                    })
+                    .attr("stroke-width", (isActive || isTarget) ? 2 : 1);
+
+                svg.append("text")
+                    .attr("x", x + (cellWidth - 5) / 2)
+                    .attr("y", dpY - 5)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "12px")
+                    .attr("fill", "#64748b")
+                    .text(`j=${j}`);
+
+                svg.append("text")
+                    .attr("x", x + (cellWidth - 5) / 2)
+                    .attr("y", dpY + 32)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "20px")
+                    .attr("font-weight", "bold")
+                    .attr("fill", dp[j] > 0 ? "#3b82f6" : "#94a3b8")
+                    .text(dp[j]);
+            }
+
+            // Transition arrow
+            if (phase === "update" && currentJ >= nums[currentNumIdx]) {
+                const num = nums[currentNumIdx];
+                const fromJ = currentJ - num;
+                const x1 = startX + fromJ * cellWidth + (cellWidth - 5) / 2;
+                const x2 = startX + currentJ * cellWidth + (cellWidth - 5) / 2;
+                const y = dpY + 60;
+
+                svg.append("path")
+                    .attr("d", `M ${x1} ${y} Q ${(x1 + x2) / 2} ${y + 25} ${x2} ${y}`)
+                    .attr("fill", "none")
+                    .attr("stroke", "#10b981")
+                    .attr("stroke-width", 2)
+                    .attr("marker-end", "url(#arrow)");
+
+                svg.append("text")
+                    .attr("x", (x1 + x2) / 2)
+                    .attr("y", y + 45)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "12px")
+                    .attr("fill", "#10b981")
+                    .text(`dp[${currentJ}] += dp[${fromJ}]`);
+            }
+
+            // Arrow marker
+            svg.append("defs").append("marker")
+                .attr("id", "arrow")
+                .attr("viewBox", "0 -5 10 10")
+                .attr("refX", 8)
+                .attr("refY", 0)
+                .attr("markerWidth", 6)
+                .attr("markerHeight", 6)
+                .attr("orient", "auto")
+                .append("path")
+                .attr("d", "M0,-5L10,0L0,5")
+                .attr("fill", "#10b981");
+
+            // Counting visualization
+            const countY = 280;
+            svg.append("text")
+                .attr("x", startX)
+                .attr("y", countY)
+                .attr("font-size", "14px")
+                .attr("font-weight", "bold")
+                .attr("fill", "#1e293b")
+                .text("Expression Tree (first few levels):");
+
+            // Show expression tree
+            drawExpressionTree(countY + 20);
+
+            // Result
+            if (phase === "done") {
+                const resultY = 520;
+                svg.append("rect")
+                    .attr("x", startX)
+                    .attr("y", resultY)
+                    .attr("width", 500)
+                    .attr("height", 60)
+                    .attr("rx", 10)
+                    .attr("fill", "#d1fae5")
+                    .attr("stroke", "#10b981")
+                    .attr("stroke-width", 2);
+
+                svg.append("text")
+                    .attr("x", startX + 250)
+                    .attr("y", resultY + 38)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "18px")
+                    .attr("font-weight", "bold")
+                    .attr("fill", "#10b981")
+                    .text(`✓ ${dp[subsetSum]} ways to reach target ${target}`);
+            }
+
+            // Legend
+            const legend = svg.append("g").attr("transform", `translate(600, 280)`);
+
+            legend.append("rect").attr("x", 0).attr("y", 0).attr("width", 20).attr("height", 20).attr("rx", 4).attr("fill", "#dbeafe").attr("stroke", "#3b82f6");
+            legend.append("text").attr("x", 28).attr("y", 15).attr("font-size", "12px").text("Has combinations");
+
+            legend.append("rect").attr("x", 0).attr("y", 30).attr("width", 20).attr("height", 20).attr("rx", 4).attr("fill", "#fef3c7").attr("stroke", "#f59e0b");
+            legend.append("text").attr("x", 28).attr("y", 45).attr("font-size", "12px").text("Current check");
+
+            legend.append("rect").attr("x", 0).attr("y", 60).attr("width", 20).attr("height", 20).attr("rx", 4).attr("fill", "#d1fae5").attr("stroke", "#10b981");
+            legend.append("text").attr("x", 28).attr("y", 75).attr("font-size", "12px").text("Target (P sum)");
+        }
+
+        function drawExpressionTree(startY) {
+            const expressions = [
+                { expr: "-1+1+1+1+1", sum: 3 },
+                { expr: "+1-1+1+1+1", sum: 3 },
+                { expr: "+1+1-1+1+1", sum: 3 },
+                { expr: "+1+1+1-1+1", sum: 3 },
+                { expr: "+1+1+1+1-1", sum: 3 }
+            ];
+
+            const processedCount = Math.min(currentNumIdx + 1, 5);
+            
+            expressions.slice(0, Math.max(0, processedCount)).forEach((item, idx) => {
+                const y = startY + idx * 40;
+                
+                svg.append("text")
+                    .attr("x", 80)
+                    .attr("y", y + 20)
+                    .attr("font-size", "16px")
+                    .attr("font-family", "monospace")
+                    .attr("fill", "#1e293b")
+                    .text(item.expr + " = " + item.sum);
+
+                svg.append("text")
+                    .attr("x", 300)
+                    .attr("y", y + 20)
+                    .attr("font-size", "14px")
+                    .attr("fill", "#10b981")
+                    .text("✓");
+            });
+
+            if (processedCount < 5) {
+                svg.append("text")
+                    .attr("x", 80)
+                    .attr("y", startY + processedCount * 40 + 20)
+                    .attr("font-size", "14px")
+                    .attr("fill", "#94a3b8")
+                    .text("... more expressions as we process ...");
+            }
+        }
+
+        function step() {
+            if (phase === "done") return;
+
+            if (phase === "init") {
+                currentNumIdx = 0;
+                currentJ = subsetSum;
+                phase = "update";
+                document.getElementById("status").textContent = 
+                    `Processing num=${nums[0]}, check j=${subsetSum} down to ${nums[0]}`;
+                render();
+                return;
+            }
+
+            if (phase === "update") {
+                const num = nums[currentNumIdx];
+
+                if (currentJ >= num) {
+                    const oldVal = dp[currentJ];
+                    dp[currentJ] += dp[currentJ - num];
+                    document.getElementById("status").textContent = 
+                        `dp[${currentJ}] += dp[${currentJ - num}] → ${oldVal} + ${dp[currentJ - num]} = ${dp[currentJ]}`;
+                    render();
+                    currentJ--;
+                    return;
+                }
+
+                currentNumIdx++;
+                if (currentNumIdx >= nums.length) {
+                    phase = "done";
+                    document.getElementById("status").textContent = 
+                        `✓ Final answer: ${dp[subsetSum]} ways to form expressions equal to ${target}`;
+                } else {
+                    currentJ = subsetSum;
+                    document.getElementById("status").textContent = 
+                        `Processing num=${nums[currentNumIdx]}`;
+                }
+                render();
+            }
+        }
+
+        async function autoRun() {
+            if (isRunning) {
+                isRunning = false;
+                document.getElementById("autoBtn").textContent = "Auto Run";
+                return;
+            }
+
+            isRunning = true;
+            document.getElementById("autoBtn").textContent = "Pause";
+
+            while (phase !== "done" && isRunning) {
+                step();
+                await new Promise(r => setTimeout(r, 150));
+            }
+
+            isRunning = false;
+            document.getElementById("autoBtn").textContent = "Auto Run";
+        }
+
+        document.getElementById("stepBtn").addEventListener("click", step);
+        document.getElementById("autoBtn").addEventListener("click", autoRun);
+        document.getElementById("resetBtn").addEventListener("click", reset);
+
+        reset();
+    </script>
+</body>
+</html>

@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LC 84: Largest Rectangle in Histogram - Algorithm Visualization</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="problem-info">
+            <h1><span class="problem-number">#84</span> Largest Rectangle in Histogram</h1>
+            <p>Given an array of heights representing histogram bars (width = 1 each), find the area of the largest rectangle that can be formed in the histogram.</p>
+            <div class="problem-meta">
+                <span class="meta-tag">📚 Stack</span>
+                <span class="meta-tag">🔄 Monotonic Stack</span>
+                <span class="meta-tag">⏱️ O(n)</span>
+                <span class="meta-tag">💾 O(n)</span>
+            </div>
+            <div class="file-ref">
+                📄 Python: <code>python/0084_largest_rectangle_in_histogram/0084_largest_rectangle_in_histogram.py</code>
+            </div>
+            </div>
+
+        <div class="explanation-panel">
+            <h4>🧠 How It Works (Layman's Terms)</h4>
+            <p>The key insight: For each bar, find how far left and right it can extend at that height.</p>
+            <ul>
+                <li><strong>Monotonic Stack:</strong> Keep a stack of indices with increasing heights</li>
+                <li><strong>When we find a shorter bar:</strong> Pop taller bars and calculate their max area</li>
+                <li><strong>Width calculation:</strong> From the popped bar's position to the current position (or previous stack element)</li>
+                <li><strong>At the end:</strong> Process remaining bars in stack (they extend to the right edge)</li>
+            </ul>
+        </div>
+
+
+        <div class="visualization-section">
+            <h3>🎬 Step-by-Step Visualization</h3>
+            
+            <div class="controls">
+                <button class="btn btn-primary" onclick="step()">Step</button>
+                <button class="btn btn-success" onclick="autoRun()">Auto Run</button>
+                <button class="btn" style="background: #607d8b; color: white;" onclick="reset()">Reset</button>
+            </div>
+
+            <div class="status-message" id="statusMessage">
+                Click Step to process histogram bars
+            </div>
+
+            <div class="variable-display" id="variables">
+                <div class="var-box">
+                    <span class="var-label">Current i</span>
+                    <span class="var-value" id="varI">0</span>
+                </div>
+                <div class="var-box">
+                    <span class="var-label">Stack</span>
+                    <span class="var-value" id="varStack">[]</span>
+                </div>
+                <div class="var-box" style="background: #e8f5e9;">
+                    <span class="var-label">Max Area</span>
+                    <span class="var-value" id="varMax" style="color: #4caf50;">0</span>
+                </div>
+            </div>
+
+            <div style="margin-top: 20px;">
+                <h4 style="margin-bottom: 10px;">📊 Histogram</h4>
+                <svg id="histogramViz" width="100%" height="300"></svg>
+            </div>
+
+            <div id="areaLog" style="margin-top: 20px; padding: 15px; background: #f5f5f5; border-radius: 12px; max-height: 150px; overflow-y: auto;">
+                <h4 style="margin-bottom: 10px;">📝 Area Calculations</h4>
+                <div id="logEntries">
+                    <span style="color: #999;">Areas will appear here...</span>
+                </div>
+            </div>
+        </div>
+        <div class="code-section">
+            <h3>💻 Python Solution</h3>
+            <div class="code-block">
+                <pre><span class="keyword">def</span> <span class="function">largest_rectangle_area</span>(heights):
+    stack = []  <span class="comment"># Stores indices of increasing heights</span>
+    max_area = <span class="number">0</span>
+    
+    <span class="keyword">for</span> i, h <span class="keyword">in</span> <span class="function">enumerate</span>(heights):
+        <span class="comment"># Pop bars that are taller than current</span>
+        <span class="keyword">while</span> stack <span class="keyword">and</span> heights[stack[<span class="number">-1</span>]] > h:
+            height = heights[stack.<span class="function">pop</span>()]
+            width = i <span class="keyword">if</span> <span class="keyword">not</span> stack <span class="keyword">else</span> i - stack[<span class="number">-1</span>] - <span class="number">1</span>
+            max_area = <span class="function">max</span>(max_area, height * width)
+        stack.<span class="function">append</span>(i)
+    
+    <span class="comment"># Process remaining bars</span>
+    <span class="keyword">while</span> stack:
+        height = heights[stack.<span class="function">pop</span>()]
+        width = <span class="function">len</span>(heights) <span class="keyword">if</span> <span class="keyword">not</span> stack <span class="keyword">else</span> <span class="function">len</span>(heights) - stack[<span class="number">-1</span>] - <span class="number">1</span>
+        max_area = <span class="function">max</span>(max_area, height * width)
+    
+    <span class="keyword">return</span> max_area</pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const heights = [2, 1, 5, 6, 2, 3];
+        let stack = [];
+        let maxArea = 0;
+        let currentIdx = 0;
+        let phase = 'scan'; // 'scan' or 'cleanup'
+        let done = false;
+        let isRunning = false;
+        let areaLogs = [];
+        let currentRect = null;
+
+        function drawHistogram() {
+            const svg = d3.select("#histogramViz");
+            svg.selectAll("*").remove();
+
+            const container = svg.node().parentElement;
+            const width = container.clientWidth;
+            const height = 300;
+            svg.attr("viewBox", `0 0 ${width} ${height}`);
+
+            const barWidth = Math.min(70, (width - 100) / heights.length);
+            const barGap = 5;
+            const startX = (width - (barWidth + barGap) * heights.length) / 2;
+            const maxHeight = Math.max(...heights);
+            const barMaxHeight = 200;
+
+            const g = svg.append("g");
+
+            // Draw current rectangle being calculated
+            if (currentRect) {
+                const rx = startX + currentRect.left * (barWidth + barGap);
+                const rw = (currentRect.right - currentRect.left + 1) * (barWidth + barGap) - barGap;
+                const rh = (currentRect.height / maxHeight) * barMaxHeight;
+                const ry = 240 - rh;
+
+                g.append("rect")
+                    .attr("x", rx)
+                    .attr("y", ry)
+                    .attr("width", rw)
+                    .attr("height", rh)
+                    .attr("fill", "rgba(255, 152, 0, 0.3)")
+                    .attr("stroke", "#ff9800")
+                    .attr("stroke-width", 3)
+                    .attr("stroke-dasharray", "5,5");
+            }
+
+            // Draw bars
+            heights.forEach((h, i) => {
+                const barHeight = (h / maxHeight) * barMaxHeight;
+                const x = startX + i * (barWidth + barGap);
+                const y = 240 - barHeight;
+
+                let fillColor = '#90caf9';
+                let strokeColor = '#64b5f6';
+
+                if (stack.includes(i)) {
+                    fillColor = '#667eea';
+                    strokeColor = '#5a6fd6';
+                }
+                if (i === currentIdx && phase === 'scan') {
+                    fillColor = '#ff9800';
+                    strokeColor = '#f57c00';
+                }
+                if (i >= heights.length && phase === 'cleanup') {
+                    fillColor = '#e0e0e0';
+                }
+
+                g.append("rect")
+                    .attr("x", x)
+                    .attr("y", y)
+                    .attr("width", barWidth)
+                    .attr("height", barHeight)
+                    .attr("fill", fillColor)
+                    .attr("stroke", strokeColor)
+                    .attr("stroke-width", 2)
+                    .attr("rx", 3);
+
+                // Height label
+                g.append("text")
+                    .attr("x", x + barWidth / 2)
+                    .attr("y", y - 5)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "14px")
+                    .attr("font-weight", "bold")
+                    .attr("fill", "#333")
+                    .text(h);
+
+                // Index label
+                g.append("text")
+                    .attr("x", x + barWidth / 2)
+                    .attr("y", 260)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "12px")
+                    .attr("fill", "#666")
+                    .text(`[${i}]`);
+
+                // Stack indicator
+                if (stack.includes(i)) {
+                    g.append("text")
+                        .attr("x", x + barWidth / 2)
+                        .attr("y", 280)
+                        .attr("text-anchor", "middle")
+                        .attr("font-size", "10px")
+                        .attr("fill", "#667eea")
+                        .text("📚");
+                }
+            });
+
+            // Current position indicator
+            if (phase === 'scan' && currentIdx < heights.length) {
+                const x = startX + currentIdx * (barWidth + barGap) + barWidth / 2;
+                g.append("polygon")
+                    .attr("points", `${x - 8},15 ${x + 8},15 ${x},25`)
+                    .attr("fill", "#ff9800");
+            }
+        }
+
+        function updateVariables() {
+            document.getElementById('varI').textContent = currentIdx;
+            document.getElementById('varStack').textContent = `[${stack.join(', ')}]`;
+            document.getElementById('varMax').textContent = maxArea;
+        }
+
+        function renderLogs() {
+            const container = document.getElementById('logEntries');
+            if (areaLogs.length === 0) {
+                container.innerHTML = '<span style="color: #999;">Areas will appear here...</span>';
+                return;
+            }
+            container.innerHTML = areaLogs.map(log => `
+                <div style="padding: 5px 10px; margin: 3px 0; background: ${log.isMax ? '#c8e6c9' : '#fff'}; 
+                            border-radius: 5px; font-size: 0.9em;">
+                    Bar ${log.barIdx}: height=${log.height} × width=${log.width} = <strong>${log.area}</strong>
+                    ${log.isMax ? '⭐ NEW MAX' : ''}
+
+        </div>
+            `).join('');
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function step() {
+            if (done) {
+                document.getElementById('statusMessage').textContent = 
+                    `Done! Maximum rectangle area: ${maxArea}`;
+                return;
+            }
+
+            currentRect = null;
+
+            if (phase === 'scan') {
+                if (currentIdx >= heights.length) {
+                    phase = 'cleanup';
+                    document.getElementById('statusMessage').textContent = 
+                        'All bars processed. Now cleaning up remaining bars in stack...';
+                    step();
+                    return;
+                }
+
+                const h = heights[currentIdx];
+
+                if (stack.length > 0 && heights[stack[stack.length - 1]] > h) {
+                    // Pop and calculate
+                    const poppedIdx = stack.pop();
+                    const poppedHeight = heights[poppedIdx];
+                    const width = stack.length === 0 ? currentIdx : currentIdx - stack[stack.length - 1] - 1;
+                    const area = poppedHeight * width;
+
+                    const leftBound = stack.length === 0 ? 0 : stack[stack.length - 1] + 1;
+                    currentRect = { left: leftBound, right: currentIdx - 1, height: poppedHeight };
+
+                    const isNewMax = area > maxArea;
+                    if (isNewMax) maxArea = area;
+
+                    areaLogs.push({
+                        barIdx: poppedIdx,
+                        height: poppedHeight,
+                        width: width,
+                        area: area,
+                        isMax: isNewMax
+                    });
+
+                    document.getElementById('statusMessage').textContent = 
+                        `Pop bar ${poppedIdx}: ${poppedHeight} × ${width} = ${area}${isNewMax ? ' (NEW MAX!)' : ''}`;
+                } else {
+                    stack.push(currentIdx);
+                    document.getElementById('statusMessage').textContent = 
+                        `Push index ${currentIdx} (height ${h}) to stack`;
+                    currentIdx++;
+                }
+            } else if (phase === 'cleanup') {
+                if (stack.length === 0) {
+                    done = true;
+                    document.getElementById('statusMessage').textContent = 
+                        `Complete! Maximum rectangle area: ${maxArea}`;
+                    return;
+                }
+
+                const poppedIdx = stack.pop();
+                const poppedHeight = heights[poppedIdx];
+                const width = stack.length === 0 ? heights.length : heights.length - stack[stack.length - 1] - 1;
+                const area = poppedHeight * width;
+
+                const leftBound = stack.length === 0 ? 0 : stack[stack.length - 1] + 1;
+                currentRect = { left: leftBound, right: heights.length - 1, height: poppedHeight };
+
+                const isNewMax = area > maxArea;
+                if (isNewMax) maxArea = area;
+
+                areaLogs.push({
+                    barIdx: poppedIdx,
+                    height: poppedHeight,
+                    width: width,
+                    area: area,
+                    isMax: isNewMax
+                });
+
+                document.getElementById('statusMessage').textContent = 
+                    `Cleanup: Pop bar ${poppedIdx}: ${poppedHeight} × ${width} = ${area}${isNewMax ? ' (NEW MAX!)' : ''}`;
+            }
+
+            updateVariables();
+            drawHistogram();
+            renderLogs();
+        }
+
+        function autoRun() {
+            if (isRunning) return;
+            isRunning = true;
+
+            const interval = setInterval(() => {
+                if (done) {
+                    clearInterval(interval);
+                    isRunning = false;
+                    return;
+                }
+                step();
+            }, 800);
+        }
+
+        function reset() {
+            stack = [];
+            maxArea = 0;
+            currentIdx = 0;
+            phase = 'scan';
+            done = false;
+            isRunning = false;
+            areaLogs = [];
+            currentRect = null;
+
+            document.getElementById('statusMessage').textContent = 
+                `Heights: [${heights.join(', ')}]. Click Step to find largest rectangle.`;
+            
+            updateVariables();
+            drawHistogram();
+            renderLogs();
+        }
+
+        reset();
+        window.addEventListener('resize', drawHistogram);
+    </script>
+</body>
+</html>
