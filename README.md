@@ -21,7 +21,9 @@ This repository contains **193 Python** 🐍 and **178 Java** ☕ solutions to L
 | NeetCode 150 🌊 | 150 |
 | Visualizations 📊 | 193 |
 
-**👉 Open [index.html](index.html)** to browse all problems with interactive visualizations.
+**👉 Open index.html** to browse all problems with interactive visualizations.
+
+![main](main.png)
 
 ## Problem Categories 📋
 
